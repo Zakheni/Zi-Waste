@@ -1,0 +1,71 @@
+<odoo>
+    <menuitem id="menu_pickup_root"
+              name="Waste Management"
+              sequence="1"/>
+
+    <menuitem id="menu_waste_container"
+              name="Waste Container"
+              parent="menu_pickup_root"
+              sequence="2"
+              action="action_waste_container"/>
+
+    <menuitem id="menu_waste_service"
+              name="Waste Service"
+              parent="menu_pickup_root"
+              sequence="1"
+              action="action_waste_service_request"/>
+
+    <record id="action_res_company_custom" model="ir.actions.act_window">
+        <field name="name">Customers</field>
+        <field name="res_model">res.company</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" eval="False"/>
+    </record>
+
+    <!-- Submenu linking to action -->
+    <menuitem id="menu_custom_company"
+              name="Customers"
+              parent="menu_pickup_root"
+              action="action_res_company_custom"/>
+
+    <menuitem id="menu_waste_configuration_site"
+              name="Configuration"
+              parent="menu_pickup_root"/>
+
+    <menuitem id="menu_pickup_point"
+              name="Pickup Points"
+              parent="menu_waste_configuration_site"
+              action="action_pickup_points"/>
+
+    <menuitem id="menu_disposal_site"
+              name="Disposal Site"
+              parent="menu_waste_configuration_site"
+              action="action_disposal_site"/>
+
+    <menuitem id="menu_waste_schedule"
+              name="Schedule"
+              parent="menu_waste_configuration_site"
+              action="action_waste_schedule"/>
+
+    <menuitem id="menu_waste_delivery"
+              name="Delivery"
+              parent="menu_waste_configuration_site"
+              action="action_waste_delivery"/>
+
+    <menuitem id="menu_waste_captures"
+              name="Captures"
+              parent="menu_waste_configuration_site"
+              action="action_waste_capture"/>
+
+    <menuitem id="menu_waste_upload"
+              name="Upload"
+              parent="menu_waste_configuration_site"
+              action="action_waste_upload"/>
+
+    <menuitem id="menu_waste_worksheet"
+              name="Worksheet"
+              parent="menu_waste_configuration_site"
+              action="action_waste_worksheet"/>
+
+
+</odoo>

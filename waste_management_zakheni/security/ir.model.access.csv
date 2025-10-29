@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_res_partner_pickup_point_user,access_res_partner_pickup_point_user,model_pickup_point,,1,0,0,0
+access_waste_container_user,access_waste_container_user,model_waste_container,,1,0,0,0
+access_res_partner_pickup_point_manager,access_res_partner_pickup_point_manager,model_pickup_point,base.group_system,1,1,1,1
+access_waste_container_manager,access_waste_container_manager,model_waste_container,base.group_system,1,1,1,1
+access_waste_service_request,access_waste_service_request,model_waste_service_request,base.group_system,1,1,1,1
+access_waste_schedule,access_waste_schedule,model_waste_schedule,base.group_system,1,1,1,1
+access_waste_delivery,access_waste_delivery,model_waste_delivery,base.group_system,1,1,1,1
+access_waste_capture,access_waste_capture,model_waste_capture,base.group_system,1,1,1,1
+access_waste_upload,access_waste_upload,model_waste_upload,base.group_system,1,1,1,1
+access_driver_signature,access_driver_signature,model_driver_signature,base.group_system,1,1,1,1
+access_disposal_site,waste_disposal_site,model_waste_disposal_site,base.group_user,1,1,1,1
+access_waste_worksheet,waste_worksheet,model_waste_worksheet,base.group_user,1,1,1,1
+

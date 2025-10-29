@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tree_service_request" model="ir.ui.view">
+        <field name="name">waste.service.request.tree</field>
+        <field name="model">waste.service.request</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc" string="Waste Service Request">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="service_requested"/>
+                <field name="pickup_point_id"/>
+                <field name="dropoff_container_ids" widget="many2many_tags" optional="hide"/>
+                <field name="lifted_bin_ids" widget="many2many_tags" optional="hide"/>
+                <field name="dropped_bin_ids" widget="many2many_tags" optional="hide"/>
+                <field name="pickup_point_id" optional="hide"/>
+                <field name="shunted_bin_ids" widget="many2many_tags" optional="hide"/>
+                <field name="shunt_from_id" optional="hide"/>
+                <field name="shunt_to_id" optional="hide"/>
+                <field name="sale_order_id" optional="hide"/>
+                 <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state == 'generated'"
+                       decoration-danger="state == 'cancelled'"
+                       decoration-warning="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_form_service_request" model="ir.ui.view">
+        <field name="name">waste.service.request.form</field>
+        <field name="model">waste.service.request</field>
+        <field name="arch" type="xml">
+            <form string="Waste Service Request">
+                <header>
+
+                    <button string="Draft" type="object" name="action_draft" class="btn-primary"/>
+                    <button string="Generate" type="object" name="action_generated" class="btn-info"
+                            invisible="state != 'draft'"/>
+                    <button string="Authorise" type="object" name="action_mark_done" class="btn-success"
+                            invisible="state != 'generated' or worksheet_count == 0"/>
+                    <button string="Reject" type="object" name="action_cancelled" class="btn-danger"
+                            invisible="state != 'generated' or worksheet_count == 0"/>
+                     <button name="action_open_related_sales" type="object"
+                            string="Invoice" class="btn-secondary"
+                     invisible="state != 'done'"/>
+
+
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,generated,cancelled,done"/>
+                </header>
+                <sheet>
+                    <div name="button_box" class="oe_button_box">
+                        <button name="action_view_worksheet"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-edit"
+                                invisible="state != 'generated'">
+                            <field name="worksheet_count" widget="statinfo"/>
+                        </button>
+
+<!--                            <button name="action_view_schedules"-->
+<!--                                    type="object"-->
+<!--                                    class="oe_stat_button"-->
+<!--                                    icon="fa-clock-o">-->
+<!--                                <field name="schedule_count" widget="statinfo"/>-->
+<!--                            </button>-->
+
+
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+
+                    <group string="container location">
+                        <group>
+                            <field name="service_request_date"/>
+                            <field name="partner_id"
+                                   widget="res_partner_many2one"
+                                   readonly="state != 'draft'"
+                                   context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}"
+                                   placeholder="Type to find a customer..."/>
+                            <field name="sale_order_id" readonly="state != 'draft'"
+                                   domain="[('partner_id', '=', partner_id),
+                                             ('validity_date', '>=', context_today()),
+                                             ('state', '=', 'sale'),
+                                             ('invoice_status', '=', 'to invoice'),
+                                             ('service_request_id', '=', False)]"/>
+                            <field name="service_requested" readonly="state != 'draft'"/>
+                            <field name="waste_type" readonly="state != 'draft'"
+                                   invisible="service_requested  in ('placement_of_bins',)"/>
+                            <field name="waste_details" readonly="state != 'draft'"
+                                   invisible="service_requested in ('placement_of_bins',)"/>
+                            <field name="bin_type" readonly="state != 'draft'"/>
+                            <field name="container_type" readonly="state != 'draft'" widget="radio"
+                                   options="{'horizontal': True}"/>
+                            <field name="driver_id" widget="many2one_avatar_user" readonly="state != 'draft'"
+                                   domain="[('id', 'not in', busy_driver_ids or [])]"/>
+
+                            <field name="assistance_id" widget="many2one_avatar_user" readonly="state != 'draft'"
+                                   domain="[('id', 'not in', busy_assistance_ids or [])]"/>
+
+
+                        </group>
+                        <group>
+                            <field name="pickup_point_id" readonly="state != 'draft'" invisible="0"/>
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'placement_of_bins'"
+                                   domain="['&amp;','&amp;','&amp;',('status', '=', 'intact'), ('tank_volume', 'not in',('7000_liters','9000_liters','11000_liters','12000_liters','15000_liters')), ('pickup_point_id', '=', False), ('bin_type', '=', bin_type), ('inUse', '=', False)]"/>
+
+
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested not in ( 'removal_of_bins')"
+                                   required="1"
+                                   domain="['&amp;', ('status', 'in', ['intact','in_use']), ('pickup_point_id', '=', pickup_id) ]"/>
+
+
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested not in ( 'waste_collection_&amp;_disposal') or container_type != 'bin'"
+                                   domain="['&amp;','&amp;',('status', 'in', ['intact','in_use']),('container_type' ,'!=','tank'),('pickup_point_id', '=', pickup_id) ]"/>
+
+
+                            <field name="pickup_id" invisible="1"/>
+                            <!--  Swap  -->
+                            <field name="lifted_bin_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'swapping_of_bins'"
+                                   domain="['&amp;',('status', 'in', ['broken','in_use','un_use']),('pickup_point_id', '=', pickup_id) ]"/>
+                            <field name="dropped_bin_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'swapping_of_bins'"
+                                   domain="[('status', '=', 'intact')]"/>
+                            <field name="pickup_point_id" invisible="service_requested != 'swapping_of_bins'"
+                                   readonly="state != 'draft'"/>
+                            <field name="shunt_container_ids" string="Bin Lifted" widget="many2many_tags"
+                                   readonly="state != 'draft'"
+                                   invisible="service_requested != 'shunting_of_bins'"
+                                   domain="['&amp;', ('status', 'in', ['in_use','un_use',]), ('pickup_point_id', '=', pickup_id) ]"/>
+                            <field name="shunt_to_id" string="Drop off Point" readonly="state != 'draft'"
+                                   invisible="service_requested != 'shunting_of_bins'"/>
+
+                            <field name="tank_ids" widget="many2many_tags" invisible="container_type != 'tank'"
+                                   readonly="state != 'draft'"
+                                   domain="['&amp;', '&amp;', '&amp;', ('status', 'in', ['in_use']), ('tank_volume', 'in',('7000L','9000L','11000L','12000L','15000L')), ('container_type', '=', 'tank'), ('pickup_point_id', '=', pickup_id)]"/>
+                            <field name="tank_volume" readonly="1" invisible="container_type != 'tank'"/>
+                            <field name="liters_collected" readonly="state != 'draft'"
+                                   invisible="container_type  != 'tank' or service_requested != 'waste_collection_&amp;_disposal'"/>
+                            <field name="liters_remaining" readonly="1"
+                                   invisible="container_type != 'tank' or service_requested != 'waste_collection_&amp;_disposal'"/>
+                            <field name="product_uom_qty" string="Bin no." readonly="state != 'draft'"/>
+                            <field name="planned_date" string="Planned Date" readonly="state != 'draft'"/>
+                            <field name="vehicle_id" widget="many2one_avatar_user" readonly="state != 'draft'"
+                                   domain="[('id', 'not in', busy_track_ids or [])]"/>
+                            <field name="trailer_id" widget="many2one_avatar_user" readonly="state != 'draft'"
+                                   domain="[('id', 'not in', busy_trailler_ids or [])]"/>
+
+
+                            <field name="UN_No_SIN_No" readonly="state != 'draft'"
+                                   invisible="waste_type != 'hazardous' or service_requested == 'placement_of_bins'"/>
+                            <field name="waste_profile_Data_sheet_No" readonly="state != 'draft'"
+                                   invisible="waste_type != 'hazardous' or service_requested == 'placement_of_bins'"/>
+                            <field name="DTNumber" readonly="state != 'draft'"
+                                   invisible="waste_type != 'hazardous' or service_requested == 'placement_of_bins'"/>
+                            <field name="quote_no" readonly="state != 'draft'"/>
+                            <field name="disposal_side_id" readonly="state != 'draft'"
+                                   invisible="waste_type != 'hazardous' and waste_type != 'general_non-compactable' and waste_type != 'general_compactable'  "/>
+                            <field name="service_description" readonly="state != 'draft'"/>
+                        </group>
+
+                    </group>
+                    <notebook>
+                        <page string="Busy drivers &amp; assistants and Tucks &amp; Traillers">
+                            <group>
+                                <group string="Busy Trucks and Drivers">
+                                    <field name="busy_driver_ids" string="Drivers" widget="many2many_tags"/>
+                                    <field name="busy_track_ids" string="Trucks" widget="many2many_tags"/>
+                                </group>
+
+                                <group string="Busy Assistants and Trailers">
+                                    <field name="busy_assistance_ids" string="Assistants" widget="many2many_tags"/>
+                                    <field name="busy_trailler_ids" string="Trailers" widget="many2many_tags"/>
+                                </group>
+                            </group>
+
+                        </page>
+                    </notebook>
+
+
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="action_waste_service_request" model="ir.actions.act_window">
+        <field name="name">Waste service request</field>
+        <field name="res_model">waste.service.request</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>
+
+
+
+
+
