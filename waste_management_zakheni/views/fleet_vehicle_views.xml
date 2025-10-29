@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_fleet_vehicle_form_inherit_waste" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.waste</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//sheet//group" position="inside">
+                <group string="Waste Service">
+                    <field name="service_request_id" context="{'default_service_id': active_id}" readonly="1"/>
+                    <field name="planned_date"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

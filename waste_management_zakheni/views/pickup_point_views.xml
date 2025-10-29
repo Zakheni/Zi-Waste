@@ -1,0 +1,64 @@
+<odoo>
+    <record id="view_partner_form_inherit_pickup" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.pickup</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Pickup Points">
+                    <field name="pickup_point_ids" widget="many2many_tags"  readonly="1" />
+<!--                        <tree editable="bottom">-->
+<!--                            <field name="name"/>-->
+<!--                        </tree>-->
+<!--                    </field>-->
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_pickup_point_form" model="ir.ui.view">
+        <field name="name">pickup.point.form</field>
+        <field name="model">pickup.point</field>
+        <field name="arch" type="xml">
+            <form string="Pickup Point">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="partner_id"/>
+                    </group>
+                    <group string="Waste Containers">
+<!--                        <field name="container_ids" widget="many2many_tags" context="{'default_pickup_point_id': active_id}" domain="[('pickup_point_id', '=', False), ('pickup_point_id', '=', id)]" />-->
+                        <field name="container_ids" widget="many2many_tags" context="{'default_pickup_point_id': active_id}" domain="[('pickup_point_id', '=', False), ('pickup_point_id', '=', id)]" />
+<!--                            <tree editable="bottom">-->
+<!--                                <field name="name"/>-->
+<!--                            </tree>-->
+<!--                        </field>-->
+                    </group>
+                </sheet>
+                  <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_pickup_point_tree" model="ir.ui.view">
+        <field name="name">pickup.point.tree</field>
+        <field name="model">pickup.point</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc">
+                <field name="name"/>
+                <field name="partner_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_pickup_points" model="ir.actions.act_window">
+        <field name="name">Pickup Points</field>
+        <field name="res_model">pickup.point</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

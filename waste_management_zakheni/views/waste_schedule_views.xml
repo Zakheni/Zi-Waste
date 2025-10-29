@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_waste_schedule_tree" model="ir.ui.view">
+        <field name="name">waste.schedule.tree</field>
+        <field name="model">waste.schedule</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc">
+                <field name="driver_id" widget="many2one_avatar_user"/>
+                <field name="assistance_id" widget="many2one_avatar_user"/>
+                <field name="vehicle_id" widget="many2one_avatar_user"/>
+                <field name="trailer_id" widget="many2one_avatar_user"/>
+                <field name="service_request_id"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'scheduled'"
+                       decoration-warning="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_waste_schedule_form" model="ir.ui.view">
+        <field name="name">waste.schedule.form</field>
+        <field name="model">waste.schedule</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_set_to_draft" type="object" string="Set to Draft" class="btn-secondary"/>
+                    <button name="action_set_to_scheduled" type="object" string="Schedule" class="btn-primary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled"/>
+                </header>
+                <sheet>
+                    <group>
+
+                        <group>
+                            <field name="service_request_id" readonly="1"/>
+                        </group>
+
+
+                        <group>
+                            <field name="planned_date" string=" Planned Date" widget="badge" decoration-warning="1"/>
+                        </group>
+                    </group>
+
+
+                    <group>
+                        <group string="Manifest Details">
+                            <field name="partner_id"
+                            />
+                            <!--                            <field name="sale_order_id" readonly="state != 'draft'"-->
+                            <!--                                   domain="[('partner_id', '=', partner_id),-->
+                            <!--                                             ('validity_date', '>=', context_today()),-->
+                            <!--                                             ('state', '=', 'sale'),-->
+                            <!--                                             ('invoice_status', '=', 'to invoice'),-->
+                            <!--                                             ('service_request_id', '=', False)]"/>-->
+                            <field name="service_requested" readonly="state != 'draft'"/>
+                            <field name="waste_type" readonly="state != 'draft'"
+                                   invisible="service_requested  in ('placement_of_bins',)"/>
+                            <field name="waste_details" readonly="state != 'draft'"
+                                   invisible="service_requested in ('placement_of_bins',)"/>
+                            <field name="bin_type" readonly="state != 'draft'"/>
+                            <field name="container_type" readonly="state != 'draft'" widget="radio"
+                                   options="{'horizontal': True}"/>
+
+                            <field name="pickup_point_id" readonly="state != 'draft'" invisible="0"/>
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'placement_of_bins'"/>
+
+
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested not in ( 'removal_of_bins')"
+                                   required="1"/>
+
+
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested not in ( 'waste_collection_&amp;_disposal') or container_type != 'bin'"/>
+
+
+                            <!--                            <field name="pickup_id" invisible="1"/>-->
+                            <!--  Swap  -->
+                            <field name="lifted_bin_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'swapping_of_bins'"
+                            />
+                            <field name="dropped_bin_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'swapping_of_bins'"
+                                   domain="[('status', '=', 'intact')]"/>
+                            <field name="pickup_point_id" invisible="service_requested != 'swapping_of_bins'"
+                                   readonly="state != 'draft'"/>
+                            <!--                      Shunt  -->
+
+                            <field name="shunt_container_ids" string="Bin Lifted" widget="many2many_tags"
+                                   readonly="state != 'draft'"
+                                   invisible="service_requested != 'shunting_of_bins'"/>
+                            <!--                        <field name="shunt_from_id"/>-->
+                            <field name="shunt_to_id" string="Drop off Point" readonly="state != 'draft'"
+                                   invisible="service_requested != 'shunting_of_bins'"/>
+
+                            <field name="tank_ids" widget="many2many_tags" invisible="container_type != 'tank'"
+                                   readonly="state != 'draft'"/>
+
+
+                            <field name="tank_volume" readonly="1" invisible="container_type != 'tank'"/>
+
+                        </group>
+
+                        <group string="Schedule Information">
+
+                            <!-- Fix: wrap busy_x_ids with safe default -->
+                            <field name="driver_id" widget="many2one_avatar_user"
+                                   domain="[('id', 'not in', busy_driver_ids or [])]"/>
+                            <field name="vehicle_id" widget="many2one_avatar_user"
+                                   domain="[('id', 'not in', busy_track_ids or [])]"/>
+                            <field name="assistance_id" widget="many2one_avatar_user"
+                                   domain="[('id', 'not in', busy_assistance_ids or [])]"/>
+                            <field name="trailer_id" widget="many2one_avatar_user"
+                                   domain="[('id', 'not in', busy_trailler_ids or [])]"/>
+                        </group>
+
+
+
+                        <notebook>
+                            <page string="Busy drivers &amp; assistants and Tucks &amp; Traillers">
+                                <group>
+                                    <group string="Busy Trucks and Drivers">
+                                        <field name="busy_driver_ids" string="Drivers" widget="many2many_tags"/>
+                                        <field name="busy_track_ids" string="Trucks" widget="many2many_tags"/>
+                                    </group>
+
+                                    <group string="Busy Assistants and Trailers">
+                                        <field name="busy_assistance_ids" string="Assistants" widget="many2many_tags"/>
+                                        <field name="busy_trailler_ids" string="Trailers" widget="many2many_tags"/>
+                                    </group>
+                                </group>
+
+                            </page>
+                        </notebook>
+
+                    </group>
+                    <group>
+
+                    </group>
+                </sheet>
+
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_waste_schedule" model="ir.actions.act_window">
+        <field name="name">Waste Schedule</field>
+        <field name="res_model">waste.schedule</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>
+

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_waste_worksheet_tree" model="ir.ui.view">
+        <field name="name">waste.worksheet.tree</field>
+        <field name="model">waste.worksheet</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc">
+                <field name="arrival_time"/>
+                <field name="kilometers"/>
+                <field name="return_date"/>
+                <field name="unit_of_measure"/>
+                <field name="quantity_collected"/>
+                <field name="service_request_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_waste_worksheet_form" model="ir.ui.view">
+        <field name="name">waste.worksheet.form</field>
+        <field name="model">waste.worksheet</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_set_to_draft" type="object" string="Set to Draft"
+                            class="btn-secondary"/>
+                    <button name="action_set_to_done" type="object" string="Mark as done"
+                            class="btn-primary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+
+                    <group>
+
+                        <group>
+                            <field name="planned_date" string=" Planned Date" widget="badge" decoration-warning="1"/>
+                        </group>
+
+                          <group>
+                            <field name="service_request_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+
+                        <group string="Worksheet information">
+                            <field name="arrival_time"/>
+                            <field name="kilometers"/>
+                            <field name="return_date"/>
+                            <field name="unit_of_measure"/>
+                            <field name="quantity_collected"/>
+                            <field name="driver_signature" widget="signature"/>
+                        </group>
+                        <group string="Manifest Details">
+                            <field name="partner_id"
+                            />
+
+                            <field name="service_requested" readonly="1"/>
+                            <field name="waste_type" readonly="1"
+                                   invisible="service_requested  in ('placement_of_bins',)"/>
+                            <field name="waste_details" readonly="1"
+                                   invisible="service_requested in ('placement_of_bins',)"/>
+                            <field name="bin_type" readonly="1"/>
+                            <field name="container_type" readonly="1" widget="radio"
+                                   options="{'horizontal': True}"/>
+
+                            <field name="pickup_point_id" readonly="1" invisible="0"/>
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'placement_of_bins'"/>
+
+
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="1"
+                                   invisible="service_requested not in ( 'removal_of_bins')"
+                                   required="1"/>
+
+
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="1"
+                                   invisible="service_requested not in ( 'waste_collection_&amp;_disposal') or container_type != 'bin'"/>
+
+                            <field name="lifted_bin_ids" widget="many2many_tags" readonly="1"
+                                   invisible="service_requested != 'swapping_of_bins'"
+                            />
+                            <field name="dropped_bin_ids" widget="many2many_tags" readonly="1"
+                                   invisible="service_requested != 'swapping_of_bins'"
+                                   domain="[('status', '=', 'intact')]"/>
+                            <field name="pickup_point_id" invisible="service_requested != 'swapping_of_bins'"
+                                   readonly="1"/>
+
+                            <field name="shunt_container_ids" string="Bin Lifted" widget="many2many_tags"
+                                   readonly="state != 'draft'"
+                                   invisible="service_requested != 'shunting_of_bins'"/>
+                            <field name="shunt_to_id" string="Drop off Point" readonly="1"
+                                   invisible="service_requested != 'shunting_of_bins'"/>
+
+                            <field name="tank_ids" widget="many2many_tags" invisible="container_type != 'tank'"
+                                   readonly="1"/>
+
+
+                            <field name="tank_volume" readonly="1" invisible="container_type != 'tank'" />
+
+                        </group>
+
+                        <group string="Upload information">
+                            <group style="display:flex; align-items:center;">
+                                <field name="manifest_document" filename="manifest_document_filename"
+                                       style="flex:1;"/>
+                                <button name="action_open_manifest_document"
+                                        type="object"
+                                        icon="fa-file-pdf-o"
+                                        invisible="manifest_document == False"
+                                        style="margin-left: -10px;"/>
+
+                            </group>
+
+                            <group style="display:flex; align-items:center;">
+                                <field name="weighbridge_slip" filename="weighbridge_slip_filename"
+                                       style="flex:1;"/>
+                                <button name="action_open_weighbridge_slip"
+                                        type="object"
+                                        icon="fa-file-pdf-o"
+                                        invisible="weighbridge_slip == False"
+                                        style="margin-left: -10px;"/>
+
+                            </group>
+
+
+                            <group style="display:flex; align-items:center;" invisible="waste_type != 'hazardous'">
+                                <field name="safety_certificate" filename="safety_certificate_filename"
+                                       style="flex:1;"/>
+                                <button name="action_open_safety_certificate"
+                                        type="object"
+                                        icon="fa-file-pdf-o"
+                                        invisible="safety_certificate == False"
+                                        style="margin-left: -10px;"/>
+
+                            </group>
+
+
+                        </group>
+
+
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_waste_worksheet" model="ir.actions.act_window">
+        <field name="name">Waste Worksheet</field>
+        <field name="res_model">waste.worksheet</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+
+</odoo>
