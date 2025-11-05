@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- TREE -->
+    <record id="view_pastel_sync_log_tree" model="ir.ui.view">
+        <field name="name">pastel.sync.log.tree</field>
+        <field name="model">pastel.sync.log</field>
+        <field name="arch" type="xml">
+            <tree string="Pastel Sync History">
+                <field name="create_date"/>
+                <field name="kind"/>
+                <field name="imported"/>
+                <field name="updated"/>
+                <field name="deleted"/>
+                <field name="notes"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- GRAPH (bar) -->
+    <record id="view_pastel_sync_log_graph" model="ir.ui.view">
+        <field name="name">pastel.sync.log.graph</field>
+        <field name="model">pastel.sync.log</field>
+        <field name="arch" type="xml">
+            <graph string="Pastel Sync Stats" type="bar">
+                <!-- supplier will appear automatically as a value of "kind" -->
+                <field name="kind" type="row"/>
+                <field name="imported" type="measure"/>
+                <field name="updated" type="measure"/>
+                <field name="deleted" invisible="1"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- PIVOT -->
+    <record id="view_pastel_sync_log_pivot" model="ir.ui.view">
+        <field name="name">pastel.sync.log.pivot</field>
+        <field name="model">pastel.sync.log</field>
+        <field name="arch" type="xml">
+            <pivot string="Pastel Sync Pivot">
+                <field name="kind" type="row"/>
+                <field name="create_date" type="col" interval="month"/>
+                <field name="imported" type="measure"/>
+                <field name="updated" type="measure"/>
+                <field name="deleted" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- SEARCH with supplier filter -->
+    <record id="view_pastel_sync_log_search" model="ir.ui.view">
+        <field name="name">pastel.sync.log.search</field>
+        <field name="model">pastel.sync.log</field>
+        <field name="arch" type="xml">
+            <search string="Search History">
+                <field name="notes"/>
+                <filter string="Customers" name="kind_customer" domain="[('kind','=','customer')]"/>
+                <filter string="Suppliers" name="kind_supplier" domain="[('kind','=','supplier')]"/>
+                <filter string="Products"  name="kind_product"  domain="[('kind','=','product')]"/>
+                <filter string="Invoices"  name="kind_invoice"  domain="[('kind','=','invoice')]"/>
+
+                <separator/>
+
+                <filter string="Last 7 Days"  name="last_7"  domain="[('create_date','&gt;=', (context_today() - relativedelta(days=7)).strftime('%%Y-%%m-%%d'))]"/>
+                <filter string="Last 30 Days" name="last_30" domain="[('create_date','&gt;=', (context_today() - relativedelta(days=30)).strftime('%%Y-%%m-%%d'))]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Kind" name="grp_kind" context="{'group_by':'kind'}"/>
+                    <filter string="Month" name="grp_month" context="{'group_by':'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_pastel_sync_log" model="ir.actions.act_window">
+        <field name="name">History</field>
+        <field name="res_model">pastel.sync.log</field>
+        <field name="view_mode">tree,graph,pivot</field>
+        <field name="search_view_id" ref="view_pastel_sync_log_search"/>
+        <field name="target">current</field>
+        <!-- optional: default to last 30 days; remove if you don't want defaults -->
+        <field name="context">{'search_default_last_30': 1}</field>
+    </record>
+
+</odoo>
+
+
+<!--<?xml version="1.0" encoding="utf-8"?>-->
+<!--<odoo>-->
+<!--    <record id="view_pastel_sync_log_tree" model="ir.ui.view">-->
+<!--        <field name="name">pastel.sync.log.tree</field>-->
+<!--        <field name="model">pastel.sync.log</field>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <tree string="Pastel Sync History">-->
+<!--                <field name="create_date"/>-->
+<!--                <field name="kind"/>-->
+<!--                <field name="imported"/>-->
+<!--                <field name="updated"/>-->
+<!--                <field name="deleted"/>-->
+<!--                <field name="notes"/>-->
+<!--            </tree>-->
+<!--        </field>-->
+<!--    </record>-->
+
+<!--    <record id="view_pastel_sync_log_graph" model="ir.ui.view">-->
+<!--        <field name="name">pastel.sync.log.graph</field>-->
+<!--        <field name="model">pastel.sync.log</field>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <graph string="Pastel Sync Stats" type="bar">-->
+<!--                <field name="kind" type="row"/>-->
+<!--                <field name="imported" type="measure"/>-->
+<!--                <field name="updated" type="measure"/>-->
+<!--            </graph>-->
+<!--        </field>-->
+<!--    </record>-->
+
+<!--    <record id="action_pastel_sync_log" model="ir.actions.act_window">-->
+<!--        <field name="name">History</field>-->
+<!--        <field name="res_model">pastel.sync.log</field>-->
+<!--        <field name="view_mode">tree,graph</field>-->
+<!--        <field name="target">current</field>-->
+<!--    </record>-->
+<!--</odoo>-->

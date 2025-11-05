@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pastel_import_form" model="ir.ui.view">
+        <field name="name">pastel.import.form.form</field>
+        <field name="model">pastel.import.form</field>
+        <field name="arch" type="xml">
+            <form string="Pastel Import">
+                <header>
+                    <!--                    <button name="action_import_now" type="object" string="Import (Selected)" class="oe_highlight"/>-->
+                    <!--                    <button name="action_import_all" type="object" string="Import ALL" class="oe_highlight"/>-->
+                    <!--                        <button name="action_import_invoices" type="object" string="Import Invoices"/>-->
+                    <button name="action_import_customers" type="object" class="oe_highlight"
+                            string="Import Customers"/>
+                    <button name="action_import_products" type="object" class="oe_highlight" string="Import Products"/>
+                    <button name="action_import_suppliers" type="object" class="oe_highlight"
+                            string="Import Suppliers" />
+                    <button name="debug_fetch_suppliers" type="object" class="oe_highlight"
+                            string="Import Suppliers" invisible="1"/>
+
+                </header>
+                <sheet>
+                    <group string="What to import">
+                        <group>
+                            <field name="import_customers"/>
+                            <field name="import_products"/>
+                        </group>
+                        <group>
+                            <!--                            <field name="import_invoices"/>-->
+                            <field name="import_suppliers"/>
+                        </group>
+
+                    </group>
+                    <group string="latest Updates">
+                        <field name="last_result" readonly="1"/>
+                    </group>
+                    <!--                    <separator string="action buttons"/>-->
+
+                    <!--                    <header>-->
+                    <!--                        <button name="action_import_customers" type="object" string="Import Customers"/>-->
+                    <!--                        <button name="action_import_products" type="object" string="Import Products"/>-->
+                    <!--                        &lt;!&ndash;                        <button name="action_import_invoices" type="object" string="Import Invoices"/>&ndash;&gt;-->
+                    <!--                        <button name="action_import_suppliers" type="object" string="Import Suppliers"/>-->
+
+                    <!--                    </header>-->
+
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_pastel_import_form" model="ir.actions.act_window">
+        <field name="name">Import</field>
+        <field name="res_model">pastel.import.form</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'default_name': 'Import from Sage'}</field>
+    </record>
+</odoo>
+

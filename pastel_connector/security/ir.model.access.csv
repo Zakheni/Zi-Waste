@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pastel_sync_admin,pastel.sync admin,model_pastel_sync,base.group_system,1,1,1,1
+access_pastel_import_form_user,pastel.import.form user,model_pastel_import_form,base.group_user,1,1,1,1
+access_pastel_connector_setting_user,pastel.connector.setting user,model_pastel_connector_setting,base.group_user,1,1,1,1
+access_pastel_connector_setting_admin,pastel.connector.setting admin,model_pastel_connector_setting,base.group_system,1,1,1,1
+access_pastel_sync_log_user,pastel.sync.log user,model_pastel_sync_log,base.group_user,1,1,1,1
+access_pastel_sync_queue_admin,pastel.sync.queue admin,model_pastel_sync_queue,base.group_system,1,1,1,1

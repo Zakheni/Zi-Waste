@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_product_template_form_sage" model="ir.ui.view">
+        <field name="name">product.template.form.sage</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Sage">
+                    <group>
+                        <field name="x_pastel_item_code"/>
+                        <field name="x_pastel_tax_code"/>
+                        <field name="x_pastel_price_regime"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

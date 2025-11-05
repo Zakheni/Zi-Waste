@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_pastel_root"
+              name="Pastel Connector"
+              sequence="45"/>
+
+<!--    <menuitem id="menu_pastel_import"-->
+<!--              name="Import"-->
+<!--              parent="menu_pastel_root"-->
+<!--              action="action_pastel_import_wizard"-->
+<!--              sequence="10"/>-->
+    <menuitem id="menu_pastel_import"
+              name="Import"
+              parent="menu_pastel_root"
+              action="action_pastel_import_form"
+              sequence="10"/>
+
+    <menuitem id="menu_pastel_history"
+              name="History"
+              parent="menu_pastel_root"
+              action="action_pastel_sync_log"
+              sequence="20"/>
+
+    <menuitem id="menu_pastel_config"
+              name="Configuration"
+              parent="menu_pastel_root"
+              action="action_pastel_connector_setting"
+              sequence="1"/>
+
+    <menuitem id="menu_pastel_queue"
+              name="Queue"
+              parent="menu_pastel_root"
+              action="action_pastel_sync_queue"
+              groups="base.group_system"
+              sequence="40"/>
+</odoo>
