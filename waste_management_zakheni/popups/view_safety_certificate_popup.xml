@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <form string="Safety Certificate" create="false" edit="false">
                 <sheet>
-                    <field name="latest_safety_certificate" widget="pdf_viewer" filename="latest_safety_certificate_filename"/>
+                    <field name="latest_worksheet_safety_certificate" widget="pdf_viewer" filename="latest_worksheet_safety_certificate_filename"/>
                 </sheet>
             </form>
         </field>

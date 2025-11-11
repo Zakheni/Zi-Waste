@@ -2,8 +2,8 @@
 <odoo>
     <!-- Manifest Document Popup -->
     <record id="view_manifest_document_up_pop" model="ir.ui.view">
-        <field name="name">waste.upload.manifest.document.up.pop</field>
-        <field name="model">waste.upload</field>
+        <field name="name">waste.worksheet.manifest.document.up.pop</field>
+        <field name="model">waste.worksheet</field>
         <field name="arch" type="xml">
             <form string="Manifest Document" create="false" edit="false">
                 <sheet>

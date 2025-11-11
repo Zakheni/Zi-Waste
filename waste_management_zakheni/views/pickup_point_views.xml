@@ -6,11 +6,11 @@
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
                 <page string="Pickup Points">
-                    <field name="pickup_point_ids" widget="many2many_tags"  readonly="1" />
-<!--                        <tree editable="bottom">-->
-<!--                            <field name="name"/>-->
-<!--                        </tree>-->
-<!--                    </field>-->
+                    <field name="pickup_point_ids" widget="many2many_tags" readonly="1"/>
+                    <!--                        <tree editable="bottom">-->
+                    <!--                            <field name="name"/>-->
+                    <!--                        </tree>-->
+                    <!--                    </field>-->
                 </page>
             </xpath>
         </field>
@@ -27,15 +27,17 @@
                         <field name="partner_id"/>
                     </group>
                     <group string="Waste Containers">
-<!--                        <field name="container_ids" widget="many2many_tags" context="{'default_pickup_point_id': active_id}" domain="[('pickup_point_id', '=', False), ('pickup_point_id', '=', id)]" />-->
-                        <field name="container_ids" widget="many2many_tags" context="{'default_pickup_point_id': active_id}" domain="[('pickup_point_id', '=', False), ('pickup_point_id', '=', id)]" />
-<!--                            <tree editable="bottom">-->
-<!--                                <field name="name"/>-->
-<!--                            </tree>-->
-<!--                        </field>-->
+                        <!--                        <field name="container_ids" widget="many2many_tags" context="{'default_pickup_point_id': active_id}" domain="[('pickup_point_id', '=', False), ('pickup_point_id', '=', id)]" />-->
+                        <field name="container_ids" widget="many2many_tags"
+                               context="{'default_pickup_point_id': active_id}"
+                               domain="[('pickup_point_id', '=', False)]"/>
+                        <!--                            <tree editable="bottom">-->
+                        <!--                                <field name="name"/>-->
+                        <!--                            </tree>-->
+                        <!--                        </field>-->
                     </group>
                 </sheet>
-                  <div class="oe_chatter">
+                <div class="oe_chatter">
                     <field name="message_follower_ids" groups="base.group_user"/>
                     <field name="activity_ids"/>
                     <field name="message_ids"/>

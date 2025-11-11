@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_batch_payment_user,batch.payment user,model_batch_payment,base.group_user,1,1,1,1
+access_batch_payment_line_user,batch.payment.line user,model_batch_payment_line,base.group_user,1,1,1,1
+access_batch_payment_add_wizard_user,batch.payment.add.wizard user,model_batch_payment_add_wizard,base.group_user,1,1,1,1

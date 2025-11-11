@@ -20,6 +20,15 @@ class WasteContainer(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('waste.container') or 'New'
         return super().create(vals)
     pickup_point_id = fields.Many2one('pickup.point', string="Pickup Point", ondelete='cascade')
+    pickup_point_ids = fields.Many2many(
+        'pickup.point',
+        'waste_container_pickup_rel',  # relation table name
+        'container_id',  # column pointing to waste.container
+        'pickup_point_id',  # column pointing to pickup.point
+        string="Pickup Points",
+        help="All pickup points associated with this container."
+    )
+
     serial_no = fields.Char(string='Serial Number')
 
     sale_order_id = fields.Many2one('sale.order', string="Sales Order")
@@ -32,53 +41,33 @@ class WasteContainer(models.Model):
         ('un_use', 'UnUse'),
     ], default='', string='Condition')
 
-    container_type = fields.Selection([
-        ('bin', 'Bin'),
-        ('tank', 'Tank')
-    ], String="container Type", default=''
-    )
-    bin_type = fields.Selection([
-        ('6m³', '6m³'),
-        ('9m³', '9m³'),
-        ('11m³', '11m³'),
-        ('18m³', '18m³'),
-        ('28m³', '28m³'),
-    ], default='',string="Bin Type")
+    hide_tank = fields.Boolean(compute='_compute_hide_container')
+    hide_bin = fields.Boolean(compute='_compute_hide_container')
 
-    tank_volume = fields.Selection([
-        ('7000_liters', '7000 Liters'),
-        ('9000_liters', '9000 Liters'),
-        ('11000_liters', '11000 Liters'),
-        ('12000_liters', '12000 Liters'),
-        ('15000_liters', '15000 Liters'),
-    ],default='', string="Tank Volume",)
+    # hide_hazardous = fields.Boolean(compute='_compute_hide_waste_type')
 
-    # bin_type = fields.Selection([
-    #     ('6m3', '6m³'),
-    #     ('9m3', '9m³'),
-    #     ('11m3', '11m³'),
-    #     ('18m3', '18m³'),
-    #     ('28m3', '28m³'),
-    #
-    # ], default='', string='Type', )
-    # tank_volume = fields.Selection([
-    #     ('7000L', '7000 Liters'),
-    #     ('9000L', '9000 Liters'),
-    #     ('11000L', '11000 Liters'),
-    #     ('12000L', '12000 Liters'),
-    #     ('15000L', '15000 Liters'),
-    # ], default='', string='Tank Volume',
-    # )
+    @api.depends('container_type_id','container_type_id.name')
+    def _compute_hide_container(self):
+        for rec in self:
+            is_tank = (rec.container_type_id.name or '').strip().lower()
+            is_bin = (rec.container_type_id.name or '').strip().lower()
+            rec.hide_tank = (is_tank == 'tank')
+            rec.hide_bin = (is_bin == 'bin')
 
-    display_info = fields.Char(string="Bin / Volume Info", compute="_compute_display_info", store=True)
 
-    @api.depends('container_type', 'bin_type', 'tank_volume')
+    container_type_id = fields.Many2one('container.type', string="Container Type")
+    bin_type_id       = fields.Many2one('bin.type', string="Bin Type")
+    tank_volume_id    = fields.Many2one('tank.volume', string="Tank Volume")
+    display_info      = fields.Char(string="Bin / Volume Info", compute="_compute_display_info", store=True)
+
+    @api.depends('container_type_id', 'bin_type_id', 'tank_volume_id')
     def _compute_display_info(self):
         for rec in self:
-            if rec.container_type == 'bin':
-                rec.display_info = dict(type(rec).bin_type.selection).get(rec.bin_type, '')
-            elif rec.container_type == 'tank':
-                rec.display_info = dict(type(rec).tank_volume.selection).get(rec.tank_volume, '')
+            ct_name = (rec.container_type_id.display_name or '').strip().lower()
+            if ct_name == 'bin':
+                rec.display_info = rec.bin_type_id.display_name or ''
+            elif ct_name == 'tank':
+                rec.display_info = rec.tank_volume_id.display_name or ''
             else:
                 rec.display_info = ''
 
@@ -105,11 +94,11 @@ class WasteContainer(models.Model):
     liters_collected = fields.Float(string="Liters Collected")
     liters_remaining = fields.Float(string="Liters Remaining", compute="_compute_liters_remaining", store=True)
 
-    @api.depends('liters_collected', 'tank_volume')
+    @api.depends('liters_collected', 'tank_volume_id')
     def _compute_liters_remaining(self):
         for rec in self:
             try:
-                total = float(rec.tank_volume.replace('L', '')) if rec.tank_volume else 0
+                total = float(rec.tank_volume_id.replace('L', '')) if rec.tank_volume_id else 0
             except:
                 total = 0
             rec.liters_remaining = max(0.0, total - rec.liters_collected)

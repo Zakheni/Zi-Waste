@@ -2,8 +2,8 @@
 <odoo>
     <!-- Safety Certificate Popup -->
     <record id="view_safety_certificate_up_pop" model="ir.ui.view">
-        <field name="name">waste.upload.safety.certificate.up_pop</field>
-        <field name="model">waste.upload</field>
+        <field name="name">waste.worksheet.safety.certificate.up_pop</field>
+        <field name="model">waste.worksheet</field>
         <field name="arch" type="xml">
             <form string="Safety Certificate" create="false" edit="false">
                 <sheet>

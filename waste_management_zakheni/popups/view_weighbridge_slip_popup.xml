@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <form string="Weighbridge Slip" create="false" edit="false">
                 <sheet>
-                    <field name="latest_weighbridge_slip" widget="pdf_viewer" filename="latest_weighbridge_slip_filename"/>
+                    <field name="latest_worksheet_weighbridge_slip" widget="pdf_viewer" filename="latest_worksheet_weighbridge_slip_filename"/>
                 </sheet>
             </form>
         </field>

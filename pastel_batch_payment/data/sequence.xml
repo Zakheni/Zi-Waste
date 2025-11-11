@@ -1,0 +1,9 @@
+<odoo>
+  <record id="seq_batch_payment" model="ir.sequence">
+    <field name="name">Batch Payment</field>
+    <field name="code">batch.payment</field>
+    <field name="prefix">BP/%(year)s/</field>
+    <field name="padding">4</field>
+    <field name="company_id" eval="False"/>
+  </record>
+</odoo>

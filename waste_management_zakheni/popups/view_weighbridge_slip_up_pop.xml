@@ -2,8 +2,8 @@
 <odoo>
     <!-- Weighbridge Slip Popup -->
     <record id="view_weighbridge_slip_up_pop" model="ir.ui.view">
-        <field name="name">waste.upload.weighbridge.slip.up_pop</field>
-        <field name="model">waste.upload</field>
+        <field name="name">waste.worksheet.weighbridge.slip.up_pop</field>
+        <field name="model">waste.worksheet</field>
         <field name="arch" type="xml">
             <form string="Weighbridge Slip" create="false" edit="false">
                 <sheet>
