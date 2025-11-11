@@ -1,0 +1,248 @@
+<odoo>
+    <record id="view_batch_payment_tree" model="ir.ui.view">
+        <field name="name">batch.payment.tree</field>
+        <field name="model">batch.payment</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="payment_date"/>
+                <field name="partner_type"/>
+                <field name="journal_id"/>
+                <field name="currency_id"/>
+                <field name="amount_total" widget="monetary"
+                       options="{'currency_field': 'currency_id'}"
+                       sum="Total Amount"/>
+                <field name="exported_ref"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'exported'"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'validated'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_batch_payment_form" model="ir.ui.view">
+        <field name="name">batch.payment.form</field>
+        <field name="model">batch.payment</field>
+        <field name="arch" type="xml">
+            <form string="Batch Payment">
+                <header>
+                    <button name="action_validate" type="object" string="Validate" invisible="state != 'draft'"
+                            class="btn-primary"/>
+                    <button name="action_export_sage" type="object" string="Export to Sage"
+                            invisible="state != 'validated'" class="oe_highlight"/>
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+
+                    <separator string="Batch Information"/>
+                    <group>
+                        <group>
+                            <!--                            <field name="name" readonly="1"/>-->
+                            <field name="payment_date" widget="badge"
+                                   decoration-warning="1" readonly="state != 'draft'"/>
+                            <field name="partner_type" readonly="state != 'draft'"/>
+                            <field name="journal_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="company_id" readonly="1"/>
+                        </group>
+                        <group>
+
+                            <field name="payment_method_line_id" domain="[('journal_id','=',journal_id)] "
+                                   context="{'default_journal_id': journal_id}" readonly="state != 'draft'"/>
+                            <field name="partner_id" invisible="partner_type != 'customer'"
+                                   readonly="state != 'draft'"/>
+                            <field name="currency_id" readonly="state != 'draft'"/>
+                            <field name="amount_total" readonly="1"/>
+                            <field name="exported_ref" readonly="1"/>
+                        </group>
+
+                    </group>
+
+                    <notebook>
+                        <page string="Lines">
+                            <!-- Button unchanged (keeps your context for the wizard) -->
+                            <button name="%(action_batch_payment_add_wizard)d"
+                                    type="action"
+                                    string="Select Posted Payments"
+                                    class="oe_highlight"
+                                    invisible="state != 'draft'"
+                                    context="{
+          'default_batch_id': active_id,
+          'bp_company_id': company_id,
+          'bp_journal_id': journal_id,
+          'bp_pml_id': payment_method_line_id,
+          'bp_partner_id': partner_id
+        }"/>
+
+                            <!-- IMPORTANT: pass header fields into the context of the x2many itself -->
+                            <field name="line_ids"
+                                   context="{
+         'default_batch_id': active_id,
+         'bp_company_id': company_id,
+         'bp_journal_id': journal_id,
+         'bp_pml_id': payment_method_line_id,
+         'bp_partner_id': partner_id
+       }"
+                                   readonly="state != 'draft'">
+                                <tree editable="bottom" multi_edit="True">
+
+                                    <!-- Use context.get(...) instead of parent.* so the filter actually applies -->
+                                    <field name="payment_id"
+                                           options="{'no_create': True, 'no_create_edit': True, 'no_open': False}"
+                                           domain="[
+                                         ('state', '=', 'posted'),
+                                         ('company_id', '=', context.get('bp_company_id')),
+                                         ('in_exported_batch', '=', False),
+
+
+                                         '|',
+                                           ('journal_id', '=', context.get('bp_journal_id')),
+                                           ('journal_id', '!=', False),
+
+
+                                         '|',
+                                           ('payment_method_line_id', '=', context.get('bp_pml_id')),
+                                           ('payment_method_line_id', '!=', False),
+
+
+                                         '|', '&amp;',
+                                           ('partner_id', '=', context.get('bp_partner_id')),
+                                           ('partner_id', '!=', False),
+                                           ('partner_id', '=', False)
+                                       ]"/>
+
+                                    <!-- Columns -->
+                                    <field name="date"/>
+                                    <field name="journal_id"/>
+                                    <field name="company_id"/>
+                                    <field name="payment_method_line_id"/>
+                                    <field name="partner_id"/>
+                                    <field name="currency_id"/>
+
+                                    <field name="amount"
+                                           widget="monetary"
+                                           options="{'currency_field': 'currency_id'}"
+                                           sum="Total Amount"/>
+
+                                    <field name="status" widget="badge" decoration-success="status == 'posted'"/>
+                                    <field name="communication"/>
+                                </tree>
+                            </field>
+
+
+                            <!--                            <button name="%(action_batch_payment_add_wizard)d"-->
+                            <!--                                    type="action"-->
+                            <!--                                    string="Select Posted Payments"-->
+                            <!--                                    class="oe_highlight"-->
+                            <!--                                    invisible="state != 'draft'"-->
+                            <!--                                    context="{-->
+                            <!--                                              'default_batch_id': active_id,-->
+                            <!--                                              'bp_company_id': company_id,-->
+                            <!--                                              'bp_journal_id': journal_id,-->
+                            <!--                                              'bp_pml_id': payment_method_line_id,-->
+                            <!--                                              'bp_partner_id': partner_id-->
+                            <!--                                            }"/>-->
+
+                            <!--                            <field name="line_ids"-->
+                            <!--                                   context="{'default_batch_id': active_id}"-->
+                            <!--                                   readonly="state != 'draft'">-->
+                            <!--                                <tree editable="bottom" multi_edit="True">-->
+                            <!--                                    <field name="payment_id"-->
+                            <!--                                           options="{'no_create': True, 'no_open': False}"-->
+                            <!--                                           domain="[-->
+                            <!--                                                   ('state', '=', 'posted'),-->
+                            <!--                                                   ('company_id', '=', parent.company_id),-->
+                            <!--                                                   ('payment_method_line_id', '=', parent.payment_method_line_id),-->
+                            <!--                                                   ('in_exported_batch', '=', False),-->
+                            <!--                                                   '|', ('journal_id', '=', parent.journal_id),-->
+                            <!--                                                        ('journal_id', '!=', False),-->
+                            <!--                                                   '|', '&amp;',-->
+                            <!--                                                        ('partner_id', '=', parent.partner_id),-->
+                            <!--                                                        ('partner_id', '!=', False),-->
+                            <!--                                                        ('partner_id', '=', False)-->
+                            <!--                                               ]"/>-->
+
+                            <!--                                    &lt;!&ndash; columns &ndash;&gt;-->
+                            <!--                                    <field name="date"/>-->
+                            <!--                                    <field name="journal_id"/>-->
+                            <!--                                    <field name="company_id"/>-->
+                            <!--                                    <field name="payment_method_line_id"/>-->
+                            <!--                                    <field name="partner_id"/>-->
+                            <!--                                    <field name="currency_id"/>-->
+
+                            <!--                                    &lt;!&ndash; Show total in footer; ensure monetary widget & currency &ndash;&gt;-->
+                            <!--                                    <field name="amount"-->
+                            <!--                                           widget="monetary"-->
+                            <!--                                           options="{'currency_field': 'currency_id'}"-->
+                            <!--                                           sum="Total Amount"/>-->
+
+                            <!--                                    <field name="status" widget="badge" decoration-success="status == 'posted'"/>-->
+                            <!--                                    <field name="communication"/>-->
+                            <!--                                </tree>-->
+                            <!--                            </field>-->
+
+
+                            <!--                            <field name="line_ids" context="{'default_batch_id': active_id}" create="state != 'draft'"-->
+                            <!--                                   readonly="state != 'draft'" nolabel="1">-->
+                            <!--                                <tree editable="bottom" multi_edit="True">-->
+                            <!--                                    &lt;!&ndash; KEY PART: domain ensures only posted + filtered by header &ndash;&gt;-->
+                            <!--                                    <field name="payment_id"-->
+                            <!--                                           options="{'no_create': True, 'no_open': False}"-->
+                            <!--                                           domain="[-->
+                            <!--                                                   ('state', '=', 'posted'),-->
+                            <!--                                                   ('company_id', '=', parent.company_id),-->
+                            <!--                                                   ('in_exported_batch', '=', False),-->
+                            <!--                                                   '|', ('journal_id', '=', parent.journal_id),-->
+                            <!--                                                        ('journal_id', '!=', False),-->
+                            <!--                                                   '|', '&amp;',-->
+                            <!--                                                        ('partner_id', '=', parent.partner_id),-->
+                            <!--                                                        ('partner_id', '!=', False),-->
+                            <!--                                                        ('partner_id', '=', False)-->
+                            <!--                                               ]"/>-->
+
+                            <!--                                    &lt;!&ndash; display columns &ndash;&gt;-->
+                            <!--                                    &lt;!&ndash;                                    <field name="selected"/>&ndash;&gt;-->
+                            <!--                                    &lt;!&ndash;                                    <field name="number"/>&ndash;&gt;-->
+                            <!--                                    <field name="date"/>-->
+                            <!--                                    <field name="journal_id"/>-->
+                            <!--                                    <field name="company_id"/>-->
+                            <!--                                    <field name="payment_method_line_id"/>-->
+                            <!--                                    <field name="partner_id"/>-->
+                            <!--                                    <field name="amount"/>-->
+                            <!--                                    <field name="status" widget="badge"-->
+                            <!--                                           decoration-success="status == 'posted'"/>-->
+                            <!--                                    <field name="communication"/>-->
+                            <!--                                </tree>-->
+                            <!--                            </field>-->
+                        </page>
+                        <page string="Notes">
+                            <group>
+                                <field name="note" widget="html"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_batch_payment" model="ir.actions.act_window">
+        <field name="name">Batch Payments</field>
+        <field name="res_model">batch.payment</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_batch_payment_root" name="Batch Payments" parent="account.menu_finance" sequence="80"/>
+    <menuitem id="menu_batch_payment" name="Batches" parent="menu_batch_payment_root" action="action_batch_payment"/>
+</odoo>

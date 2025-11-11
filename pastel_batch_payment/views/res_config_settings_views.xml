@@ -1,0 +1,49 @@
+<odoo>
+    <record id="view_res_config_settings_pastel_batch" model="ir.ui.view">
+        <field name="name">res.config.settings.pastel.batch</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Odoo 17: o_setting_container is present on the account settings form -->
+            <xpath expr="//div[contains(@class,'o_setting_container')] | //div[contains(@class,'o_settings_container')] | //form">
+
+                <div class="app_settings_block mb-5" data-string="Pastel Bridge" string="Pastel Bridge">
+                    <h2>Pastel Bridge</h2>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="pastel_bridge_base" placeholder="http://127.0.0.1:8787"/>
+                                <field name="pastel_bridge_key" password="True"/>
+                            </group>
+                            <group>
+
+                            </group>
+                        </group>
+                    </sheet>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+
+
+        <!--<odoo>-->
+        <!--    <record id="view_res_config_settings_pastel_batch" model="ir.ui.view">-->
+        <!--        <field name="name">res.config.settings.pastel.batch</field>-->
+        <!--        <field name="model">res.config.settings</field>-->
+        <!--        <field name="inherit_id" ref="account.res_config_settings_view_form"/>-->
+        <!--        <field name="arch" type="xml">-->
+        <!--            &lt;!&ndash; Try the known containers first, then fall back to the <form> &ndash;&gt;-->
+        <!--            <xpath expr="//div[contains(@class,'o_setting_container')] | //div[contains(@class,'o_settings_container')] | //form"-->
+        <!--                   position="inside">-->
+        <!--                <div class="app_settings_block" data-string="Pastel Bridge" string="Pastel Bridge">-->
+        <!--                    <h2>Pastel Bridge</h2>-->
+        <!--                    <group>-->
+        <!--                        <field name="pastel_bridge_base" placeholder="http://127.0.0.1:8787"/>-->
+        <!--                        <field name="pastel_bridge_key" password="True"/>-->
+        <!--                    </group>-->
+        <!--                </div>-->
+        <!--            </xpath>-->
+        <!--        </field>-->
+        <!--    </record>-->
+        <!--</odoo>-->
