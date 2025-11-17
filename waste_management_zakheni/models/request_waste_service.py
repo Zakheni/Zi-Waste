@@ -1812,6 +1812,65 @@ class WasteServiceRequest(models.Model):
             "context": {"default_service_request_id": self.id},
         }
 
+    extra_product_line_ids = fields.One2many(
+        'waste.service.request.extra.line',
+        'request_id',
+        string='Extra Products',
+    )
+
+    extra_product_count = fields.Integer(
+        string='Extra Products',
+        compute='_compute_extra_product_count',
+        readonly=True,
+    )
+
+    @api.depends('extra_product_line_ids')
+    def _compute_extra_product_count(self):
+        for rec in self:
+            rec.extra_product_count = len(rec.extra_product_line_ids)
+
+    def action_open_extra_products(self):
+        """Smart button: open the extra products lines."""
+        self.ensure_one()
+        return {
+            'name': _('Extra Products'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'waste.service.request.extra.line',
+            'view_mode': 'tree,form',
+            'domain': [('request_id', '=', self.id)],
+            'context': {
+                'default_request_id': self.id,
+            },
+            'target': 'current',
+        }
+
+    def action_push_extra_products_to_so(self):
+        """Create / update sale.order.line from extra products."""
+        for req in self:
+            if not req.sale_order_id:
+                raise UserError(_('No Sales Order linked to this request.'))
+            so = req.sale_order_id
+
+            for line in req.extra_product_line_ids:
+                if line.sale_order_line_id:
+                    # update existing SO line
+                    line.sale_order_line_id.write({
+                        'product_uom_qty': line.quantity,
+                        'price_unit': line.price_unit,
+                    })
+                else:
+                    # create new SO line
+                    sol_vals = {
+                        'order_id': so.id,
+                        'product_id': line.product_id.id,
+                        'name': line.product_id.get_product_multiline_description_sale()
+                                or line.product_id.display_name,
+                        'product_uom_qty': line.quantity,
+                        'price_unit': line.price_unit,
+                    }
+                    sol = self.env['sale.order.line'].create(sol_vals)
+                    line.sale_order_line_id = sol.id
+        return True
 
 
 

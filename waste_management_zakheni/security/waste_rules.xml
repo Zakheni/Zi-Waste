@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Admin/Manager full -->
+    <record id="wmz_rule_manifest_admin" model="ir.rule">
+        <field name="name">Manifest: Admin</field>
+        <field name="model_id" ref="model_waste_service_request"/>
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin'))]"/>-->
+         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin'))]"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+    </record>
+
+
+    <record id="wmz_rule_manifest_manager" model="ir.rule">
+        <field name="name">Manifest: Manager</field>
+        <field name="model_id" ref="model_waste_service_request"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>
+        <field name="domain_force">[]</field>
+    </record>
+
+    <record id="wmz_rule_manifest_finance" model="ir.rule">
+        <field name="name">Manifest: Finance</field>
+        <field name="model_id" ref="model_waste_service_request"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_finance'))]"/>
+        <field name="domain_force">[('state','=','done')]</field>
+    </record>
+
+    <record id="wmz_rule_manifest_driver" model="ir.rule">
+        <field name="name">Manifest: Driver</field>
+        <field name="model_id" ref="model_waste_service_request"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_driver'))]"/>
+        <field name="domain_force">[]</field>
+    </record>
+
+
+    <record id="wmz_rule_worksheet_driver" model="ir.rule">
+        <field name="name">Worksheet: Driver</field>
+        <field name="model_id" ref="model_waste_worksheet"/>
+         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_driver'))]"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+    </record>
+
+
+    <!--    <record id="wmz_rule_request_admin" model="ir.rule">-->
+    <!--        <field name="name">Request: Admin/Manager all</field>-->
+    <!--        <field name="model_id" ref="model_wm_request"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin')),-->
+    <!--                                 (4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+    <!--        <field name="domain_force">[(1,'=',1)]</field>-->
+    <!--    </record>-->
+
+    <!--    <record id="wmz_rule_container_admin" model="ir.rule">-->
+    <!--        <field name="name">Container: Admin/Manager all</field>-->
+    <!--        <field name="model_id" ref="model_wm_container"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin')),-->
+    <!--                                 (4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+    <!--        <field name="domain_force">[(1,'=',1)]</field>-->
+    <!--    </record>-->
+
+    <!--    &lt;!&ndash; Clerk: company &ndash;&gt;-->
+    <!--    <record id="wmz_rule_manifest_clerk_company" model="ir.rule">-->
+    <!--        <field name="name">Manifest: Clerk company</field>-->
+    <!--        <field name="model_id" ref="model_wm_manifest"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
+    <!--        <field name="domain_force">[('company_id','in',user.company_ids.ids)]</field>-->
+    <!--    </record>-->
+
+    <!--    <record id="wmz_rule_request_clerk_company" model="ir.rule">-->
+    <!--        <field name="name">Request: Clerk company</field>-->
+    <!--        <field name="model_id" ref="model_wm_request"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
+    <!--        <field name="domain_force">[('company_id','in',user.company_ids.ids)]</field>-->
+    <!--    </record>-->
+
+    <!--    <record id="wmz_rule_container_clerk_company" model="ir.rule">-->
+    <!--        <field name="name">Container: Clerk company</field>-->
+    <!--        <field name="model_id" ref="model_wm_container"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
+    <!--        <field name="domain_force">[('company_id','in',user.company_ids.ids)]</field>-->
+    <!--    </record>-->
+
+    <!--    <record id="wmz_rule_worksheet_clerk_company" model="ir.rule">-->
+    <!--        <field name="name">Worksheet: Clerk company</field>-->
+    <!--        <field name="model_id" ref="model_wm_worksheet"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
+    <!--        <field name="domain_force">[('company_id','in',user.company_ids.ids)]</field>-->
+    <!--    </record>-->
+
+    <!--    &lt;!&ndash; Driver: only assigned &ndash;&gt;-->
+    <!--    <record id="wmz_rule_manifest_driver_assigned" model="ir.rule">-->
+    <!--        <field name="name">Manifest: Driver assigned</field>-->
+    <!--        <field name="model_id" ref="model_wm_manifest"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_driver'))]"/>-->
+    <!--        <field name="domain_force">[('driver_user_id','=',user.id)]</field>-->
+    <!--    </record>-->
+
+    <!--    <record id="wmz_rule_worksheet_driver_assigned" model="ir.rule">-->
+    <!--        <field name="name">Worksheet: Driver assigned</field>-->
+    <!--        <field name="model_id" ref="model_wm_worksheet"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_driver'))]"/>-->
+    <!--        <field name="domain_force">['|',('driver_user_id','=',user.id),('manifest_id.driver_user_id','=',user.id)]-->
+    <!--        </field>-->
+    <!--    </record>-->
+
+    <!--    &lt;!&ndash; Agent (Internal): assigned only &ndash;&gt;-->
+    <!--    <record id="wmz_rule_manifest_agent_assigned" model="ir.rule">-->
+    <!--        <field name="name">Manifest: Agent assigned</field>-->
+    <!--        <field name="model_id" ref="model_wm_manifest"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_agent'))]"/>-->
+    <!--        <field name="domain_force">[('agent_user_id','=',user.id)]</field>-->
+    <!--    </record>-->
+
+    <!--    <record id="wmz_rule_worksheet_agent_assigned" model="ir.rule">-->
+    <!--        <field name="name">Worksheet: Agent assigned</field>-->
+    <!--        <field name="model_id" ref="model_wm_worksheet"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_agent'))]"/>-->
+    <!--        <field name="domain_force">['|',('agent_user_id','=',user.id),('manifest_id.agent_user_id','=',user.id)]</field>-->
+    <!--    </record>-->
+
+    <!--    &lt;!&ndash; Customer (Internal): own requests &ndash;&gt;-->
+    <!--    <record id="wmz_rule_request_customer_own" model="ir.rule">-->
+    <!--        <field name="name">Request: Customer own</field>-->
+    <!--        <field name="model_id" ref="model_wm_request"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_customer'))]"/>-->
+    <!--        <field name="domain_force">-->
+    <!--            ['|',('partner_id','=',user.partner_id.id),('requested_by_partner_id','=',user.partner_id.id)]-->
+    <!--        </field>-->
+    <!--    </record>-->
+</odoo>
+
+
+        <!--<?xml version="1.0" encoding="utf-8"?>-->
+        <!--<odoo>-->
+        <!--    &lt;!&ndash; Admin/Manager full &ndash;&gt;-->
+        <!--    <record id="wmz_rule_manifest_admin" model="ir.rule">-->
+        <!--        <field name="name">Manifest: Admin/Manager all</field>-->
+        <!--        <field name="model_id" ref="model_wm_manifest"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin')),-->
+        <!--                                 (4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+        <!--        <field name="domain_force">[(1,'=',1)]</field>-->
+        <!--    </record>-->
+
+        <!--    <record id="wmz_rule_worksheet_admin" model="ir.rule">-->
+        <!--        <field name="name">Worksheet: Admin/Manager all</field>-->
+        <!--        <field name="model_id" ref="model_wm_worksheet"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin')),-->
+        <!--                                 (4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+        <!--        <field name="domain_force">[(1,'=',1)]</field>-->
+        <!--    </record>-->
+
+        <!--    <record id="wmz_rule_request_admin" model="ir.rule">-->
+        <!--        <field name="name">Request: Admin/Manager all</field>-->
+        <!--        <field name="model_id" ref="model_wm_request"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin')),-->
+        <!--                                 (4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+        <!--        <field name="domain_force">[(1,'=',1)]</field>-->
+        <!--    </record>-->
+
+        <!--    <record id="wmz_rule_container_admin" model="ir.rule">-->
+        <!--        <field name="name">Container: Admin/Manager all</field>-->
+        <!--        <field name="model_id" ref="model_wm_container"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin')),-->
+        <!--                                 (4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+        <!--        <field name="domain_force">[(1,'=',1)]</field>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; Clerk: company &ndash;&gt;-->
+        <!--    <record id="wmz_rule_manifest_clerk_company" model="ir.rule">-->
+        <!--        <field name="name">Manifest: Clerk company</field>-->
+        <!--        <field name="model_id" ref="model_wm_manifest"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
+        <!--        <field name="domain_force">[('company_id','in',user.company_ids.ids)]</field>-->
+        <!--    </record>-->
+
+        <!--    <record id="wmz_rule_request_clerk_company" model="ir.rule">-->
+        <!--        <field name="name">Request: Clerk company</field>-->
+        <!--        <field name="model_id" ref="model_wm_request"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
+        <!--        <field name="domain_force">[('company_id','in',user.company_ids.ids)]</field>-->
+        <!--    </record>-->
+
+        <!--    <record id="wmz_rule_container_clerk_company" model="ir.rule">-->
+        <!--        <field name="name">Container: Clerk company</field>-->
+        <!--        <field name="model_id" ref="model_wm_container"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
+        <!--        <field name="domain_force">[('company_id','in',user.company_ids.ids)]</field>-->
+        <!--    </record>-->
+
+        <!--    <record id="wmz_rule_worksheet_clerk_company" model="ir.rule">-->
+        <!--        <field name="name">Worksheet: Clerk company</field>-->
+        <!--        <field name="model_id" ref="model_wm_worksheet"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
+        <!--        <field name="domain_force">[('company_id','in',user.company_ids.ids)]</field>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; Driver: only assigned &ndash;&gt;-->
+        <!--    <record id="wmz_rule_manifest_driver_assigned" model="ir.rule">-->
+        <!--        <field name="name">Manifest: Driver assigned</field>-->
+        <!--        <field name="model_id" ref="model_wm_manifest"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_driver'))]"/>-->
+        <!--        <field name="domain_force">[('driver_user_id','=',user.id)]</field>-->
+        <!--    </record>-->
+
+        <!--    <record id="wmz_rule_worksheet_driver_assigned" model="ir.rule">-->
+        <!--        <field name="name">Worksheet: Driver assigned</field>-->
+        <!--        <field name="model_id" ref="model_wm_worksheet"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_driver'))]"/>-->
+        <!--        <field name="domain_force">['|',('driver_user_id','=',user.id),('manifest_id.driver_user_id','=',user.id)]-->
+        <!--        </field>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; Agent (Internal): assigned only &ndash;&gt;-->
+        <!--    <record id="wmz_rule_manifest_agent_assigned" model="ir.rule">-->
+        <!--        <field name="name">Manifest: Agent assigned</field>-->
+        <!--        <field name="model_id" ref="model_wm_manifest"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_agent'))]"/>-->
+        <!--        <field name="domain_force">[('agent_user_id','=',user.id)]</field>-->
+        <!--    </record>-->
+
+        <!--    <record id="wmz_rule_worksheet_agent_assigned" model="ir.rule">-->
+        <!--        <field name="name">Worksheet: Agent assigned</field>-->
+        <!--        <field name="model_id" ref="model_wm_worksheet"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_agent'))]"/>-->
+        <!--        <field name="domain_force">['|',('agent_user_id','=',user.id),('manifest_id.agent_user_id','=',user.id)]</field>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; Customer (Internal): own requests &ndash;&gt;-->
+        <!--    <record id="wmz_rule_request_customer_own" model="ir.rule">-->
+        <!--        <field name="name">Request: Customer own</field>-->
+        <!--        <field name="model_id" ref="model_wm_request"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_customer'))]"/>-->
+        <!--        <field name="domain_force">-->
+        <!--            ['|',('partner_id','=',user.partner_id.id),('requested_by_partner_id','=',user.partner_id.id)]-->
+        <!--        </field>-->
+        <!--    </record>-->
+        <!--</odoo>-->

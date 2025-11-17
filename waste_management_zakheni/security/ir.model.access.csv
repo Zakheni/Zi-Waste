@@ -103,4 +103,6 @@ access_amend_service_request_wizard_manager,amend.service.request.wizard manager
 access_amend_service_request_wizard_driver,amend.service.request.wizard driver,model_amend_service_request_wizard,waste_management_zakheni.group_wmz_driver,1,1,0,0
 access_amend_service_request_wizard_finance,amend.service.request.wizard finance,model_amend_service_request_wizard,waste_management_zakheni.group_wmz_finance,1,1,0,0
 
+access_waste_service_request_extra_line,waste.service.request.extra.line user,model_waste_service_request_extra_line,,1,1,1,1
+
 

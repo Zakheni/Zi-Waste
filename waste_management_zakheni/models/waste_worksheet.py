@@ -6,6 +6,20 @@ class WasteWorksheet(models.Model):
     _description = "Waste Worksheet"
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
+    name = fields.Char(
+        string='Request ID',
+        required=True,
+        # copy=False,
+        readonly=True,
+        default='New')
+
+    @api.model
+    def create(self, vals):
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('waste.worksheet') or 'New'
+
+        return super().create(vals)
+
     service_request_id = fields.Many2one(
         "waste.service.request",
         string="Service Request",
@@ -41,9 +55,9 @@ class WasteWorksheet(models.Model):
     def _check_dates(self):
         for rec in self:
             # 1) Arrival must not be before the planned date
-            if rec.planned_date and rec.arrival_time and rec.arrival_time < rec.planned_date:
+            if rec.planned_date and rec.arrival_time and rec.arrival_time > rec.planned_date:
                 raise ValidationError(_(
-                    "Arrival Date/Time (%s) cannot be earlier than the Planned Date (%s)."
+                    "Arrival Date/Time (%s) cannot be greater than the Planned Date (%s)."
                 ) % (rec.arrival_time, rec.planned_date))
 
             # 2) Return must not be before arrival
@@ -54,9 +68,9 @@ class WasteWorksheet(models.Model):
 
             # (Optional but usually logical)
             # Return must also not be before the planned date
-            if rec.return_date and rec.planned_date and rec.return_date < rec.planned_date:
+            if rec.return_date and rec.planned_date and rec.return_date > rec.planned_date:
                 raise ValidationError(_(
-                    "Return Date/Time (%s) cannot be earlier than the Planned Date (%s)."
+                    "Return Date/Time (%s) cannot be greater than the Planned Date (%s)."
                 ) % (rec.return_date, rec.planned_date))
 
     def action_open_manifest_document(self):

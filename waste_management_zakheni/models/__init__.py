@@ -15,5 +15,6 @@ from . import provider_wizard
 from . import request_provider_wizard
 from . import reject_service_request_wizard
 from . import amend_service_request_widzard
+from . import waste_service_request_extra_line
 
 

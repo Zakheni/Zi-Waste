@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tank_volume_tree" model="ir.ui.view">
+        <field name="name">tank.volume.tree</field>
+        <field name="model">tank.volume</field>
+        <field name="arch" type="xml">
+            <tree string="Tank Volume" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+
+    <record id="action_tank_volume" model="ir.actions.act_window">
+        <field name="name">Tank Volume</field>
+        <field name="res_model">tank.volume</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create New Tank Volume
+            </p>
+        </field>
+    </record>
+
+
+</odoo>

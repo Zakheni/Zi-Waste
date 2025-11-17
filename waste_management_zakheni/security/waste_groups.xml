@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- Category -->
+  <record id="module_category_waste_management" model="ir.module.category">
+    <field name="name">Waste Management</field>
+    <field name="description">Access groups for Waste Management (Zakheni)</field>
+    <field name="sequence">25</field>
+  </record>
+
+<!--  &lt;!&ndash; Root internal app group &ndash;&gt;-->
+<!--  <record id="group_wmz_user" model="res.groups">-->
+<!--    <field name="name">User</field>-->
+<!--    <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>-->
+<!--    &lt;!&ndash; make this an INTERNAL base by implying base.group_user &ndash;&gt;-->
+<!--&lt;!&ndash;    <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>&ndash;&gt;-->
+<!--  </record>-->
+
+  <!-- Admin (Super) -->
+  <record id="group_wmz_admin" model="res.groups">
+    <field name="name">Super Admin</field>
+    <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+<!--    <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user')),-->
+<!--                                     (4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+  </record>
+
+  <!-- Manager -->
+  <record id="group_wmz_manager" model="res.groups">
+    <field name="name">Manager</field>
+    <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+<!--    <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user')),-->
+<!--                                     (4, ref('sales_team.group_sale_manager')),-->
+<!--                                     (4, ref('account.group_account_user')),-->
+<!--                                     (4, ref('product.group_product_manager'))]"/>-->
+  </record>
+
+  <!-- Admin Clerk -->
+  <record id="group_wmz_admin_clerk" model="res.groups">
+    <field name="name">Admin Clerk</field>
+    <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+<!--    <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user')),-->
+<!--                                     (4, ref('sales_team.group_sale_user')),-->
+<!--                                     (4, ref('product.group_product_user'))]"/>-->
+  </record>
+
+  <!-- Driver -->
+  <record id="group_wmz_driver" model="res.groups">
+    <field name="name">Driver</field>
+    <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+<!--    <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user'))]"/>-->
+  </record>
+
+  <!-- Finance -->
+  <record id="group_wmz_finance" model="res.groups">
+    <field name="name">Finance</field>
+    <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+<!--    <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user')),-->
+<!--                                     (4, ref('sales_team.group_sale_user')),-->
+<!--                                     (4, ref('account.group_account_user'))]"/>-->
+  </record>
+
+  <!-- Agent (Internal) -->
+  <record id="group_wmz_agent" model="res.groups">
+    <field name="name">Waste Management Agent</field>
+    <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+<!--    &lt;!&ndash; INTERNAL: inherits base.group_user via root &ndash;&gt;-->
+<!--    <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user'))]"/>-->
+  </record>
+
+  <!-- Customer (Internal) -->
+  <record id="group_wmz_customer" model="res.groups">
+    <field name="name">Waste Management Customer</field>
+    <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+<!--    &lt;!&ndash; INTERNAL: inherits base.group_user via root &ndash;&gt;-->
+<!--    <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user'))]"/>-->
+  </record>
+
+</odoo>

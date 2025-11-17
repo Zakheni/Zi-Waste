@@ -44,13 +44,13 @@
                             invisible="state != 'generated'"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
 
-<!--                    &lt;!&ndash; NEW: Assign &ndash;&gt;-->
-<!--                    <button string="Assign"-->
-<!--                            type="object"-->
-<!--                            name="action_set_assigned"-->
-<!--                            class="btn-info"-->
-<!--                            invisible="state != 'assigned' and state != 'scheduled' or is_service_provider == False"-->
-<!--                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>-->
+                    <!--                    &lt;!&ndash; NEW: Assign &ndash;&gt;-->
+                    <!--                    <button string="Assign"-->
+                    <!--                            type="object"-->
+                    <!--                            name="action_set_assigned"-->
+                    <!--                            class="btn-info"-->
+                    <!--                            invisible="state != 'assigned' and state != 'scheduled' or is_service_provider == False"-->
+                    <!--                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>-->
 
 
                     <button string="Generate" type="object" name="action_generated" class="btn-info"
@@ -66,8 +66,10 @@
                             invisible="state != 'cancelled' or worksheet_count == 0"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
                     <button name="action_open_related_sales" type="object"
-                            string=" Create Invoice" class="btn-primary"
-                            invisible="state != 'done'"/>
+                            string="Create Invoice" class="btn-primary"
+                            invisible="state != 'done'"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance"/>
+
 
                     <button name="action_open_simple_provider_wizard"
                             type="object"
@@ -76,6 +78,12 @@
                             invisible="is_service_provider == False or state != 'draft'"
 
                     />
+
+                    <button name="action_push_extra_products_to_so"
+                            type="object"
+                            string="Update Sales Order"
+                            class="btn-primary"
+                            invisible="sale_order_id == False"/>
 
 
                     <field name="state" widget="statusbar"
@@ -90,6 +98,15 @@
                                 invisible="state != 'scheduled' and state != 'dispatched' and state != 'cancelled'"
                         >
                             <field name="worksheet_count" widget="statinfo"/>
+                        </button>
+
+                        <button name="action_open_extra_products"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-plus">
+                            <field name="extra_product_count"
+                                   widget="statinfo"
+                                   string="Extra Products"/>
                         </button>
 
 
@@ -124,7 +141,7 @@
                         </div>
 
                         <group>
-                            <field name="is_rejected" invisible="1"  readonly="1"/>
+                            <field name="is_rejected" invisible="1" readonly="1"/>
                         </group>
 
                     </group>
@@ -136,7 +153,8 @@
                                    readonly="state != 'draft' and state != 'cancelled'"
                                    context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}"
                                    placeholder="Type to find a customer..."/>
-                            <field name="sale_order_id" required="1" readonly="state != 'draft' and state != 'cancelled'"
+                            <field name="sale_order_id" required="1"
+                                   readonly="state != 'draft' and state != 'cancelled'"
                                    domain="[('partner_id', '=', partner_id),
                                                      ('validity_date', '>=', context_today()),
                                                      ('state', '=', 'sale'),

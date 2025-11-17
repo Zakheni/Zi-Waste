@@ -16,6 +16,7 @@
         "views/pickup_point_views.xml",
         "views/waste_container.xml",
         "views/request_waste_service.xml",
+        "views/waste_service_request_extra_line.xml",
         "views/product_inherit.view.xml",
         "views/sale_order_view.xml",
         "views/hr_employee_view.xml",

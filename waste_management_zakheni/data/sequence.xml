@@ -23,5 +23,12 @@
             <field name="padding">4</field>
         </record>
 
+          <record id="seq_waste_waste_worksheet" model="ir.sequence">
+            <field name="name">Worksheet</field>
+            <field name="code">waste.worksheet</field>
+            <field name="prefix">WS-</field>
+            <field name="padding">4</field>
+        </record>
+
     </data>
 </odoo>
