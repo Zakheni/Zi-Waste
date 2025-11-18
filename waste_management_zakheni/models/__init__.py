@@ -16,5 +16,10 @@ from . import request_provider_wizard
 from . import reject_service_request_wizard
 from . import amend_service_request_widzard
 from . import waste_service_request_extra_line
+from . import product_product
+from . import waste_request_assign_bin_wizard
+from . import waste_request_bin_line
+from . import waste_worksheet_assign_bin_wizard
+
 
 

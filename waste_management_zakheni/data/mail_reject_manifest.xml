@@ -9,7 +9,7 @@
             <field name="email_from">{{user.email}}</field>
 <!--            <field name="email_to">info@zaheniict.co.za</field>-->
             <field name="email_to" eval="'info@zaheniict.co.za'"/>
-            <field name="auto_delete" eval="True"/>
+            <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">
                 <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
                     <div style="max-width: 600px; margin: 0 auto; background: #ffffff;
@@ -50,7 +50,7 @@
                             <p>Login for mor details:</p>
 
                             <p>
-                                <a href="http://localhost:8017/web/login"
+                                <a href="https://dwmis.co.za/web/login"
                                    style="padding:10px 15px;background:#004080;color:white;text-decoration:none;">
                                     Login
                                 </a>

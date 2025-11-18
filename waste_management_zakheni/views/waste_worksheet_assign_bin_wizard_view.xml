@@ -1,0 +1,66 @@
+<odoo>
+    <record id="view_ws_assign_bin_wizard_form" model="ir.ui.view">
+        <field name="name">waste.worksheet.assign.bin.wizard.form</field>
+        <field name="model">waste.worksheet.assign.bin.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Assign Bins (Worksheet)">
+                <group>
+                    <field name="worksheet_id" readonly="1"/>
+                    <field name="request_id" readonly="1"/>
+                    <field name="svc_code" readonly="1"/>
+                      <field name="customer_id" invisible="1"/>
+                    <field name="bin_type_id" invisible="1"/>
+                </group>
+
+                <!-- Show shunt_to_id only for shunting -->
+                <group invisible="svc_code != 'shunting of bins'">
+                    <field name="shunt_to_id"/>
+                </group>
+
+                <group>
+                    <field name="line_ids">
+                        <tree editable="bottom" create="1" edit="1">
+                            <field name="pickup_point_id"/>
+                              <field name="customer_id" invisible="1"/>
+                            <field name="bin_type_id" invisible="1"/>
+                            <field name="svc_code" invisible="1"/>
+
+                            <!-- Placement / Removal / Collection -->
+                            <field name="container_ids"
+                                   widget="many2many_tags"
+                                   invisible="svc_code in ['shunting of bins','swapping of bins']"/>
+
+                            <!-- Shunting -->
+                            <field name="shunt_container_ids"
+                                   widget="many2many_tags"
+                                   invisible="svc_code != 'shunting of bins'"/>
+
+                            <!-- Swapping -->
+                            <field name="lifted_container_ids"
+                                   widget="many2many_tags"
+                                   invisible="svc_code != 'swapping of bins'"/>
+                            <field name="dropped_container_ids"
+                                   widget="many2many_tags"
+                                   invisible="svc_code != 'swapping of bins'"/>
+                        </tree>
+                    </field>
+                </group>
+
+                <footer>
+                    <button name="action_confirm" type="object"
+                            string="Apply" class="btn-primary"/>
+                    <button string="Cancel" special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ws_assign_bin_wizard" model="ir.actions.act_window">
+        <field name="name">Assign Bins (Worksheet)</field>
+        <field name="res_model">waste.worksheet.assign.bin.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_ws_assign_bin_wizard_form"/>
+    </record>
+</odoo>

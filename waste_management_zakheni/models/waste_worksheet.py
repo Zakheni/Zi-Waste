@@ -12,13 +12,13 @@ class WasteWorksheet(models.Model):
         # copy=False,
         readonly=True,
         default='New')
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        default=lambda self: self.env.company,
+        index=True,
+    )
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('waste.worksheet') or 'New'
-
-        return super().create(vals)
 
     service_request_id = fields.Many2one(
         "waste.service.request",
@@ -39,6 +39,11 @@ class WasteWorksheet(models.Model):
     pickup_point_id = fields.Many2one('pickup.point', string="Drop-off/Pickup Point",
                                       related='service_request_id.pickup_point_id')
 
+    # driver_id = fields.Many2one('hr.employee')
+    # driver_email = fields.Char(string="Driver Email", related="driver_id.work_email")
+    driver_id = fields.Many2one("hr.employee", string="Driver", )
+    driver_work_email = fields.Char(string="Driver Work email", related="driver_id.work_email", store=True)
+
     manifest_document = fields.Binary("Manifests Document", attachment=True)
     manifest_document_filename = fields.Char()
 
@@ -48,6 +53,29 @@ class WasteWorksheet(models.Model):
     safety_certificate = fields.Binary("Safety Certificate", attachment=True)
     safety_certificate_filename = fields.Char()
 
+    # Prevent duplicate of service_request_id
+    _sql_constraints = [
+        (
+            'waste_worksheet_request_uniq',
+            'unique(service_request_id)',
+            'This Service Request already has a worksheet.'
+        ),
+    ]
+
+    @api.constrains('service_request_id')
+    def _check_unique_service_request(self):
+        """Extra safety at ORM level (nice error during imports)."""
+        for rec in self:
+            if not rec.service_request_id:
+                continue
+            dup = self.search([
+                ('id', '!=', rec.id),
+                ('service_request_id', '=', rec.service_request_id.id),
+            ], limit=1)
+            if dup:
+                raise ValidationError(_(
+                    "A worksheet already exists for service request %s."
+                ) % rec.service_request_id.display_name)
     # =========================
     # Date consistency checks
     # =========================
@@ -67,11 +95,11 @@ class WasteWorksheet(models.Model):
                 ) % (rec.return_date, rec.arrival_time))
 
             # (Optional but usually logical)
-            # Return must also not be before the planned date
-            if rec.return_date and rec.planned_date and rec.return_date > rec.planned_date:
-                raise ValidationError(_(
-                    "Return Date/Time (%s) cannot be greater than the Planned Date (%s)."
-                ) % (rec.return_date, rec.planned_date))
+            # # Return must also not be before the planned date
+            # if rec.return_date and rec.planned_date and rec.return_date > rec.planned_date:
+            #     raise ValidationError(_(
+            #         "Return Date/Time (%s) cannot be greater than the Planned Date (%s)."
+            #     ) % (rec.return_date, rec.planned_date))
 
     def action_open_manifest_document(self):
         self.ensure_one()
@@ -125,10 +153,9 @@ class WasteWorksheet(models.Model):
     liters_collected = fields.Float(string="Liters Collected", related='service_request_id.liters_collected', )
     liters_remaining = fields.Float(string="Liters Remaining",  related='service_request_id.liters_remaining', )
     product_id = fields.Many2one('product.product', string="Product",  related='service_request_id.product_id',)
-    product_uom_qty = fields.Float(string="Quantity",  related='service_request_id.product_uom_qty',)
+    # product_uom_qty = fields.Float(string="Quantity",  related='service_request_id.product_uom_qty',)
     price_unit = fields.Float(string="Unit Price",  related='service_request_id.price_unit',)
-
-
+    sale_order_id = fields.Many2one('sale.order', string="Sales Order")
 
     hide_waste_type = fields.Boolean(compute='_compute_field_visibility')
     hide_waste_details = fields.Boolean(compute='_compute_field_visibility')
@@ -295,6 +322,12 @@ class WasteWorksheet(models.Model):
                 rec.service_request_id.with_context(skip_auto_state=True).write({
                     'state': 'service_delivered'
                 })
+            template = self.env.ref(
+                'waste_management_zakheni.mail_tmpl_service_request_worksheet_completion',
+                raise_if_not_found=False,
+            )
+            if template:
+                template.send_mail(self.id, force_send=True)
     #
     # def action_set_to_done(self):
     #     self.state = "done"
@@ -312,6 +345,406 @@ class WasteWorksheet(models.Model):
     notes_html = fields.Html(
         string="Worksheet Notes",
         help="Add notes and embed pictures directly in the content.",
+    )
+
+    # wizard_pickup_point_ids = fields.Many2many(
+    #     'pickup.point',
+    #     'waste_request_wizard_pickup_rel',
+    #     'request_id',
+    #     'pickup_point_id',
+    #     related="service_request_id.wizard_pickup_point_ids",
+    #     string="Pickup/Dropoff Points",
+    #     help="Pickup/Dropoff points captured from Assign Bins wizard.",
+    #     store=True,
+    # )
+
+    wizard_pickup_point_ids = fields.Many2many(
+        related="service_request_id.wizard_pickup_point_ids",
+        string="Pickup/Dropoff Points",
+        readonly=True,
+        store=False,  # set True only if you need searching/grouping
+    )
+
+    pickup_point_bins_summary = fields.Text(
+        string="Pickup/Dropoff Points & Bins Summary",
+        compute="_compute_pickup_point_bins_summary",
+        store=False,
+    )
+
+    @api.depends(
+        "bin_line_ids.pickup_point_id",
+        "bin_line_ids.container_ids",
+        "bin_line_ids.shunt_container_ids",
+        "bin_line_ids.lifted_container_ids",
+        "bin_line_ids.dropped_container_ids",
+    )
+    def _compute_pickup_point_bins_summary(self):
+        for rec in self:
+            parts = []
+
+            # use saved lines (persistent)
+            for line in rec.bin_line_ids:
+                pp = line.pickup_point_id
+                if not pp:
+                    continue
+
+                # decide which bins to show per service
+                svc_code = (rec.service_requested_id.code or "").lower() \
+                    if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
+                    else (rec.service_requested_id.display_name or "").strip().lower()
+
+                if svc_code == "shunting of bins":
+                    bins = line.shunt_container_ids
+                elif svc_code == "swapping of bins":
+                    # show both in one line
+                    lifted = ", ".join(b.display_name for b in line.lifted_container_ids)
+                    dropped = ", ".join(b.display_name for b in line.dropped_container_ids)
+                    text = f"{pp.display_name} [Lifted: {lifted or '-'} | Dropped: {dropped or '-'}]"
+                    parts.append(text)
+                    continue
+                else:
+                    bins = line.container_ids
+
+                bin_names = [b.display_name for b in bins]
+                if len(bin_names) > 3:
+                    shown = ", ".join(bin_names[:3]) + ", ..."
+                else:
+                    shown = ", ".join(bin_names)
+
+                parts.append(f"{pp.display_name} [{shown}]")
+
+            rec.pickup_point_bins_summary = ", ".join(parts) if parts else ""
+
+    # ---------------------------------------------------------
+    # Smart button count = number of bins currently selected
+    # ---------------------------------------------------------
+
+    wizard_pickup_point_count = fields.Integer(
+        compute="_compute_wizard_pickup_point_count",
+        store=False,
+    )
+
+    @api.depends('wizard_pickup_point_ids')
+    def _compute_wizard_pickup_point_count(self):
+        for rec in self:
+            rec.wizard_pickup_point_count = len(rec.wizard_pickup_point_ids)
+
+    bin_line_ids = fields.One2many(
+        "waste.request.bin.line",
+        "request_id",
+        related="service_request_id.bin_line_ids",
+        string="Pickup/Bins Lines",
+    )
+
+    bin_line_count = fields.Integer(
+        compute="_compute_bin_line_count",
+        store=True,
+    )
+
+    @api.depends('bin_line_ids')
+    def _compute_bin_line_count(self):
+        for rec in self:
+            rec.bin_line_count = len(rec.bin_line_ids)
+
+    @api.depends('dropoff_container_ids', 'shunt_container_ids',
+                 'lifted_bin_ids', 'dropped_bin_ids')
+    def _compute_bin_line_count(self):
+        for rec in self:
+            svc_code = (rec.service_requested_id.code or '').lower() \
+                if rec.service_requested_id and hasattr(rec.service_requested_id, 'code') \
+                else (rec.service_requested_id.display_name or '').strip().lower()
+
+            if svc_code in ('placement of bins', 'removal of bins', 'waste collection & disposal'):
+                rec.bin_line_count = len(rec.dropoff_container_ids)
+            elif svc_code == 'shunting of bins':
+                rec.bin_line_count = len(rec.shunt_container_ids)
+            elif svc_code == 'swapping of bins':
+                rec.bin_line_count = len(rec.lifted_bin_ids) + len(rec.dropped_bin_ids)
+            else:
+                rec.bin_line_count = 0
+
+    # ---------------------------------------------------------
+    # Open wizard from smart button
+    # ---------------------------------------------------------
+    def action_open_bin_assignment_wizard(self):
+        self.ensure_one()
+        action = self.env.ref('waste_management_zakheni.action_waste_assign_bin_wizard').read()[0]
+        action['context'] = {
+            'default_request_id': self.id,
+            'active_id': self.id,
+            'active_model': self._name,
+        }
+        return action
+
+    order_line_id = fields.Many2one(
+        'sale.order.line',
+        string="Sale Order Line",
+        ondelete='set null',
+        help="The sale order line that this service request should update."
+    )
+
+    # REPLACE your old product_uom_qty field with this one
+    product_uom_qty = fields.Float(
+        string="Quantity",
+        compute="_compute_product_uom_qty",
+        store=True,
+        readonly=False,  # still editable if you want
+    )
+
+    @api.depends(
+        "service_requested_id",
+        "dropoff_container_ids",
+        "shunt_container_ids",
+        "lifted_bin_ids",
+        "dropped_bin_ids",
+    )
+    def _compute_product_uom_qty(self):
+        """
+        Quantity follows selected bins and therefore increments/decrements automatically.
+        """
+        for rec in self:
+            svc_code = (rec.service_requested_id.code or "").lower() \
+                if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
+                else (rec.service_requested_id.display_name or "").strip().lower()
+
+            qty = 0.0
+
+            if svc_code in ("placement of bins", "removal of bins", "waste collection & disposal"):
+                qty = float(len(rec.dropoff_container_ids))
+
+            elif svc_code == "shunting of bins":
+                qty = float(len(rec.shunt_container_ids))
+
+            elif svc_code == "swapping of bins":
+                if rec.lifted_bin_ids:
+                    qty = float(len(rec.lifted_bin_ids))
+                elif rec.dropped_bin_ids:
+                    qty = float(len(rec.dropped_bin_ids))
+                else:
+                    qty = 0.0
+
+            rec.product_uom_qty = qty
+
+    # ------------------------------------------------------------
+    # SALE ORDER QTY SYNC
+    # ------------------------------------------------------------
+    def _sync_sale_order_qty(self):
+        """
+        Push current request qty to the related sale order line.
+        Uses best matching line if order_line_id not set.
+        """
+        for rec in self:
+            so = rec.sale_order_id
+            if not so:
+                continue
+
+            qty = rec.product_uom_qty or 0.0
+
+            # 1) Use explicitly linked line if present
+            line = rec.order_line_id
+            if line and line.order_id != so:
+                line = False
+
+            # 2) Try to find a line linked by custom field (if you later add one)
+            if not line and 'waste_request_id' in so.order_line._fields:
+                line = so.order_line.filtered(lambda l: l.waste_request_id.id == rec.id)[:1]
+
+            # 3) Try to match by service_requested_id if line has that field
+            if not line and rec.service_requested_id and 'service_requested_id' in so.order_line._fields:
+                line = so.order_line.filtered(
+                    lambda l: l.service_requested_id.id == rec.service_requested_id.id
+                )[:1]
+
+            # 4) Fallback: first order line (keeps system working even without config)
+            if not line:
+                line = so.order_line[:1]
+
+            if line:
+                # avoid recursion if you later add reverse sync
+                line.with_context(skip_waste_sync=True).write({
+                    'product_uom_qty': qty
+                })
+                rec.order_line_id = line
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Handle sequence for name (multi-create safe)
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code(
+                    'waste.worksheet'
+                ) or 'New'
+
+        recs = super().create(vals_list)
+
+        # Sync quantities to sale order after create
+        recs._sync_sale_order_qty()
+
+        return recs
+
+    def write(self, vals):
+        res = super().write(vals)
+
+        # if bins/service/qty changed, recompute -> sync to sale order
+        if any(k in vals for k in [
+            'product_uom_qty',
+            'dropoff_container_ids',
+            'shunt_container_ids',
+            'lifted_bin_ids',
+            'dropped_bin_ids',
+            'service_requested_id',
+        ]):
+            self._sync_sale_order_qty()
+
+        return res
+
+    @api.onchange('sale_order_id')
+    def _onchange_sale_order_id(self):
+        for rec in self:
+            if not rec.sale_order_id or not rec.sale_order_id.order_line:
+                continue
+
+            line = rec.sale_order_id.order_line[0]  # or your own logic
+
+            rec.product_id = line.product_id.id
+            rec.product_uom_qty = line.product_uom_qty
+            rec.price_unit = line.price_unit
+
+            # Clear previous
+            rec.update({
+                'service_requested_id': False,
+                'waste_type_id': False,
+                'waste_details_id': False,
+                'bin_type_id': False,
+                'tank_volume_id': False,
+                'container_type_id': False,
+            })
+
+            # Map product attribute name -> (your model, your field)
+            attr_to_model_field = {
+                'service requested': ('service.request', 'service_requested_id'),
+                'waste type':        ('waste.type',        'waste_type_id'),
+                'waste details':     ('waste.details',     'waste_details_id'),
+                'bin type':          ('bin.type',          'bin_type_id'),
+                'tank volume':       ('tank.volume',       'tank_volume_id'),
+                'container type':    ('container.type',    'container_type_id'),
+            }
+
+            PAV = self.env['product.attribute.value']
+            for ptav in line.product_id.product_template_attribute_value_ids:
+                attr_name = (ptav.attribute_id.name or '').strip().lower()
+                pav = ptav.product_attribute_value_id  # a product.attribute.value record
+                if not pav:
+                    continue
+
+                model_field = attr_to_model_field.get(attr_name)
+                if not model_field:
+                    continue
+
+                model_name, field_name = model_field
+
+                # Find your config record that points to this exact PAV
+                config_rec = self.env[model_name].search([('pav_id', '=', pav.id)], limit=1)
+                if not config_rec:
+                    # Fallback by name (optional)
+                    config_rec = self.env[model_name].search([('name', '=', pav.name)], limit=1)
+
+                if config_rec and not getattr(rec, field_name):
+                    setattr(rec, field_name, config_rec.id)
+
+            # ---------- Helpers ----------
+    def action_open_ws_bin_assignment_wizard(self):
+        self.ensure_one()
+        action = self.env.ref("waste_management_zakheni.action_ws_assign_bin_wizard").read()[0]
+        action["context"] = {
+            "active_id": self.id,
+            "active_model": self._name,
+        }
+        return action
+
+    def action_open_waste_request(self):
+        self.ensure_one()
+        if not self.service_request_id:
+            return False
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Waste Request"),
+            "res_model": "waste.service.request",
+            "view_mode": "form",
+            "res_id": self.service_request_id.id,
+            "target": "current",
+        }
+
+    request_sale_order_id = fields.Many2one('sale.order', related="service_request_id.sale_order_id", String="Sale Order")
+
+    def action_open_sale_order(self):
+        self.ensure_one()
+        if not self.request_sale_order_id:
+            return False
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Sales  Order"),
+            "res_model": "sale.order",
+            "view_mode": "form",
+            "res_id": self.request_sale_order_id.id,
+            "target": "current",
+        }
+
+class WasteWorksheetBinLine(models.Model):
+    _name = "waste.worksheet.bin.line"
+    _description = "Waste Worksheet Bin Line"
+
+    worksheet_id = fields.Many2one(
+        "waste.worksheet",
+        required=True,
+        ondelete="cascade",
+    )
+
+    waste_request_bin_id = fields.Many2one(
+        "waste.request.bin.line",
+        string="Service Request",
+        required=True,
+        ondelete="cascade",
+        index=True,
+    )
+
+    pickup_point_id = fields.Many2one(
+        "pickup.point",
+        string="Pickup / Dropoff Point",
+        related="waste_request_bin_id.pickup_point_id",
+
+    )
+
+    # Placement / Removal / Collection
+    container_ids = fields.Many2many(
+        related="waste_request_bin_id.container_ids",
+        string="Containers",
+        readonly=True,
+        store=False,
+    )
+
+    # Shunting
+    shunt_container_ids = fields.Many2many(
+        related="waste_request_bin_id.shunt_container_ids",
+        string="Bins to Shunt",
+        readonly=True,
+        store=False,
+    )
+
+    # Swapping
+    lifted_container_ids = fields.Many2many(
+        related="waste_request_bin_id.lifted_container_ids",
+        string="Lifted Bins",
+        readonly=True,
+        store=False,
+    )
+    dropped_container_ids = fields.Many2many(
+        related="waste_request_bin_id.dropped_container_ids",
+        string="Dropped Bins",
+        readonly=True,
+        store=False,
     )
 
 

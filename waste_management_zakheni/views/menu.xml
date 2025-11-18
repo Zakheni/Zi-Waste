@@ -68,24 +68,31 @@
     <menuitem id="menu_wms_providers"
               name="Service Provider"
               parent="menu_waste_configuration"
-              sequence="14"/>
+              sequence="14"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>
+
 
     <menuitem id="menu_wms_tool_pro"
               name="Service Providers"
               parent="menu_wms_providers"
               action="action_wms_service_provider"
-              sequence="15"/>
+              sequence="15"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>
+
 
     <menuitem id="menu_wms_tools"
               name="Tools"
               parent="menu_waste_configuration"
-              sequence="16"/>
+              sequence="16"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>
+
 
     <menuitem id="menu_wms_find_provider"
               name="Find Provider"
               parent="menu_wms_tools"
               action="action_open_provider_wizard"
-              sequence="17"/>
+              sequence="17"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>
 
 
     <!-- section loop-up-->

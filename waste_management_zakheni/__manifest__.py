@@ -2,7 +2,7 @@
     "name": "Waste Management",
     "version": "1.0",
     "author": "Lesiba",
-    "depends": ['base', 'mail', 'sale', 'product', 'account', 'fleet', 'hr'],
+    "depends": ['base', 'mail', 'sale', 'product', 'account', 'fleet', 'hr','stock'],
     "data": [
 
         "security/waste_groups.xml",
@@ -12,11 +12,15 @@
         "data/mail_reject_manifest.xml",
         "data/mail_amend_manifest.xml",
         "data/mai_assign_to_driver.xml",
+        "data/mail_worksheet_completion.xml",
+        "data/mail_invide_service_provider.xml",
         # "data/waste_config.xml",
+        "views/hide_sale_menu.xml",
         "views/pickup_point_views.xml",
         "views/waste_container.xml",
         "views/request_waste_service.xml",
         "views/waste_service_request_extra_line.xml",
+        "views/waste_product_views.xml",
         "views/product_inherit.view.xml",
         "views/sale_order_view.xml",
         "views/hr_employee_view.xml",
@@ -33,6 +37,8 @@
         "views/request_provider_wizard_views.xml",
         "views/reject_service_request_wizard_view.xml",
         "views/amend_service_request_widzard.xml",
+        "views/waste_assign_bin_wizard_view.xml",
+        "views/waste_worksheet_assign_bin_wizard_view.xml",
         "views/container_type_view.xml",
         "popups/view_manifest_document_popup.xml",
         "popups/view_manifest_document_up_pop.xml",
@@ -42,6 +48,13 @@
         "popups/view_weighbridge_slip_up_pop.xml",
         "views/menu.xml",
     ],
+
+    'assets': {
+        'web.assets_backend': [
+            'waste_management_zakheni/static/src/scss/waste_kanban.scss',
+        ],
+    },
+
     "installable": True,
     "application": True,
     "post_init_hook": "post_init_seed_waste_config",

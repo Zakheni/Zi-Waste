@@ -1,5 +1,4 @@
 import re
-import re as regex
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessDenied, ValidationError
@@ -16,6 +15,7 @@ class WasteServiceRequest(models.Model):
         # copy=False,
         readonly=True,
         default='New')
+    pickup_point_id = fields.Many2one('pickup.point', string="Pickup Point", ondelete='cascade')
 
     company_id = fields.Many2one(
         'res.company',
@@ -30,23 +30,12 @@ class WasteServiceRequest(models.Model):
     )
 
     partner_id = fields.Many2one('res.partner', string="Customer",)
-    pickup_point_id = fields.Many2one(
-        'pickup.point', string="Drop-off/Pickup Point",
-        related='sale_order_id.pickup_point_id' ,
-        default=lambda self: self.env['pickup.point'].search([], limit=1) )
-
-    # pickup_point_ids = fields.Many2many(
-    #     'pickup.point',
-    #     'waste_service_request_pickup_rel',  # relation table
-    #     'request_id',  # FK to waste.service.request
-    #     'pickup_point_id',  # FK to pickup.point
-    #     string="Drop-off/Pickup Points",
-    # )
 
     pickup_point_ids = fields.One2many(
-        related='sale_order_id.pickup_point_ids',
+        'pickup.point',
+        'service_request_id',
         string="Drop-off/Pickup Points",
-        readonly=True,
+        store=True,
     )
 
     container_id = fields.Many2one('waste.container', string='Container')
@@ -82,46 +71,6 @@ class WasteServiceRequest(models.Model):
     reject_reason = fields.Text(string="Enter Reject Reason", tracking=True,  store=True)
     amend_comment = fields.Text(string="Enter Amend Comment", tracking=True, store=True)
     driver_work_email = fields.Char(string="Driver Work email", related="driver_id.work_email", store=True)
-
-    # busy_driver_ids = fields.Many2many(
-    #     'hr.employee',
-    #     'waste_service_request_busy_driver_rel',  # unique relation table
-    #     'request_id',  # FK to waste.service.request
-    #     'employee_id',  # FK to hr.employee
-    #     compute="_compute_busy_drivers",
-    #     store=True,
-    #     string="Busy Drivers"
-    # )
-    #
-    # busy_assistance_ids = fields.Many2many(
-    #     'hr.employee',
-    #     'waste_service_request_busy_assist_rel',  # different relation table
-    #     'request_id',
-    #     'employee_id',
-    #     compute="_compute_busy_assistants",
-    #     store=True,
-    #     string="Busy Assistants"
-    # )
-    #
-    # busy_track_ids = fields.Many2many(
-    #     'fleet.vehicle',
-    #     'waste_service_request_busy_truck_rel',
-    #     'request_id',
-    #     'vehicle_id',
-    #     compute="_compute_busy_trucks",
-    #     store=True,
-    #     string="Busy Trucks"
-    # )
-    #
-    # busy_trailler_ids = fields.Many2many(
-    #     'fleet.vehicle',
-    #     'waste_service_request_busy_trailer_rel',
-    #     'request_id',
-    #     'vehicle_id',
-    #     compute="_compute_busy_traillers",
-    #     store=True,
-    #     string="Busy Trailers"
-    # )
 
     busy_driver_ids = fields.Many2many(
         'hr.employee',
@@ -170,28 +119,43 @@ class WasteServiceRequest(models.Model):
     provider_id = fields.Many2one('wms.service.provider', string="Service Provider")
 
     provider_name = fields.Char(
-        string="Provider Name",
+        string="Name",
         related='provider_id.name',
         store=True,
         readonly=True,
     )
     provider_province = fields.Selection(
         SA_PROVINCES,
-        string="Provider Province",
+        string="Province",
         related='provider_id.province',
         store=True,
         readonly=True,
     )
     provider_city = fields.Char(
-        string="Provider City",
+        string="City",
         related='provider_id.city',
         store=True,
         readonly=True,
     )
     provider_suburb = fields.Char(
-        string="Provider Suburb",
+        string="Suburb",
         related='provider_id.suburb',
         store=True,
+        readonly=True,
+    )
+    provider_phone = fields.Char(
+        string="Phone",
+        related='provider_id.phone',
+        readonly=True,
+    )
+    provider_mobile = fields.Char(
+        string="Mobile",
+        related='provider_id.mobile',
+        readonly=True,
+    )
+    provider_email = fields.Char(
+        string="Email",
+        related='provider_id.email',
         readonly=True,
     )
 
@@ -268,369 +232,24 @@ class WasteServiceRequest(models.Model):
         ('none', 'None'),
     ], default='draft', tracking=True)
 
-    def action_set_scheduled(self):
-        """
-        Manually move to 'scheduled'.
-        Only change state, do NOT touch any other fields.
+    @api.constrains("state", "planned_date", "driver_id", "vehicle_id", "wizard_pickup_point_ids")
+    def _check_required_fields_in_states(self):
+        for rec in self:
+            # Required when scheduled
+            if rec.state == "scheduled":
+                if not rec.planned_date:
+                    raise ValidationError(_("Please Enter Planned Date."))
+                # if not rec.driver_id:
+                #     raise ValidationError(_("Please Enter Driver."))
+                # if not rec.vehicle_id:
+                #     raise ValidationError(_("Please Enter Vehicle."))
 
-        """
-        self.state = 'scheduled'
-
-        template = self.env.ref(
-            'waste_management_zakheni.mail_tmpl_service_request_driver_invitation',
-            raise_if_not_found=False,
-        )
-        if template:
-            template.send_mail(self.id, force_send=True)
-        # for rec in self:
-        #     # Basic sanity checks – you can relax these if you want
-        #     if not rec.partner_id:
-        #         raise ValidationError(_("Please select a Customer before scheduling."))
-        #     if not rec.planned_date:
-        #         raise ValidationError(_("Please set a Planned Date before scheduling."))
-
-            # if rec.state == 'draft':
-            #     rec.state = 'scheduled'
-
-    # def action_set_assigned(self):
-    #     """
-    #     Manually move to 'assigned'.
-    #     Only change state, do NOT touch any other fields.
-    #     """
-    #     self.state = 'assigned'
-        # for rec in self:
-        #     if not rec.partner_id:
-        #         raise ValidationError(_("Please select a Customer before assigning a driver."))
-        #     if not rec.planned_date:
-        #         raise ValidationError(_("Please set a Planned Date before assigning a driver."))
-        #     if not rec.driver_id:
-        #         raise ValidationError(_("Please select a Driver before assigning."))
-        #
-        #     if rec.state in ('draft', 'scheduled'):
-        #         rec.state = 'assigned'
-
-
-    # @api.onchange('planned_date')
-    # def _onchange_planned_date(self):
-    #     for rec in self:
-    #         if rec.planned_date and rec.state == 'draft':
-    #             rec.state = 'scheduled'
-    #
-    # @api.onchange('driver_id')
-    # def _onchange_driver_id(self):
-    #     for rec in self:
-    #         if rec.driver_id and rec.state in ('draft', 'scheduled'):
-    #             rec.state = 'assigned'
-    #
-    # @api.model
-    # def create(self, vals):
-    #     # 1) Sequence
-    #     if vals.get('name', 'New') == 'New':
-    #         vals['name'] = self.env['ir.sequence'].next_by_code('waste.service.request') or 'New'
-    #
-    #     # 2) Initial state default – ONLY if caller didn't explicitly pass 'state'
-    #     if not vals.get('state'):
-    #         if vals.get('driver_id'):
-    #             vals['state'] = 'assigned'
-    #         elif vals.get('planned_date'):
-    #             vals['state'] = 'scheduled'
-    #         else:
-    #             vals['state'] = 'draft'
-    #
-    #     record = super(WasteServiceRequest, self).create(vals)
-    #
-    #     # 3) Reverse links (no second write)
-    #     if record.driver_id and hasattr(record.driver_id, 'service_request_id'):
-    #         record.driver_id.service_request_id = record.id
-    #     if record.sale_order_id and hasattr(record.sale_order_id, 'service_request_id'):
-    #         record.sale_order_id.service_request_id = record.id
-    #
-    #     return record
-    #
-    # def write(self, vals):
-    #     """
-    #     Auto-move state when planned_date or driver_id change,
-    #     but only in the SAME write that saves the record.
-    #     No second write, no recursion, no state magic in onchange.
-    #     """
-    #     for rec in self:
-    #         local_vals = vals.copy()
-    #
-    #         # If caller didn't explicitly change state, we may adjust it
-    #         if 'state' not in local_vals:
-    #             # If driver is being set/changed → go to 'assigned'
-    #             if 'driver_id' in local_vals and local_vals.get('driver_id'):
-    #                 if rec.state in ('draft', 'scheduled'):
-    #                     local_vals['state'] = 'assigned'
-    #             # Else, if planned_date is set and still draft → 'scheduled'
-    #             elif 'planned_date' in local_vals and local_vals.get('planned_date'):
-    #                 if rec.state == 'draft':
-    #                     local_vals['state'] = 'scheduled'
-    #
-    #         # Do the actual write for THIS record only
-    #         super(WasteServiceRequest, rec).write(local_vals)
-    #
-    #         # Maintain reverse links
-    #         if rec.driver_id and hasattr(rec.driver_id, 'service_request_id'):
-    #             rec.driver_id.service_request_id = rec.id
-    #         if rec.sale_order_id and hasattr(rec.sale_order_id, 'service_request_id'):
-    #             rec.sale_order_id.service_request_id = rec.id
-    #
-    #     return True
-
-
-    # ---------- Onchange helpers (UI feedback before save) ----------
-    #
-    # @api.onchange('planned_date', 'partner_id')
-    # def _onchange_planned_date(self):
-    #     """
-    #     Auto-move to 'scheduled' when a planned date is set,
-    #     but only if:
-    #       - there's a customer selected, and
-    #       - we are still in 'draft'.
-    #     This avoids jumping state too early on half-filled forms.
-    #     """
-    #     for rec in self:
-    #         if (
-    #             rec.planned_date
-    #             and rec.partner_id            # don't auto-move if customer missing
-    #             and rec.state == 'draft'
-    #         ):
-    #             rec.state = 'scheduled'
-    #
-    # @api.onchange('driver_id')
-    # def _onchange_driver_id(self):
-    #     """
-    #     Auto-move to 'assigned' when driver is chosen,
-    #     but only if:
-    #       - we have a customer,
-    #       - and we are in 'draft' or 'scheduled'.
-    #     """
-    #     for rec in self:
-    #         if (
-    #             rec.driver_id
-    #             and rec.partner_id            # don't assign if customer missing
-    #             and rec.state in ('draft', 'scheduled')
-    #         ):
-    #             rec.state = 'assigned'
-    #
-    # # ---------- Create / Write overrides (no extra writes, no resets) ----------
-    #
-    # @api.model
-    # def create(self, vals):
-    #     # 1) Sequence for name
-    #     if vals.get('name', 'New') == 'New':
-    #         vals['name'] = self.env['ir.sequence'].next_by_code('waste.service.request') or 'New'
-    #
-    #     # 2) Default initial state based on provided values (only on create)
-    #     #    We respect an explicit 'state' in vals if caller set it.
-    #     if vals.get('driver_id') and not vals.get('state'):
-    #         vals['state'] = 'assigned'
-    #     elif vals.get('planned_date') and not vals.get('state'):
-    #         vals['state'] = 'scheduled'
-    #
-    #     record = super(WasteServiceRequest, self).create(vals)
-    #
-    #     # 3) Maintain reverse links only (no side-effect writes)
-    #     if record.driver_id and hasattr(record.driver_id, 'service_request_id'):
-    #         record.driver_id.service_request_id = record.id
-    #
-    #     if record.sale_order_id and hasattr(record.sale_order_id, 'service_request_id'):
-    #         record.sale_order_id.service_request_id = record.id
-    #
-    #     return record
-    #
-    # def write(self, vals):
-    #     """
-    #     Do NOT auto-change state here any more.
-    #     - State changes come from:
-    #        * onchanges (UI feedback)
-    #        * header action buttons (Generate, Authorise, etc.)
-    #     - This write only persists what the user decided
-    #       and maintains the reverse links.
-    #     """
-    #     res = super(WasteServiceRequest, self).write(vals)
-    #
-    #     for rec in self:
-    #         if rec.driver_id and hasattr(rec.driver_id, 'service_request_id'):
-    #             rec.driver_id.service_request_id = rec.id
-    #         if rec.sale_order_id and hasattr(rec.sale_order_id, 'service_request_id'):
-    #             rec.sale_order_id.service_request_id = rec.id
-    #
-    #     return res
-    #
-
-    # # ---------- Onchange helpers (UI feedback before save) ----------
-    #
-    # @api.onchange('planned_date')
-    # def _onchange_planned_date(self):
-    #     for rec in self:
-    #         # Only auto-schedule if still in draft
-    #         if rec.planned_date and rec.state == 'draft':
-    #             rec.state = 'scheduled'
-    #
-    # @api.onchange('driver_id')
-    # def _onchange_driver_id(self):
-    #     for rec in self:
-    #         # Once driver is chosen, move to Assigned (unless already further)
-    #         if rec.driver_id and rec.state in ('draft', 'scheduled'):
-    #             rec.state = 'assigned'
-    #
-    # # ---------- Create / Write overrides for server-side enforcement ----------
-    #
-    # @api.model
-    # def create(self, vals):
-    #     # Handle sequence for name
-    #     if vals.get('name', 'New') == 'New':
-    #         vals['name'] = self.env['ir.sequence'].next_by_code('waste.service.request') or 'New'
-    #
-    #     # Initial state based on given values (only once at creation)
-    #     if vals.get('driver_id'):
-    #         # If a driver is already set at creation, default state to 'assigned' unless overridden explicitly
-    #         vals.setdefault('state', 'assigned')
-    #     elif vals.get('planned_date'):
-    #         # If only planned_date is set, default state to 'scheduled'
-    #         vals.setdefault('state', 'scheduled')
-    #
-    #     record = super(WasteServiceRequest, self).create(vals)
-    #
-    #     # Maintain reverse links, without touching any other fields
-    #     if getattr(record.driver_id, 'service_request_id', False) is not False:
-    #         record.driver_id.service_request_id = record.id
-    #
-    #     if getattr(record.sale_order_id, 'service_request_id', False) is not False:
-    #         record.sale_order_id.service_request_id = record.id
-    #
-    #     return record
-    #
-    # def write(self, vals):
-    #     # NOTE: do NOT auto-change state here anymore.
-    #     # Leave state changes to:
-    #     #  - header buttons
-    #     #  - the onchange on driver_id / planned_date
-    #     res = super(WasteServiceRequest, self).write(vals)
-    #
-    #     for rec in self:
-    #         # Maintain reverse links only – no side effects on other fields
-    #         if rec.driver_id and hasattr(rec.driver_id, 'service_request_id'):
-    #             rec.driver_id.service_request_id = rec.id
-    #         if rec.sale_order_id and hasattr(rec.sale_order_id, 'service_request_id'):
-    #             rec.sale_order_id.service_request_id = rec.id
-    #
-    #     return res
-
-
-    # @api.model
-    # def create(self, vals):
-    #     # 1) Handle sequence for name
-    #     if vals.get('name', 'New') == 'New':
-    #         vals['name'] = self.env['ir.sequence'].next_by_code('waste.service.request') or 'New'
-    #
-    #     # 2) Auto state based on initial data
-    #     if vals.get('driver_id') and vals.get('state', 'draft') in ('draft', 'scheduled'):
-    #         vals['state'] = 'assigned'
-    #     elif vals.get('planned_date') and vals.get('state', 'draft') == 'draft':
-    #         vals['state'] = 'scheduled'
-    #
-    #     record = super(WasteServiceRequest, self).create(vals)
-    #
-    #     # 3) Link driver to this service request (reverse pointer)
-    #     if record.driver_id and hasattr(record.driver_id, 'service_request_id'):
-    #         record.driver_id.service_request_id = record.id
-    #
-    #     # 4) Link sale order to this service request (reverse pointer)
-    #     if record.sale_order_id and hasattr(record.sale_order_id, 'service_request_id'):
-    #         record.sale_order_id.service_request_id = record.id
-    #
-    #     return record
-    #
-    # def write(self, vals):
-    #     res = super(WasteServiceRequest, self).write(vals)
-    #
-    #     # Avoid infinite loop when we re-write to change state
-    #     if self.env.context.get('skip_auto_state'):
-    #         return res
-    #
-    #     for rec in self:
-    #         # 1) If driver is set (or changed) → Assigned to Driver
-    #         if ('driver_id' in vals and vals.get('driver_id')) and rec.state in ('draft', 'scheduled'):
-    #             rec.with_context(skip_auto_state=True).write({'state': 'assigned'})
-    #
-    #         # 2) Else, if planned_date was set and still draft → Scheduled
-    #         elif 'planned_date' in vals and vals.get('planned_date') and rec.state == 'draft':
-    #             rec.with_context(skip_auto_state=True).write({'state': 'scheduled'})
-    #
-    #         # 3) Maintain reverse links on update
-    #         if rec.driver_id and hasattr(rec.driver_id, 'service_request_id'):
-    #             rec.driver_id.service_request_id = rec.id
-    #         if rec.sale_order_id and hasattr(rec.sale_order_id, 'service_request_id'):
-    #             rec.sale_order_id.service_request_id = rec.id
-    #
-    #     return res
-
+            # Required when generated
+            if rec.state == "generated":
+                if not rec.wizard_pickup_point_ids:
+                    raise ValidationError(_("Please select Pickup/Drop Off Point(s)."))
 
     @api.model
-    # def create(self, vals):
-    #     # If driver is already set on creation → Assigned to Driver
-    #     if vals.get('driver_id') and vals.get('state', 'draft') in ('draft', 'scheduled'):
-    #         vals['state'] = 'assigned'
-    #     # Else if only planned_date → Scheduled
-    #     elif vals.get('planned_date') and vals.get('state', 'draft') == 'draft':
-    #         vals['state'] = 'scheduled'
-    #
-    #     return super(WasteServiceRequest, self).create(vals)
-    #
-    # def write(self, vals):
-    #     res = super(WasteServiceRequest, self).write(vals)
-    #
-    #     # Avoid infinite loop when we re-write to change state
-    #     if self.env.context.get('skip_auto_state'):
-    #         return res
-    #
-    #     for rec in self:
-    #         # 1) If driver is set (or changed) → Assigned to Driver
-    #         if ('driver_id' in vals and vals.get('driver_id')) and rec.state in ('draft', 'scheduled'):
-    #             rec.with_context(skip_auto_state=True).write({'state': 'assigned'})
-    #
-    #         # 2) Else, if planned_date was set and still draft → Scheduled
-    #         elif 'planned_date' in vals and vals.get('planned_date') and rec.state == 'draft':
-    #             rec.with_context(skip_auto_state=True).write({'state': 'scheduled'})
-    #
-    #     return res
-
-    # @api.onchange('planned_date')
-    # def _onchange_planned_date(self):
-    #     for rec in self:
-    #         if rec.planned_date and rec.state == 'draft':
-    #             rec.state = 'scheduled'
-    #
-    # @api.model
-    # def create(self, vals):
-    #     # If planned_date is set on creation, force state to scheduled
-    #     if vals.get('planned_date') and vals.get('state', 'draft') == 'draft':
-    #         vals['state'] = 'scheduled'
-    #     return super(WasteServiceRequest, self).create(vals)
-    #
-    # def write(self, vals):
-    #     """
-    #     After saving, if planned_date is set and record is in 'draft',
-    #     move it to 'scheduled'.
-    #     """
-    #     res = super(WasteServiceRequest, self).write(vals)
-    #
-    #     # Avoid infinite loop when we update state again
-    #     if self.env.context.get('skip_auto_schedule'):
-    #         return res
-    #
-    #     # If planned_date was changed or set
-    #     if 'planned_date' in vals:
-    #         for rec in self:
-    #             if rec.planned_date and rec.state == 'draft':
-    #                 # Second write just to change state
-    #                 rec.with_context(skip_auto_schedule=True).write({'state': 'scheduled'})
-    #
-    #     return res
-
     def action_signature(self):
         self.ensure_one()
 
@@ -685,33 +304,37 @@ class WasteServiceRequest(models.Model):
         string="Bins to Shunt"
     )
 
-    @api.constrains('shunt_container_ids', 'dropoff_container_ids','lifted_bin_ids', 'product_uom_qty')
-    def _check_bin_count(self):
-        for rec in self:
-            # Check shunting containers
-            if rec.shunt_container_ids:
-                shunt_count = len(rec.shunt_container_ids)
-                if shunt_count != rec.product_uom_qty:
-                    raise ValidationError(
-                        f"Number of bins in Shunt Containers ({shunt_count}) "
-                        f"must match Bin no. ({rec.product_uom_qty})."
-                    )
+#======================================================
+#BIB COUNT VERIFICATION
+#=====================================================
+# @api.constrains('shunt_container_ids', 'dropoff_container_ids','lifted_bin_ids', 'product_uom_qty')
+# def _check_bin_count(self):
+#     for rec in self:
+#         # Check shunting containers
+#         if rec.shunt_container_ids:
+#             shunt_count = len(rec.shunt_container_ids)
+#             if shunt_count != rec.product_uom_qty:
+#                 raise ValidationError(
+#                     f"Number of bins in Shunt Containers ({shunt_count}) "
+#                     f"must match Bin no. ({rec.product_uom_qty})."
+#                 )
+#
+#         # Check drop-off containers
+#         if rec.dropoff_container_ids:
+#             dropoff_count = len(rec.dropoff_container_ids)
+#             if dropoff_count != rec.product_uom_qty:
+#                 raise ValidationError(
+#                     f"Number of bins = ({dropoff_count}) "
+#                     f"must match  Bin no. ({rec.product_uom_qty})."
+#                 )
+#         if rec.lifted_bin_ids:
+#             lifted_count = len(rec.lifted_bin_ids)
+#             if lifted_count != rec.product_uom_qty:
+#                 raise ValidationError(
+#                     f"Number of bins in Swap Containers ({lifted_count}) "
+#                     f"must match  Bin no. ({rec.product_uom_qty})."
+#                 )
 
-            # Check drop-off containers
-            if rec.dropoff_container_ids:
-                dropoff_count = len(rec.dropoff_container_ids)
-                if dropoff_count != rec.product_uom_qty:
-                    raise ValidationError(
-                        f"Number of bins = ({dropoff_count}) "
-                        f"must match  Bin no. ({rec.product_uom_qty})."
-                    )
-            if rec.lifted_bin_ids:
-                lifted_count = len(rec.lifted_bin_ids)
-                if lifted_count != rec.product_uom_qty:
-                    raise ValidationError(
-                        f"Number of bins in Swap Containers ({lifted_count}) "
-                        f"must match  Bin no. ({rec.product_uom_qty})."
-                    )
 
     condition = fields.Selection([
         ('draft', 'draft'),
@@ -723,38 +346,6 @@ class WasteServiceRequest(models.Model):
 
     sale_order_id = fields.Many2one('sale.order', string="Sales Order")
 
-    @api.model
-    def create(self, vals):
-        # Handle sequence for name
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('waste.service.request') or 'New'
-
-        record = super().create(vals)
-
-        # Link driver to this service request
-        if record.driver_id:
-            record.driver_id.service_request_id = record.id
-
-        # Link sale order to this service request
-        if record.sale_order_id:
-            record.sale_order_id.service_request_id = record.id
-
-        return record
-
-    def write(self, vals):
-        res = super().write(vals)
-        for rec in self:
-            # Link driver to this service request
-            if rec.driver_id:
-                rec.driver_id.service_request_id = rec.id
-
-            # Link sale order to this service request
-            if rec.sale_order_id:
-                rec.sale_order_id.service_request_id = rec.id
-
-        return res
-
-
     # @api.model
     # def create(self, vals):
     #     # Handle sequence for name
@@ -763,16 +354,28 @@ class WasteServiceRequest(models.Model):
     #
     #     record = super().create(vals)
     #
-    #     # Link to Sale Order if available
+    #     # Link driver to this service request
+    #     if record.driver_id:
+    #         record.driver_id.service_request_id = record.id
+    #
+    #     # Link sale order to this service request
     #     if record.sale_order_id:
     #         record.sale_order_id.service_request_id = record.id
     #
     #     return record
-
-    # sale_order_id = fields.Many2one('sale.order', string="Sales Order")
-    product_id = fields.Many2one('product.product', string="Product")
-    product_uom_qty = fields.Float(string="Quantity")
-    price_unit = fields.Float(string="Unit Price")
+    #
+    # def write(self, vals):
+    #     res = super().write(vals)
+    #     for rec in self:
+    #         # Link driver to this service request
+    #         if rec.driver_id:
+    #             rec.driver_id.service_request_id = rec.id
+    #
+    #         # Link sale order to this service request
+    #         if rec.sale_order_id:
+    #             rec.sale_order_id.service_request_id = rec.id
+    #
+    #     return res
 
     # Link to your config tables (which link to product.attribute.value)
     service_requested_id = fields.Many2one('service.request', string="Service Requested")
@@ -805,7 +408,7 @@ class WasteServiceRequest(models.Model):
     hide_none_general = fields.Boolean(compute='_compute_field_visibility')
     hide_service_placement = fields.Boolean(compute='_compute_field_visibility')
     hide_disposal_site = fields.Boolean(compute='_compute_hide_waste_type')
-
+    hide_pickup_point = fields.Boolean(compute='_compute_hide_waste_type')
 
     @api.depends('service_requested_id','container_type_id', 'waste_type_id',
                  'service_requested_id.name','container_type_id.name','waste_type_id.name')
@@ -834,6 +437,7 @@ class WasteServiceRequest(models.Model):
             is_none_general = (rec.waste_type_id.name or '').strip().lower()
             is_disposal_site = (rec.waste_type_id.name or '').strip().lower()
             is_service_placement = (rec.service_requested_id.name or '').strip().lower()
+            is_pickup_point = (rec.service_requested_id.name or '').strip().lower()
 
             rec.hide_waste_type = (is_waste_type == 'placement of bins')
             rec.hide_waste_details = (is_waste_details == 'placement of bins')
@@ -858,7 +462,173 @@ class WasteServiceRequest(models.Model):
             rec.hide_none_general = (is_none_general == 'general non compactable')
             rec.hide_disposal_site = (is_disposal_site == 'hazardous')
             rec.hide_service_placement = (is_service_placement == 'placement of bins')
+            rec.hide_pickup_point = (is_pickup_point == 'placement of bins')
 
+    # sale_order_id = fields.Many2one('sale.order', string="Sales Order")
+    product_id = fields.Many2one('product.product', string="Product")
+    # product_uom_qty = fields.Float(string="Quantity")
+    price_unit = fields.Float(string="Unit Price")
+
+    order_line_id = fields.Many2one(
+        'sale.order.line',
+        string="Sale Order Line",
+        ondelete='set null',
+        help="The sale order line that this service request should update."
+    )
+
+    # REPLACE your old product_uom_qty field with this one
+    product_uom_qty = fields.Float(
+        string="Quantity",
+        compute="_compute_product_uom_qty",
+        store=True,
+        readonly=False,  # still editable if you want
+    )
+
+
+    @api.depends(
+        "service_requested_id",
+        "dropoff_container_ids",
+        "shunt_container_ids",
+        "lifted_bin_ids",
+        "dropped_bin_ids",
+    )
+    def _compute_product_uom_qty(self):
+        """
+        Quantity follows selected bins and therefore increments/decrements automatically.
+        """
+        for rec in self:
+            svc_code = (rec.service_requested_id.code or "").lower() \
+                if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
+                else (rec.service_requested_id.display_name or "").strip().lower()
+
+            qty = 0.0
+
+            if svc_code in ("placement of bins", "removal of bins", "waste collection & disposal"):
+                qty = float(len(rec.dropoff_container_ids))
+
+            elif svc_code == "shunting of bins":
+                qty = float(len(rec.shunt_container_ids))
+
+            elif svc_code == "swapping of bins":
+                if rec.lifted_bin_ids:
+                    qty = float(len(rec.lifted_bin_ids))
+                elif rec.dropped_bin_ids:
+                    qty = float(len(rec.dropped_bin_ids))
+                else:
+                    qty = 0.0
+
+            rec.product_uom_qty = qty
+
+    # ------------------------------------------------------------
+    # SALE ORDER QTY SYNC
+    # ------------------------------------------------------------
+    def _sync_sale_order_qty(self):
+        """
+        Push current request qty to the related sale order line.
+        Uses best matching line if order_line_id not set.
+        """
+        for rec in self:
+            so = rec.sale_order_id
+            if not so:
+                continue
+
+            qty = rec.product_uom_qty or 0.0
+
+            # 1) Use explicitly linked line if present
+            line = rec.order_line_id
+            if line and line.order_id != so:
+                line = False
+
+            # 2) Try to find a line linked by custom field (if you later add one)
+            if not line and 'waste_request_id' in so.order_line._fields:
+                line = so.order_line.filtered(lambda l: l.waste_request_id.id == rec.id)[:1]
+
+            # 3) Try to match by service_requested_id if line has that field
+            if not line and rec.service_requested_id and 'service_requested_id' in so.order_line._fields:
+                line = so.order_line.filtered(
+                    lambda l: l.service_requested_id.id == rec.service_requested_id.id
+                )[:1]
+
+            # 4) Fallback: first order line (keeps system working even without config)
+            if not line:
+                line = so.order_line[:1]
+
+            if line:
+                # avoid recursion if you later add reverse sync
+                line.with_context(skip_waste_sync=True).write({
+                    'product_uom_qty': qty
+                })
+                rec.order_line_id = line
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Handle sequence for name (multi-create safe)
+        for vals in vals_list:
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code(
+                    'waste.service.request'
+                ) or 'New'
+
+        recs = super().create(vals_list)
+
+        # Link driver + sale order to this service request
+        for rec in recs:
+            if rec.driver_id:
+                rec.driver_id.service_request_id = rec.id
+            if rec.sale_order_id:
+                rec.sale_order_id.service_request_id = rec.id
+
+        # Sync quantities to sale order after create
+        recs._sync_sale_order_qty()
+
+        return recs
+
+    def write(self, vals):
+        res = super().write(vals)
+
+        # Keep driver + sale order links synced after updates
+        for rec in self:
+            if rec.driver_id:
+                rec.driver_id.service_request_id = rec.id
+            if rec.sale_order_id:
+                rec.sale_order_id.service_request_id = rec.id
+
+        # If bins/service/qty changed, recompute + sync to sale order
+        if any(k in vals for k in [
+            'product_uom_qty',
+            'dropoff_container_ids',
+            'shunt_container_ids',
+            'lifted_bin_ids',
+            'dropped_bin_ids',
+            'service_requested_id',
+        ]):
+            self._sync_sale_order_qty()
+
+        return res
+
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     recs = super().create(vals_list)
+    #     recs._sync_sale_order_qty()
+    #     return recs
+    #
+    # def write(self, vals):
+    #
+    #
+    #     res = super().write(vals)
+    #
+    #     # if bins/service changed, qty recomputed -> sync to sale order
+    #     if any(k in vals for k in [
+    #         'product_uom_qty',
+    #         'dropoff_container_ids',
+    #         'shunt_container_ids',
+    #         'lifted_bin_ids',
+    #         'dropped_bin_ids',
+    #         'service_requested_id',
+    #     ]):
+    #         self._sync_sale_order_qty()
+    #
+    #     return res
 
     @api.onchange('sale_order_id')
     def _onchange_sale_order_id(self):
@@ -987,43 +757,75 @@ class WasteServiceRequest(models.Model):
 
             rec.state = 'generated'
 
+    # def action_set_scheduled(self):
+    #     """
+    #     Manually move to 'scheduled'.
+    #     Only change state, do NOT touch any other fields.
+    #
+    #     """
+    #     self.state = 'scheduled'
+    #
+    #     template = self.env.ref(
+    #         'waste_management_zakheni.mail_tmpl_service_request_driver_invitation',
+    #         raise_if_not_found=False,
+    #     )
+    #     if template:
+    #         template.send_mail(self.id, force_send=True)
+
+    def action_set_scheduled(self):
+        """
+        Manually move to 'scheduled'.
+        Only change state, then send email based on is_service_provider.
+        """
+        for rec in self:
+            rec.state = "scheduled"
+
+            if rec.is_service_provider:
+                # send SERVICE PROVIDER template
+                template = rec.env.ref(
+                    "waste_management_zakheni.mail_tmpl_service_request_service_provide_invitation",
+                    raise_if_not_found=False,
+                )
+            else:
+                # send DRIVER template
+                template = rec.env.ref(
+                    "waste_management_zakheni.mail_tmpl_service_request_driver_invitation",
+                    raise_if_not_found=False,
+                )
+
+            if template:
+                template.send_mail(rec.id, force_send=True)
+
+        return True
 
     def action_mark_done(self):
         for record in self:
-            # Prefer a stable code on service.request; else fall back to name
             svc_code = (record.service_requested_id.code or '').lower() \
                 if record.service_requested_id and hasattr(record.service_requested_id, 'code') \
                 else (record.service_requested_id.display_name or '').strip().lower()
 
-            # All pickup points selected on the REQUEST (from sale.order via related field)
-            dest_pps = record.pickup_point_ids  # recordset of pickup.point
-            dest_pp_ids = dest_pps.ids  # list of ids
+            dest_pps = record.pickup_point_ids
+            dest_pp_ids = dest_pps.ids
             dest_pp_label = ", ".join(dest_pps.mapped("display_name")) if dest_pps else "Unknown"
 
-            # Decide which customer we use for containers/tanks
             cust = record.customer_id or record.partner_id
 
-            # ------------------------------------------------------------------
-            # REMOVAL OF BINS
-            # ------------------------------------------------------------------
+            # -------------------------
+            # YOUR EXISTING LOGIC
+            # -------------------------
             if svc_code == 'removal of bins':
                 for container in record.dropoff_container_ids:
-                    # Remove container from all pickup points & customer
                     if 'pickup_point_ids' in container._fields:
-                        container.pickup_point_ids = [(5, 0, 0)]  # clear all M2M
+                        container.pickup_point_ids = [(5, 0, 0)]
                     if 'pickup_point_id' in container._fields:
                         container.pickup_point_id = False
                     if 'customer_id' in container._fields:
-                        container.customer_id = False  # 🔴 clear customer
+                        container.customer_id = False
                     if 'status' in container._fields:
                         container.status = 'un_use'
                     record.message_post(body=f"Removed bin: {container.display_name}")
 
-            # ------------------------------------------------------------------
-            # SWAPPING OF BINS
-            # ------------------------------------------------------------------
             elif svc_code == 'swapping of bins':
-                # Lifted bins leave their current pickup points + customer
                 for lifted_bin in record.lifted_bin_ids:
                     from_label = ", ".join(lifted_bin.pickup_point_ids.mapped("display_name")) \
                         if 'pickup_point_ids' in lifted_bin._fields and lifted_bin.pickup_point_ids else "Unknown"
@@ -1033,7 +835,7 @@ class WasteServiceRequest(models.Model):
                     if 'pickup_point_id' in lifted_bin._fields:
                         lifted_bin.pickup_point_id = False
                     if 'customer_id' in lifted_bin._fields:
-                        lifted_bin.customer_id = False  # 🔴 clear customer
+                        lifted_bin.customer_id = False
                     if 'status' in lifted_bin._fields:
                         lifted_bin.status = 'un_use'
 
@@ -1041,14 +843,13 @@ class WasteServiceRequest(models.Model):
                         body=f"Lifted bin '{lifted_bin.display_name}' from '{from_label}'"
                     )
 
-                # Dropped bins go to the request pickup_point_ids + customer
                 for dropped_bin in record.dropped_bin_ids:
                     if 'pickup_point_ids' in dropped_bin._fields:
                         dropped_bin.pickup_point_ids = [(6, 0, dest_pp_ids)]
                     if 'pickup_point_id' in dropped_bin._fields and dest_pps:
                         dropped_bin.pickup_point_id = dest_pps[0]
                     if 'customer_id' in dropped_bin._fields and cust:
-                        dropped_bin.customer_id = cust  # ✅ set customer
+                        dropped_bin.customer_id = cust
                     if 'status' in dropped_bin._fields:
                         dropped_bin.status = 'in_use'
 
@@ -1056,22 +857,17 @@ class WasteServiceRequest(models.Model):
                         body=f"Dropped bin '{dropped_bin.display_name}' at '{dest_pp_label}'"
                     )
 
-            # ------------------------------------------------------------------
-            # SHUNTING OF BINS
-            # ------------------------------------------------------------------
             elif svc_code == 'shunting of bins':
                 from_label = record.shunt_from_id.display_name if record.shunt_from_id else "Unknown"
                 to_label = record.shunt_to_id.display_name if record.shunt_to_id else "Unknown"
 
                 for bin_rec in record.shunt_container_ids:
-                    # Move current location to shunt_to_id
                     if 'pickup_point_id' in bin_rec._fields:
                         bin_rec.pickup_point_id = record.shunt_to_id
-                    # Add shunt_to_id to M2M list (if you want history)
                     if 'pickup_point_ids' in bin_rec._fields and record.shunt_to_id:
                         bin_rec.pickup_point_ids = [(4, record.shunt_to_id.id)]
                     if 'customer_id' in bin_rec._fields and cust:
-                        bin_rec.customer_id = cust  # ✅ set customer
+                        bin_rec.customer_id = cust
                     if 'status' in bin_rec._fields:
                         bin_rec.status = 'in_use'
 
@@ -1079,32 +875,8 @@ class WasteServiceRequest(models.Model):
                         body=f"Shunted bin '{bin_rec.display_name}' from '{from_label}' to '{to_label}'"
                     )
 
-            # ------------------------------------------------------------------
-            # PLACEMENT OF BINS
-            # ------------------------------------------------------------------
-            # elif svc_code == 'placement of bins':
-            #     for container in record.dropoff_container_ids:
-            #         if 'pickup_point_ids' in container._fields:
-            #             container.pickup_point_ids = [(6, 0, dest_pp_ids)]
-            #         if 'pickup_point_id' in container._fields and dest_pps:
-            #             container.pickup_point_id = dest_pps[0]
-            #         if 'customer_id' in container._fields and cust:
-            #             container.customer_id = cust  # ✅ set customer
-            #         if 'status' in container._fields:
-            #             container.status = 'in_use'
-            #
-            #         record.message_post(
-            #             body=f"Placed bin: {container.display_name} at {dest_pp_label}"
-            #         )
-
-            # ------------------------------------------------------------------
-            # PLACEMENT OF BINS
-            # ------------------------------------------------------------------
             elif svc_code == 'placement of bins':
                 for container in record.dropoff_container_ids:
-                    # 1) Decide destination pickup point per container:
-                    #    - Prefer container's own pickup_point_id (set in container module / sales)
-                    #    - Else fall back to first pickup from the request
                     if 'pickup_point_id' in container._fields and container.pickup_point_id:
                         dest_pp_single = container.pickup_point_id
                     elif dest_pps:
@@ -1112,24 +884,14 @@ class WasteServiceRequest(models.Model):
                     else:
                         dest_pp_single = False
 
-                    # 2) Human-readable label for the message
-                    if dest_pp_single:
-                        label = dest_pp_single.display_name
-                    else:
-                        # fallback to combined label if nothing is set
-                        label = dest_pp_label
+                    label = dest_pp_single.display_name if dest_pp_single else dest_pp_label
 
-                    # 3) Write back to container
                     if 'pickup_point_id' in container._fields and dest_pp_single:
                         container.pickup_point_id = dest_pp_single
-
-                    # Keep the M2M history as well, but per-container
                     if 'pickup_point_ids' in container._fields and dest_pp_single:
-                        # Add this pickup point to the container's list (no wipe)
                         container.pickup_point_ids = [(4, dest_pp_single.id)]
-
                     if 'customer_id' in container._fields and cust:
-                        container.customer_id = cust  # customer from request
+                        container.customer_id = cust
                     if 'status' in container._fields:
                         container.status = 'in_use'
 
@@ -1137,10 +899,6 @@ class WasteServiceRequest(models.Model):
                         body=f"Placed bin: {container.display_name} at {label}"
                     )
 
-
-            # ------------------------------------------------------------------
-            # WASTE COLLECTION & DISPOSAL
-            # ------------------------------------------------------------------
             elif svc_code == 'waste collection & disposal':
                 for container in record.dropoff_container_ids:
                     if 'pickup_point_ids' in container._fields:
@@ -1148,7 +906,7 @@ class WasteServiceRequest(models.Model):
                     if 'pickup_point_id' in container._fields:
                         container.pickup_point_id = False
                     if 'customer_id' in container._fields:
-                        container.customer_id = False  # 🔴 clear customer
+                        container.customer_id = False
                     if 'status' in container._fields:
                         container.status = 'un_use'
 
@@ -1156,16 +914,14 @@ class WasteServiceRequest(models.Model):
                         body=f"Collected & Disposed bin: {container.display_name}"
                     )
 
-            # ------------------------------------------------------------------
-            # TANKS
-            # ------------------------------------------------------------------
+            # tanks logic unchanged...
             for tank in record.tank_ids:
                 if 'pickup_point_ids' in tank._fields:
                     tank.pickup_point_ids = [(6, 0, dest_pp_ids)]
                 if 'pickup_point_id' in tank._fields and dest_pps:
                     tank.pickup_point_id = dest_pps[0]
                 if 'customer_id' in tank._fields and cust:
-                    tank.customer_id = cust  # ✅ set customer
+                    tank.customer_id = cust
                 if 'status' in tank._fields:
                     tank.status = 'un_use'
 
@@ -1174,461 +930,15 @@ class WasteServiceRequest(models.Model):
                          f"({tank.tank_volume_id.display_name or ''})"
                 )
 
-                # Only for tank collection, push totals down to tank lines
-                ct_self = (getattr(record.container_type_id, 'code', '') or '').lower() \
-                    if record.container_type_id and hasattr(record.container_type_id, 'code') \
-                    else (record.container_type_id.display_name or '').strip().lower()
+                # ✅ AUDIT LOG - one line grouped exactly like requested
+                audit_summary = record._get_pickup_point_bins_summary_string(limit_per_point=None)
+                if audit_summary:
+                    record.message_post(
+                        body=_("Bins per Pickup/Dropoff Point: %s") % audit_summary
+                    )
 
-                if (getattr(record, 'service_type', '') == 'collection') and (ct_self == 'tank'):
-                    record.tank_ids.write({
-                        'liters_collected': record.liters_collected,
-                        'liters_remaining': record.liters_remaining,
-                    })
+            record.state = "done"
 
-        self.state = 'done'
-
-    # def action_mark_done(self):
-    #     for record in self:
-    #         # Prefer a stable code on service.request; else fall back to name
-    #         svc_code = (record.service_requested_id.code or '').lower() \
-    #             if record.service_requested_id and hasattr(record.service_requested_id, 'code') \
-    #             else (record.service_requested_id.display_name or '').strip().lower()
-    #
-    #         # All pickup points selected on the REQUEST (many2many)
-    #         dest_pps = record.pickup_point_ids  # recordset of pickup.point
-    #         dest_pp_ids = dest_pps.ids  # list of ids
-    #         dest_pp_label = ", ".join(dest_pps.mapped("display_name")) if dest_pps else "Unknown"
-    #
-    #         # ------------------------------------------------------------------
-    #         # REMOVAL OF BINS
-    #         # ------------------------------------------------------------------
-    #         if svc_code == 'removal of bins':
-    #             for container in record.dropoff_container_ids:
-    #                 # Remove container from all pickup points & customer
-    #                 if 'pickup_point_ids' in container._fields:
-    #                     container.pickup_point_ids = [(5, 0, 0)]  # clear all M2M
-    #                 if 'pickup_point_id' in container._fields:
-    #                     container.pickup_point_id = False
-    #                 if 'customer_id' in container._fields:
-    #                     container.customer_id = False
-    #                 if 'status' in container._fields:
-    #                     container.status = 'un_use'
-    #                 record.message_post(body=f"Removed bin: {container.display_name}")
-    #
-    #         # ------------------------------------------------------------------
-    #         # SWAPPING OF BINS
-    #         # ------------------------------------------------------------------
-    #         elif svc_code == 'swapping of bins':
-    #             # Lifted bins leave their current pickup points
-    #             for lifted_bin in record.lifted_bin_ids:
-    #                 from_label = ", ".join(lifted_bin.pickup_point_ids.mapped("display_name")) \
-    #                     if 'pickup_point_ids' in lifted_bin._fields and lifted_bin.pickup_point_ids else "Unknown"
-    #
-    #                 if 'pickup_point_ids' in lifted_bin._fields:
-    #                     lifted_bin.pickup_point_ids = [(5, 0, 0)]
-    #                 if 'pickup_point_id' in lifted_bin._fields:
-    #                     lifted_bin.pickup_point_id = False
-    #                 if 'customer_id' in lifted_bin._fields:
-    #                     lifted_bin.customer_id = False
-    #                 if 'status' in lifted_bin._fields:
-    #                     lifted_bin.status = 'un_use'
-    #
-    #                 record.message_post(
-    #                     body=f"Lifted bin '{lifted_bin.display_name}' from '{from_label}'"
-    #                 )
-    #
-    #             # Dropped bins go to the request pickup_point_ids
-    #             for dropped_bin in record.dropped_bin_ids:
-    #                 if 'pickup_point_ids' in dropped_bin._fields:
-    #                     dropped_bin.pickup_point_ids = [(6, 0, dest_pp_ids)]
-    #                 if 'pickup_point_id' in dropped_bin._fields and dest_pps:
-    #                     dropped_bin.pickup_point_id = dest_pps[0]
-    #                 if 'customer_id' in dropped_bin._fields:
-    #                     dropped_bin.customer_id = record.customer_id
-    #                 if 'status' in dropped_bin._fields:
-    #                     dropped_bin.status = 'in_use'
-    #
-    #                 record.message_post(
-    #                     body=f"Dropped bin '{dropped_bin.display_name}' at '{dest_pp_label}'"
-    #                 )
-    #
-    #         # ------------------------------------------------------------------
-    #         # SHUNTING OF BINS
-    #         # ------------------------------------------------------------------
-    #         elif svc_code == 'shunting of bins':
-    #             from_label = record.shunt_from_id.display_name if record.shunt_from_id else "Unknown"
-    #             to_label = record.shunt_to_id.display_name if record.shunt_to_id else "Unknown"
-    #
-    #             for bin_rec in record.shunt_container_ids:
-    #                 # Move current location to shunt_to_id
-    #                 if 'pickup_point_id' in bin_rec._fields:
-    #                     bin_rec.pickup_point_id = record.shunt_to_id
-    #                 # Add shunt_to_id to M2M list (if you want history)
-    #                 if 'pickup_point_ids' in bin_rec._fields and record.shunt_to_id:
-    #                     bin_rec.pickup_point_ids = [(4, record.shunt_to_id.id)]
-    #                 if 'customer_id' in bin_rec._fields:
-    #                     bin_rec.customer_id = record.customer_id
-    #                 if 'status' in bin_rec._fields:
-    #                     bin_rec.status = 'in_use'
-    #
-    #                 record.message_post(
-    #                     body=f"Shunted bin '{bin_rec.display_name}' from '{from_label}' to '{to_label}'"
-    #                 )
-    #
-    #         # ------------------------------------------------------------------
-    #         # PLACEMENT OF BINS
-    #         # ------------------------------------------------------------------
-    #         elif svc_code == 'placement of bins':
-    #             for container in record.dropoff_container_ids:
-    #                 if 'pickup_point_ids' in container._fields:
-    #                     container.pickup_point_ids = [(6, 0, dest_pp_ids)]
-    #                 if 'pickup_point_id' in container._fields and dest_pps:
-    #                     container.pickup_point_id = dest_pps[0]
-    #                 if 'customer_id' in container._fields:
-    #                     container.customer_id = record.customer_id
-    #                 if 'status' in container._fields:
-    #                     container.status = 'in_use'
-    #
-    #                 record.message_post(
-    #                     body=f"Placed bin: {container.display_name} at {dest_pp_label}"
-    #                 )
-    #
-    #         # ------------------------------------------------------------------
-    #         # WASTE COLLECTION & DISPOSAL
-    #         # ------------------------------------------------------------------
-    #         elif svc_code == 'waste collection & disposal':
-    #             for container in record.dropoff_container_ids:
-    #                 if 'pickup_point_ids' in container._fields:
-    #                     container.pickup_point_ids = [(5, 0, 0)]
-    #                 if 'pickup_point_id' in container._fields:
-    #                     container.pickup_point_id = False
-    #                 if 'customer_id' in container._fields:
-    #                     container.customer_id = False
-    #                 if 'status' in container._fields:
-    #                     container.status = 'un_use'
-    #
-    #                 record.message_post(
-    #                     body=f"Collected & Disposed bin: {container.display_name}"
-    #                 )
-    #
-    #         # ------------------------------------------------------------------
-    #         # TANKS
-    #         # ------------------------------------------------------------------
-    #         for tank in record.tank_ids:
-    #             if 'pickup_point_ids' in tank._fields:
-    #                 tank.pickup_point_ids = [(6, 0, dest_pp_ids)]
-    #             if 'pickup_point_id' in tank._fields and dest_pps:
-    #                 tank.pickup_point_id = dest_pps[0]
-    #             if 'customer_id' in tank._fields:
-    #                 tank.customer_id = record.customer_id
-    #             if 'status' in tank._fields:
-    #                 tank.status = 'un_use'
-    #
-    #             record.message_post(
-    #                 body=f"Collected & Emptied tank: {tank.display_name} "
-    #                      f"({tank.tank_volume_id.display_name or ''})"
-    #             )
-    #
-    #             # Only for tank collection, push totals down to tank lines
-    #             ct_self = (getattr(record.container_type_id, 'code', '') or '').lower() \
-    #                 if record.container_type_id and hasattr(record.container_type_id, 'code') \
-    #                 else (record.container_type_id.display_name or '').strip().lower()
-    #
-    #             if (getattr(record, 'service_type', '') == 'collection') and (ct_self == 'tank'):
-    #                 record.tank_ids.write({
-    #                     'liters_collected': record.liters_collected,
-    #                     'liters_remaining': record.liters_remaining,
-    #                 })
-    #
-    #     self.state = 'done'
-
-        # -------------------------------------------------------------------------
-        # UPDATED action_mark_done USING pickup_point_ids (M2M) + pickup_point_id
-        # -------------------------------------------------------------------------
-    # def action_mark_done(self):
-    #         for record in self:
-    #             # Prefer a stable code on service.request; else fall back to name
-    #             svc_code = (record.service_requested_id.code or '').lower() \
-    #                 if record.service_requested_id and hasattr(record.service_requested_id, 'code') \
-    #                 else (record.service_requested_id.display_name or '').strip().lower()
-    #
-    #             # All pickup points linked to this request (M2M)
-    #             request_pp_ids = record.pickup_point_ids.ids
-    #             # A single main pickup point if you use it
-    #             single_pp = record.pickup_point_id
-    #
-    #             # === REMOVAL OF BINS ===
-    #             if svc_code == 'removal of bins':
-    #                 for container in record.dropoff_container_ids:
-    #                     container.pickup_point_id = False
-    #                     container.pickup_point_ids = [(5, 0, 0)]  # clear all M2M links
-    #                     container.customer_id = False
-    #                     container.status = 'un_use'
-    #                     record.message_post(body=f"Removed bin: {container.display_name}")
-    #
-    #             # === SWAPPING OF BINS ===
-    #             elif svc_code == 'swapping of bins':
-    #                 # Lifted bins leave the site completely
-    #                 for lifted_bin in record.lifted_bin_ids:
-    #                     from_name = single_pp.display_name if single_pp else 'Unknown'
-    #                     lifted_bin.pickup_point_id = False
-    #                     lifted_bin.pickup_point_ids = [(5, 0, 0)]
-    #                     lifted_bin.customer_id = False
-    #                     lifted_bin.status = 'un_use'
-    #                     record.message_post(body=f"Lifted bin '{lifted_bin.display_name}' from '{from_name}'")
-    #
-    #                 # Dropped bins are placed at the request pickup point(s)
-    #                 for dropped_bin in record.dropped_bin_ids:
-    #                     to_name = single_pp.display_name if single_pp else 'Unknown'
-    #                     if single_pp:
-    #                         dropped_bin.pickup_point_id = single_pp
-    #                     if request_pp_ids:
-    #                         dropped_bin.pickup_point_ids = [(6, 0, request_pp_ids)]
-    #                     dropped_bin.customer_id = record.customer_id
-    #                     dropped_bin.status = 'in_use'
-    #                     record.message_post(body=f"Dropped bin '{dropped_bin.display_name}' at '{to_name}'")
-    #
-    #             # === SHUNTING OF BINS ===
-    #             elif svc_code == 'shunting of bins':
-    #                 from_name = record.shunt_from_id.display_name if record.shunt_from_id else 'Unknown'
-    #                 to_name = record.shunt_to_id.display_name if record.shunt_to_id else 'Unknown'
-    #                 for bin_rec in record.shunt_container_ids:
-    #                     # Move current location to shunt_to_id
-    #                     bin_rec.pickup_point_id = record.shunt_to_id
-    #                     # Add shunt_to_id to M2M pickup list
-    #                     if record.shunt_to_id:
-    #                         bin_rec.pickup_point_ids = [(4, record.shunt_to_id.id)]
-    #                     bin_rec.customer_id = record.customer_id
-    #                     bin_rec.status = 'in_use'
-    #                     record.message_post(
-    #                         body=f"Shunted bin '{bin_rec.display_name}' from '{from_name}' to '{to_name}'"
-    #                     )
-    #
-    #             # === PLACEMENT OF BINS ===
-    #             elif svc_code == 'placement of bins':
-    #                 for container in record.dropoff_container_ids:
-    #                     to_name = single_pp.display_name if single_pp else 'Unknown'
-    #                     if single_pp:
-    #                         container.pickup_point_id = single_pp
-    #                     if request_pp_ids:
-    #                         container.pickup_point_ids = [(6, 0, request_pp_ids)]
-    #                     container.customer_id = record.customer_id
-    #                     container.status = 'in_use'
-    #                     record.message_post(body=f"Placed bin: {container.display_name} at {to_name}")
-    #
-    #             # === WASTE COLLECTION & DISPOSAL ===
-    #             elif svc_code == 'waste collection & disposal':
-    #                 for container in record.dropoff_container_ids:
-    #                     container.pickup_point_id = False
-    #                     container.pickup_point_ids = [(5, 0, 0)]
-    #                     container.customer_id = False
-    #                     container.status = 'un_use'
-    #                     record.message_post(body=f"Collected & Disposed bin: {container.display_name}")
-    #
-    #             # === TANKS ===
-    #             for tank in record.tank_ids:
-    #                 to_name = single_pp.display_name if single_pp else 'Unknown'
-    #                 if single_pp:
-    #                     tank.pickup_point_id = single_pp
-    #                 if request_pp_ids:
-    #                     tank.pickup_point_ids = [(6, 0, request_pp_ids)]
-    #                 tank.customer_id = record.customer_id
-    #                 tank.status = 'un_use'
-    #                 record.message_post(
-    #                     body=f"Collected & Emptied tank: {tank.display_name} "
-    #                          f"({tank.tank_volume_id.display_name or ''})"
-    #                 )
-    #
-    #                 # Only for tank collection, push totals down to tank lines
-    #                 ct_self = (getattr(record.container_type_id, 'code', '') or '').lower() \
-    #                     if record.container_type_id and hasattr(record.container_type_id, 'code') \
-    #                     else (record.container_type_id.display_name or '').strip().lower()
-    #
-    #                 if (getattr(record, 'service_type', '') == 'collection') and (ct_self == 'tank'):
-    #                     record.tank_ids.write({
-    #                         'liters_collected': record.liters_collected,
-    #                         'liters_remaining': record.liters_remaining,
-    #                     })
-    #
-    #         self.state = 'done'
-
-    # def action_mark_done(self):
-    #     for record in self:
-    #         # Prefer a stable code on service.request; else fall back to name
-    #         svc_code = (record.service_requested_id.code or '').lower() \
-    #             if record.service_requested_id and hasattr(record.service_requested_id, 'code') \
-    #             else (record.service_requested_id.display_name or '').strip().lower()
-    #
-    #         # For convenience: all pickup points from the request (via the sale order)
-    #         request_pp_ids = record.pickup_point_ids.ids  # this is a recordset on waste.service.request
-    #         single_pp = record.pickup_point_id  # if you also have a single Many2one
-    #
-    #         # === REMOVAL OF BINS ===
-    #         if svc_code == 'removal of bins':
-    #             for container in record.dropoff_container_ids:
-    #                 container.pickup_point_id = False
-    #                 container.pickup_point_ids = [(5, 0, 0)]  # clear all M2M links
-    #                 container.customer_id = False
-    #                 container.status = 'un_use'
-    #                 record.message_post(body=f"Removed bin: {container.display_name}")
-    #
-    #         # === SWAPPING OF BINS ===
-    #         elif svc_code == 'swapping of bins':
-    #             # Lifted bins leave all pickup points
-    #             for lifted_bin in record.lifted_bin_ids:
-    #                 from_name = single_pp.display_name if single_pp else 'Unknown'
-    #                 lifted_bin.pickup_point_id = False
-    #                 lifted_bin.pickup_point_ids = [(5, 0, 0)]
-    #                 lifted_bin.customer_id = False
-    #                 lifted_bin.status = 'un_use'
-    #                 record.message_post(body=f"Lifted bin '{lifted_bin.display_name}' from '{from_name}'")
-    #
-    #             # Dropped bins are linked to the request pickup points
-    #             for dropped_bin in record.dropped_bin_ids:
-    #                 to_name = single_pp.display_name if single_pp else 'Unknown'
-    #                 if single_pp:
-    #                     dropped_bin.pickup_point_id = single_pp
-    #                 if request_pp_ids:
-    #                     dropped_bin.pickup_point_ids = [(6, 0, request_pp_ids)]
-    #                 dropped_bin.customer_id = record.customer_id
-    #                 dropped_bin.status = 'in_use'
-    #                 record.message_post(body=f"Dropped bin '{dropped_bin.display_name}' at '{to_name}'")
-    #
-    #         # === SHUNTING OF BINS ===
-    #         elif svc_code == 'shunting of bins':
-    #             from_name = record.shunt_from_id.display_name if record.shunt_from_id else 'Unknown'
-    #             to_name = record.shunt_to_id.display_name if record.shunt_to_id else 'Unknown'
-    #             for bin_rec in record.shunt_container_ids:
-    #                 # current location moves to shunt_to_id
-    #                 bin_rec.pickup_point_id = record.shunt_to_id
-    #                 # add shunt_to_id to the M2M list
-    #                 if record.shunt_to_id:
-    #                     bin_rec.pickup_point_ids = [(4, record.shunt_to_id.id)]
-    #                 bin_rec.customer_id = record.customer_id
-    #                 bin_rec.status = 'in_use'
-    #                 record.message_post(
-    #                     body=f"Shunted bin '{bin_rec.display_name}' from '{from_name}' to '{to_name}'"
-    #                 )
-    #
-    #         # === PLACEMENT OF BINS ===
-    #         elif svc_code == 'placement of bins':
-    #             for container in record.dropoff_container_ids:
-    #                 to_name = single_pp.display_name if single_pp else 'Unknown'
-    #                 if single_pp:
-    #                     container.pickup_point_id = single_pp
-    #                 if request_pp_ids:
-    #                     container.pickup_point_ids = [(6, 0, request_pp_ids)]
-    #                 container.customer_id = record.customer_id
-    #                 container.status = 'in_use'
-    #                 record.message_post(body=f"Placed bin: {container.display_name} at {to_name}")
-    #
-    #         # === WASTE COLLECTION & DISPOSAL ===
-    #         elif svc_code == 'waste collection & disposal':
-    #             for container in record.dropoff_container_ids:
-    #                 container.pickup_point_id = False
-    #                 container.pickup_point_ids = [(5, 0, 0)]
-    #                 container.customer_id = False
-    #                 container.status = 'un_use'
-    #                 record.message_post(body=f"Collected & Disposed bin: {container.display_name}")
-    #
-    #         # === TANKS ===
-    #         for tank in record.tank_ids:
-    #             to_name = single_pp.display_name if single_pp else 'Unknown'
-    #             if single_pp:
-    #                 tank.pickup_point_id = single_pp
-    #             if request_pp_ids:
-    #                 tank.pickup_point_ids = [(6, 0, request_pp_ids)]
-    #             tank.customer_id = record.customer_id
-    #             tank.status = 'un_use'
-    #             record.message_post(
-    #                 body=f"Collected & Emptied tank: {tank.display_name} "
-    #                      f"({tank.tank_volume_id.display_name or ''})"
-    #             )
-    #
-    #             ct_self = (getattr(record.container_type_id, 'code', '') or '').lower() \
-    #                 if record.container_type_id and hasattr(record.container_type_id, 'code') \
-    #                 else (record.container_type_id.display_name or '').strip().lower()
-    #
-    #             if (getattr(record, 'service_type', '') == 'collection') and (ct_self == 'tank'):
-    #                 record.tank_ids.write({
-    #                     'liters_collected': record.liters_collected,
-    #                     'liters_remaining': record.liters_remaining,
-    #                 })
-    #
-    #     self.state = 'done'
-
-    #
-    # def action_mark_done(self):
-    #     for record in self:
-    #         # Prefer a stable code on service.request; else fall back to name
-    #         svc_code = (record.service_requested_id.code or '').lower() \
-    #             if record.service_requested_id and hasattr(record.service_requested_id, 'code') \
-    #             else (record.service_requested_id.display_name or '').strip().lower()
-    #
-    #         if svc_code == 'removal of bins':
-    #             for container in record.dropoff_container_ids:
-    #                 container.pickup_point_ids = False
-    #                 container.customer_id = False
-    #                 container.status = 'un_use'
-    #                 record.message_post(body=f"Removed bin: {container.display_name}")
-    #
-    #         elif svc_code == 'swapping of bins':
-    #             for lifted_bin in record.lifted_bin_ids:
-    #                 from_name = record.pickup_point_ids.display_name if record.pickup_point_ids else 'Unknown'
-    #                 lifted_bin.pickup_point_ids = False
-    #                 lifted_bin.customer_id = False
-    #                 lifted_bin.status = 'un_use'
-    #                 record.message_post(body=f"Lifted bin '{lifted_bin.display_name}' from '{from_name}'")
-    #
-    #             for dropped_bin in record.dropped_bin_ids:
-    #                 to_name = record.pickup_point_ids.display_name if record.pickup_point_ids else 'Unknown'
-    #                 dropped_bin.pickup_point_ids = record.pickup_point_ids
-    #                 dropped_bin.customer_id = record.customer_id
-    #                 dropped_bin.status = 'in_use'
-    #                 record.message_post(body=f"Dropped bin '{dropped_bin.display_name}' at '{to_name}'")
-    #
-    #         elif svc_code == 'shunting of bins':
-    #             from_name = record.shunt_from_id.display_name if getattr(record, 'shunt_from_id', False) else 'Unknown'
-    #             to_name = record.shunt_to_id.display_name if getattr(record, 'shunt_to_id', False) else 'Unknown'
-    #             for bin_rec in record.shunt_container_ids:
-    #                 bin_rec.pickup_point_ids = record.shunt_to_id
-    #                 bin_rec.status = 'in_use'
-    #                 record.message_post(body=f"Shunted bin '{bin_rec.display_name}' from '{from_name}' to '{to_name}'")
-    #
-    #         elif svc_code == 'placement of bins':
-    #             for container in record.dropoff_container_ids:
-    #                 to_name = record.pickup_point_ids.display_name if record.pickup_point_ids else 'Unknown'
-    #                 container.pickup_point_ids = record.pickup_point_ids
-    #                 container.customer_id = record.customer_id
-    #                 container.status = 'in_use'
-    #                 record.message_post(body=f"Placed bin: {container.display_name} at {to_name}")
-    #
-    #         elif svc_code == 'waste collection & disposal':
-    #             # Bins collected & disposed
-    #             for container in record.dropoff_container_ids:
-    #                 container.pickup_point_ids = False
-    #                 container.customer_id = False
-    #                 container.status = 'un_use'
-    #                 record.message_post(body=f"Collected & Disposed bin: {container.display_name}")
-    #
-    #         # Tanks: set status appropriately (adjust your filter as needed)
-    #         for tank in record.tank_ids:
-    #             to_name = record.pickup_point_ids.display_name if record.pickup_point_ids else 'Unknown'
-    #             tank.pickup_point_ids = record.pickup_point_ids
-    #             tank.customer_id = record.customer_id
-    #             tank.status = 'un_use'
-    #             record.message_post(
-    #                 body=f"Collected & Emptied tank: {tank.display_name} ({tank.tank_volume_id.display_name or ''})")
-    #             # Only for tank collection, push totals down to tank lines
-    #             ct_self = (getattr(record.container_type_id, 'code', '') or '').lower() \
-    #                 if record.container_type_id else (record.container_type_id.display_name or '').strip().lower()
-    #
-    #             if (getattr(record, 'service_type', '') == 'collection') and (ct_self == 'tank'):
-    #                 record.tank_ids.write({
-    #                     'liters_collected': record.liters_collected,
-    #                     'liters_remaining': record.liters_remaining,
-    #                 })
-    #     self.state = 'done'
 
     work_sheet_id = fields.Many2one(
         "waste.worksheet",
@@ -1671,20 +981,6 @@ class WasteServiceRequest(models.Model):
         }
 
 
-    # def action_cancelled(self):
-    #     self.ensure_one()
-    #     self.state = 'cancelled'
-    #
-    #     return {
-    #         'type': 'ir.actions.act_window',
-    #         'name': 'Enter Reject Reason',
-    #         'res_model': 'reject.service.request.wizard',
-    #         'view_mode': 'form',
-    #         'target': 'new',
-    #         'context': {
-    #             'default_user_id': self.id,
-    #         },
-    #     }
 
     def action_open_related_sales(self):
         """Redirect to sales orders related to this customer"""
@@ -1808,6 +1104,7 @@ class WasteServiceRequest(models.Model):
             "name": "Worksheet",
             "res_model": "waste.worksheet",
             "view_mode": "tree,form",
+            "target": "current",
             "domain": [("service_request_id", "=", self.id)],
             "context": {"default_service_request_id": self.id},
         }
@@ -1819,9 +1116,8 @@ class WasteServiceRequest(models.Model):
     )
 
     extra_product_count = fields.Integer(
-        string='Extra Products',
-        compute='_compute_extra_product_count',
-        readonly=True,
+        compute="_compute_extra_product_count",
+        string="Extra Products",
     )
 
     @api.depends('extra_product_line_ids')
@@ -1829,20 +1125,20 @@ class WasteServiceRequest(models.Model):
         for rec in self:
             rec.extra_product_count = len(rec.extra_product_line_ids)
 
-    def action_open_extra_products(self):
-        """Smart button: open the extra products lines."""
+    def action_open_product_selector(self):
+        """Smart button → fancy product grid (kanban)"""
         self.ensure_one()
-        return {
-            'name': _('Extra Products'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'waste.service.request.extra.line',
-            'view_mode': 'tree,form',
-            'domain': [('request_id', '=', self.id)],
-            'context': {
-                'default_request_id': self.id,
-            },
-            'target': 'current',
-        }
+        action = self.env.ref(
+            'waste_management_zakheni.action_waste_request_product_selector'
+        ).read()[0]
+
+        ctx = dict(self.env.context)
+        ctx.update({
+            'waste_request_id': self.id,
+            'search_default_sale_ok': 1,  # only storable/service for sale
+        })
+        action['context'] = ctx
+        return action
 
     def action_push_extra_products_to_so(self):
         """Create / update sale.order.line from extra products."""
@@ -1872,6 +1168,147 @@ class WasteServiceRequest(models.Model):
                     line.sale_order_line_id = sol.id
         return True
 
+    wizard_pickup_point_ids = fields.Many2many(
+        'pickup.point',
+        'waste_request_wizard_pickup_rel',
+        'request_id',
+        'pickup_point_id',
+        string="Pickup/Dropoff Points",
+        help="Pickup/Dropoff points captured from Assign Bins wizard.",
+    )
+
+    pickup_point_bins_summary = fields.Text(
+        string="Pickup/Dropoff Points & Bins Summary",
+        compute="_compute_pickup_point_bins_summary",
+        store=False,
+    )
+
+    @api.depends(
+        "bin_line_ids.pickup_point_id",
+        "bin_line_ids.container_ids",
+        "bin_line_ids.shunt_container_ids",
+        "bin_line_ids.lifted_container_ids",
+        "bin_line_ids.dropped_container_ids",
+    )
+    def _compute_pickup_point_bins_summary(self):
+        for rec in self:
+            parts = []
+
+            # use saved lines (persistent)
+            for line in rec.bin_line_ids:
+                pp = line.pickup_point_id
+                if not pp:
+                    continue
+
+                # decide which bins to show per service
+                svc_code = (rec.service_requested_id.code or "").lower() \
+                    if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
+                    else (rec.service_requested_id.display_name or "").strip().lower()
+
+                if svc_code == "shunting of bins":
+                    bins = line.shunt_container_ids
+                elif svc_code == "swapping of bins":
+                    # show both in one line
+                    lifted = ", ".join(b.display_name for b in line.lifted_container_ids)
+                    dropped = ", ".join(b.display_name for b in line.dropped_container_ids)
+                    text = f"{pp.display_name} [Lifted: {lifted or '-'} | Dropped: {dropped or '-'}]"
+                    parts.append(text)
+                    continue
+                else:
+                    bins = line.container_ids
+
+                bin_names = [b.display_name for b in bins]
+                if len(bin_names) > 3:
+                    shown = ", ".join(bin_names[:3]) + ", ..."
+                else:
+                    shown = ", ".join(bin_names)
+
+                parts.append(f"{pp.display_name} [{shown}]")
+
+            rec.pickup_point_bins_summary = ", ".join(parts) if parts else ""
+
+    # ---------------------------------------------------------
+    # Smart button count = number of bins currently selected
+    # ---------------------------------------------------------
+
+    wizard_pickup_point_count = fields.Integer(
+        compute="_compute_wizard_pickup_point_count",
+        store=False,
+    )
+
+    @api.depends('wizard_pickup_point_ids')
+    def _compute_wizard_pickup_point_count(self):
+        for rec in self:
+            rec.wizard_pickup_point_count = len(rec.wizard_pickup_point_ids)
+
+    bin_line_ids = fields.One2many(
+        "waste.request.bin.line",
+        "request_id",
+        string="Pickup/Bins Lines",
+    )
+
+    bin_line_count = fields.Integer(
+        compute="_compute_bin_line_count",
+        store=False,
+    )
+
+    @api.depends('bin_line_ids')
+    def _compute_bin_line_count(self):
+        for rec in self:
+            rec.bin_line_count = len(rec.bin_line_ids)
+
+    @api.depends('dropoff_container_ids', 'shunt_container_ids',
+                 'lifted_bin_ids', 'dropped_bin_ids')
+    def _compute_bin_line_count(self):
+        for rec in self:
+            svc_code = (rec.service_requested_id.code or '').lower() \
+                if rec.service_requested_id and hasattr(rec.service_requested_id, 'code') \
+                else (rec.service_requested_id.display_name or '').strip().lower()
+
+            if svc_code in ('placement of bins', 'removal of bins', 'waste collection & disposal'):
+                rec.bin_line_count = len(rec.dropoff_container_ids)
+            elif svc_code == 'shunting of bins':
+                rec.bin_line_count = len(rec.shunt_container_ids)
+            elif svc_code == 'swapping of bins':
+                rec.bin_line_count = len(rec.lifted_bin_ids) + len(rec.dropped_bin_ids)
+            else:
+                rec.bin_line_count = 0
+
+    # ---------------------------------------------------------
+    # Open wizard from smart button
+    # ---------------------------------------------------------
+    def action_open_bin_assignment_wizard(self):
+        self.ensure_one()
+        action = self.env.ref('waste_management_zakheni.action_waste_assign_bin_wizard').read()[0]
+        action['context'] = {
+            'default_request_id': self.id,
+            'active_id': self.id,
+            'active_model': self._name,
+        }
+        return action
+
+    sale_order_count = fields.Integer(
+        string="Sale Order Count",
+        compute="_compute_sale_order_count"
+    )
+
+    def _compute_sale_order_count(self):
+        for rec in self:
+            rec.sale_order_count = 1 if rec.sale_order_id else 0
+
+    def action_open_sale_order(self):
+        self.ensure_one()
+        if not self.sale_order_id:
+            raise UserError(_("No Sales Order linked to this Waste Request."))
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Sales Order"),
+            "res_model": "sale.order",
+            "view_mode": "form",
+            "res_id": self.sale_order_id.id,
+            "target": "current",
+        }
 
 
 class SaleOrder(models.Model):
@@ -1895,15 +1332,15 @@ class SaleOrder(models.Model):
         'pickup.point',
         string="Drop-off/Pickup Point",
         domain="[('partner_id', '=', partner_id)]",
-        required=True
+
     )
 
-    pickup_point_ids = fields.One2many(
-        'pickup.point', 'sale_order_id',
-        string="Drop-off/Pickup Point",
-        domain="[('partner_id', '=', partner_id)]",
-        required=True
-    )
+    # pickup_point_ids = fields.One2many(
+    #     'pickup.point', 'sale_order_id',
+    #     string="Drop-off/Pickup Point",
+    #     domain="[('partner_id', '=', partner_id)]",
+    #     required=True
+    # )
 
     container_ids = fields.One2many('waste.container', 'sale_order_id', string="Waste Containers")
 

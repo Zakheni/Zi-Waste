@@ -10,3 +10,4 @@ class PickupPoint(models.Model):
     container_ids = fields.One2many('waste.container', 'pickup_point_id', string="Waste Containers")
     sale_order_id = fields.Many2one('sale.order', string="Sales Order")
 
+    service_request_id = fields.Many2one('waste.service.request', string="Request")

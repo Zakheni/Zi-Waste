@@ -25,22 +25,69 @@
                 <header>
                     <button name="action_set_to_draft" type="object" string="Set to Draft"
                             class="btn-secondary"
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"
                     />
                     <button name="action_start"
                             type="object"
                             string="Start"
                             class="btn-primary"
                             invisible="state != 'draft'"
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"
                     />
                     <button name="action_done" type="object" string="Mark as done"
                             class="btn-primary"
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"
                     />
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
                 </header>
                 <sheet>
+
+                    <div name="button_box" class="oe_button_box">
+
+                        <button name="action_open_waste_request"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-external-link"
+                                string="Waste Request"
+                                invisible="service_request_id == False">
+                            <field name="service_request_id" widget="statinfo" string="Request"/>
+
+
+                        </button>
+
+                        <button name="action_open_ws_bin_assignment_wizard"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-truck"
+                                string="Assign Bins"
+                                invisible="state == 'done'"
+                        >
+
+                            <!-- Pickup Points -->
+                            <field name="wizard_pickup_point_count"
+                                   widget="statinfo"
+                                   string="Pickup Point(s)"
+                            />
+
+                            <!-- Slash separator -->
+                            <span style="font-size:14px; padding:0 4px;">|</span>
+
+                            <!-- Bins -->
+                            <field name="bin_line_count"
+                                   widget="statinfo"
+                                   string="Bin(s)"
+                            />
+                        </button>
+                        <button name="action_open_sale_order"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-external-link"
+                                string="Sale Order"
+                                groups="waste_management_zakheni.group_wmz_admin,aste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"
+                                invisible="request_sale_order_id == False">
+                            <field name="request_sale_order_id" widget="statinfo" string="Sales"/>
+                        </button>
+
+
+                    </div>
+
                     <div class="oe_title">
                         <h1>
                             <field name="name" readonly="state != 'draft'"/>
@@ -62,18 +109,21 @@
                     <group>
 
                         <group string="Worksheet information">
-                            <field name="arrival_time" required="1"/>
-                            <field name="kilometers" required="1"/>
-                            <field name="unit_of_measure" required="1"/>
+                            <field name="arrival_time" required="state  == 'in_progress'"/>
+                            <field name="kilometers" required="state == 'in_progress'"/>
+                            <field name="unit_of_measure" required="state == 'in_progress'"/>
                             <field name="return_date"/>
-                            <field name="quantity_collected" required="1"/>
-                            <field name="driver_signature" widget="signature" required="1"/>
-                            <field name="service_provider_signature" string="Customer Signature" widget="signature" required="1"/>
+                            <field name="quantity_collected" required="state == 'in_progress'"/>
+                            <separator/>
+                            <field name="driver_signature" widget="signature" required="state == 'in_progress'"/>
+                            <field name="service_provider_signature" string="Customer Signature" widget="signature"
+                                   required="state == 'in_progress'"/>
                         </group>
                         <group string="Manifest Details">
 
                             <field name="partner_id"
                                    widget="res_partner_many2one"
+                                   options="{'no_open': True}"
                                    readonly="1"
                                    context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}"
                                    placeholder="Type to find a customer..."/>
@@ -84,15 +134,23 @@
                             <field name="hide_bin" invisible="1"/>
                             <field name="hide_tank" invisible="1"/>
 
-                            <field name="service_requested_id" readonly="1"/>
+                            <field name="request_sale_order_id"
+                                   options="{'no_open': True}"
+                                   readonly="1"/>
+                            <field name="service_requested_id"
+                                   options="{'no_open': True}"
+                                   readonly="1"/>
 
                             <field name="waste_type_id" readonly="1"
+                                   options="{'no_open': True}"
                                    invisible="hide_waste_type == True"/>
 
                             <field name="waste_details_id" readonly="1"
+                                   options="{'no_open': True}"
                                    invisible="hide_waste_details == True"/>
 
                             <field name="bin_type_id" readonly="1"
+                                   options="{'no_open': True}"
                                    invisible="hide_tank == True and hide_bin == False"/>
                             <field name="container_type_id" readonly="1" widget="radio"
                                    options="{'horizontal': True}"/>
@@ -105,17 +163,23 @@
 
 
                             <!--                            <field name="pickup_point_id" readonly="state != 'draft'" invisible="0"/>-->
-                            <field name="pickup_point_ids" readonly="1" widget="many2many_tags" invisible="0"/>
+                            <!--                            <field name="pickup_point_ids" readonly="1" widget="many2many_tags" invisible="0"/>-->
+
+                            <!--                            <field name="customer_id" />-->
+                            <field name="wizard_pickup_point_ids" widget="many2many_tags" readonly="1"/>
+                            <field name="pickup_point_bins_summary" readonly="1" class="text-muted"
+                                   style="font-size:10px;"
+                                   placeholder="No bins assigned yet."/>
                             <field name="dropoff_container_ids" widget="many2many_tags" readonly="1"
                                    invisible="hide_droppoff_container_ids_placement == False or hide_tank == True"/>
 
 
-                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="1"
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="0"
                                    invisible="hide_droppoff_container_ids_removal == False"
                                    required="1"/>
 
 
-                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="1"
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="0"
                                    invisible="hide_droppoff_container_ids_collection == False or hide_droppoff_container_ids_is_bin == False "/>
 
 
@@ -166,8 +230,9 @@
 
                         </group>
                     </group>
-                    <separetor string="Upload information"/>
+                    <separator string="Upload information"/>
                     <group>
+                        <separator/>
                         <group style="display:flex; align-items:center;">
                             <field name="manifest_document" filename="manifest_document_filename"
                                    style="flex:1;"/>
@@ -207,6 +272,8 @@
 
                         </group>
                     </group>
+
+                    <separator/>
 
                     <notebook>
                         <page string="Photos">

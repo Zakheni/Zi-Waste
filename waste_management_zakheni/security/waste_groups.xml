@@ -5,16 +5,10 @@
   <record id="module_category_waste_management" model="ir.module.category">
     <field name="name">Waste Management</field>
     <field name="description">Access groups for Waste Management (Zakheni)</field>
+     <field name="visible" eval="1"/>
     <field name="sequence">25</field>
   </record>
 
-<!--  &lt;!&ndash; Root internal app group &ndash;&gt;-->
-<!--  <record id="group_wmz_user" model="res.groups">-->
-<!--    <field name="name">User</field>-->
-<!--    <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>-->
-<!--    &lt;!&ndash; make this an INTERNAL base by implying base.group_user &ndash;&gt;-->
-<!--&lt;!&ndash;    <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>&ndash;&gt;-->
-<!--  </record>-->
 
   <!-- Admin (Super) -->
   <record id="group_wmz_admin" model="res.groups">

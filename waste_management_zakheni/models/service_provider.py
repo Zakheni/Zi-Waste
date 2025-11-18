@@ -28,8 +28,8 @@ class ServiceProvider(models.Model):
 
     # Contacts
     phone = fields.Char(required=True)
-    mobile = fields.Char()
-    email = fields.Char()
+    mobile = fields.Char(required=True)
+    email = fields.Char(required=True)
 
     # Fleet info (reuse Fleet's Vehicle Model Categories as 'types')
     fleet_category_ids = fields.Many2many(

@@ -2,13 +2,12 @@
     <data noupdate="1">
 
         <!-- Styled Onboarding Welcome Email Template -->
-        <record id="mail_tmpl_service_request_amend" model="mail.template">
-            <field name="name">Amend of Service Request – Action Required</field>
-            <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
-            <field name="subject">Ament Required – {{object.name}}</field>
-            <field name="email_from">{{user.email}}</field>
-<!--            <field name="email_to">info@zaheniict.co.za</field>-->
-            <field name="email_to" eval="'info@zaheniict.co.za'"/>
+        <record id="mail_tmpl_service_request_worksheet_completion" model="mail.template">
+            <field name="name">Worksheet Completion</field>
+            <field name="model_id" ref="waste_management_zakheni.model_waste_worksheet"/>
+            <field name="subject">Worksheet Completion Action Required – {{object.name}}</field>
+            <field name="email_from">{{object.driver_work_email}}</field>
+            <field name="email_to">{{user.email}}</field>
             <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">
                 <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
@@ -22,7 +21,7 @@
 
                                     <td valign="middle" align="right"
                                         t-if="not object.company_id.uses_default_logo">
-                                        <img t-attf-src="/logo.png?company={{ object.company_id.id}}"
+                                        <img t-attf-src="/logo.png?company={{object.company_id.id}}"
                                              style="padding: 0px; margin: 0px; height: auto; width: 80px;"
                                              t-att-alt="object.company_id.name"/>
 
@@ -36,21 +35,23 @@
 
                         <!--                         Body-->
                         <div style="padding: 20px; color: #333333; line-height: 1.6;">
-                            <p>Dear Manger,
+                            <p>Dear Admin,
                             </p>
 
-                            <p>Service Request is amended please attend to it</p>
+                            <p>The worksheet has been completed and requires your attention</p>
                             <p>
+                                Service request Reference:
                                 <strong>
                                     <t t-out="object.name"></t>
                                 </strong>
+
                             </p>
 
                             <p>Login for mor details:</p>
 
                             <p>
                                 <a href="https://dwmis.co.za/web/login"
-                                   style="padding:10px 15px;background:#000000;color:white;text-decoration:none;">
+                                   style="padding:10px 15px;background:#004080;color:white;text-decoration:none;">
                                     Login
                                 </a>
 
@@ -58,7 +59,7 @@
 
 
                             <p>Thank you,</p>
-                            <p>Admin Clerk</p>
+                            <p>Driver</p>
                         </div>
 
 
