@@ -1144,3 +1144,135 @@ def delete_invoice(
 
     return {"ok": True, "deleted_doc_no": doc_no, "document_type": doc_type}
 
+
+#=====================================================================================================================================================================
+
+from typing import List, Optional
+from pydantic import BaseModel, Field
+from fastapi import Body, Header, HTTPException
+import datetime
+
+# ---- Models (match what Odoo sends) ----
+class PaymentLine(BaseModel):
+    partner_code: str
+    invoice_doc_no: Optional[str] = None
+    amount: float
+    reference: Optional[str] = None
+    currency_code: Optional[str] = None
+
+class PaymentBatchIn(BaseModel):
+    batch_ref: str
+    payment_date: str  # YYYY-MM-DD
+    partner_type: str  # 'customer' or 'supplier'
+    journal_code: Optional[str] = None  # kept for parity; not used on this fallback
+    currency_code: Optional[str] = None
+    lines: List[PaymentLine]
+
+# ---- utils reused from your bridge ----
+def _to_date_sql(s: Optional[str]):
+    if not s:
+        return None
+    try:
+        return datetime.date.fromisoformat(s)
+    except Exception:
+        return None
+
+def _safe_str(v):
+    return None if v is None else str(v).strip()
+
+def _list_tables(cur) -> List[str]:
+    return [t.table_name for t in cur.tables(tableType="TABLE").fetchall()]
+
+# POST /payments/batch  (ReceiptTransactions fallback)
+@app.post("/payments/batch")
+def create_payment_batch(
+    payload: PaymentBatchIn = Body(...),
+    x_api_key: Optional[str] = Header(default=None),
+    key: Optional[str] = None,
+):
+    require_key(x_api_key, key)
+    if not payload.batch_ref or not payload.lines:
+        raise HTTPException(status_code=400, detail="batch_ref and at least one line are required")
+
+    pay_date = _to_date_sql(payload.payment_date) or datetime.date.today()
+    ptype = (payload.partner_type or "customer").lower().strip()
+
+    with get_conn() as cn:
+        cur = cn.cursor()
+
+        # We originally looked for batch header/lines but your DB doesn't have them.
+        # We'll fallback to AR customer receipts via ReceiptTransactions.
+        tables = _list_tables(cur)
+        has_receipts = any(t.lower() == "receipttransactions".lower() for t in tables)
+        if not has_receipts:
+            # Nothing to write to — tell the caller what exists
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "error": "No ReceiptTransactions table found; cannot fallback",
+                    "available_tables": tables[:200],
+                }
+            )
+
+        if ptype != "customer":
+            # For now, we only implement AR path because your DB has AR receipts,
+            # not AP payment batch tables. We can add AP via LedgerTransactions
+            # once we confirm AP columns in your dataset.
+            raise HTTPException(
+                status_code=501,
+                detail={
+                    "error": "Supplier payments not implemented for this dataset (no batch/AP tables).",
+                    "hint": "Provide a sample row/columns of supplier payments table in your DB (e.g. APPayments / LedgerTransactions) to enable AP.",
+                    "available_tables": tables[:200],
+                }
+            )
+
+        rcpt_tbl = "ReceiptTransactions"
+        # Discover the flexible columns in your dataset
+        rcpt_no_col   = _pick_col_from(cur, rcpt_tbl, ["ReceiptNumber","ReferenceNo","Number","DocNo"])
+        rcpt_date_col = _pick_col_from(cur, rcpt_tbl, ["ReceiptDate","Date"])
+        cust_code_col = _pick_col_from(cur, rcpt_tbl, ["CustomerCode","Code","Account"])
+        amount_col    = _pick_col_from(cur, rcpt_tbl, ["Amount","TotalAmount","ReceiptAmount","Value"])
+        ref_col       = _pick_col_from(cur, rcpt_tbl, ["Reference","ExtReference","OrderNumber","Description","Memo"])
+        curr_col      = _pick_col_from(cur, rcpt_tbl, ["CurrencyCode","Currency"])
+        bank_col      = _pick_col_from(cur, rcpt_tbl, ["BankAccount","BankCode","Cashbook","CashbookCode","Journal"])
+
+        # Minimal required
+        if not (rcpt_no_col and rcpt_date_col and cust_code_col and amount_col):
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "error": "Required columns missing on ReceiptTransactions",
+                    "need": ["ReceiptNumber/ReferenceNo", "ReceiptDate/Date", "CustomerCode/Code/Account", "Amount/TotalAmount"],
+                }
+            )
+
+        inserted = 0
+        batch_id = payload.batch_ref.strip()
+        for idx, ln in enumerate(payload.lines, start=1):
+            amt = float(ln.amount or 0.0)
+            if amt <= 0:
+                continue
+
+            # Create a stable receipt number (or let DB auto-number if it does)
+            rcpt_no = f"{batch_id}-{idx:03d}"
+
+            cols = [rcpt_no_col, rcpt_date_col, cust_code_col, amount_col]
+            vals = [rcpt_no, pay_date, _safe_str(ln.partner_code), amt]
+
+            if ref_col:
+                cols.append(ref_col); vals.append(ln.reference or batch_id)
+            if curr_col:
+                cols.append(curr_col); vals.append(ln.currency_code or payload.currency_code or "ZAR")
+            # bank_col is optional – in many datasets ReceiptTransactions doesn't store bank per line
+            if bank_col and payload.journal_code:
+                cols.append(bank_col); vals.append(payload.journal_code)
+
+            cur.execute(
+                f"INSERT INTO {rcpt_tbl} ({', '.join(cols)}) VALUES ({', '.join(['?']*len(cols))})",
+                *vals
+            )
+            inserted += 1
+
+        return {"ok": True, "batch_id": batch_id, "partner_type": "customer", "inserted": inserted}
+
