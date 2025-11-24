@@ -42,12 +42,17 @@
                             <p>
                                 Service request Reference:
                                 <strong>
+                                    <t t-out="object.service_request_id.name"></t>
+                                </strong>
+<br/>
+                                Worksheet  Reference:
+                                <strong>
                                     <t t-out="object.name"></t>
                                 </strong>
 
                             </p>
 
-                            <p>Login for mor details:</p>
+                            <p>Login for more details:</p>
 
                             <p>
                                 <a href="https://dwmis.co.za/web/login"
