@@ -13,303 +13,834 @@ class WasteWorksheetAssignBinWizard(models.TransientModel):
         readonly=True,
     )
 
-    request_id = fields.Many2one(
-        "waste.service.request",
-        string="Service Request",
-        related="worksheet_id.service_request_id",
+
+    # Service metadata
+    svc_code = fields.Char(compute="_compute_svc_metadata", store=False)
+    customer_id = fields.Many2one('res.partner', compute="_compute_svc_metadata", store=False)
+    bin_type_id = fields.Many2one('bin.type', compute="_compute_svc_metadata", store=False)
+
+    # Waste type (for visibility rules / future use)
+    waste_type_id = fields.Many2one(
+        'waste.type',
+        related='request_id.waste_type_id',
+        store=False,
+        readonly=True,
+    )
+    waste_type_name = fields.Char(
+        related='request_id.waste_type_id.name',
         store=False,
         readonly=True,
     )
 
-    # helper metadata (same as request wizard)
-    svc_code = fields.Char(compute="_compute_svc_metadata", store=False)
-    customer_id = fields.Many2one("res.partner", compute="_compute_svc_metadata", store=False)
-    bin_type_id = fields.Many2one("bin.type", compute="_compute_svc_metadata", store=False)
-
-    shunt_to_id = fields.Many2one(
-        "pickup.point",
-        string="To Location (Drop-off Point)",
-        domain="[('partner_id', '=', customer_id)]",
-        help="For Shunting of Bins, select where bins will be moved to.",
+    # Drives visibility for Bin Dropped column
+    show_bin_dropped = fields.Boolean(
+        string="Show Bin Dropped",
+        compute="_compute_visibility_flags",
+        store=False,
     )
 
     line_ids = fields.One2many(
-        "waste.worksheet.assign.bin.line.wizard",
-        "wizard_id",
+        'waste.request.assign.bin.line.wizard',
+        'wizard_id',
         string="Lines",
     )
 
-    # ---------------------------------------------------------
-    # Metadata
-    # ---------------------------------------------------------
-    @api.depends("worksheet_id")
+    # ------------------------------------------------------------
+    # Service metadata
+    # ------------------------------------------------------------
+    @api.depends('request_id')
     def _compute_svc_metadata(self):
         for wiz in self:
             req = wiz.request_id
             if not req:
-                wiz.svc_code = ""
+                wiz.svc_code = ''
                 wiz.customer_id = False
                 wiz.bin_type_id = False
                 continue
 
-            code = (req.service_requested_id.code or "").lower() \
-                if req.service_requested_id and hasattr(req.service_requested_id, "code") \
-                else (req.service_requested_id.display_name or "").strip().lower()
+            code = (req.service_requested_id.code or '').lower() \
+                if req.service_requested_id and hasattr(req.service_requested_id, 'code') \
+                else (req.service_requested_id.display_name or '').strip().lower()
 
             wiz.svc_code = code
             wiz.customer_id = req.customer_id or req.partner_id
             wiz.bin_type_id = req.bin_type_id
 
-    # ---------------------------------------------------------
-    # Defaults: open from worksheet smart button
-    # ---------------------------------------------------------
+    # ------------------------------------------------------------
+    # Visibility flags (NO tank logic anymore)
+    # ------------------------------------------------------------
+    @api.depends('svc_code', 'waste_type_name', 'bin_type_id')
+    def _compute_visibility_flags(self):
+        for wiz in self:
+            code = (wiz.svc_code or '').strip().lower()
+            wt_name = (wiz.waste_type_name or '').strip().lower()
+
+            # Bin Dropped visible for:
+            # - placement of bins
+            # - swapping of bins
+            # - waste collection & disposal (including typo variant)
+            # - special case: general collection & desposal + General Compactable
+            show_bin_dropped = False
+            if code in (
+                'placement of bins',
+                'swapping of bins',
+                'waste collection & disposal',
+                'waste collection and disposal',
+            ):
+                show_bin_dropped = True
+
+            if code in ('waste collection & disposal', 'waste collection and disposal') \
+               and wt_name == 'general compactable':
+                show_bin_dropped = True
+
+            wiz.show_bin_dropped = show_bin_dropped
+
+    # ------------------------------------------------------------
+    # LOAD STORED LINES WHEN OPENING
+    # ------------------------------------------------------------
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
+        active_id = self.env.context.get('active_id')
+        if not active_id:
+            return res
 
-        active_id = self.env.context.get("active_id")
-        active_model = self.env.context.get("active_model")
+        req = self.env['waste.service.request'].browse(active_id)
+        res['request_id'] = req.id
 
-        if active_model == "waste.worksheet" and active_id:
-            ws = self.env["waste.worksheet"].browse(active_id)
-            res["worksheet_id"] = ws.id
+        lines = []
+        for l in req.bin_line_ids:
+            lines.append((0, 0, {
+                'request_id': req.id,
+                'pickup_point_id': l.pickup_point_id.id,
+                'dropoff_point_id': l.dropoff_point_id.id if l.dropoff_point_id else False,
+                'bin_lifted_ids': [(6, 0, l.bin_lifted_ids.ids)],
+                'bin_dropped_ids': [(6, 0, l.bin_dropped_ids.ids)],
+                'liters_collected': l.liters_collected,
+                'liters_remaining': l.liters_remaining,
+            }))
 
-            req = ws.service_request_id
-            if req:
-                # keep shunt_to_id on wizard
-                res["shunt_to_id"] = req.shunt_to_id.id if req.shunt_to_id else False
-
-                # preload lines from persistent request lines
-                lines_vals = []
-                for l in req.bin_line_ids:
-                    lines_vals.append((0, 0, {
-                        "pickup_point_id": l.pickup_point_id.id,
-                        "container_ids": [(6, 0, l.container_ids.ids)],
-                        "shunt_container_ids": [(6, 0, l.shunt_container_ids.ids)],
-                        "lifted_container_ids": [(6, 0, l.lifted_container_ids.ids)],
-                        "dropped_container_ids": [(6, 0, l.dropped_container_ids.ids)],
-                    }))
-                res["line_ids"] = lines_vals
+        if lines:
+            res['line_ids'] = lines
 
         return res
 
-    # ---------------------------------------------------------
-    # Apply: write to request (persistent)
-    # ---------------------------------------------------------
+    # ------------------------------------------------------------
+    # APPLY = SAVE LINES PERMANENTLY + SYNC REQUEST FIELDS
+    # ------------------------------------------------------------
+
     def action_confirm(self):
         self.ensure_one()
         req = self.request_id
-        if not req:
-            return {"type": "ir.actions.act_window_close"}
+        svc = (self.svc_code or '').strip().lower()
+        cust = self.customer_id or req.customer_id or req.partner_id
 
-        svc = (self.svc_code or "").strip().lower()
-
-        # gather bins for request-level M2M
-        dropoff_bins = self.env["waste.container"]
-        shunt_bins = self.env["waste.container"]
-        lifted_bins = self.env["waste.container"]
-        dropped_bins = self.env["waste.container"]
-
-        # -----------------------------------------------------
-        # 1) Replace persistent request bin_line_ids
-        # -----------------------------------------------------
+        # clear old persistent bin lines
         req.bin_line_ids.unlink()
 
-        new_lines = []
+        persistent_vals = []
+        all_lifted = self.env['waste.container']
+        all_dropped = self.env['waste.container']
+        all_tanks = self.env['waste.container']
+        total_liters_collected = 0.0  # 🔹 new
+
+        # collect pickup & dropoff points from wizard lines
+        pickup_points = self.env['pickup.point']
+        dropoff_points = self.env['pickup.point']
+
+        # ---- NEW: prevent same bin on multiple lines ----------------
+        # container_id -> (pickup_name, dropoff_name)
+        bin_usage_map = {}
+
         for line in self.line_ids:
-            if not line.pickup_point_id:
-                continue
+            # -----------------------------
+            # ensure pickup_point_id is set
+            # -----------------------------
+            pp_id = line.pickup_point_id.id if line.pickup_point_id else False
+            dp_id = line.dropoff_point_id.id if line.dropoff_point_id else False
 
-            vals = {
-                "request_id": req.id,
-                "pickup_point_id": line.pickup_point_id.id,
-                "container_ids": [(6, 0, line.container_ids.ids)],
-                "shunt_container_ids": [(6, 0, line.shunt_container_ids.ids)],
-                "lifted_container_ids": [(6, 0, line.lifted_container_ids.ids)],
-                "dropped_container_ids": [(6, 0, line.dropped_container_ids.ids)],
-            }
-            new_lines.append((0, 0, vals))
+            # For PLACEMENT OF BINS:
+            # UI only asks for Drop-off Point, so technically required
+            # pickup_point_id will be mirrored from dropoff_point_id
+            if svc == 'placement of bins' and not pp_id:
+                pp_id = dp_id
 
-            # collect for request container M2Ms
-            if svc in ("placement of bins", "removal of bins", "waste collection & disposal"):
-                dropoff_bins |= line.container_ids
-            elif svc == "shunting of bins":
-                shunt_bins |= line.shunt_container_ids
-            elif svc == "swapping of bins":
-                lifted_bins |= line.lifted_container_ids
-                dropped_bins |= line.dropped_container_ids
+            # safety: if after that we still don't have pp_id, raise clear error
+            if not pp_id:
+                raise ValidationError(_("Pickup Point is required on bin mapping line."))
 
-        req.write({"bin_line_ids": new_lines})
+            # ---- DUPLICATE BIN VALIDATION --------------------------
+            pp_name = line.pickup_point_id.display_name or _("(no pickup)")
+            dp_name = line.dropoff_point_id.display_name or _("(no drop-off)")
 
-        # -----------------------------------------------------
-        # 2) Update request container M2Ms
-        # -----------------------------------------------------
-        if svc in ("placement of bins", "removal of bins", "waste collection & disposal"):
-            req.dropoff_container_ids = [(6, 0, dropoff_bins.ids)]
-        elif svc == "shunting of bins":
-            req.shunt_to_id = self.shunt_to_id
-            req.shunt_container_ids = [(6, 0, shunt_bins.ids)]
-        elif svc == "swapping of bins":
-            req.lifted_bin_ids = [(6, 0, lifted_bins.ids)]
-            req.dropped_bin_ids = [(6, 0, dropped_bins.ids)]
+            # all bins on this line (lifted + dropped)
+            current_bin_ids = set(line.bin_lifted_ids.ids + line.bin_dropped_ids.ids)
 
-        # -----------------------------------------------------
-        # 3) Update wizard_pickup_point_ids on request
-        #    (silently cap to 10)
-        # -----------------------------------------------------
-        pickup_points = self.line_ids.mapped("pickup_point_id")
-        pickup_points = pickup_points[:10]
-        req.wizard_pickup_point_ids = [(6, 0, pickup_points.ids)]
+            for cid in current_bin_ids:
+                if cid in bin_usage_map:
+                    prev_pp_name, prev_dp_name = bin_usage_map[cid]
+                    bin_rec = self.env['waste.container'].browse(cid)
+                    raise ValidationError(_(
+                        "Bin %(bin)s is already assigned to "
+                        "Pickup '%(pp1)s' / Drop-off '%(dp1)s'.\n"
+                        "You cannot assign it again to "
+                        "Pickup '%(pp2)s' / Drop-off '%(dp2)s'."
+                    ) % {
+                                              'bin': bin_rec.display_name,
+                                              'pp1': prev_pp_name,
+                                              'dp1': prev_dp_name,
+                                              'pp2': pp_name,
+                                              'dp2': dp_name,
+                                          })
 
-        return {"type": "ir.actions.act_window_close"}
+                # remember where this bin is used
+                bin_usage_map[cid] = (pp_name, dp_name)
+            # ---- END DUPLICATE VALIDATION -------------------------
+
+            persistent_vals.append({
+                'request_id': req.id,
+                'pickup_point_id': pp_id,
+                'dropoff_point_id': dp_id,
+                'bin_lifted_ids': [(6, 0, line.bin_lifted_ids.ids)],
+                'bin_dropped_ids': [(6, 0, line.bin_dropped_ids.ids)],
+                'tank_ids': [(6, 0, line.tank_ids.ids)],
+                'liters_collected': line.liters_collected,
+                'liters_remaining': line.liters_remaining,
+            })
+
+            all_lifted |= line.bin_lifted_ids
+            all_dropped |= line.bin_dropped_ids
+            all_tanks |= line.tank_ids  # 🔹 collect all tanks
+            total_liters_collected += line.liters_collected or 0.0
+
+            # accumulate points for request M2Ms
+            if pp_id:
+                pickup_points |= self.env['pickup.point'].browse(pp_id)
+            if dp_id:
+                dropoff_points |= self.env['pickup.point'].browse(dp_id)
+
+        if persistent_vals:
+            self.env['waste.request.bin.line'].create(persistent_vals)
+
+        # sync lifted / dropped bins back to request
+        req.bin_lifted_ids = [(6, 0, all_lifted.ids)]
+        req.bin_dropped_ids = [(6, 0, all_dropped.ids)]
+        req.tank_ids = [(6, 0, all_tanks.ids)]
+
+        # sync pickup & drop-off points back to waste.service.request
+        if pickup_points:
+            req.pickup_point_ids = [(6, 0, pickup_points.ids)]
+        else:
+            req.pickup_point_ids = [(5, 0, 0)]
+
+        if dropoff_points:
+            req.dropoff_point_ids = [(6, 0, dropoff_points.ids)]
+        else:
+            req.dropoff_point_ids = [(5, 0, 0)]
+
+        # ----------------------------------------------------
+        # 🔹 NEW: RESERVE BINS FOR THIS REQUEST (placement)
+        # ----------------------------------------------------
+        if svc == 'placement of bins' and all_dropped:
+            all_dropped.write({
+                'reserved_request_id': req.id,
+                # NOTE:
+                # We only reserve here. Physical placement (status/inUse)
+                # happens later in action_mark_done.
+            })
+
+        if svc == 'shunting of bins' and all_lifted:
+            all_lifted.write({
+                'reserved_request_id': req.id,
+                # NOTE:
+                # We only reserve here. Physical placement (status/inUse)
+                # happens later in action_mark_done.
+            })
+
+        if svc == 'removal of bins' and all_lifted:
+            all_lifted.write({
+                'reserved_request_id': req.id,
+                # NOTE:
+                # We only reserve here. Physical placement (status/inUse)
+                # happens later in action_mark_done.
+            })
+
+        if svc == 'waste collection & disposal' and all_lifted:
+            all_lifted.write({
+                'reserved_request_id': req.id,
+                # NOTE:
+                # We only reserve here. Physical placement (status/inUse)
+                # happens later in action_mark_done.
+            })
+
+        # optional: behaviour for swapping of bins
+        if svc == 'swapping of bins' and all_lifted:
+            all_lifted.write({
+                'reserved_request_id': req.id,
+                # NOTE:
+                # We only reserve here. Physical placement (status/inUse)
+                # happens later in action_mark_done.
+            })
+
+            for line in self.line_ids:
+                pp = line.pickup_point_id
+
+                # lifted bins leave pickup point
+                if line.bin_lifted_ids:
+                    line.bin_lifted_ids.write({
+                        'pickup_point_id': False,
+                        'dropoff_point_id': False,
+                        'inUse': False,
+                    })
+
+                # dropped bins go to pickup point
+                if pp and line.bin_dropped_ids:
+                    line.bin_dropped_ids.write({
+                        'pickup_point_id': pp.id,
+                        'customer_id': cust.id if cust else False,
+                        'status': 'in_use',
+                        'inUse': True,
+                    })
 
 
-class WasteWorksheetAssignBinWizardLine(models.TransientModel):
-    _name = "waste.worksheet.assign.bin.line.wizard"
-    _description = "Assign Bins Wizard Line (Worksheet)"
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+class WasteAssignBinWizardLine(models.TransientModel):
+    _name = 'waste.request.assign.bin.line.wizard'
+    _description = 'Assign Bins Wizard Line'
 
     wizard_id = fields.Many2one(
-        "waste.worksheet.assign.bin.wizard",
+        'waste.request.assign.bin.wizard',
+        string="Wizard",
         required=True,
-        ondelete="cascade",
+        ondelete='cascade',
     )
 
-    svc_code = fields.Char(related="wizard_id.svc_code", store=False)
-    customer_id = fields.Many2one(related="wizard_id.customer_id", store=False, readonly=True)
-    bin_type_id = fields.Many2one(related="wizard_id.bin_type_id", store=False, readonly=True)
+    request_id = fields.Many2one(
+        'waste.service.request',
+        string="Service Request",
+    )
+
+    svc_code = fields.Char(related='wizard_id.svc_code', store=False)
+    customer_id = fields.Many2one(
+        'res.partner',
+        related='wizard_id.customer_id',
+        store=False,
+        readonly=True,
+    )
+    bin_type_id = fields.Many2one(
+        'bin.type',
+        related='wizard_id.bin_type_id',
+        store=False,
+        readonly=True,
+    )
+
+    waste_type_id = fields.Many2one(
+        'waste.type',
+        related='wizard_id.waste_type_id',
+        store=False,
+        readonly=True,
+    )
+    waste_type_name = fields.Char(
+        related='wizard_id.waste_type_name',
+        store=False,
+        readonly=True,
+    )
+
+    # used in XML for bin_dropped visibility
+    show_bin_dropped = fields.Boolean(
+        related='wizard_id.show_bin_dropped',
+        store=False,
+        readonly=True,
+    )
 
     pickup_point_id = fields.Many2one(
-        "pickup.point",
-        string="Pickup / Dropoff Point",
-        help="Pickup point (also used as dropoff).",
+        'pickup.point',
+        string="Pickup Point",
         domain="[('partner_id', '=', customer_id)]",
     )
 
-    # Placement / Removal / Collection
-    container_ids = fields.Many2many(
-        "waste.container",
-        "waste_ws_assign_line_cont_rel",
-        "line_id",
-        "container_id",
-        string="Containers",
-        domain="""
-                [
-                    ('pickup_point_id', '=', False),
-                    ('customer_id', '=', False),
-                    ('bin_type_id', '=', bin_type_id),
-                    ('status', 'in', ('intact', 'un_use'))
-                ]
-                """,
+    dropoff_point_id = fields.Many2one(
+        'pickup.point',
+        string="Drop-off Point",
+        domain="[('partner_id', '=', customer_id)]",
     )
 
-    # Shunting
-    shunt_container_ids = fields.Many2many(
-        "waste.container",
-        "waste_ws_assign_line_shunt_rel",
-        "line_id",
-        "container_id",
-        string="Bins to Shunt",
+    # ------------------------------------------------------------
+    # Dynamic domain: don't show bins that are already selected
+    # on another wizard line
+    # ------------------------------------------------------------
+    @api.onchange('pickup_point_id', 'dropoff_point_id',
+                  'bin_lifted_ids', 'bin_dropped_ids')
+    def _onchange_bins_domain(self):
+        """Exclude bins already used on other lines of this wizard."""
+        self.ensure_one()
+        if not self.wizard_id:
+            return {}
+
+        # other lines of the same wizard
+        other_lines = self.wizard_id.line_ids - self
+
+        used_bins = (
+                other_lines.mapped('bin_lifted_ids') |
+                other_lines.mapped('bin_dropped_ids')
+        )
+
+        return {
+            'domain': {
+                'bin_lifted_ids': [('id', 'not in', used_bins.ids)],
+                'bin_dropped_ids': [('id', 'not in', used_bins.ids)],
+            }
+        }
+
+    # bin_lifted_ids = fields.Many2many(
+    #     'waste.container',
+    #     'waste_assign_bin_wizard_line_lifted_rel',
+    #     'line_id',
+    #     'container_id',
+    #     string="Bin Lifted",
+    #     domain="""
+    #         [
+    #             ('partner_id', '=', customer_id),
+    #             ('pickup_point_id', '=', pickup_point_id),
+    #             ('status', 'in', ['in_use', 'un_use']),
+    #             ('inUse', '=', True),
+    #             ('container_type_id', '=', 'Bin'),
+    #             ('reserved_request_id', '=', False),
+    #             ('bin_type_id', 'in', ['6m³','9m³','11m³'])
+    #         ]
+    #     """,
+    # )
+
+    bin_lifted_ids = fields.Many2many(
+        'waste.container',
+        'waste_ws_assign_bin_wizard_line_lifted_rel',
+        'line_id',
+        'container_id',
+        string="Bin Lifted",
+        domain="""
+            [
+                ('partner_id', '=', customer_id),
+                ('pickup_point_id', '=', pickup_point_id),
+                ('status', 'in', ['in_use', 'un_use']),
+                ('inUse', '=', True),
+                ('container_type_id', '=', 'Bin'),
+                ('bin_type_id', 'in', ['6m³','9m³','11m³']),
+                ('reserved_request_id', 'in', [False, request_id])
+            ]
+        """,
+    )
+
+    tank_ids = fields.Many2many(
+        'waste.container',
+        'waste_ws_assign_tank_wizard_line_collect_rel',
+        'line_id',
+        'container_id',
+        string="Tanks",
         domain="""
                   [
+                      ('partner_id', '=', partner_id),
                       ('pickup_point_id', '=', pickup_point_id),
-                      ('customer_id', '=', customer_id),
-                      ('bin_type_id', '=', bin_type_id),
-                      ('status', '!=', ('missing'))
+                      ('status', 'in', ['in_use', 'un_use']),
+                      ('inUse', '=', True),
+                      ('container_type_id', '=', 'Tank'),
                   ]
-                  """,
+              """,
     )
 
-    # Swapping
-    lifted_container_ids = fields.Many2many(
-        "waste.container",
-        "waste_ws_assign_line_lifted_rel",
-        "line_id",
-        "container_id",
-        string="Lifted Bins",
+    # bin_dropped_ids = fields.Many2many(
+    #     'waste.container',
+    #     'waste_assign_bin_wizard_line_dropped_rel',
+    #     'line_id',
+    #     'container_id',
+    #     string="Bin Dropped",
+    #     domain="""
+    #         [
+    #             ('partner_id', '=', False),
+    #             ('pickup_point_id', '=', False),
+    #             ('status', '=', 'intact'),
+    #             ('inUse', '=', False),
+    #             ('dropoff_point_id', '=', False),
+    #             ('bin_type_id', 'in', ['6m³','9m³','11m³'])
+    #         ]
+    #     """,
+    # )
+
+    bin_dropped_ids = fields.Many2many(
+        'waste.container',
+        'waste_ws_assign_bin_wizard_line_dropped_rel',
+        'line_id',
+        'container_id',
+        string="Bin Dropped",
         domain="""
-                    [
-                        ('pickup_point_id', '=', pickup_point_id),
-                        ('customer_id', '=', customer_id),
-                        ('bin_type_id', '=', bin_type_id),
-                        ('status', 'in', ('in_use','un_use'))
-                    ]
-                    """,
-    )
-    dropped_container_ids = fields.Many2many(
-        "waste.container",
-        "waste_ws_assign_line_dropped_rel",
-        "line_id",
-        "container_id",
-        string="Dropped Bins",
-        domain="""
-                   [
-                       ('pickup_point_id', '=', pickup_point_id),
-                       ('customer_id', '=', customer_id),
-                       ('bin_type_id', '=', bin_type_id),
-                       ('status', 'in', ('broken','in_use','un_use'))
-                   ]
-                   """,
+            [
+                ('partner_id', '=', False),
+                ('pickup_point_id', '=', False),
+                ('status', '=', 'intact'),
+                ('inUse', '=', False),
+                ('dropoff_point_id', '=', False),
+                ('reserved_request_id', '=', False),   
+                ('bin_type_id', 'in', ['6m³','9m³','11m³'])
+            ]
+        """,
     )
 
-    # ---------------------------------------------------------
-    # Domains per service type (same rules you gave)
-    # ---------------------------------------------------------
-    @api.onchange("pickup_point_id")
-    def _onchange_pickup_point_id(self):
+    liters_collected = fields.Float(string="Liters Collected")
+    liters_remaining = fields.Float(string="Liters Remaining")
+
+    bin_duplicate_warning = fields.Char(
+        string="Bin already used in this request",
+        compute="_compute_bin_duplicate_warning",
+        store=False,
+    )
+
+    @api.depends(
+        'bin_lifted_ids',
+        'bin_dropped_ids',
+        'wizard_id.line_ids.bin_lifted_ids',
+        'wizard_id.line_ids.bin_dropped_ids',
+    )
+    def _compute_bin_duplicate_warning(self):
+        """If any bin on this line is also used on another line of the wizard,
+        show a warning text.
+        """
         for line in self:
-            wiz = line.wizard_id
-            svc = (wiz.svc_code or "").strip().lower()
-            customer = wiz.customer_id
-            bin_type = wiz.bin_type_id
+            line.bin_duplicate_warning = False
 
-            base_dom = []
-            if bin_type:
-                base_dom.append(("bin_type_id", "=", bin_type.id))
+            if not line.wizard_id:
+                continue
 
-            domains = {}
+            current_bins = set(line.bin_lifted_ids.ids + line.bin_dropped_ids.ids)
+            if not current_bins:
+                continue
 
-            # Placement = free intact/un_use bins
-            if svc == "placement of bins":
-                domains["container_ids"] = base_dom + [
-                    ("pickup_point_id", "=", False),
-                    ("customer_id", "=", False),
-                    ("status", "in", ["intact", "un_use"]),
-                ]
+            # other lines in same wizard
+            other_lines = line.wizard_id.line_ids - line
+            other_bins = set(
+                other_lines.mapped('bin_lifted_ids').ids +
+                other_lines.mapped('bin_dropped_ids').ids
+            )
 
-            # Removal = bins at pickup point for customer
-            elif svc == "removal of bins":
-                domains["container_ids"] = base_dom + [
-                    ("pickup_point_id", "=", line.pickup_point_id.id if line.pickup_point_id else False),
-                    ("customer_id", "=", customer.id if customer else False),
-                    ("status", "in", ["intact", "in_use", "broken"]),
-                ]
+            dup_ids = current_bins.intersection(other_bins)
+            if dup_ids:
+                bins = self.env['waste.container'].browse(list(dup_ids))
+                names = ", ".join(bins.mapped('display_name'))
+                line.bin_duplicate_warning = _("Used on another line: %s") % names
 
-            # Waste collection & disposal
-            elif svc == "waste collection & disposal":
-                domains["container_ids"] = base_dom + [
-                    ("pickup_point_id", "=", line.pickup_point_id.id if line.pickup_point_id else False),
-                    ("customer_id", "=", customer.id if customer else False),
-                    ("status", "in", ["in_use", "broken", "un_use"]),
-                ]
-
-            # Shunting = any bins at pickup point for customer
-            elif svc == "shunting of bins":
-                domains["shunt_container_ids"] = base_dom + [
-                    ("pickup_point_id", "=", line.pickup_point_id.id if line.pickup_point_id else False),
-                    ("customer_id", "=", customer.id if customer else False),
-                ]
-
-            # Swapping
-            elif svc == "swapping of bins":
-                domains["lifted_container_ids"] = base_dom + [
-                    ("pickup_point_id", "=", line.pickup_point_id.id if line.pickup_point_id else False),
-                    ("customer_id", "=", customer.id if customer else False),
-                    ("status", "in", ["broken", "in_use", "un_use"]),
-                ]
-                domains["dropped_container_ids"] = base_dom + [
-                    ("pickup_point_id", "=", False),
-                    ("customer_id", "=", False),
-                    ("status", "in", ["intact"]),
-                ]
-
-            return {"domain": domains}
+# from odoo import models, fields, api, _
+# from odoo.exceptions import ValidationError
+#
+#
+# class WasteWorksheetAssignBinWizard(models.TransientModel):
+#     _name = "waste.worksheet.assign.bin.wizard"
+#     _description = "Assign Bins Wizard (from Worksheet)"
+#
+#     worksheet_id = fields.Many2one(
+#         "waste.worksheet",
+#         string="Worksheet",
+#         required=True,
+#         readonly=True,
+#     )
+#
+#     request_id = fields.Many2one(
+#         "waste.service.request",
+#         string="Service Request",
+#         related="worksheet_id.service_request_id",
+#         store=False,
+#         readonly=True,
+#     )
+#
+#     # helper metadata (same as request wizard)
+#     svc_code = fields.Char(compute="_compute_svc_metadata", store=False)
+#     customer_id = fields.Many2one("res.partner", compute="_compute_svc_metadata", store=False)
+#     bin_type_id = fields.Many2one("bin.type", compute="_compute_svc_metadata", store=False)
+#
+#     shunt_to_id = fields.Many2one(
+#         "pickup.point",
+#         string="To Location (Drop-off Point)",
+#         domain="[('partner_id', '=', customer_id)]",
+#         help="For Shunting of Bins, select where bins will be moved to.",
+#     )
+#
+#     line_ids = fields.One2many(
+#         "waste.worksheet.assign.bin.line.wizard",
+#         "wizard_id",
+#         string="Lines",
+#     )
+#
+#     # ---------------------------------------------------------
+#     # Metadata
+#     # ---------------------------------------------------------
+#     @api.depends("worksheet_id")
+#     def _compute_svc_metadata(self):
+#         for wiz in self:
+#             req = wiz.request_id
+#             if not req:
+#                 wiz.svc_code = ""
+#                 wiz.customer_id = False
+#                 wiz.bin_type_id = False
+#                 continue
+#
+#             code = (req.service_requested_id.code or "").lower() \
+#                 if req.service_requested_id and hasattr(req.service_requested_id, "code") \
+#                 else (req.service_requested_id.display_name or "").strip().lower()
+#
+#             wiz.svc_code = code
+#             wiz.customer_id = req.customer_id or req.partner_id
+#             wiz.bin_type_id = req.bin_type_id
+#
+#     # ---------------------------------------------------------
+#     # Defaults: open from worksheet smart button
+#     # ---------------------------------------------------------
+#     @api.model
+#     def default_get(self, fields_list):
+#         res = super().default_get(fields_list)
+#
+#         active_id = self.env.context.get("active_id")
+#         active_model = self.env.context.get("active_model")
+#
+#         if active_model == "waste.worksheet" and active_id:
+#             ws = self.env["waste.worksheet"].browse(active_id)
+#             res["worksheet_id"] = ws.id
+#
+#             req = ws.service_request_id
+#             if req:
+#                 # keep shunt_to_id on wizard
+#                 res["shunt_to_id"] = req.shunt_to_id.id if req.shunt_to_id else False
+#
+#                 # preload lines from persistent request lines
+#                 lines_vals = []
+#                 for l in req.bin_line_ids:
+#                     lines_vals.append((0, 0, {
+#                         "pickup_point_id": l.pickup_point_id.id,
+#                         "container_ids": [(6, 0, l.container_ids.ids)],
+#                         "shunt_container_ids": [(6, 0, l.shunt_container_ids.ids)],
+#                         "lifted_container_ids": [(6, 0, l.lifted_container_ids.ids)],
+#                         "dropped_container_ids": [(6, 0, l.dropped_container_ids.ids)],
+#                     }))
+#                 res["line_ids"] = lines_vals
+#
+#         return res
+#
+#     # ---------------------------------------------------------
+#     # Apply: write to request (persistent)
+#     # ---------------------------------------------------------
+#     def action_confirm(self):
+#         self.ensure_one()
+#         req = self.request_id
+#         if not req:
+#             return {"type": "ir.actions.act_window_close"}
+#
+#         svc = (self.svc_code or "").strip().lower()
+#
+#         # gather bins for request-level M2M
+#         dropoff_bins = self.env["waste.container"]
+#         shunt_bins = self.env["waste.container"]
+#         lifted_bins = self.env["waste.container"]
+#         dropped_bins = self.env["waste.container"]
+#
+#         # -----------------------------------------------------
+#         # 1) Replace persistent request bin_line_ids
+#         # -----------------------------------------------------
+#         req.bin_line_ids.unlink()
+#
+#         new_lines = []
+#         for line in self.line_ids:
+#             if not line.pickup_point_id:
+#                 continue
+#
+#             vals = {
+#                 "request_id": req.id,
+#                 "pickup_point_id": line.pickup_point_id.id,
+#                 "container_ids": [(6, 0, line.container_ids.ids)],
+#                 "shunt_container_ids": [(6, 0, line.shunt_container_ids.ids)],
+#                 "lifted_container_ids": [(6, 0, line.lifted_container_ids.ids)],
+#                 "dropped_container_ids": [(6, 0, line.dropped_container_ids.ids)],
+#             }
+#             new_lines.append((0, 0, vals))
+#
+#             # collect for request container M2Ms
+#             if svc in ("placement of bins", "removal of bins", "waste collection & disposal"):
+#                 dropoff_bins |= line.container_ids
+#             elif svc == "shunting of bins":
+#                 shunt_bins |= line.shunt_container_ids
+#             elif svc == "swapping of bins":
+#                 lifted_bins |= line.lifted_container_ids
+#                 dropped_bins |= line.dropped_container_ids
+#
+#         req.write({"bin_line_ids": new_lines})
+#
+#         # -----------------------------------------------------
+#         # 2) Update request container M2Ms
+#         # -----------------------------------------------------
+#         if svc in ("placement of bins", "removal of bins", "waste collection & disposal"):
+#             req.dropoff_container_ids = [(6, 0, dropoff_bins.ids)]
+#         elif svc == "shunting of bins":
+#             req.shunt_to_id = self.shunt_to_id
+#             req.shunt_container_ids = [(6, 0, shunt_bins.ids)]
+#         elif svc == "swapping of bins":
+#             req.lifted_bin_ids = [(6, 0, lifted_bins.ids)]
+#             req.dropped_bin_ids = [(6, 0, dropped_bins.ids)]
+#
+#         # -----------------------------------------------------
+#         # 3) Update wizard_pickup_point_ids on request
+#         #    (silently cap to 10)
+#         # -----------------------------------------------------
+#         pickup_points = self.line_ids.mapped("pickup_point_id")
+#         pickup_points = pickup_points[:10]
+#         req.wizard_pickup_point_ids = [(6, 0, pickup_points.ids)]
+#
+#         return {"type": "ir.actions.act_window_close"}
+#
+#
+# class WasteWorksheetAssignBinWizardLine(models.TransientModel):
+#     _name = "waste.worksheet.assign.bin.line.wizard"
+#     _description = "Assign Bins Wizard Line (Worksheet)"
+#
+#     wizard_id = fields.Many2one(
+#         "waste.worksheet.assign.bin.wizard",
+#         required=True,
+#         ondelete="cascade",
+#     )
+#
+#     svc_code = fields.Char(related="wizard_id.svc_code", store=False)
+#     customer_id = fields.Many2one(related="wizard_id.customer_id", store=False, readonly=True)
+#     bin_type_id = fields.Many2one(related="wizard_id.bin_type_id", store=False, readonly=True)
+#
+#     pickup_point_id = fields.Many2one(
+#         "pickup.point",
+#         string="Pickup / Dropoff Point",
+#         help="Pickup point (also used as dropoff).",
+#         domain="[('partner_id', '=', customer_id)]",
+#     )
+#
+#     # Placement / Removal / Collection
+#     container_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_ws_assign_line_cont_rel",
+#         "line_id",
+#         "container_id",
+#         string="Containers",
+#         domain="""
+#                 [
+#                     ('pickup_point_id', '=', False),
+#                     ('customer_id', '=', False),
+#                     ('bin_type_id', '=', bin_type_id),
+#                     ('status', 'in', ('intact', 'un_use'))
+#                 ]
+#                 """,
+#     )
+#
+#     # Shunting
+#     shunt_container_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_ws_assign_line_shunt_rel",
+#         "line_id",
+#         "container_id",
+#         string="Bins to Shunt",
+#         domain="""
+#                   [
+#                       ('pickup_point_id', '=', pickup_point_id),
+#                       ('customer_id', '=', customer_id),
+#                       ('bin_type_id', '=', bin_type_id),
+#                       ('status', '!=', ('missing'))
+#                   ]
+#                   """,
+#     )
+#
+#     # Swapping
+#     lifted_container_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_ws_assign_line_lifted_rel",
+#         "line_id",
+#         "container_id",
+#         string="Lifted Bins",
+#         domain="""
+#                     [
+#                         ('pickup_point_id', '=', pickup_point_id),
+#                         ('customer_id', '=', customer_id),
+#                         ('bin_type_id', '=', bin_type_id),
+#                         ('status', 'in', ('in_use','un_use'))
+#                     ]
+#                     """,
+#     )
+#     dropped_container_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_ws_assign_line_dropped_rel",
+#         "line_id",
+#         "container_id",
+#         string="Dropped Bins",
+#         domain="""
+#                    [
+#                        ('pickup_point_id', '=', pickup_point_id),
+#                        ('customer_id', '=', customer_id),
+#                        ('bin_type_id', '=', bin_type_id),
+#                        ('status', 'in', ('broken','in_use','un_use'))
+#                    ]
+#                    """,
+#     )
+#
+#     # ---------------------------------------------------------
+#     # Domains per service type (same rules you gave)
+#     # ---------------------------------------------------------
+#     @api.onchange("pickup_point_id")
+#     def _onchange_pickup_point_id(self):
+#         for line in self:
+#             wiz = line.wizard_id
+#             svc = (wiz.svc_code or "").strip().lower()
+#             customer = wiz.customer_id
+#             bin_type = wiz.bin_type_id
+#
+#             base_dom = []
+#             if bin_type:
+#                 base_dom.append(("bin_type_id", "=", bin_type.id))
+#
+#             domains = {}
+#
+#             # Placement = free intact/un_use bins
+#             if svc == "placement of bins":
+#                 domains["container_ids"] = base_dom + [
+#                     ("pickup_point_id", "=", False),
+#                     ("customer_id", "=", False),
+#                     ("status", "in", ["intact", "un_use"]),
+#                 ]
+#
+#             # Removal = bins at pickup point for customer
+#             elif svc == "removal of bins":
+#                 domains["container_ids"] = base_dom + [
+#                     ("pickup_point_id", "=", line.pickup_point_id.id if line.pickup_point_id else False),
+#                     ("customer_id", "=", customer.id if customer else False),
+#                     ("status", "in", ["intact", "in_use", "broken"]),
+#                 ]
+#
+#             # Waste collection & disposal
+#             elif svc == "waste collection & disposal":
+#                 domains["container_ids"] = base_dom + [
+#                     ("pickup_point_id", "=", line.pickup_point_id.id if line.pickup_point_id else False),
+#                     ("customer_id", "=", customer.id if customer else False),
+#                     ("status", "in", ["in_use", "broken", "un_use"]),
+#                 ]
+#
+#             # Shunting = any bins at pickup point for customer
+#             elif svc == "shunting of bins":
+#                 domains["shunt_container_ids"] = base_dom + [
+#                     ("pickup_point_id", "=", line.pickup_point_id.id if line.pickup_point_id else False),
+#                     ("customer_id", "=", customer.id if customer else False),
+#                 ]
+#
+#             # Swapping
+#             elif svc == "swapping of bins":
+#                 domains["lifted_container_ids"] = base_dom + [
+#                     ("pickup_point_id", "=", line.pickup_point_id.id if line.pickup_point_id else False),
+#                     ("customer_id", "=", customer.id if customer else False),
+#                     ("status", "in", ["broken", "in_use", "un_use"]),
+#                 ]
+#                 domains["dropped_container_ids"] = base_dom + [
+#                     ("pickup_point_id", "=", False),
+#                     ("customer_id", "=", False),
+#                     ("status", "in", ["intact"]),
+#                 ]
+#
+#             return {"domain": domains}

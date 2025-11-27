@@ -137,24 +137,49 @@ class WasteWorksheet(models.Model):
             'target': 'new',
         }
 
+    billing_kl = fields.Float(
+        related='service_request_id.billing_kl',
+        string="Billing kL",
+        store=True,
+        readonly=True,
+        help="Kiloliters used for billing (from Service Request)."
+    )
+
+    billing_amount = fields.Float(
+        related='service_request_id.billing_amount',
+        string="Billing Amount (Excl. VAT)",
+        store=True,
+        readonly=True,
+        help="Calculated billing amount (from Service Request)."
+    )
+
+    qty_updated_from_worksheet = fields.Boolean(
+        related='service_request_id.qty_updated_from_worksheet',
+        string="Qty Updated From Worksheet",
+        store=True,
+        readonly=True,
+    )
+
+    truck_tanker_id = fields.Many2one('tank.volume', string="Track Tanker", related="service_request_id.tank_volume_id", store=False)
+
     service_requested_id = fields.Many2one('service.request', related='service_request_id.service_requested_id', string="Service Requested")
     waste_type_id = fields.Many2one('waste.type',related='service_request_id.waste_type_id', string="Waste Type")
     waste_details_id = fields.Many2one('waste.details',related='service_request_id.waste_details_id', string="Waste Details")
     bin_type_id = fields.Many2one('bin.type',related='service_request_id.bin_type_id', string="Bin Type")
     tank_volume_id = fields.Many2one('tank.volume',related='service_request_id.tank_volume_id', string="Tank Volume")
     container_type_id = fields.Many2one('container.type',related='service_request_id.container_type_id', string="Container type")
-    pickup_point_ids = fields.Many2many(
-        'pickup.point',
-        'waste_worksheet_pickup_rel',  # <-- NEW table name
-        'worksheet_id',  # <-- FK to waste.worksheet
-        'pickup_point_id',  # FK to pickup.point (can stay same)
-        string="Pickup Points",
-    )
+    # pickup_point_ids = fields.Many2many(
+    #     'pickup.point',
+    #     'waste_worksheet_pickup_rel',  # <-- NEW table name
+    #     'worksheet_id',  # <-- FK to waste.worksheet
+    #     'pickup_point_id',  # FK to pickup.point (can stay same)
+    #     string="Pickup Points",
+    # )
     liters_collected = fields.Float(string="Liters Collected", related='service_request_id.liters_collected', )
-    liters_remaining = fields.Float(string="Liters Remaining",  related='service_request_id.liters_remaining', )
-    product_id = fields.Many2one('product.product', string="Product",  related='service_request_id.product_id',)
+    # liters_remaining = fields.Float(string="Liters Remaining",  related='service_request_id.liters_remaining', )
+    # product_id = fields.Many2one('product.product', string="Product",  related='service_request_id.product_id',)
     # product_uom_qty = fields.Float(string="Quantity",  related='service_request_id.product_uom_qty',)
-    price_unit = fields.Float(string="Unit Price",  related='service_request_id.price_unit',)
+    # price_unit = fields.Float(string="Unit Price",  related='service_request_id.price_unit',)
     sale_order_id = fields.Many2one('sale.order', string="Sales Order")
 
     hide_waste_type = fields.Boolean(compute='_compute_field_visibility')
@@ -234,52 +259,44 @@ class WasteWorksheet(models.Model):
             rec.hide_service_placement = (is_service_placement == 'placement of bins')
 
 
-    inUse = fields.Boolean(string='InUse', related='service_request_id.inUse', defauld=True, )
+    inUse = fields.Boolean(string='InUse', related='service_request_id.inUse' )
     tank_ids = fields.Many2many('waste.container', 'waste_service_request_tanks_rel', string="Tanks",
                                 related='service_request_id.tank_ids')
-    # Shunt
-    shunt_from_id = fields.Many2one('pickup.point', string="From Location", domain="[('partner_id', '=', partner_id)]",
-                                    related='service_request_id.shunt_from_id')
-    shunt_to_id = fields.Many2one('pickup.point', string="To Location", domain="[('partner_id', '=', partner_id)]",
-                                  related='service_request_id.shunt_to_id')
 
-    lifted_bin_ids = fields.Many2many(
-        'waste.container',
-        'waste_service_request_lifted_rel',  # Different relation table
+    #NEW
+    pickup_point_ids = fields.Many2many(
+        'pickup.point',
+        'waste_request_pickup_point_rel',
         'request_id',
-        'container_id',
-        string="Lifted Bins", related='service_request_id.lifted_bin_ids'
+        'pickup_point_id',
+        string="Pickup Points",
+        related='service_request_id.pickup_point_ids'
     )
-    dropped_bin_ids = fields.Many2many(
-        'waste.container',
-        'waste_service_request_dropped_rel',  # Different relation table
+
+    dropoff_point_ids = fields.Many2many(
+        'pickup.point',
+        'waste_request_dropoff_point_rel',
         'request_id',
-        'container_id',
-        string="New Bins (Dropped)",
-        related='service_request_id.dropped_bin_ids'
+        'pickup_point_id',
+        string="Drop-off Points",
+        related='service_request_id.dropoff_point_ids'
     )
-    # Placement & Collection
-    dropoff_container_ids = fields.Many2many(
+    bin_lifted_ids = fields.Many2many(
         'waste.container',
-        'waste_service_request_containers_rel',
-        string="Containers",
-        related='service_request_id.dropoff_container_ids'
+        'waste_service_request_bin_lifted_rel',  # relation table
+        'request_id',  # FK to waste.service.request
+        'waste_container_id',  # FK to waste.container (existing column)
+        string="Bin Lifted",
+        related='service_request_id.bin_lifted_ids'
     )
-    # Shunt
-    shunt_container_ids = fields.Many2many(
+
+    bin_dropped_ids = fields.Many2many(
         'waste.container',
-        'waste_service_request_shunt_rel',
-        string="Containers",
-        related='service_request_id.shunt_container_ids'
-    )
-    # Shunt
-    shunted_bin_ids = fields.Many2many(
-        'waste.container',
-        'waste_service_request_shunted_rel',  # Different relation table
-        'request_id',
-        'container_id',
-        string="Bins to Shunt",
-        related='service_request_id.shunted_bin_ids'
+        'waste_service_request_bin_dropped_rel',  # relation table
+        'request_drop_id',  # FK to waste.service.request
+        'waste_container_id',  # FK to waste.container (existing column)
+        string="Bin Dropped",
+        related='service_request_id.bin_dropped_ids'
     )
 
     state = fields.Selection([
@@ -328,13 +345,6 @@ class WasteWorksheet(models.Model):
             )
             if template:
                 template.send_mail(self.id, force_send=True)
-    #
-    # def action_set_to_done(self):
-    #     self.state = "done"
-    #     # for rec in self:
-    #     #     rec.state = "delivered"
-    #     #     if rec.service_request_id:
-    #     #         rec.service_request_id.state = "delivered"
 
     image_ids = fields.One2many(
         'waste.worksheet.image',
@@ -347,122 +357,42 @@ class WasteWorksheet(models.Model):
         help="Add notes and embed pictures directly in the content.",
     )
 
-    # wizard_pickup_point_ids = fields.Many2many(
-    #     'pickup.point',
-    #     'waste_request_wizard_pickup_rel',
-    #     'request_id',
-    #     'pickup_point_id',
-    #     related="service_request_id.wizard_pickup_point_ids",
-    #     string="Pickup/Dropoff Points",
-    #     help="Pickup/Dropoff points captured from Assign Bins wizard.",
-    #     store=True,
-    # )
-
-    wizard_pickup_point_ids = fields.Many2many(
-        related="service_request_id.wizard_pickup_point_ids",
-        string="Pickup/Dropoff Points",
-        readonly=True,
-        store=False,  # set True only if you need searching/grouping
-    )
-
     pickup_point_bins_summary = fields.Text(
+        related="service_request_id.pickup_point_bins_summary",
         string="Pickup/Dropoff Points & Bins Summary",
-        compute="_compute_pickup_point_bins_summary",
-        store=False,
+        store=True,
+        readonly=True,
     )
-
-    @api.depends(
-        "bin_line_ids.pickup_point_id",
-        "bin_line_ids.container_ids",
-        "bin_line_ids.shunt_container_ids",
-        "bin_line_ids.lifted_container_ids",
-        "bin_line_ids.dropped_container_ids",
-    )
-    def _compute_pickup_point_bins_summary(self):
-        for rec in self:
-            parts = []
-
-            # use saved lines (persistent)
-            for line in rec.bin_line_ids:
-                pp = line.pickup_point_id
-                if not pp:
-                    continue
-
-                # decide which bins to show per service
-                svc_code = (rec.service_requested_id.code or "").lower() \
-                    if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
-                    else (rec.service_requested_id.display_name or "").strip().lower()
-
-                if svc_code == "shunting of bins":
-                    bins = line.shunt_container_ids
-                elif svc_code == "swapping of bins":
-                    # show both in one line
-                    lifted = ", ".join(b.display_name for b in line.lifted_container_ids)
-                    dropped = ", ".join(b.display_name for b in line.dropped_container_ids)
-                    text = f"{pp.display_name} [Lifted: {lifted or '-'} | Dropped: {dropped or '-'}]"
-                    parts.append(text)
-                    continue
-                else:
-                    bins = line.container_ids
-
-                bin_names = [b.display_name for b in bins]
-                if len(bin_names) > 3:
-                    shown = ", ".join(bin_names[:3]) + ", ..."
-                else:
-                    shown = ", ".join(bin_names)
-
-                parts.append(f"{pp.display_name} [{shown}]")
-
-            rec.pickup_point_bins_summary = ", ".join(parts) if parts else ""
-
-    # ---------------------------------------------------------
-    # Smart button count = number of bins currently selected
-    # ---------------------------------------------------------
 
     wizard_pickup_point_count = fields.Integer(
-        compute="_compute_wizard_pickup_point_count",
+        related="service_request_id.wizard_pickup_point_count",
         store=False,
     )
-
-    @api.depends('wizard_pickup_point_ids')
-    def _compute_wizard_pickup_point_count(self):
-        for rec in self:
-            rec.wizard_pickup_point_count = len(rec.wizard_pickup_point_ids)
 
     bin_line_ids = fields.One2many(
         "waste.request.bin.line",
         "request_id",
-        related="service_request_id.bin_line_ids",
         string="Pickup/Bins Lines",
+        related="service_request_id.bin_line_ids",
     )
-
     bin_line_count = fields.Integer(
-        compute="_compute_bin_line_count",
-        store=True,
+        related="service_request_id.bin_line_count",
+        store=False,
     )
 
-    @api.depends('bin_line_ids')
-    def _compute_bin_line_count(self):
-        for rec in self:
-            rec.bin_line_count = len(rec.bin_line_ids)
+    sale_order_count = fields.Integer(
+        string="Sale Order Count",
+        related="service_request_id.sale_order_count",
+    )
 
-    @api.depends('dropoff_container_ids', 'shunt_container_ids',
-                 'lifted_bin_ids', 'dropped_bin_ids')
-    def _compute_bin_line_count(self):
-        for rec in self:
-            svc_code = (rec.service_requested_id.code or '').lower() \
-                if rec.service_requested_id and hasattr(rec.service_requested_id, 'code') \
-                else (rec.service_requested_id.display_name or '').strip().lower()
 
-            if svc_code in ('placement of bins', 'removal of bins', 'waste collection & disposal'):
-                rec.bin_line_count = len(rec.dropoff_container_ids)
-            elif svc_code == 'shunting of bins':
-                rec.bin_line_count = len(rec.shunt_container_ids)
-            elif svc_code == 'swapping of bins':
-                rec.bin_line_count = len(rec.lifted_bin_ids) + len(rec.dropped_bin_ids)
-            else:
-                rec.bin_line_count = 0
-
+    # REPLACE your old product_uom_qty field with this one
+    product_uom_qty = fields.Float(
+        related="service_request_id.product_uom_qty",
+        string="Quantity",
+        store=True,
+        readonly=False,# still editable if you want
+    )
     # ---------------------------------------------------------
     # Open wizard from smart button
     # ---------------------------------------------------------
@@ -482,48 +412,6 @@ class WasteWorksheet(models.Model):
         ondelete='set null',
         help="The sale order line that this service request should update."
     )
-
-    # REPLACE your old product_uom_qty field with this one
-    product_uom_qty = fields.Float(
-        string="Quantity",
-        compute="_compute_product_uom_qty",
-        store=True,
-        readonly=False,  # still editable if you want
-    )
-
-    @api.depends(
-        "service_requested_id",
-        "dropoff_container_ids",
-        "shunt_container_ids",
-        "lifted_bin_ids",
-        "dropped_bin_ids",
-    )
-    def _compute_product_uom_qty(self):
-        """
-        Quantity follows selected bins and therefore increments/decrements automatically.
-        """
-        for rec in self:
-            svc_code = (rec.service_requested_id.code or "").lower() \
-                if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
-                else (rec.service_requested_id.display_name or "").strip().lower()
-
-            qty = 0.0
-
-            if svc_code in ("placement of bins", "removal of bins", "waste collection & disposal"):
-                qty = float(len(rec.dropoff_container_ids))
-
-            elif svc_code == "shunting of bins":
-                qty = float(len(rec.shunt_container_ids))
-
-            elif svc_code == "swapping of bins":
-                if rec.lifted_bin_ids:
-                    qty = float(len(rec.lifted_bin_ids))
-                elif rec.dropped_bin_ids:
-                    qty = float(len(rec.dropped_bin_ids))
-                else:
-                    qty = 0.0
-
-            rec.product_uom_qty = qty
 
     # ------------------------------------------------------------
     # SALE ORDER QTY SYNC
@@ -575,7 +463,16 @@ class WasteWorksheet(models.Model):
                     'waste.worksheet'
                 ) or 'New'
 
+
         recs = super().create(vals_list)
+
+        for ws in recs:
+            if ws.service_request_id and not ws.service_request_id.work_sheet_id:
+                ws.service_request_id.work_sheet_id = ws.id
+            elif ws.service_request_id:
+                # If you always want the *latest* worksheet, uncomment this:
+                # ws.service_request_id.work_sheet_id = ws.id
+                pass
 
         # Sync quantities to sale order after create
         recs._sync_sale_order_qty()
@@ -583,83 +480,50 @@ class WasteWorksheet(models.Model):
         return recs
 
     def write(self, vals):
-        res = super().write(vals)
+        # We want the context 'from_worksheet' when product_uom_qty is written
+        # so that WasteServiceRequest.write can know where the change came from.
+        ws = self.with_context(from_worksheet=True)
+        res = super(WasteWorksheet, ws).write(vals)
 
-        # if bins/service/qty changed, recompute -> sync to sale order
+        # If you removed worksheet SO sync, you can delete the block below.
+        # If you kept it and still want it, you can leave this:
         if any(k in vals for k in [
             'product_uom_qty',
-            'dropoff_container_ids',
-            'shunt_container_ids',
-            'lifted_bin_ids',
-            'dropped_bin_ids',
             'service_requested_id',
+            'bin_lifted_ids',
+            'bin_dropped_ids',
         ]):
             self._sync_sale_order_qty()
 
         return res
 
-    @api.onchange('sale_order_id')
-    def _onchange_sale_order_id(self):
-        for rec in self:
-            if not rec.sale_order_id or not rec.sale_order_id.order_line:
-                continue
+    # def write(self, vals):
+    #     res = super().write(vals)
+    #     #
+    #     # # if bins/service/qty changed, recompute -> sync to sale order
+    #     if any(k in vals for k in [
+    #         'product_uom_qty',
+    #         'service_requested_id',
+    #         'bin_lifted_ids',
+    #         'bin_dropped_ids',
+    #     ]):
+    #         self._sync_sale_order_qty()
+    #
+    #     return res
 
-            line = rec.sale_order_id.order_line[0]  # or your own logic
 
-            rec.product_id = line.product_id.id
-            rec.product_uom_qty = line.product_uom_qty
-            rec.price_unit = line.price_unit
-
-            # Clear previous
-            rec.update({
-                'service_requested_id': False,
-                'waste_type_id': False,
-                'waste_details_id': False,
-                'bin_type_id': False,
-                'tank_volume_id': False,
-                'container_type_id': False,
-            })
-
-            # Map product attribute name -> (your model, your field)
-            attr_to_model_field = {
-                'service requested': ('service.request', 'service_requested_id'),
-                'waste type':        ('waste.type',        'waste_type_id'),
-                'waste details':     ('waste.details',     'waste_details_id'),
-                'bin type':          ('bin.type',          'bin_type_id'),
-                'tank volume':       ('tank.volume',       'tank_volume_id'),
-                'container type':    ('container.type',    'container_type_id'),
-            }
-
-            PAV = self.env['product.attribute.value']
-            for ptav in line.product_id.product_template_attribute_value_ids:
-                attr_name = (ptav.attribute_id.name or '').strip().lower()
-                pav = ptav.product_attribute_value_id  # a product.attribute.value record
-                if not pav:
-                    continue
-
-                model_field = attr_to_model_field.get(attr_name)
-                if not model_field:
-                    continue
-
-                model_name, field_name = model_field
-
-                # Find your config record that points to this exact PAV
-                config_rec = self.env[model_name].search([('pav_id', '=', pav.id)], limit=1)
-                if not config_rec:
-                    # Fallback by name (optional)
-                    config_rec = self.env[model_name].search([('name', '=', pav.name)], limit=1)
-
-                if config_rec and not getattr(rec, field_name):
-                    setattr(rec, field_name, config_rec.id)
-
-            # ---------- Helpers ----------
     def action_open_ws_bin_assignment_wizard(self):
         self.ensure_one()
-        action = self.env.ref("waste_management_zakheni.action_ws_assign_bin_wizard").read()[0]
-        action["context"] = {
-            "active_id": self.id,
-            "active_model": self._name,
-        }
+        # ✅ Reuse the existing wizard action
+        action = self.env.ref("waste_management_zakheni.action_waste_assign_bin_wizard").read()[0]
+
+        ctx = dict(self.env.context)
+        ctx.update({
+            "default_request_id": self.service_request_id.id,
+            "active_id": self.service_request_id.id,
+            "active_model": "waste.service.request",
+        })
+        action["context"] = ctx
         return action
 
     def action_open_waste_request(self):
@@ -710,42 +574,51 @@ class WasteWorksheetBinLine(models.Model):
         index=True,
     )
 
+    request_id = fields.Many2one(
+        "waste.service.request",
+        string="Service Request",
+        required=True,
+        ondelete="cascade",
+        index=True,
+    )
+
     pickup_point_id = fields.Many2one(
         "pickup.point",
-        string="Pickup / Dropoff Point",
-        related="waste_request_bin_id.pickup_point_id",
-
+        string="Pickup Point",
+        required=True,
     )
 
-    # Placement / Removal / Collection
-    container_ids = fields.Many2many(
-        related="waste_request_bin_id.container_ids",
-        string="Containers",
-        readonly=True,
-        store=False,
+    dropoff_point_id = fields.Many2one(
+        "pickup.point",
+        string="Drop-off Point",
     )
 
-    # Shunting
-    shunt_container_ids = fields.Many2many(
-        related="waste_request_bin_id.shunt_container_ids",
-        string="Bins to Shunt",
-        readonly=True,
-        store=False,
+    bin_lifted_ids = fields.Many2many(
+        "waste.container",
+        "waste_ws_request_bin_line_lifted_rel",
+        "line_id",
+        "container_id",
+        string="Bin Lifted",
     )
 
-    # Swapping
-    lifted_container_ids = fields.Many2many(
-        related="waste_request_bin_id.lifted_container_ids",
-        string="Lifted Bins",
-        readonly=True,
-        store=False,
+    bin_dropped_ids = fields.Many2many(
+        "waste.container",
+        "waste_ws_request_bin_line_dropped_rel",
+        "line_id",
+        "container_id",
+        string="Bin Dropped",
     )
-    dropped_container_ids = fields.Many2many(
-        related="waste_request_bin_id.dropped_container_ids",
-        string="Dropped Bins",
-        readonly=True,
-        store=False,
+
+    tank_ids = fields.Many2many(
+        "waste.container",
+        "waste_ws_request_tank_line_collect_rel",
+        "line_id",
+        "container_id",
+        string="Tank",
     )
+
+    liters_collected = fields.Float(string="Liters Collected")
+    # liters_remaining = fields.Float(string="Liters Remaining")
 
 
 class WasteWorksheetImage(models.Model):

@@ -95,14 +95,14 @@
             ])]"/>
         </record>
 
-        <record id="base.menu_administration" model="ir.ui.menu">
-            <field name="groups_id" eval="[(6,0,[
-                ref('waste_management_zakheni.group_wmz_admin'),
-                ref('waste_management_zakheni.group_wmz_admin_clerk'),
-                ref('waste_management_zakheni.group_wmz_finance'),
-                ref('waste_management_zakheni.group_wmz_manager')
-            ])]"/>
-        </record>
+<!--        <record id="base.menu_administration" model="ir.ui.menu">-->
+<!--            <field name="groups_id" eval="[(6,0,[-->
+<!--                ref('waste_management_zakheni.group_wmz_admin'),-->
+<!--                ref('waste_management_zakheni.group_wmz_admin_clerk'),-->
+<!--                ref('waste_management_zakheni.group_wmz_finance'),-->
+<!--                ref('waste_management_zakheni.group_wmz_manager')-->
+<!--            ])]"/>-->
+<!--        </record>-->
 
     </data>
 </odoo>

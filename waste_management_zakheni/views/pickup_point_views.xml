@@ -29,6 +29,7 @@
                     <group string="Waste Containers">
                         <!--                        <field name="container_ids" widget="many2many_tags" context="{'default_pickup_point_id': active_id}" domain="[('pickup_point_id', '=', False), ('pickup_point_id', '=', id)]" />-->
                         <field name="container_ids" widget="many2many_tags"
+                               readonly="1"
                                context="{'default_pickup_point_id': active_id}"
                                domain="[('pickup_point_id', '=', False)]"/>
                         <!--                            <tree editable="bottom">-->

@@ -7,11 +7,20 @@
         <field name="arch" type="xml">
 
             <xpath expr="//sheet//group" position="inside">
-                <group string="Waste Service">
-                    <field name="service_request_id" context="{'default_service_id': active_id}" readonly="1"/>
-                    <field name="planned_date"/>
+                <group string="Tanks">
+<!--                    <field name="service_request_id" context="{'default_service_id': active_id}" readonly="1"/>-->
+<!--                    <field name="planned_date"/>-->
+                    <field name="driver_email"/>
+                    <field name="is_waste_tanker"/>
+                    <field name="tank_volume_id"
+                           invisible="is_waste_tanker == False"/>
+                    <field name="tank_capacity_liters"
+                           invisible="is_waste_tanker == False"/>
+
                 </group>
             </xpath>
         </field>
     </record>
+
+
 </odoo>

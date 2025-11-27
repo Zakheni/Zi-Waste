@@ -5,20 +5,21 @@
         <field name="model">waste.container</field>
         <field name="arch" type="xml">
             <tree default_order="create_date desc" string="Bin List">
-                <field name="name" />
+                <field name="name"/>
                 <field name="status"/>
                 <field name="image" widget="image" class="oe_avatar" options="{'size': [35, 35]}"/>
                 <field name="container_type_id"/>
                 <!--                <field name="bin_type"/>-->
                 <!--                <field name="tank_volume"/>-->
                 <field name="display_info" string="Type / Volume"/>
-                <field name="liters_collected"  optional="hide"/>
-                <field name="liters_remaining"  optional="hide"/>
+                <field name="liters_collected" optional="hide"/>
+                <field name="liters_remaining" optional="hide"/>
                 <field name="inUse"/>
-                <field name="customer_id"/>
+                <field name="partner_id"/>
                 <field name="pickup_point_id"/>
-<!--                 <field name="hide_tank" invisible="1"/>-->
-<!--                 <field name="hide_bin" invisible="1"/>-->
+                <field name="reserved_request_id"/>
+                <!--                 <field name="hide_tank" invisible="1"/>-->
+                <!--                 <field name="hide_bin" invisible="1"/>-->
                 <!--                <field name="pickup_point_id" widget="many2many_tags" options="{'color_field': 'color'}"/>-->
 
             </tree>
@@ -40,22 +41,26 @@
                             <field name="name" readonly="0"/>
                         </h1>
                     </div>
-                    <group string="container and tank information">
+                    <group string="bin information">
 
                         <group>
 
-                            <field name="customer_id"
+                            <field name="partner_id"
                                    widget="res_partner_many2one"
                                    context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}"
                                    placeholder="Type to find a customer..."/>
                             <!--                            <field name="sale_order_id"/>-->
 
                             <field name="pickup_point_id"/>
+                            <field name="dropoff_point_id"/>
                             <!--                            <field name="available_pickup_point_ids" invisible="1"/>-->
                             <field name="liters_collected"
                                    invisible="1"/>
                             <field name="liters_remaining" readonly="1"
                                    invisible="1 "/>
+
+                            <field name="reserved_request_id"
+                                   invisible="reserved_request_id == False"/>
 
                         </group>
 
@@ -64,9 +69,12 @@
                             <field name="hide_tank" invisible="1"/>
                             <field name="hide_bin" invisible="1"/>
                             <field name="status" required="1"/>
-                            <field name="container_type_id" required="1" widget="radio" options="{'horizontal': True}"/>
-                            <field name="bin_type_id" required="1" invisible="hide_bin == False"/>
-                            <field name="tank_volume_id" required="1" invisible="hide_tank == False"/>
+                            <field name="bin_type_id" required="1" />
+
+                            <!--                            <field name="container_type_id" required="1" widget="radio" options="{'horizontal': True}"/>-->
+                            <!--                            &lt;!&ndash;                            <field name="container_type_id" required="1"/>&ndash;&gt;-->
+                            <!--                            <field name="bin_type_id" required="1" invisible="hide_bin == False"/>-->
+                            <!--                            <field name="tank_volume_id" required="1" invisible="hide_tank == False"/>-->
                             <field name="inUse"/>
 
                         </group>
@@ -84,7 +92,7 @@
     </record>
 
     <record id="action_waste_container" model="ir.actions.act_window">
-        <field name="name">Bin and Tank list</field>
+        <field name="name">Bin list</field>
         <field name="res_model">waste.container</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">

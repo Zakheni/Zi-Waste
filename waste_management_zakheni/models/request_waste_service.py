@@ -1,8 +1,12 @@
 import re
+import logging
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessDenied, ValidationError
 from .service_provider import SA_PROVINCES
+
+_logger = logging.getLogger(__name__)
+
 
 class WasteServiceRequest(models.Model):
     _name = 'waste.service.request'
@@ -29,37 +33,36 @@ class WasteServiceRequest(models.Model):
         default=fields.Datetime.now,  # use datetime imported from datetime
     )
 
-    partner_id = fields.Many2one('res.partner', string="Customer",)
-
-    pickup_point_ids = fields.One2many(
-        'pickup.point',
-        'service_request_id',
-        string="Drop-off/Pickup Points",
-        store=True,
-    )
-
     container_id = fields.Many2one('waste.container', string='Container')
-    customer_id = fields.Many2one(
+    partner_id = fields.Many2one(
         'res.partner',
         string='Customer',
-        related='pickup_point_id.partner_id',
-        store=True,
         readonly=True
     )
 
     pickup_id = fields.Char(string="Pickup Point Name", related='pickup_point_id.name',)
     planned_date = fields.Datetime(string='Planned Date', )
 
-    quote_no = fields.Char(Strinh="Quote No.")
+    quote_no = fields.Char(string="Quote No.")
     service_description = fields.Text(string='Service Description')
     UN_No_SIN_No = fields.Char(string='UN No/SIN No')
     waste_profile_Data_sheet_No = fields.Char(string='Waste Profile/Data sheet No')
     DTNumber = fields.Char(string='DTNumber')
     disposal_site_id = fields.Many2one('waste.disposal.site', string="Disposal Side")
-    driver_id = fields.Many2one( "hr.employee",string="Driver", )
-    assistance_id = fields.Many2one("hr.employee", string="Driver Assistance")
+    # driver_id = fields.Many2one( "hr.employee",string="Driver", )
+    # assistance_id = fields.Many2one("hr.employee", string="Driver Assistance")
+    # vehicle_id = fields.Many2one("fleet.vehicle", string="Vehicle Registration Number")
+    # trailer_id = fields.Many2one("fleet.vehicle", string="Trailer Registration Number")
+    # employee_id = fields.Many2one( "hr.employee",string="Driver", )
     vehicle_id = fields.Many2one("fleet.vehicle", string="Vehicle Registration Number")
+    driver_id = fields.Many2one( string="Driver", related="vehicle_id.driver_id" )
+    assistance_id = fields.Many2one(string="Driver Assistance", related="vehicle_id.future_driver_id")
     trailer_id = fields.Many2one("fleet.vehicle", string="Trailer Registration Number")
+    work_sheet_id = fields.Many2one(
+        "waste.worksheet",
+        string="Work Sheet",
+        ondelete="set null"
+    )
     driver_signature = fields.Binary(string="Driver Signature")
 
     is_rejected = fields.Boolean(
@@ -70,10 +73,10 @@ class WasteServiceRequest(models.Model):
     )
     reject_reason = fields.Text(string="Enter Reject Reason", tracking=True,  store=True)
     amend_comment = fields.Text(string="Enter Amend Comment", tracking=True, store=True)
-    driver_work_email = fields.Char(string="Driver Work email", related="driver_id.work_email", store=True)
+    driver_work_email = fields.Char(string="Driver Work email", related="vehicle_id.driver_email", store=True)
 
     busy_driver_ids = fields.Many2many(
-        'hr.employee',
+        'res.partner',
         'waste_service_request_busy_driver_rel',
         'request_id',
         'employee_id',
@@ -83,7 +86,7 @@ class WasteServiceRequest(models.Model):
     )
 
     busy_assistance_ids = fields.Many2many(
-        'hr.employee',
+        'res.partner',
         'waste_service_request_busy_assist_rel',
         'request_id',
         'employee_id',
@@ -244,10 +247,10 @@ class WasteServiceRequest(models.Model):
                 # if not rec.vehicle_id:
                 #     raise ValidationError(_("Please Enter Vehicle."))
 
-            # Required when generated
-            if rec.state == "generated":
-                if not rec.wizard_pickup_point_ids:
-                    raise ValidationError(_("Please select Pickup/Drop Off Point(s)."))
+            # # Required when generated
+            # if rec.state == "generated":
+            #     if not rec.wizard_pickup_point_ids:
+            #         raise ValidationError(_("Please select Pickup/Drop Off Point(s)."))
 
     @api.model
     def action_signature(self):
@@ -264,118 +267,384 @@ class WasteServiceRequest(models.Model):
             },
         }
 
-    inUse = fields.Boolean(string='InUse', related='container_id.inUse', defauld=True)
-    tank_ids = fields.Many2many('waste.container', 'waste_service_request_tanks_rel', string="Tanks")
-    # Shunt
-    shunt_from_id = fields.Many2one('pickup.point', string="From Location", domain="[('partner_id', '=', partner_id)]")
-    shunt_to_id = fields.Many2one('pickup.point', string="To Location", domain="[('partner_id', '=', partner_id)]")
-    lifted_bin_ids = fields.Many2many(
+    inUse = fields.Boolean(string='InUse', related='container_id.inUse', store=True)
+    tank_ids = fields.Many2many(
         'waste.container',
-        'waste_service_request_lifted_rel',  # Different relation table
+        'waste_service_request_tanks_rel',
+        string="Tanks")
+
+    pickup_point_ids = fields.Many2many(
+        'pickup.point',
+        'waste_request_pickup_point_rel',
         'request_id',
-        'container_id',
-        string="Lifted Bins"
-    )
-    dropped_bin_ids = fields.Many2many(
-        'waste.container',
-        'waste_service_request_dropped_rel',  # Different relation table
-        'request_id',
-        'container_id',
-        string="New Bins (Dropped)"
-    )
-    # Placement & Collection
-    dropoff_container_ids = fields.Many2many(
-        'waste.container',
-        'waste_service_request_containers_rel',
-        string="Containers",
-        )
-    # Shunt
-    shunt_container_ids = fields.Many2many(
-        'waste.container',
-        'waste_service_request_shunt_rel',
-        string="Containers",
-    )
-    # Shunt
-    shunted_bin_ids = fields.Many2many(
-        'waste.container',
-        'waste_service_request_shunted_rel',  # Different relation table
-        'request_id',
-        'container_id',
-        string="Bins to Shunt"
+        'pickup_point_id',
+        string="Pickup Points",
     )
 
-#======================================================
-#BIB COUNT VERIFICATION
-#=====================================================
-# @api.constrains('shunt_container_ids', 'dropoff_container_ids','lifted_bin_ids', 'product_uom_qty')
-# def _check_bin_count(self):
-#     for rec in self:
-#         # Check shunting containers
-#         if rec.shunt_container_ids:
-#             shunt_count = len(rec.shunt_container_ids)
-#             if shunt_count != rec.product_uom_qty:
-#                 raise ValidationError(
-#                     f"Number of bins in Shunt Containers ({shunt_count}) "
-#                     f"must match Bin no. ({rec.product_uom_qty})."
-#                 )
-#
-#         # Check drop-off containers
-#         if rec.dropoff_container_ids:
-#             dropoff_count = len(rec.dropoff_container_ids)
-#             if dropoff_count != rec.product_uom_qty:
-#                 raise ValidationError(
-#                     f"Number of bins = ({dropoff_count}) "
-#                     f"must match  Bin no. ({rec.product_uom_qty})."
-#                 )
-#         if rec.lifted_bin_ids:
-#             lifted_count = len(rec.lifted_bin_ids)
-#             if lifted_count != rec.product_uom_qty:
-#                 raise ValidationError(
-#                     f"Number of bins in Swap Containers ({lifted_count}) "
-#                     f"must match  Bin no. ({rec.product_uom_qty})."
-#                 )
+    dropoff_point_ids = fields.Many2many(
+        'pickup.point',
+        'waste_request_dropoff_point_rel',
+        'request_id',
+        'pickup_point_id',
+        string="Drop-off Points",
+    )
+    bin_lifted_ids = fields.Many2many(
+        'waste.container',
+        'waste_service_request_bin_lifted_rel',  # relation table
+        'request_id',  # FK to waste.service.request
+        'waste_container_id',  # FK to waste.container (existing column)
+        string="Bin Lifted",
+    )
 
+    bin_dropped_ids = fields.Many2many(
+        'waste.container',
+        'waste_service_request_bin_dropped_rel',  # relation table
+        'request_drop_id',  # FK to waste.service.request
+        'waste_container_id',  # FK to waste.container (existing column)
+        string="Bin Dropped",
+    )
+
+    ticket_type = fields.Selection(
+        [
+            ('pickup', 'Pickup'),
+            ('followup', 'Follow-up'),
+        ],
+        string="Ticket Type",
+        default='pickup',
+        tracking=True,
+    )
+
+    @api.onchange('partner_id')
+    def _onchange_partner_id(self):
+        """When customer changes, clear pickup/dropoff so user re-selects."""
+        self.pickup_point_ids = False
+        self.dropoff_point_ids = False
+
+    @api.constrains('partner_id', 'pickup_point_ids', 'dropoff_point_ids', 'bin_lifted_ids')
+    def _check_pickup_points_and_bins(self):
+        for rec in self:
+            # If no customer, nothing to validate
+            if not rec.partner_id:
+                continue
+
+            # --------------------------------------------------
+            # 1) Pickup points must belong to the same customer
+            # --------------------------------------------------
+            for pp in rec.pickup_point_ids:
+                if pp.partner_id and pp.partner_id != rec.partner_id:
+                    raise ValidationError(_(
+                        "Pickup point '%(pp)s' belongs to customer '%(c_pp)s', "
+                        "but this request is for customer '%(c_req)s'.",
+                        pp=pp.display_name,
+                        c_pp=pp.partner_id.display_name,
+                        c_req=rec.partner_id.display_name,
+                    ))
+
+            # --------------------------------------------------
+            # 2) Drop-off points must also belong to same customer
+            # --------------------------------------------------
+            for pp in rec.dropoff_point_ids:
+                if pp.partner_id and pp.partner_id != rec.partner_id:
+                    raise ValidationError(_(
+                        "Drop-off point '%(pp)s' belongs to customer '%(c_pp)s', "
+                        "but this request is for customer '%(c_req)s'.",
+                        pp=pp.display_name,
+                        c_pp=pp.partner_id.display_name,
+                        c_req=rec.partner_id.display_name,
+                    ))
+
+            # --------------------------------------------------
+            # 3) Bins must belong to the same customer AND
+            #    be linked to one of the selected pickup points
+            # --------------------------------------------------
+            if not rec.pickup_point_ids or not rec.bin_lifted_ids:
+                # No pickup points or no bins -> nothing more to validate
+                continue
+
+            allowed_pp_ids = set(rec.pickup_point_ids.ids)
+
+            for cont in rec.bin_lifted_ids:
+                # 3.1) Check bin's customer
+                if cont.partner_id and cont.partner_id != rec.partner_id:
+                    raise ValidationError(_(
+                        "Bin %(bin)s belongs to customer %(c_bin)s, "
+                        "but this request is for customer %(c_req)s.",
+                        bin=cont.display_name,
+                        c_bin=cont.partner_id.display_name,
+                        c_req=rec.partner_id.display_name,
+                    ))
+
+                # 3.2) Check bin's pickup point is in selected pickup points
+                if cont.pickup_point_id and cont.pickup_point_id.id not in allowed_pp_ids:
+                    raise ValidationError(_(
+                        "Bin %(bin)s is linked to pickup point %(pp_bin)s, "
+                        "which is not in the selected pickup points for this request.",
+                        bin=cont.display_name,
+                        pp_bin=cont.pickup_point_id.display_name,
+                    ))
+
+    # ------------------------------------------------------------
+    # NEW COUNT VERIFICATION
+    # ------------------------------------------------------------
+    # @api.constrains('shunt_container_ids', 'dropoff_container_ids','lifted_bin_ids', 'product_uom_qty')
+    # def _check_bin_count(self):
+    #     for rec in self:
+    #         # Check shunting containers
+    #         if rec.shunt_container_ids:
+    #             shunt_count = len(rec.shunt_container_ids)
+    #             if shunt_count != rec.product_uom_qty:
+    #                 raise ValidationError(
+    #                     f"Number of bins in Shunt Containers ({shunt_count}) "
+    #                     f"must match Bin no. ({rec.product_uom_qty})."
+    #                 )
+    #
+    #         # Check drop-off containers
+    #         if rec.dropoff_container_ids:
+    #             dropoff_count = len(rec.dropoff_container_ids)
+    #             if dropoff_count != rec.product_uom_qty:
+    #                 raise ValidationError(
+    #                     f"Number of bins = ({dropoff_count}) "
+    #                     f"must match  Bin no. ({rec.product_uom_qty})."
+    #                 )
+    #         if rec.lifted_bin_ids:
+    #             lifted_count = len(rec.lifted_bin_ids)
+    #             if lifted_count != rec.product_uom_qty:
+    #                 raise ValidationError(
+    #                     f"Number of bins in Swap Containers ({lifted_count}) "
+    #                     f"must match  Bin no. ({rec.product_uom_qty})."
+    #                 )
 
     condition = fields.Selection([
         ('draft', 'draft'),
         ('done', 'Done')],
         string='Condition', default='draft')
 
-    liters_collected = fields.Float(string="Liters Collected",)
-    liters_remaining = fields.Float(string="Liters Remaining", compute="_compute_liters_remaining", store=True)
+    # How many truck loads were collected for this job
+    # 1.0 = full truck, 0.5 = half load, 0.25 = quarter load, etc.
+    # loads = fields.Float(
+    #     string="Truck Loads",
+    #     default=1.0,
+    #     help="1.0 = full tank, 0.5 = half load, 0.25 = quarter load, etc."
+    # )
 
-    sale_order_id = fields.Many2one('sale.order', string="Sales Order")
+    # Total liters collected for this request – computed from truck capacity
+    # liters_collected = fields.Float(
+    #     string="Liters to Collect",
+    #     help="Enter the liters requested by client, e.g. 4000 = 4 kL."
+    # )
 
-    # @api.model
-    # def create(self, vals):
-    #     # Handle sequence for name
-    #     if vals.get('name', 'New') == 'New':
-    #         vals['name'] = self.env['ir.sequence'].next_by_code('waste.service.request') or 'New'
+    liters_collected = fields.Float(
+        string="Liters to Collect",
+        compute="_compute_liters_from_qty",
+        store=True,
+        help="For Tank jobs: kL quantity × 1000."
+    )
+
+    # For info / debugging
+    billing_kl = fields.Float(
+        string="Billing kL",
+        compute="_compute_billing_amount",
+        store=True,
+        help="Liters converted to kiloliters for billing."
+    )
+
+    billing_amount = fields.Float(
+        string="Billing Amount (Excl. VAT)",
+        compute="_compute_billing_amount",
+        store=True,
+        help="Calculated from liters using rate: 4 kL base + extra per kL."
+    )
+
+    truck_tanker_id = fields.Many2one('tank.volume', string="Track Tanker", related="vehicle_id.tank_volume_id", store=False)
+    image_ids = fields.One2many(
+        'waste.worksheet.image',
+        'worksheet_id',
+        string='Photos',
+    )
+    notes_html = fields.Html(
+        related="work_sheet_id.notes_html",
+        string="Worksheet Notes",
+        store=False,  # or True if you want it stored/searchable
+        readonly=False,  # set False if you want to edit from manifest
+        help="Add notes and embed pictures directly in the content.",
+    )
+    @api.depends('product_uom_qty', 'container_type_id')
+    def _compute_liters_from_qty(self):
+        for rec in self:
+            if rec._is_tank_job():
+                # kL → L
+                rec.liters_collected = (rec.product_uom_qty or 0.0) * 1000.0
+            else:
+                # For non-tank jobs you can keep it 0 or leave manual if you want
+                rec.liters_collected = rec.liters_collected or 0.0
+
+    qty_updated_from_worksheet = fields.Boolean(
+        string="Quantity Updated from Worksheet",
+        default=False,
+        tracking=True,
+        help="Ticked automatically when the driver updates quantity from the worksheet.",
+    )
+
+    qty_update_label = fields.Char(
+        string="",
+        compute="_compute_qty_update_label",
+        store=False,
+    )
+
+    @api.depends('qty_updated_from_worksheet')
+    def _compute_qty_update_label(self):
+        for rec in self:
+            rec.qty_update_label = _("Updated from worksheet") if rec.qty_updated_from_worksheet else False
+    # def _get_rate_params(self):
+    #     """
+    #     Decide which rate table to use.
+    #     For now: septic default.
+    #     Later you can branch on waste_type_id or service_requested_id.
+    #     """
+    #     # Default: Septic Tank
+    #     base_kl = 4.0          # first 4 kL
+    #     base_price = 2395.0    # R 2 395 for first 4 kL
+    #     extra_rate = 295.0     # R 295 per extra kL
     #
-    #     record = super().create(vals)
+    #     # Example: if you later want special rates:
+    #     # if self.waste_type_id and 'grease' in (self.waste_type_id.name or '').lower():
+    #     #     base_price = 3606.75
+    #     #     extra_rate = 362.25
     #
-    #     # Link driver to this service request
-    #     if record.driver_id:
-    #         record.driver_id.service_request_id = record.id
-    #
-    #     # Link sale order to this service request
-    #     if record.sale_order_id:
-    #         record.sale_order_id.service_request_id = record.id
-    #
-    #     return record
-    #
-    # def write(self, vals):
-    #     res = super().write(vals)
+    #     return base_kl, base_price, extra_rate
+
+    def _get_rate_params(self):
+        """
+        Decide which rate table to use based on waste_type or service.
+        Default: Septic Tank rates.
+        Grease Trap: special base + extra.
+        """
+
+        # Normalize helper
+        def norm(txt):
+            return (txt or "").strip().lower()
+
+        # Defaults: Septic Tank
+        base_kl = 4.0  # first 4 kL
+        base_price = 2395.0  # R 2 395 for first 4 kL
+        extra_rate = 295.0  # R 295 per extra kL
+
+        wd_name = norm(self.waste_details_id.name)
+        # svc_name = norm(self.service_requested_id.name)
+
+        # 🔹 Grease Trap detection (adjust names to match your master data)
+        if "grease" in wd_name: #or "grease" in svc_name:
+            base_price = 3606.75  # base for Grease Trap
+            extra_rate = 362.25  # extra per kL for Grease Trap
+
+        return base_kl, base_price, extra_rate
+
+    # @api.depends('liters_collected', 'waste_type_id')
+    # def _compute_billing_amount(self):
     #     for rec in self:
-    #         # Link driver to this service request
-    #         if rec.driver_id:
-    #             rec.driver_id.service_request_id = rec.id
+    #         liters = rec.liters_collected or 0.0
+    #         if liters <= 0.0:
+    #             rec.billing_kl = 0.0
+    #             rec.billing_amount = 0.0
+    #             continue
     #
-    #         # Link sale order to this service request
-    #         if rec.sale_order_id:
-    #             rec.sale_order_id.service_request_id = rec.id
+    #         kl = liters / 1000.0
+    #         base_kl, base_price, extra_rate = rec._get_rate_params()
     #
-    #     return res
+    #         if kl <= base_kl:
+    #             amount = base_price
+    #         else:
+    #             extra_kl = kl - base_kl
+    #             amount = base_price + extra_kl * extra_rate
+    #
+    #         rec.billing_kl = kl
+    #         rec.billing_amount = amount
+
+    @api.depends('product_uom_qty', 'waste_type_id', 'container_type_id')
+    def _compute_billing_amount(self):
+        for rec in self:
+            # Only apply this logic to Tank jobs
+            if not rec._is_tank_job():
+                rec.billing_kl = 0.0
+                rec.billing_amount = 0.0
+                continue
+
+            kl = rec.product_uom_qty or 0.0  # 🔹 quantity = kL
+            if kl <= 0.0:
+                rec.billing_kl = 0.0
+                rec.billing_amount = 0.0
+                continue
+
+            base_kl, base_price, extra_rate = rec._get_rate_params()
+
+            if kl <= base_kl:
+                amount = base_price
+            else:
+                extra_kl = kl - base_kl
+                amount = base_price + extra_kl * extra_rate
+
+            rec.billing_kl = kl
+            rec.billing_amount = amount
+
+    # ===============================Tanks Helpers=======================
+    def _is_tank_job(self):
+        ctype = (self.container_type_id.name or "").strip().lower()
+        return ctype == "tank"
+
+    def _post_tank_summary_message(self):
+        """
+        Post a nice summary in the chatter for Tank jobs
+        whenever the record is saved.
+        """
+        for rec in self:
+            if not rec._is_tank_job():
+                continue
+
+            # need some volume and amount to say anything useful
+            if not rec.billing_kl or rec.billing_kl <= 0:
+                continue
+
+            liters = rec.liters_collected or (rec.billing_kl * 1000.0)
+            base_kl, base_price, extra_rate = rec._get_rate_params()
+
+            # Try to show a friendly service name
+            service_label = (
+                rec.waste_type_id.display_name
+                or rec.service_requested_id.display_name
+                or _("Tank Service")
+            )
+
+            so_part = (
+                _("Linked SO: %s") % rec.sale_order_id.name
+                if rec.sale_order_id
+                else _("No Sales Order linked yet")
+            )
+
+            body = _(
+                "Tank job summary:"
+                "- Service: %(service)s"
+                "- Quantity: %(kl).2f kL (%(liters).0f L)"
+                "- Tariff: first %(base_kl).0f kL at R%(base_price).2f, "
+                "extra kL at R%(extra_rate).2f"
+                "- Calculated amount (excl. VAT): R%(amount).2f"
+                "- %(so)s",
+                service=service_label,
+                kl=rec.billing_kl,
+                liters=liters,
+                base_kl=base_kl,
+                base_price=base_price,
+                extra_rate=extra_rate,
+                amount=rec.billing_amount or 0.0,
+                so=so_part,
+            )
+
+            rec.message_post(body=body)
+
+
+
+    # liters_collected = fields.Float(string="Liters Collected",)
+    # liters_remaining = fields.Float(string="Liters Remaining", compute="_compute_liters_remaining", store=True)
+    sale_order_id = fields.Many2one('sale.order', string="Sales Order")
 
     # Link to your config tables (which link to product.attribute.value)
     service_requested_id = fields.Many2one('service.request', string="Service Requested")
@@ -383,7 +652,7 @@ class WasteServiceRequest(models.Model):
     waste_details_id = fields.Many2one('waste.details', string="Waste Details")
     bin_type_id = fields.Many2one('bin.type', string="Bin Type")
     container_type_id = fields.Many2one('container.type', string="Container Type")
-    tank_volume_id = fields.Many2one('tank.volume', related='tank_ids.tank_volume_id', string="Tank Volume")
+    tank_volume_id = fields.Many2one('tank.volume', string="Tank Volume")
 
     hide_waste_type = fields.Boolean(compute='_compute_field_visibility')
     hide_waste_details = fields.Boolean(compute='_compute_field_visibility')
@@ -407,8 +676,8 @@ class WasteServiceRequest(models.Model):
     hide_general = fields.Boolean(compute='_compute_field_visibility')
     hide_none_general = fields.Boolean(compute='_compute_field_visibility')
     hide_service_placement = fields.Boolean(compute='_compute_field_visibility')
-    hide_disposal_site = fields.Boolean(compute='_compute_hide_waste_type')
-    hide_pickup_point = fields.Boolean(compute='_compute_hide_waste_type')
+    hide_disposal_site = fields.Boolean(compute='_compute_field_visibility')
+    hide_pickup_point = fields.Boolean(compute='_compute_field_visibility')
 
     @api.depends('service_requested_id','container_type_id', 'waste_type_id',
                  'service_requested_id.name','container_type_id.name','waste_type_id.name')
@@ -481,44 +750,72 @@ class WasteServiceRequest(models.Model):
         string="Quantity",
         compute="_compute_product_uom_qty",
         store=True,
+        tracking=True,
         readonly=False,  # still editable if you want
     )
+
+    def _remove_extra_line_safely(self, so, extra_line):
+        """Remove extra Tank kL line without breaking confirmed SO rules."""
+        if not extra_line:
+            return
+
+        # If order is still editable, we can delete
+        if so.state in ('draft', 'sent'):
+            extra_line.unlink()
+        else:
+            # Confirmed order: set qty & price to 0 instead of deleting
+            extra_line.with_context(skip_waste_sync=True).write({
+                'product_uom_qty': 0.0,
+                'price_unit': 0.0,
+            })
 
 
     @api.depends(
         "service_requested_id",
-        "dropoff_container_ids",
-        "shunt_container_ids",
-        "lifted_bin_ids",
-        "dropped_bin_ids",
+        "bin_lifted_ids",
+        "bin_dropped_ids",
+        "container_type_id",
     )
     def _compute_product_uom_qty(self):
         """
-        Quantity follows selected bins and therefore increments/decrements automatically.
+        For BIN jobs: compute qty from bins.
+        For TANK jobs: do NOT override qty (user/SO sets kL quantity).
         """
         for rec in self:
+            # 🔹 Skip Tank jobs – let user / SO control kL
+            if rec._is_tank_job():
+                continue
+
             svc_code = (rec.service_requested_id.code or "").lower() \
                 if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
                 else (rec.service_requested_id.display_name or "").strip().lower()
 
+            # If no bins at all, don't override
+            if not rec.bin_lifted_ids and not rec.bin_dropped_ids:
+                rec.product_uom_qty = rec.product_uom_qty or 0.0
+                continue
+
             qty = 0.0
 
-            if svc_code in ("placement of bins", "removal of bins", "waste collection & disposal"):
-                qty = float(len(rec.dropoff_container_ids))
+            if svc_code == "placement of bins":
+                qty = float(len(rec.bin_dropped_ids))
 
-            elif svc_code == "shunting of bins":
-                qty = float(len(rec.shunt_container_ids))
+            elif svc_code in ("shunting of bins", "removal of bins"):
+                qty = float(len(rec.bin_lifted_ids))
+
+            elif svc_code == "waste collection & disposal":
+                if rec.bin_lifted_ids:
+                    qty = float(len(rec.bin_lifted_ids))
+                elif rec.bin_dropped_ids:
+                    qty = float(len(rec.bin_dropped_ids))
 
             elif svc_code == "swapping of bins":
-                if rec.lifted_bin_ids:
-                    qty = float(len(rec.lifted_bin_ids))
-                elif rec.dropped_bin_ids:
-                    qty = float(len(rec.dropped_bin_ids))
-                else:
-                    qty = 0.0
+                if rec.bin_lifted_ids:
+                    qty = float(len(rec.bin_lifted_ids))
+                elif rec.bin_dropped_ids:
+                    qty = float(len(rec.bin_dropped_ids))
 
             rec.product_uom_qty = qty
-
     # ------------------------------------------------------------
     # SALE ORDER QTY SYNC
     # ------------------------------------------------------------
@@ -526,13 +823,18 @@ class WasteServiceRequest(models.Model):
         """
         Push current request qty to the related sale order line.
         Uses best matching line if order_line_id not set.
+
+        BIN jobs:
+            - Single SO line, qty = number of bins.
+
+        TANK jobs:
+            - Base line: fixed 4 kL @ base_price (qty = 1).
+            - Extra line: extra kL @ extra_rate (qty = extra_kL).
         """
         for rec in self:
             so = rec.sale_order_id
             if not so:
                 continue
-
-            qty = rec.product_uom_qty or 0.0
 
             # 1) Use explicitly linked line if present
             line = rec.order_line_id
@@ -553,12 +855,87 @@ class WasteServiceRequest(models.Model):
             if not line:
                 line = so.order_line[:1]
 
-            if line:
-                # avoid recursion if you later add reverse sync
-                line.with_context(skip_waste_sync=True).write({
-                    'product_uom_qty': qty
-                })
+            if not line:
+                # No line at all, nothing to sync
+                continue
+
+            # --------------------------------------------------------
+            # TANK JOB → base line + extra kL line
+            # --------------------------------------------------------
+            if rec._is_tank_job():
+                # kL for billing – prefer explicit qty, else computed billing_kl, else from liters
+                kl = rec.product_uom_qty or rec.billing_kl or (
+                    (rec.liters_collected / 1000.0) if rec.liters_collected else 0.0
+                )
+
+                base_kl, base_price, extra_rate = rec._get_rate_params()
+
+                # Find existing extra line if any
+                extra_line = so.order_line.filtered(
+                    lambda l: 'Extra Tank kL' in (l.name or '') or
+                              'Extra tanker kL' in (l.name or '')
+                )[:1]
+
+                if kl <= 0.0:
+                    # Nothing to bill → zero base line and clear extra line safely
+                    line.with_context(skip_waste_sync=True).write({
+                        'product_uom_qty': 0.0,
+                        'price_unit': 0.0,
+                    })
+
+                    rec._remove_extra_line_safely(so, extra_line)
+                    rec.order_line_id = line
+                    continue
+
+                # How many kL are "extra" above base_kl
+                extra_kl = max(0.0, kl - base_kl)
+
+                # ---------- BASE LINE ----------
+                base_name = line.product_id.display_name or line.name or _("Transport Rate (Tank)")
+                base_suffix = f" – Base up to {base_kl:g} kL"
+                base_line_vals = {
+                    'product_uom_qty': 1.0,
+                    'price_unit': base_price,
+                    'name': base_name + base_suffix,
+                }
+                line.with_context(skip_waste_sync=True).write(base_line_vals)
+
+                # ---------- EXTRA kL LINE ----------
+                if extra_kl > 0:
+                    extra_name = f"Extra Tank kL ({extra_kl:.2f} kL)"
+
+                    if extra_line:
+                        # Update existing extra line
+                        extra_line.with_context(skip_waste_sync=True).write({
+                            'product_uom_qty': extra_kl,
+                            'price_unit': extra_rate,
+                            'name': extra_name,
+                        })
+                    else:
+                        # Create new extra line
+                        rec.env['sale.order.line'].with_context(skip_waste_sync=True).create({
+                            'order_id': so.id,
+                            'product_id': line.product_id.id or rec.product_id.id,
+                            'name': extra_name,
+                            'product_uom_qty': extra_kl,
+                            'price_unit': extra_rate,
+                        })
+                else:
+                    # No extra kL → remove / neutralise extra line safely
+                    rec._remove_extra_line_safely(so, extra_line)
+
                 rec.order_line_id = line
+                continue  # go to next rec
+
+            # --------------------------------------------------------
+            # NORMAL BIN JOB: keep existing qty-only sync
+            # --------------------------------------------------------
+            qty = rec.product_uom_qty or 0.0
+            line.with_context(skip_waste_sync=True).write({
+                'product_uom_qty': qty
+            })
+
+            rec.order_line_id = line
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -573,166 +950,156 @@ class WasteServiceRequest(models.Model):
 
         # Link driver + sale order to this service request
         for rec in recs:
-            if rec.driver_id:
-                rec.driver_id.service_request_id = rec.id
+            # if rec.driver_id:
+            #     rec.driver_id.service_request_id = rec.id
             if rec.sale_order_id:
                 rec.sale_order_id.service_request_id = rec.id
-
         # Sync quantities to sale order after create
         recs._sync_sale_order_qty()
+        # 🔹 Post tank summary for tank jobs
+        recs._post_tank_summary_message()
 
         return recs
 
     def write(self, vals):
+        # If quantity is changed, decide if it came from worksheet
+        if 'product_uom_qty' in vals and 'qty_updated_from_worksheet' not in vals:
+            from_ws = self.env.context.get('from_worksheet', False)
+            # If from worksheet → True, if from anywhere else (manifest) → False
+            vals['qty_updated_from_worksheet'] = bool(from_ws)
+
         res = super().write(vals)
 
         # Keep driver + sale order links synced after updates
         for rec in self:
-            if rec.driver_id:
-                rec.driver_id.service_request_id = rec.id
+            # if rec.driver_id:
+            #     rec.driver_id.service_request_id = rec.id
             if rec.sale_order_id:
                 rec.sale_order_id.service_request_id = rec.id
 
-        # If bins/service/qty changed, recompute + sync to sale order
         if any(k in vals for k in [
             'product_uom_qty',
-            'dropoff_container_ids',
-            'shunt_container_ids',
-            'lifted_bin_ids',
-            'dropped_bin_ids',
             'service_requested_id',
+            'bin_lifted_ids',
+            'bin_dropped_ids',
+            'liters_collected',
+            'container_type_id',
+            'waste_type_id',
         ]):
             self._sync_sale_order_qty()
 
-        return res
+            # 🔹 Also post/update tank summary
+            self._post_tank_summary_message()
 
-    # @api.model_create_multi
-    # def create(self, vals_list):
-    #     recs = super().create(vals_list)
-    #     recs._sync_sale_order_qty()
-    #     return recs
-    #
-    # def write(self, vals):
-    #
-    #
-    #     res = super().write(vals)
-    #
-    #     # if bins/service changed, qty recomputed -> sync to sale order
-    #     if any(k in vals for k in [
-    #         'product_uom_qty',
-    #         'dropoff_container_ids',
-    #         'shunt_container_ids',
-    #         'lifted_bin_ids',
-    #         'dropped_bin_ids',
-    #         'service_requested_id',
-    #     ]):
-    #         self._sync_sale_order_qty()
-    #
-    #     return res
+#===============================================================================================================================
+
+    def _normalize_attr(self, name):
+        # Helper to normalize attribute names: lower + strip + collapse spaces
+        name = (name or "").strip().lower()
+        # replace multiple spaces with one
+        name = " ".join(name.split())
+        return name
+
 
     @api.onchange('sale_order_id')
     def _onchange_sale_order_id(self):
         for rec in self:
-            if not rec.sale_order_id or not rec.sale_order_id.order_line:
+            so = rec.sale_order_id
+            if not so or not so.order_line:
+                _logger.info("WSR onchange: no sale_order or no order_line for %s", rec.name)
                 continue
 
-            line = rec.sale_order_id.order_line[0]  # or your own logic
+            # 👉 take first line for now (you can later improve selection logic)
+            line = so.order_line[:1]
+            _logger.info("WSR onchange: using SO %s / line %s / product %s",
+                         so.name, line.id, line.product_id.display_name)
 
+            # ------------------------------
+            # Basic product info from SO line
+            # ------------------------------
             rec.product_id = line.product_id.id
-            rec.product_uom_qty = line.product_uom_qty
             rec.price_unit = line.price_unit
 
-            # Clear previous
-            rec.update({
-                'service_requested_id': False,
-                'waste_type_id': False,
-                'waste_details_id': False,
-                'bin_type_id': False,
-                'tank_volume_id': False,
-                'container_type_id': False,
-            })
+            # Only override qty from SO if there are NO bins yet
+            if not (rec.bin_lifted_ids or rec.bin_dropped_ids):
+                rec.product_uom_qty = line.product_uom_qty
+                _logger.info("WSR onchange: setting product_uom_qty from SO = %s",
+                             line.product_uom_qty)
+            else:
+                _logger.info("WSR onchange: bins already selected, keeping qty = %s",
+                             rec.product_uom_qty)
 
-            # Map product attribute name -> (your model, your field)
+            # ------------------------------
+            # Clear previous mapping fields
+            # ------------------------------
+            rec.service_requested_id = False
+            rec.waste_type_id = False
+            rec.waste_details_id = False
+            rec.bin_type_id = False
+            rec.container_type_id = False
+            rec.tank_volume_id = False
+            # tank_volume_id is related -> do not set directly
+
+            # ------------------------------
+            # Map product attributes → config models
+            # ------------------------------
+            # NOTE: keys are *normalized* names
             attr_to_model_field = {
                 'service requested': ('service.request', 'service_requested_id'),
-                'waste type':        ('waste.type',        'waste_type_id'),
-                'waste details':     ('waste.details',     'waste_details_id'),
-                'bin type':          ('bin.type',          'bin_type_id'),
-                'tank volume':       ('tank.volume',       'tank_volume_id'),
-                'container type':    ('container.type',    'container_type_id'),
+                'waste type': ('waste.type', 'waste_type_id'),
+                'waste details': ('waste.details', 'waste_details_id'),
+                'bin type': ('bin.type', 'bin_type_id'),
+                'container type': ('container.type', 'container_type_id'),
+                'tank volume': ('tank.volume', 'tank_volume_id'),
             }
 
-            PAV = self.env['product.attribute.value']
+            # Log all PTAVs on the product
             for ptav in line.product_id.product_template_attribute_value_ids:
-                attr_name = (ptav.attribute_id.name or '').strip().lower()
-                pav = ptav.product_attribute_value_id  # a product.attribute.value record
+                _logger.info(
+                    "WSR onchange: PTAV -> attr=%s / value=%s (id=%s)",
+                    ptav.attribute_id.name, ptav.product_attribute_value_id.name,
+                    ptav.product_attribute_value_id.id
+                )
+
+            for ptav in line.product_id.product_template_attribute_value_ids:
+                raw_attr_name = ptav.attribute_id.name or ''
+                attr_name = rec._normalize_attr(raw_attr_name)
+                pav = ptav.product_attribute_value_id
                 if not pav:
                     continue
 
-                model_field = attr_to_model_field.get(attr_name)
-                if not model_field:
+                mapping = attr_to_model_field.get(attr_name)
+                _logger.info("WSR onchange: normalized attr '%s' -> mapping %s",
+                             attr_name, mapping)
+
+                if not mapping:
+                    # just log and skip unknown attributes
                     continue
 
-                model_name, field_name = model_field
+                model_name, field_name = mapping
+                Model = self.env[model_name]
 
-                # Find your config record that points to this exact PAV
-                config_rec = self.env[model_name].search([('pav_id', '=', pav.id)], limit=1)
+                # 1) Try strict pav_id match
+                config_rec = Model.search([('pav_id', '=', pav.id)], limit=1)
+                _logger.info("WSR onchange: search %s by pav_id=%s -> %s",
+                             model_name, pav.id, config_rec)
+
+                # 2) Fallback by name if pav_id not set or not matching
                 if not config_rec:
-                    # Fallback by name (optional)
-                    config_rec = self.env[model_name].search([('name', '=', pav.name)], limit=1)
+                    config_rec = Model.search([('name', '=', pav.name)], limit=1)
+                    _logger.info("WSR onchange: fallback search %s by name=%s -> %s",
+                                 model_name, pav.name, config_rec)
 
                 if config_rec and not getattr(rec, field_name):
                     setattr(rec, field_name, config_rec.id)
+                    _logger.info("WSR onchange: SET %s.%s = %s",
+                                 rec, field_name, config_rec.id)
+                else:
+                    if not config_rec:
+                        _logger.warning("WSR onchange: NO config record found for %s: pav=%s name=%s",
+                                        model_name, pav.id, pav.name)
 
-        # ---------- Helpers ----------
 
-    @api.depends('tank_ids.tank_volume_id')
-    def _compute_tank_volume(self):
-        for rec in self:
-            rec.tank_volume_id = rec.tank_ids[:1].tank_volume_id or False
-
-    @api.depends('liters_collected', 'tank_volume_id', 'tank_volume_id.name')
-    def _compute_liters_remaining(self):
-        for rec in self:
-            capacity = 0.0
-
-            tv = rec.tank_volume_id
-            if tv:
-                # 1) Prefer a proper numeric field if your model has one
-                for fld in ('capacity_liters', 'liters', 'capacity', 'volume_l', 'volume'):
-                    if fld in tv._fields:
-                        val = getattr(tv, fld, 0.0) or 0.0
-                        if val:
-                            capacity = float(val)
-                            break
-
-                # 2) Fallback: parse from name (handles "5 000 L", "5,000L", "2.5 kL", "5000 litres")
-                if not capacity:
-                    label = (tv.display_name or '').strip().lower()
-                    label = label.replace('litres', 'l').replace('liters', 'l')
-                    m = re.search(r'(\d[\d\s,\.]*)\s*(k?l)\b', label)  # number + unit (l or kl)
-                    if m:
-                        num = m.group(1).replace(' ', '').replace(',', '')
-                        unit = m.group(2)
-                        try:
-                            capacity = float(num)
-                            if unit == 'kl':  # kiloliters → liters
-                                capacity *= 1000.0
-                        except ValueError:
-                            capacity = 0.0
-                    else:
-                        # last fallback: first number anywhere
-                        m2 = re.search(r'\d[\d\s,\.]*', label)
-                        if m2:
-                            num = m2.group(0).replace(' ', '').replace(',', '')
-                            try:
-                                capacity = float(num)
-                            except ValueError:
-                                capacity = 0.0
-
-            rec.liters_remaining = max(0.0, (capacity or 0.0) - (rec.liters_collected or 0.0))
-
-    # ---------- State actions ----------
     def action_draft(self):
         self.write({'state': 'draft'})
 
@@ -741,9 +1108,8 @@ class WasteServiceRequest(models.Model):
             # Decide which containers to mark as in use for "generated"
             targets = self.env['waste.container']
             # If your logic actually depends on service type, put that logic here.
-            targets |= rec.dropoff_container_ids
-            targets |= rec.lifted_bin_ids | rec.dropped_bin_ids
-            targets |= rec.shunt_container_ids
+            targets |= rec.bin_lifted_ids
+            targets |= rec.bin_dropped_ids
             targets |= rec.tank_ids
 
             # Update in bulk. If you don't have inUse, remove it and keep status only.
@@ -756,21 +1122,6 @@ class WasteServiceRequest(models.Model):
                 targets.write(vals)
 
             rec.state = 'generated'
-
-    # def action_set_scheduled(self):
-    #     """
-    #     Manually move to 'scheduled'.
-    #     Only change state, do NOT touch any other fields.
-    #
-    #     """
-    #     self.state = 'scheduled'
-    #
-    #     template = self.env.ref(
-    #         'waste_management_zakheni.mail_tmpl_service_request_driver_invitation',
-    #         raise_if_not_found=False,
-    #     )
-    #     if template:
-    #         template.send_mail(self.id, force_send=True)
 
     def action_set_scheduled(self):
         """
@@ -800,63 +1151,100 @@ class WasteServiceRequest(models.Model):
 
     def action_mark_done(self):
         for record in self:
+            # Normalised service code
             svc_code = (record.service_requested_id.code or '').lower() \
                 if record.service_requested_id and hasattr(record.service_requested_id, 'code') \
                 else (record.service_requested_id.display_name or '').strip().lower()
 
+            # Destination pickup points (from the request)
             dest_pps = record.pickup_point_ids
             dest_pp_ids = dest_pps.ids
             dest_pp_label = ", ".join(dest_pps.mapped("display_name")) if dest_pps else "Unknown"
 
-            cust = record.customer_id or record.partner_id
+            # Customer for containers
+            cust = record.partner_id or record.partner_id
 
-            # -------------------------
-            # YOUR EXISTING LOGIC
-            # -------------------------
+            # -------------------------------------------------
+            # REMOVAL OF BINS  -> use bin_lifted_ids
+            # -------------------------------------------------
             if svc_code == 'removal of bins':
-                for container in record.dropoff_container_ids:
+                for container in record.bin_lifted_ids:
                     if 'pickup_point_ids' in container._fields:
                         container.pickup_point_ids = [(5, 0, 0)]
                     if 'pickup_point_id' in container._fields:
                         container.pickup_point_id = False
-                    if 'customer_id' in container._fields:
-                        container.customer_id = False
+                    if 'dropoff_point_id' in container._fields:
+                        container.dropoff_point_id = False
+                    if 'partner_id' in container._fields:
+                        container.partner_id = False
                     if 'status' in container._fields:
                         container.status = 'un_use'
+                    if 'inUse' in container._fields:
+                        container.inUse = False
+                    # 🔹 clear reservation once the removal is completed
+                    if 'reserved_request_id' in container._fields and container.reserved_request_id == record:
+                        container.reserved_request_id = False
+
                     record.message_post(body=f"Removed bin: {container.display_name}")
 
+            # -------------------------------------------------
+            # SWAPPING OF BINS -> bin_lifted_ids / bin_dropped_ids
+            # -------------------------------------------------
             elif svc_code == 'swapping of bins':
-                for lifted_bin in record.lifted_bin_ids:
-                    from_label = ", ".join(lifted_bin.pickup_point_ids.mapped("display_name")) \
-                        if 'pickup_point_ids' in lifted_bin._fields and lifted_bin.pickup_point_ids else "Unknown"
-
+                # 1) Lifted bins: take them away from current points/customer
+                for lifted_bin in record.bin_lifted_ids:
                     if 'pickup_point_ids' in lifted_bin._fields:
                         lifted_bin.pickup_point_ids = [(5, 0, 0)]
                     if 'pickup_point_id' in lifted_bin._fields:
                         lifted_bin.pickup_point_id = False
-                    if 'customer_id' in lifted_bin._fields:
-                        lifted_bin.customer_id = False
+                    if 'dropoff_point_id' in lifted_bin._fields:
+                        lifted_bin.dropoff_point_id = False
+                    if 'partner_id' in lifted_bin._fields:
+                        lifted_bin.partner_id = False
                     if 'status' in lifted_bin._fields:
                         lifted_bin.status = 'un_use'
+                    if 'inUse' in lifted_bin._fields:
+                        lifted_bin.inUse = False
+                    # 🔹 clear reservation for lifted bins as well
+                    if 'reserved_request_id' in lifted_bin._fields and lifted_bin.reserved_request_id == record:
+                        lifted_bin.reserved_request_id = False
+
+                    from_label = ", ".join(
+                        lifted_bin.pickup_point_ids.mapped("display_name")
+                    ) if 'pickup_point_ids' in lifted_bin._fields and lifted_bin.pickup_point_ids else "Unknown"
 
                     record.message_post(
                         body=f"Lifted bin '{lifted_bin.display_name}' from '{from_label}'"
                     )
 
-                for dropped_bin in record.dropped_bin_ids:
-                    if 'pickup_point_ids' in dropped_bin._fields:
+                # 2) Dropped bins: assign to destination pickup points + customer
+                for dropped_bin in record.bin_dropped_ids:
+                    dest_pp_single = dest_pps[:1] and dest_pps[0] or False
+
+                    if 'pickup_point_ids' in dropped_bin._fields and dest_pp_ids:
                         dropped_bin.pickup_point_ids = [(6, 0, dest_pp_ids)]
-                    if 'pickup_point_id' in dropped_bin._fields and dest_pps:
-                        dropped_bin.pickup_point_id = dest_pps[0]
-                    if 'customer_id' in dropped_bin._fields and cust:
-                        dropped_bin.customer_id = cust
+                    if 'pickup_point_id' in dropped_bin._fields and dest_pp_single:
+                        dropped_bin.pickup_point_id = dest_pp_single
+                    if 'dropoff_point_id' in dropped_bin._fields and dest_pp_single:
+                        dropped_bin.dropoff_point_id = dest_pp_single
+                    if 'partner_id' in dropped_bin._fields and cust:
+                        dropped_bin.partner_id = cust
                     if 'status' in dropped_bin._fields:
                         dropped_bin.status = 'in_use'
+                    if 'inUse' in dropped_bin._fields:
+                        dropped_bin.inUse = True
+                    # 🔹 clear reservation once swap is completed
+                    if 'reserved_request_id' in dropped_bin._fields and dropped_bin.reserved_request_id == record:
+                        dropped_bin.reserved_request_id = False
 
+                    label = dest_pp_single.display_name if dest_pp_single else dest_pp_label
                     record.message_post(
-                        body=f"Dropped bin '{dropped_bin.display_name}' at '{dest_pp_label}'"
+                        body=f"Dropped bin '{dropped_bin.display_name}' at '{label}'"
                     )
 
+            # -------------------------------------------------
+            # SHUNTING OF BINS  (still uses shunt_* fields)
+            # -------------------------------------------------
             elif svc_code == 'shunting of bins':
                 from_label = record.shunt_from_id.display_name if record.shunt_from_id else "Unknown"
                 to_label = record.shunt_to_id.display_name if record.shunt_to_id else "Unknown"
@@ -866,85 +1254,171 @@ class WasteServiceRequest(models.Model):
                         bin_rec.pickup_point_id = record.shunt_to_id
                     if 'pickup_point_ids' in bin_rec._fields and record.shunt_to_id:
                         bin_rec.pickup_point_ids = [(4, record.shunt_to_id.id)]
-                    if 'customer_id' in bin_rec._fields and cust:
-                        bin_rec.customer_id = cust
+                    if 'dropoff_point_id' in bin_rec._fields and record.shunt_to_id:
+                        bin_rec.dropoff_point_id = record.shunt_to_id
+                    if 'partner_id' in bin_rec._fields and cust:
+                        bin_rec.partner_id = cust
                     if 'status' in bin_rec._fields:
                         bin_rec.status = 'in_use'
+                    if 'inUse' in bin_rec._fields:
+                        bin_rec.inUse = True
+                    # 🔹 clear reservation after shunt is done
+                    if 'reserved_request_id' in bin_rec._fields and bin_rec.reserved_request_id == record:
+                        bin_rec.reserved_request_id = False
 
                     record.message_post(
                         body=f"Shunted bin '{bin_rec.display_name}' from '{from_label}' to '{to_label}'"
                     )
 
+            # -------------------------------------------------
+            # ✅ PLACEMENT OF BINS – driven by bin_line_ids
+            # -------------------------------------------------
             elif svc_code == 'placement of bins':
-                for container in record.dropoff_container_ids:
-                    if 'pickup_point_id' in container._fields and container.pickup_point_id:
-                        dest_pp_single = container.pickup_point_id
-                    elif dest_pps:
-                        dest_pp_single = dest_pps[0]
-                    else:
-                        dest_pp_single = False
+                # Use each line’s pickup/dropoff to place its bins
+                for line in record.bin_line_ids:
+                    # Prefer drop-off point, else pickup point
+                    dest_pp = line.dropoff_point_id or line.pickup_point_id
+                    label = dest_pp.display_name if dest_pp else dest_pp_label
 
-                    label = dest_pp_single.display_name if dest_pp_single else dest_pp_label
+                    for container in line.bin_dropped_ids:
+                        if 'pickup_point_id' in container._fields and dest_pp:
+                            container.pickup_point_id = dest_pp
+                        if 'pickup_point_ids' in container._fields and dest_pp:
+                            container.pickup_point_ids = [(4, dest_pp.id)]
+                        if 'dropoff_point_id' in container._fields and dest_pp:
+                            container.dropoff_point_id = dest_pp
+                        if 'partner_id' in container._fields and cust:
+                            container.partner_id = cust
+                        if 'status' in container._fields:
+                            container.status = 'in_use'
+                        if 'inUse' in container._fields:
+                            container.inUse = True
+                        # 🔹 important: clear reservation so bin is available
+                        if 'reserved_request_id' in container._fields and container.reserved_request_id == record:
+                            container.reserved_request_id = False
 
-                    if 'pickup_point_id' in container._fields and dest_pp_single:
-                        container.pickup_point_id = dest_pp_single
-                    if 'pickup_point_ids' in container._fields and dest_pp_single:
-                        container.pickup_point_ids = [(4, dest_pp_single.id)]
-                    if 'customer_id' in container._fields and cust:
-                        container.customer_id = cust
-                    if 'status' in container._fields:
-                        container.status = 'in_use'
+                        record.message_post(
+                            body=f"Placed bin: {container.display_name} at {label}"
+                        )
 
-                    record.message_post(
-                        body=f"Placed bin: {container.display_name} at {label}"
-                    )
-
-            elif svc_code == 'waste collection & disposal':
-                for container in record.dropoff_container_ids:
+            # -------------------------------------------------
+            # WASTE COLLECTION & DISPOSAL
+            # -------------------------------------------------
+            elif svc_code in (
+                    'waste collection & disposal',
+                    'waste collection and disposal',
+                    'general collection & desposal',
+            ):
+                containers = (record.bin_lifted_ids | record.bin_dropped_ids)
+                for container in containers:
                     if 'pickup_point_ids' in container._fields:
                         container.pickup_point_ids = [(5, 0, 0)]
                     if 'pickup_point_id' in container._fields:
                         container.pickup_point_id = False
-                    if 'customer_id' in container._fields:
-                        container.customer_id = False
+                    if 'dropoff_point_id' in container._fields:
+                        container.dropoff_point_id = False
+                    if 'partner_id' in container._fields:
+                        container.partner_id = False
                     if 'status' in container._fields:
                         container.status = 'un_use'
+                    if 'inUse' in container._fields:
+                        container.inUse = False
+                    # 🔹 clear reservation once collected/disposed
+                    if 'reserved_request_id' in container._fields and container.reserved_request_id == record:
+                        container.reserved_request_id = False
 
                     record.message_post(
                         body=f"Collected & Disposed bin: {container.display_name}"
                     )
 
-            # tanks logic unchanged...
-            for tank in record.tank_ids:
-                if 'pickup_point_ids' in tank._fields:
-                    tank.pickup_point_ids = [(6, 0, dest_pp_ids)]
-                if 'pickup_point_id' in tank._fields and dest_pps:
-                    tank.pickup_point_id = dest_pps[0]
-                if 'customer_id' in tank._fields and cust:
-                    tank.customer_id = cust
-                if 'status' in tank._fields:
-                    tank.status = 'un_use'
+            all_tanks = self.env['waste.container']
 
-                record.message_post(
-                    body=f"Collected & Emptied tank: {tank.display_name} "
-                         f"({tank.tank_volume_id.display_name or ''})"
+            # 1) Log per-line liters + tanks
+            total_liters = 0.0
+            for line in record.bin_line_ids:
+                if not line.tank_ids:
+                    continue
+
+                all_tanks |= line.tank_ids
+
+                liters = line.liters_collected or 0.0
+                total_liters += liters
+
+                pp_label = (
+                    line.pickup_point_id.display_name
+                    if line.pickup_point_id
+                    else dest_pp_label
                 )
 
-                # ✅ AUDIT LOG - one line grouped exactly like requested
-                audit_summary = record._get_pickup_point_bins_summary_string(limit_per_point=None)
-                if audit_summary:
-                    record.message_post(
-                        body=_("Bins per Pickup/Dropoff Point: %s") % audit_summary
+                tank_bits = []
+                for tank in line.tank_ids:
+                    # Try to show tank volume
+                    vol_label = ""
+                    if "tank_volume_id" in tank._fields and tank.tank_volume_id:
+                        vol_label = (
+                                tank.tank_volume_id.display_name
+                                or tank.tank_volume_id.name
+                                or ""
+                        )
+
+                    if vol_label:
+                        tank_bits.append(f"{tank.display_name} ({vol_label})")
+                    else:
+                        tank_bits.append(tank.display_name)
+
+                tank_label = ", ".join(tank_bits) or "Unknown tank"
+
+                if liters:
+                    msg = (
+                        f"Collected {liters:g} L from tanks: {tank_label} "
+                        f"at {pp_label}"
                     )
+                else:
+                    msg = f"Emptied tanks: {tank_label} at {pp_label}"
+
+                record.message_post(body=msg)
+
+            # 1b) Log overall kL + tariff summary for the job (if this is a Tank job)
+            if record._is_tank_job():
+                # Prefer your computed billing values from the request
+                liters_for_billing = record.liters_collected or total_liters
+                kl = record.billing_kl or (liters_for_billing / 1000.0 if liters_for_billing else 0.0)
+                base_kl, base_price, extra_rate = record._get_rate_params()
+                extra_kl = max(0.0, kl - base_kl)
+                amount = record.billing_amount or 0.0
+
+                tariff_msg = (
+                    f"Tank job summary: {kl:.2f} kL "
+                    f"({liters_for_billing:.0f} L). "
+                    f"Base: {base_kl:g} kL at R{base_price:,.2f}. "
+                    f"Extra: {extra_kl:.2f} kL at R{extra_rate:,.2f}/kL. "
+                    f"Total amount (excl. VAT): R{amount:,.2f}."
+                )
+                record.message_post(body=tariff_msg)
+
+            # 2) Actually empty / reset tank records (keep your existing logic here)
+            for tank in all_tanks:
+                if "pickup_point_ids" in tank._fields:
+                    tank.pickup_point_ids = [(6, 0, dest_pp_ids)]
+                if "pickup_point_id" in tank._fields and dest_pps:
+                    tank.pickup_point_id = dest_pps[0]
+                if "dropoff_point_id" in tank._fields and dest_pps:
+                    tank.dropoff_point_id = dest_pps[0]
+                if "partner_id" in tank._fields and cust:
+                    tank.partner_id = cust
+                if "status" in tank._fields:
+                    tank.status = "un_use"
+                if "inUse" in tank._fields:
+                    tank.inUse = False
+                if (
+                        "reserved_request_id" in tank._fields
+                        and tank.reserved_request_id == record
+                ):
+                    tank.reserved_request_id = False
 
             record.state = "done"
 
 
-    work_sheet_id = fields.Many2one(
-        "waste.worksheet",
-        string="Work Sheet",
-        ondelete="set null"
-    )
 
     def action_cancelled(self):
         self.ensure_one()
@@ -979,8 +1453,6 @@ class WasteServiceRequest(models.Model):
                 'default_user_id': self.id,
             },
         }
-
-
 
     def action_open_related_sales(self):
         """Redirect to sales orders related to this customer"""
@@ -1056,7 +1528,7 @@ class WasteServiceRequest(models.Model):
                                                        store=True)
     latest_worksheet_quantity_collected = fields.Float(string='Quantity Collected', compute="_compute_latest_worksheet",
                                              store=True)
-    latest_worksheet_driver_signature = fields.Binary(string="Signature", compute="_compute_latest_capture", store=True)
+    latest_worksheet_driver_signature = fields.Binary(string="Signature", compute="_compute_latest_worksheet", store=True)
     latest_worksheet_manifest_document = fields.Binary("Manifests Document", compute="_compute_latest_worksheet", store=True, attachment=True)
     latest_worksheet_manifest_document_filename = fields.Char()
 
@@ -1065,6 +1537,13 @@ class WasteServiceRequest(models.Model):
 
     latest_worksheet_safety_certificate = fields.Binary("Safety Certificate", compute="_compute_latest_worksheet", store=True, attachment=True)
     latest_worksheet_safety_certificate_filename = fields.Char()
+
+    latest_worksheet_notes_html = fields.Html(
+        string='Worksheet Notes',
+        compute="_compute_latest_worksheet",
+        store=True,
+        help="Notes from the latest worksheet linked to this service request.",
+    )
 
 
 
@@ -1086,6 +1565,7 @@ class WasteServiceRequest(models.Model):
                 rec.latest_worksheet_manifest_document = latest.manifest_document
                 rec.latest_worksheet_weighbridge_slip = latest.weighbridge_slip
                 rec.latest_worksheet_safety_certificate = latest.safety_certificate
+                rec.latest_worksheet_notes_html = latest.notes_html            # 🔹 NEW
 
             else:
                 rec.latest_worksheet_arrival_time = False
@@ -1097,6 +1577,8 @@ class WasteServiceRequest(models.Model):
                 rec.latest_worksheet_manifest_document = False
                 rec.latest_worksheet_weighbridge_slip = False
                 rec.latest_worksheet_safety_certificate = False
+                rec.latest_worksheet_notes_html = False               # 🔹 NEW
+
 
     def action_view_worksheet(self):
         return {
@@ -1177,6 +1659,9 @@ class WasteServiceRequest(models.Model):
         help="Pickup/Dropoff points captured from Assign Bins wizard.",
     )
 
+    # ----------------------------------------------------------------------
+    # SUMMARY OF PICKUP / DROPOFF POINTS & BINS (READ-ONLY TEXT)
+    # ----------------------------------------------------------------------
     pickup_point_bins_summary = fields.Text(
         string="Pickup/Dropoff Points & Bins Summary",
         compute="_compute_pickup_point_bins_summary",
@@ -1185,62 +1670,195 @@ class WasteServiceRequest(models.Model):
 
     @api.depends(
         "bin_line_ids.pickup_point_id",
-        "bin_line_ids.container_ids",
-        "bin_line_ids.shunt_container_ids",
-        "bin_line_ids.lifted_container_ids",
-        "bin_line_ids.dropped_container_ids",
+        "bin_line_ids.dropoff_point_id",
+        "bin_line_ids.bin_lifted_ids",
+        "bin_line_ids.bin_dropped_ids",
+        "bin_line_ids.tank_ids",
+        "bin_line_ids.liters_collected",
+        "container_type_id",
+        "billing_kl",
+        "liters_collected",
+        "waste_type_id",
+        "service_requested_id",
     )
     def _compute_pickup_point_bins_summary(self):
         for rec in self:
             parts = []
 
-            # use saved lines (persistent)
+            if rec._is_tank_job():
+                # If no quantity yet, leave empty
+                if not rec.billing_kl or rec.billing_kl <= 0:
+                    rec.pickup_point_bins_summary = ""
+                    continue
+
+                liters = rec.liters_collected or (rec.billing_kl * 1000.0)
+                base_kl, base_price, extra_rate = rec._get_rate_params()
+
+                # extra kL above base (e.g. qty 6 → extra 2)
+                extra_kl = max(0.0, rec.billing_kl - base_kl)
+
+                service_label = (
+                        rec.waste_type_id.display_name
+                        or rec.service_requested_id.display_name
+                        or _("Tank Service")
+                )
+
+                pp_label = ", ".join(
+                    rec.pickup_point_ids.mapped("display_name")
+                ) or _("No Pickup Point")
+
+                amount = rec.billing_amount or 0.0
+
+                # Build extra kL text
+                if extra_kl > 0:
+                    extra_txt = _(
+                        "Base: %(base_kl).0f kL, Extra: %(extra_kl).2f kL",
+                        base_kl=base_kl,
+                        extra_kl=extra_kl,
+                    )
+                else:
+                    extra_txt = _(
+                        "Within base %(base_kl).0f kL",
+                        base_kl=base_kl,
+                    )
+
+                summary = _(
+                    "%(pp)s – %(service)s: %(kl).2f kL (%(liters).0f L). "
+                    "%(extra_txt)s. "
+                    "Tariff: first %(base_kl).0f kL at R%(base_price).2f, "
+                    "extra kL at R%(extra_rate).2f. "
+                    "Amount (excl. VAT): R%(amount).2f",
+                    pp=pp_label,
+                    service=service_label,
+                    kl=rec.billing_kl,
+                    liters=liters,
+                    extra_txt=extra_txt,
+                    base_kl=base_kl,
+                    base_price=base_price,
+                    extra_rate=extra_rate,
+                    amount=amount,
+                )
+
+                rec.pickup_point_bins_summary = summary
+                continue  # ✅ skip bin logic for tank jobs
+
+            # ------------------------------------------------------------------
+            # 🔹 NORMAL (BIN) LOGIC – your existing behaviour
+            # ------------------------------------------------------------------
+
+            # current service code (normalized)
+            svc_code = (rec.service_requested_id.code or "").lower() \
+                if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
+                else (rec.service_requested_id.display_name or "").strip().lower()
+
             for line in rec.bin_line_ids:
                 pp = line.pickup_point_id
-                if not pp:
-                    continue
+                dp = line.dropoff_point_id
 
-                # decide which bins to show per service
-                svc_code = (rec.service_requested_id.code or "").lower() \
-                    if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
-                    else (rec.service_requested_id.display_name or "").strip().lower()
+                lifted_names = ", ".join(line.bin_lifted_ids.mapped("display_name")) or "-"
+                dropped_names = ", ".join(line.bin_dropped_ids.mapped("display_name")) or "-"
 
-                if svc_code == "shunting of bins":
-                    bins = line.shunt_container_ids
+                # --------------------------------------------------
+                # Build tank + liters text for this line (if any)
+                # --------------------------------------------------
+                tank_infos = []
+                for tank in line.tank_ids:
+                    vol_label = ""
+                    if hasattr(tank, "tank_volume_id") and tank.tank_volume_id:
+                        vol_label = (
+                            tank.tank_volume_id.display_name
+                            or tank.tank_volume_id.name
+                            or ""
+                        )
+                    if vol_label:
+                        tank_infos.append(f"{tank.display_name} ({vol_label})")
+                    else:
+                        tank_infos.append(tank.display_name)
+
+                tanks_label = ", ".join(tank_infos)
+                line_liters = line.liters_collected or 0.0
+
+                tank_text = ""
+                if line_liters and tanks_label:
+                    tank_text = f"Collected {line_liters:g} L from: {tanks_label}"
+                elif line_liters:
+                    tank_text = f"Collected {line_liters:g} L"
+                elif tanks_label:
+                    tank_text = f"Tanks: {tanks_label}"
+
+                # --------------------------------------------------
+                # Existing summary logic per service type
+                # --------------------------------------------------
+
+                # ---------- PLACEMENT OF BINS ----------
+                if svc_code == "placement of bins":
+                    point_label = dp.display_name if dp else (pp.display_name if pp else "Unknown")
+                    text = f"{point_label} [Placed: {dropped_names}]"
+
+                # ---------- SHUNTING OF BINS ----------
+                elif svc_code == "shunting of bins":
+                    src = pp.display_name if pp else "Unknown"
+                    dst = dp.display_name if dp else "Unknown"
+                    text = f"{src} → {dst} [Shunted: {lifted_names}]"
+
+                # ---------- REMOVAL OF BINS ----------
+                elif svc_code == "removal of bins":
+                    point_label = pp.display_name if pp else "Unknown"
+                    text = f"{point_label} [Removed: {lifted_names}]"
+
+                # ---------- WASTE / GENERAL COLLECTION & DISPOSAL ----------
+                elif svc_code in (
+                        "waste collection & disposal",
+                        "waste collection and disposal",
+                        "general collection & desposal",
+                ):
+                    point_label = pp.display_name if pp else "Unknown"
+                    if line.bin_lifted_ids and line.bin_dropped_ids:
+                        text = f"{point_label} [Lifted: {lifted_names} | Dropped: {dropped_names}]"
+                    elif line.bin_lifted_ids:
+                        text = f"{point_label} [Lifted: {lifted_names}]"
+                    elif line.bin_dropped_ids:
+                        text = f"{point_label} [Dropped: {dropped_names}]"
+                    else:
+                        text = f"{point_label} [-]"
+
+                # ---------- SWAPPING OF BINS ----------
                 elif svc_code == "swapping of bins":
-                    # show both in one line
-                    lifted = ", ".join(b.display_name for b in line.lifted_container_ids)
-                    dropped = ", ".join(b.display_name for b in line.dropped_container_ids)
-                    text = f"{pp.display_name} [Lifted: {lifted or '-'} | Dropped: {dropped or '-'}]"
-                    parts.append(text)
-                    continue
-                else:
-                    bins = line.container_ids
+                    point_label = pp.display_name if pp else "Unknown"
+                    text = f"{point_label} [Lifted: {lifted_names} | Dropped: {dropped_names}]"
 
-                bin_names = [b.display_name for b in bins]
-                if len(bin_names) > 3:
-                    shown = ", ".join(bin_names[:3]) + ", ..."
+                # ---------- FALLBACK ----------
                 else:
-                    shown = ", ".join(bin_names)
+                    point_label = pp.display_name if pp else (dp.display_name if dp else "Unknown")
+                    all_bins = (line.bin_lifted_ids | line.bin_dropped_ids).mapped("display_name")
+                    if len(all_bins) > 3:
+                        shown = ", ".join(all_bins[:3]) + ", ..."
+                    else:
+                        shown = ", ".join(all_bins) if all_bins else "-"
+                    text = f"{point_label} [{shown}]"
 
-                parts.append(f"{pp.display_name} [{shown}]")
+                # 🔹 Append tank + liters info at the end (if any)
+                if tank_text:
+                    text = f"{text} ({tank_text})"
+
+                parts.append(text)
 
             rec.pickup_point_bins_summary = ", ".join(parts) if parts else ""
-
-    # ---------------------------------------------------------
-    # Smart button count = number of bins currently selected
-    # ---------------------------------------------------------
 
     wizard_pickup_point_count = fields.Integer(
         compute="_compute_wizard_pickup_point_count",
         store=False,
     )
 
-    @api.depends('wizard_pickup_point_ids')
+    @api.depends("bin_line_ids.pickup_point_id")
     def _compute_wizard_pickup_point_count(self):
         for rec in self:
-            rec.wizard_pickup_point_count = len(rec.wizard_pickup_point_ids)
+            # unique pickup points from persistent lines
+            rec.wizard_pickup_point_count = len(set(rec.bin_line_ids.mapped("pickup_point_id").ids))
 
+    # ----------------------------------------------------------------------
+    # LINES + COUNT OF BINS FROM LINES
+    # ----------------------------------------------------------------------
     bin_line_ids = fields.One2many(
         "waste.request.bin.line",
         "request_id",
@@ -1252,27 +1870,53 @@ class WasteServiceRequest(models.Model):
         store=False,
     )
 
-    @api.depends('bin_line_ids')
+    @api.depends(
+        "bin_line_ids.bin_lifted_ids",
+        "bin_line_ids.bin_dropped_ids",
+    )
     def _compute_bin_line_count(self):
         for rec in self:
-            rec.bin_line_count = len(rec.bin_line_ids)
+            svc_code = (rec.service_requested_id.code or "").lower() \
+                if rec.service_requested_id and hasattr(rec.service_requested_id, "code") \
+                else (rec.service_requested_id.display_name or "").strip().lower()
 
-    @api.depends('dropoff_container_ids', 'shunt_container_ids',
-                 'lifted_bin_ids', 'dropped_bin_ids')
-    def _compute_bin_line_count(self):
-        for rec in self:
-            svc_code = (rec.service_requested_id.code or '').lower() \
-                if rec.service_requested_id and hasattr(rec.service_requested_id, 'code') \
-                else (rec.service_requested_id.display_name or '').strip().lower()
+            lines = rec.bin_line_ids
 
-            if svc_code in ('placement of bins', 'removal of bins', 'waste collection & disposal'):
-                rec.bin_line_count = len(rec.dropoff_container_ids)
-            elif svc_code == 'shunting of bins':
-                rec.bin_line_count = len(rec.shunt_container_ids)
-            elif svc_code == 'swapping of bins':
-                rec.bin_line_count = len(rec.lifted_bin_ids) + len(rec.dropped_bin_ids)
+            if svc_code == "placement of bins":
+                # how many bins are being placed
+                rec.bin_line_count = sum(len(l.bin_dropped_ids) for l in lines)
+
+            elif svc_code == "removal of bins":
+                # how many bins removed
+                rec.bin_line_count = sum(len(l.bin_lifted_ids) for l in lines)
+
+            elif svc_code == "shunting of bins":
+                # how many bins shunted
+                rec.bin_line_count = sum(len(l.bin_lifted_ids) for l in lines)
+
+            elif svc_code in (
+                    "waste collection & disposal",
+                    "waste collection and disposal",
+                    "general collection & desposal",
+            ):
+                # count all bins involved in collection/disposal
+                rec.bin_line_count = sum(
+                    len(l.bin_lifted_ids | l.bin_dropped_ids) for l in lines
+                )
+
+            elif svc_code == "swapping of bins":
+                # lifted + dropped for swapping
+                rec.bin_line_count = sum(
+                    len(l.bin_lifted_ids) + len(l.bin_dropped_ids) for l in lines
+                )
+
             else:
-                rec.bin_line_count = 0
+                # default: all distinct bins across all lines
+                all_bins = self.env["waste.container"]
+                for l in lines:
+                    all_bins |= (l.bin_lifted_ids | l.bin_dropped_ids)
+                rec.bin_line_count = len(all_bins)
+
 
     # ---------------------------------------------------------
     # Open wizard from smart button
@@ -1335,12 +1979,6 @@ class SaleOrder(models.Model):
 
     )
 
-    # pickup_point_ids = fields.One2many(
-    #     'pickup.point', 'sale_order_id',
-    #     string="Drop-off/Pickup Point",
-    #     domain="[('partner_id', '=', partner_id)]",
-    #     required=True
-    # )
 
     container_ids = fields.One2many('waste.container', 'sale_order_id', string="Waste Containers")
 
@@ -1360,6 +1998,9 @@ class HREmployee(models.Model):
         readonly=True
     )
 
+    work_email = fields.Char(required=True)
+    job_id = fields.Many2one('hr.job',required=True)
+
 
 class FleetVehicle(models.Model):
     _inherit = 'fleet.vehicle'
@@ -1374,4 +2015,48 @@ class FleetVehicle(models.Model):
         related="service_request_id.planned_date",
         store=True,
         readonly=True
+    )
+    driver_email = fields.Char(
+        string="Driver Email",
+        related='driver_id.email',
+        store=True,  # optional but useful for searching / filtering
+        readonly=True,
+    )
+
+    is_waste_tanker = fields.Boolean(
+        string="Waste Tanker Truck",
+        help="Tick if this vehicle has a fixed tank for liquid waste (e.g. 7000L, 9000L, etc.)."
+    )
+
+    tank_volume_id = fields.Many2one(
+        'tank.volume',
+        string="Tank Volume",
+        help="Select the tank volume (e.g. 7000L, 9000L, etc.) for this truck."
+    )
+
+    # capacity_liters is now derived from tank.volume
+    tank_capacity_liters = fields.Float(
+        string="Tank Capacity (L)",
+        related="tank_volume_id.capacity_liters",
+        store=True,
+        readonly=False,  # keep editable if you want to override per truck
+    )
+
+
+class FleetVehicleModel(models.Model):
+    _inherit = 'fleet.vehicle.model'
+
+    vehicle_type = fields.Selection(
+        selection_add=[
+            ('truck', 'Truck'),
+            ('compactor', 'Compactor'),
+            ('trailer', 'Trailer'),
+            ('tank_truck', 'Tank Truck'),
+        ],
+        ondelete={
+            'truck': 'set default',
+            'compactor': 'set default',
+            'trailer': 'set default',
+            'tank_truck': 'set default',
+        },
     )

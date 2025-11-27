@@ -28,3 +28,8 @@ class TankVolume(models.Model):
         for r in self:
             if r.pav_id and r.name.strip() != r.pav_id.name.strip():
                 raise ValidationError(_("Name must match the selected attribute value."))
+
+    capacity_liters = fields.Float(
+        string="Capacity (L)",
+        help="Numeric capacity in liters, e.g. 7000, 9000, 12000, 15000."
+    )

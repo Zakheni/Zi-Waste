@@ -107,7 +107,10 @@ access_waste_service_request_extra_line,waste.service.request.extra.line user,mo
 access_waste_request_assign_bin_wizard,waste.request.assign.bin.wizard user,model_waste_request_assign_bin_wizard,,1,1,1,1
 access_waste_request_assign_bin_line_wizard,waste.request.assign.bin.line.wizard user,model_waste_request_assign_bin_line_wizard,,1,1,1,1
 access_waste_request_bin_line,waste.request.bin.line user,model_waste_request_bin_line,,1,1,1,1
-access_ws_assign_bin_wizard,waste.worksheet.assign.bin.wizard,model_waste_worksheet_assign_bin_wizard,base.group_user,1,1,1,1
-access_ws_assign_bin_line_wizard,waste.worksheet.assign.bin.line.wizard,model_waste_worksheet_assign_bin_line_wizard,base.group_user,1,1,1,1
+
+
+access_wsr_portal_customer,waste.service.request portal customer,model_waste_service_request,waste_management_zakheni.group_wmz_client_customer,1,0,1,0
+access_wsr_portal_agent,waste.service.request portal agent,model_waste_service_request,waste_management_zakheni.group_wmz_client_agent,1,0,0,0
+
 
 

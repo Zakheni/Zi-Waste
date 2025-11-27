@@ -3,7 +3,7 @@ from odoo import models, fields
 
 class WasteRequestBinLine(models.Model):
     _name = "waste.request.bin.line"
-    _description = "Waste Request Pickup Point / Bin Mapping Line"
+    _description = "Waste Request Pickup / Bin Mapping Line"
 
     request_id = fields.Many2one(
         "waste.service.request",
@@ -15,47 +15,256 @@ class WasteRequestBinLine(models.Model):
 
     pickup_point_id = fields.Many2one(
         "pickup.point",
-        string="Pickup / Dropoff Point",
+        string="Pickup Point",
         required=True,
     )
 
-    # Placement / Removal / Collection
-    container_ids = fields.Many2many(
-        "waste.container",
-        "waste_request_bin_line_cont_rel",
-        "line_id",
-        "container_id",
-        string="Containers",
-        required=True,
+    dropoff_point_id = fields.Many2one(
+        "pickup.point",
+        string="Drop-off Point",
     )
 
-    # Shunting
-    shunt_container_ids = fields.Many2many(
-        "waste.container",
-        "waste_request_bin_line_shunt_rel",
-        "line_id",
-        "container_id",
-        string="Bins to Shunt",
-        required=True,
-    )
-
-    # Swapping
-    lifted_container_ids = fields.Many2many(
+    bin_lifted_ids = fields.Many2many(
         "waste.container",
         "waste_request_bin_line_lifted_rel",
         "line_id",
         "container_id",
-        string="Lifted Bins",
-        required=True,
+        string="Bin Lifted",
     )
-    dropped_container_ids = fields.Many2many(
+
+    bin_dropped_ids = fields.Many2many(
         "waste.container",
         "waste_request_bin_line_dropped_rel",
         "line_id",
         "container_id",
-        string="Dropped Bins",
-        required=True,
+        string="Bin Dropped",
     )
+
+    tank_ids = fields.Many2many(
+        "waste.container",
+        "waste_request_tank_line_collect_rel",
+        "line_id",
+        "container_id",
+        string="Tank",
+    )
+
+    liters_collected = fields.Float(string="Liters Collected")
+    liters_remaining = fields.Float(string="Liters Remaining")
+
+
+# from odoo import models, fields
+#
+#
+# class WasteRequestBinLine(models.Model):
+#     _name = "waste.request.bin.line"
+#     _description = "Waste Request Pickup / Bin Mapping Line"
+#
+#     request_id = fields.Many2one(
+#         "waste.service.request",
+#         string="Service Request",
+#         required=True,
+#         ondelete="cascade",
+#         index=True,
+#     )
+#
+#     pickup_point_id = fields.Many2one(
+#         "pickup.point",
+#         string="Pickup Point",
+#         required=True,
+#     )
+#
+#     dropoff_point_id = fields.Many2one(
+#         "pickup.point",
+#         string="Drop-off Point",
+#     )
+#
+#     bin_lifted_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_lifted_rel",
+#         "line_id",
+#         "container_id",
+#         string="Bin Lifted",
+#     )
+#
+#     bin_dropped_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_dropped_rel",
+#         "line_id",
+#         "container_id",
+#         string="Bin Dropped",
+#     )
+#
+#     # 🔹 NEW: store tank volume per line
+#     tank_volume_id = fields.Many2one(
+#         "tank.volume",
+#         string="Tank Volume",
+#     )
+#
+#     liters_collected = fields.Float(string="Liters Collected")
+#     liters_remaining = fields.Float(string="Liters Remaining")
+#
+
+
+# from odoo import models, fields
+#
+#
+# class WasteRequestBinLine(models.Model):
+#     _name = "waste.request.bin.line"
+#     _description = "Waste Request Pickup / Bin Mapping Line"
+#
+#     request_id = fields.Many2one(
+#         "waste.service.request",
+#         string="Service Request",
+#         required=True,
+#         ondelete="cascade",
+#         index=True,
+#     )
+#
+#     pickup_point_id = fields.Many2one(
+#         "pickup.point",
+#         string="Pickup Point",
+#         required=True,
+#     )
+#
+#     dropoff_point_id = fields.Many2one(
+#         "pickup.point",
+#         string="Drop-off Point",
+#     )
+#
+#     bin_lifted_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_lifted_rel",
+#         "line_id",
+#         "container_id",
+#         string="Bin Lifted",
+#     )
+#
+#     bin_dropped_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_dropped_rel",
+#         "line_id",
+#         "container_id",
+#         string="Bin Dropped",
+#     )
+#
+#     # ✅ NEW: tank per mapping line
+#     tank_volume_id = fields.Many2one(
+#         "tank.volume",
+#         string="Tank Volume",
+#     )
+#
+#     liters_collected = fields.Float(string="Liters Collected")
+#     liters_remaining = fields.Float(string="Liters Remaining")
+#
+
+
+
+# from odoo import models, fields
+#
+#
+# class WasteRequestBinLine(models.Model):
+#     _name = "waste.request.bin.line"
+#     _description = "Waste Request Pickup / Bin Mapping Line"
+#
+#     request_id = fields.Many2one(
+#         "waste.service.request",
+#         string="Service Request",
+#         required=True,
+#         ondelete="cascade",
+#         index=True,
+#     )
+#
+#     pickup_point_id = fields.Many2one(
+#         "pickup.point",
+#         string="Pickup Point",
+#         required=True,
+#     )
+#
+#     dropoff_point_id = fields.Many2one(
+#         "pickup.point",
+#         string="Drop-off Point",
+#     )
+#
+#     bin_lifted_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_lifted_rel",
+#         "line_id",
+#         "container_id",
+#         string="Bin Lifted",
+#     )
+#
+#     bin_dropped_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_dropped_rel",
+#         "line_id",
+#         "container_id",
+#         string="Bin Dropped",
+#     )
+#
+#     liters_collected = fields.Float(string="Liters Collected")
+#     liters_remaining = fields.Float(string="Liters Remaining")
+
+
+
+
+# from odoo import models, fields
+#
+#
+# class WasteRequestBinLine(models.Model):
+#     _name = "waste.request.bin.line"
+#     _description = "Waste Request Pickup Point / Bin Mapping Line"
+#
+#     request_id = fields.Many2one(
+#         "waste.service.request",
+#         string="Service Request",
+#         required=True,
+#         ondelete="cascade",
+#         index=True,
+#     )
+#
+#     pickup_point_id = fields.Many2one(
+#         "pickup.point",
+#         string="Pickup / Dropoff Point",
+#         required=True,
+#     )
+#
+#     # Placement / Removal / Collection
+#     container_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_cont_rel",
+#         "line_id",
+#         "container_id",
+#         string="Containers",
+#         required=True,
+#     )
+#
+#     # Shunting
+#     shunt_container_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_shunt_rel",
+#         "line_id",
+#         "container_id",
+#         string="Bins to Shunt",
+#         required=True,
+#     )
+#
+#     # Swapping
+#     lifted_container_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_lifted_rel",
+#         "line_id",
+#         "container_id",
+#         string="Lifted Bins",
+#         required=True,
+#     )
+#     dropped_container_ids = fields.Many2many(
+#         "waste.container",
+#         "waste_request_bin_line_dropped_rel",
+#         "line_id",
+#         "container_id",
+#         string="Dropped Bins",
+#         required=True,
+#     )
 
 
 # from odoo import models, fields

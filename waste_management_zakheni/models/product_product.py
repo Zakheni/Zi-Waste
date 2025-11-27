@@ -1,9 +1,10 @@
-# models/product_product.py
+# models/product_template.py
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
-class ProductProduct(models.Model):
-    _inherit = 'product.product'
+
+class ProductTemplate(models.Model):
+    _inherit = 'product.template'
 
     waste_qty = fields.Float(
         string="Waste Request Qty",
@@ -18,41 +19,51 @@ class ProductProduct(models.Model):
 
     @api.depends_context('waste_request_id')
     def _compute_waste_request_info(self):
-        """Compute qty + selected flag per product for the active waste request."""
+        """Compute qty + selected flag per product TEMPLATE for the active waste request."""
         request_id = self.env.context.get('waste_request_id')
         ExtraLine = self.env['waste.service.request.extra.line']
 
         # No request in context → nothing selected
         if not request_id:
-            for prod in self:
-                prod.waste_qty = 0.0
-                prod.waste_selected = False
+            for tmpl in self:
+                tmpl.waste_qty = 0.0
+                tmpl.waste_selected = False
             return
 
-        # Group lines per product for this request
-        lines = ExtraLine.read_group(
-            [('request_id', '=', request_id), ('product_id', 'in', self.ids)],
-            ['product_id', 'quantity:sum'],
-            ['product_id'],
-        )
-        qty_map = {l['product_id'][0]: l['quantity'] for l in lines}
+        # Get all extra lines for this request and aggregate by product_tmpl_id
+        lines = ExtraLine.search([
+            ('request_id', '=', request_id),
+            ('product_id', '!=', False),
+        ])
 
-        for prod in self:
-            qty = qty_map.get(prod.id, 0.0)
-            prod.waste_qty = qty
-            prod.waste_selected = qty > 0
+        qty_by_tmpl = {}
+        for l in lines:
+            tmpl = l.product_id.product_tmpl_id
+            if not tmpl:
+                continue
+            qty_by_tmpl[tmpl.id] = qty_by_tmpl.get(tmpl.id, 0.0) + (l.quantity or 0.0)
 
-    # ==== existing helper used by buttons ====
+        for tmpl in self:
+            qty = qty_by_tmpl.get(tmpl.id, 0.0)
+            tmpl.waste_qty = qty
+            tmpl.waste_selected = qty > 0
+
+    # ==== helper used by buttons ====
     def _update_waste_request_line(self, delta_qty):
         request_id = self.env.context.get('waste_request_id')
         if not request_id:
-            raise UserError(_("No waste request in context."))
+            # If opened from generic product menu, just ignore the click
+            return False
 
         request = self.env['waste.service.request'].browse(request_id)
         request.ensure_one()
 
         ExtraLine = self.env['waste.service.request.extra.line']
-        for product in self:
+        for tmpl in self:
+            product = tmpl.product_variant_id
+            if not product:
+                continue
+
             line = ExtraLine.search([
                 ('request_id', '=', request.id),
                 ('product_id', '=', product.id),
@@ -73,6 +84,7 @@ class ProductProduct(models.Model):
                 })
         return False
 
+
     def action_waste_add_one(self):
         return self._update_waste_request_line(1)
 
@@ -80,96 +92,17 @@ class ProductProduct(models.Model):
         return self._update_waste_request_line(-1)
 
 
+class SaleOrderLine(models.Model):
+    _inherit = 'sale.order.line'
 
-#
-# # models/product_product.py
-# from odoo import models, api, _
-# from odoo.exceptions import UserError
-#
-# class ProductProduct(models.Model):
-#     _inherit = 'product.product'
-#
-#     def _update_waste_request_line(self, delta_qty):
-#         """delta_qty: +1, -1, etc. Updates extra products on waste.service.request."""
-#         request_id = self.env.context.get('waste_request_id')
-#         if not request_id:
-#             # called outside a waste request
-#             raise UserError(_("No waste request in context."))
-#
-#         request = self.env['waste.service.request'].browse(request_id)
-#         request.ensure_one()
-#
-#         ExtraLine = self.env['waste.service.request.extra.line']
-#         for product in self:
-#             line = ExtraLine.search([
-#                 ('request_id', '=', request.id),
-#                 ('product_id', '=', product.id),
-#             ], limit=1)
-#
-#             if line:
-#                 new_qty = (line.quantity or 0.0) + delta_qty
-#                 if new_qty <= 0:
-#                     line.unlink()
-#                 else:
-#                     line.quantity = new_qty
-#             elif delta_qty > 0:
-#                 ExtraLine.create({
-#                     'request_id': request.id,
-#                     'product_id': product.id,
-#                     'quantity': delta_qty,
-#                     'price_unit': product.lst_price,
-#                 })
-#
-#         # return False so Odoo just stays on the kanban
-#         return False
-#
-#     def action_waste_add_one(self):
-#         return self._update_waste_request_line(1)
-#
-#     def action_waste_remove_one(self):
-#         return self._update_waste_request_line(-1)
-#
-#
-# # # models/product_product.py
-# # from odoo import models, api, _
-# # from odoo.exceptions import UserError
-# #
-# # class ProductProduct(models.Model):
-# #     _inherit = 'product.product'
-# #
-# #     def _update_waste_request_line(self, delta_qty):
-# #         """delta_qty: +1, -1, etc."""
-# #         request_id = self.env.context.get('waste_request_id')
-# #         if not request_id:
-# #             raise UserError(_("No waste request in context."))
-# #
-# #         request = self.env['waste.service.request'].browse(request_id).sudo()
-# #         request.ensure_one()
-# #
-# #         ExtraLine = self.env['waste.service.request.extra.line']
-# #         for product in self:
-# #             line = ExtraLine.search([
-# #                 ('request_id', '=', request.id),
-# #                 ('product_id', '=', product.id),
-# #             ], limit=1)
-# #             if line:
-# #                 new_qty = (line.quantity or 0.0) + delta_qty
-# #                 if new_qty <= 0:
-# #                     line.unlink()
-# #                 else:
-# #                     line.quantity = new_qty
-# #             elif delta_qty > 0:
-# #                 ExtraLine.create({
-# #                     'request_id': request.id,
-# #                     'product_id': product.id,
-# #                     'quantity': delta_qty,
-# #                     'price_unit': product.lst_price,
-# #                 })
-# #         # stay on the grid
-# #         return False
-# #
-# #     def action_waste_add_one(self):
-# #         return self._update_waste_request_line(1)
-# #
-# #     def action_waste_remove_one(self):
-# #         return self._update_waste_request_line(-1)
+    def remove_sale_order_line_safe(self):
+        """
+        Safely remove a sale order line:
+        - If order is confirmed (sale / done) → set quantity to 0
+        - If order is draft / sent → delete the line
+        """
+        for line in self:
+            if line.order_id.state in ('sale', 'done'):
+                line.write({'product_uom_qty': 0})
+            else:
+                super(SaleOrderLine, line).unlink()

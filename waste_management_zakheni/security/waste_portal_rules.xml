@@ -1,0 +1,27 @@
+<odoo>
+
+    <!-- Customers: only their own requests -->
+    <record id="wsr_rule_portal_customer_own" model="ir.rule">
+        <field name="name">WSR portal customer own</field>
+        <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_customer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+    </record>
+
+    <!-- Agents: can read all manifests, no write -->
+    <record id="wsr_rule_portal_agent_all_read" model="ir.rule">
+        <field name="name">WSR portal agent all read</field>
+        <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+</odoo>

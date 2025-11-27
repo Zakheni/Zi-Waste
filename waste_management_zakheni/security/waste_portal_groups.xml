@@ -1,0 +1,21 @@
+<odoo>
+    <data noupdate="0">
+
+        <!-- Client Customer (Portal)  -->
+        <record id="group_wmz_client_customer" model="res.groups">
+            <field name="name">Client Customer</field>
+            <!-- make it visible under Website / Portal -->
+            <field name="category_id" ref="base.module_category_website"/>
+            <!-- still a portal user -->
+            <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+        </record>
+
+        <!-- Client Agent (Portal) -->
+        <record id="group_wmz_client_agent" model="res.groups">
+            <field name="name">Client Agent</field>
+            <field name="category_id" ref="base.module_category_website"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+        </record>
+
+    </data>
+</odoo>

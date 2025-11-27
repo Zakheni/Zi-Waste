@@ -33,5 +33,20 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_order_form_inherit_waste_remove_extra" model="ir.ui.view">
+    <field name="name">sale.order.form.inherit.waste.remove_extra</field>
+    <field name="model">sale.order</field>
+    <field name="inherit_id" ref="sale.view_order_form"/>
+    <field name="arch" type="xml">
+        <xpath expr="//field[@name='order_line']/tree/field[@name='price_unit']" position="after">
+<!--            <button name="remove_sale_order_line_safe"-->
+<!--                    type="object"-->
+<!--                    string="Remove"-->
+<!--                    class="btn btn-secondary btn-sm"/>-->
+        </xpath>
+    </field>
+</record>
+
 </odoo>
 

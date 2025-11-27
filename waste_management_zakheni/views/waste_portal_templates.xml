@@ -1,0 +1,895 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- -
+         EXTEND PORTAL HOME: add Waste tiles
+         - -->
+    <template id="waste_portal_my_home"
+              inherit_id="portal.portal_my_home"
+              name="Waste Portal Home extension"
+              priority="30">
+
+        <xpath expr="//div[@id='portal_common_category']" position="inside">
+
+            <!-- Tile: View Logged Requests -->
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/portal/static/src/img/portal-connection.svg'"/>
+                <t t-set="title">Waste Requests</t>
+                <t t-set="url" t-value="'/my/waste/requests'"/>
+                <t t-set="text">
+                    View logged service requests
+                </t>
+                <t t-set="placeholder_count" t-value="'waste_request_count'"/>
+                <t t-set="count" t-value="waste_request_count"/>
+            </t>
+
+            <!-- Tile: Log Service Request -->
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/portal/static/src/img/portal-addresses.svg'"/>
+                <t t-set="title">Log Service Request</t>
+                <t t-set="url" t-value="'/my/waste/request/new'"/>
+                <t t-set="text">
+                    Log a new waste service request
+                </t>
+                <!-- config card so it doesn’t expect a counter -->
+                <t t-set="config_card" t-value="True"/>
+            </t>
+
+        </xpath>
+    </template>
+
+
+    <!-- -
+         LIST PAGE: /my/waste/requests
+        - -->
+    <template id="portal_my_waste_requests" name="My Service Requests">
+        <t t-call="website.layout">
+            <div class="container my-5">
+
+                <!-- BREADCRUMB -->
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/home">
+                                <i class="fa fa-home"/>
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            Waste Requests
+                        </li>
+                    </ol>
+                </nav>
+
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <h2 class="mb-4">My Service Requests</h2>
+
+                        <table class="table table-hover mt-3">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Request</th>
+                                    <th>Service Requested</th>
+                                    <th>Ticket Type</th>
+                                    <th>Container Type</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="wsr_records or []" t-as="req">
+                                    <!-- Name / Request -->
+                                    <td>
+                                        <a t-att-href="'/my/waste/request/%s' % req.id">
+                                            <t t-esc="req.name"/>
+                                        </a>
+                                    </td>
+
+                                    <!-- Service Requested -->
+                                    <td>
+                                        <t t-esc="req.service_requested_id.display_name or ''"/>
+                                    </td>
+
+                                    <!-- Ticket Type -->
+                                    <td>
+                                        <t t-esc="req.ticket_type or ''"/>
+                                    </td>
+
+                                    <!-- Container Type -->
+                                    <td>
+                                        <t t-esc="req.container_type_id.display_name or ''"/>
+                                    </td>
+
+                                    <!-- Date -->
+                                    <td>
+                                        <t t-esc="req.service_request_date"/>
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            <t t-esc="req.state"/>
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <!-- Empty state -->
+                                <tr t-if="not (wsr_records and len(wsr_records))">
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        No service requests logged yet.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+
+    <!---
+         FORM PAGE: /my/waste/request/new
+         - -->
+    <template id="portal_new_waste_request_form" name="Log Service Request">
+        <t t-call="website.layout">
+            <div class="container my-5">
+
+                <!-- BREADCRUMB -->
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/home">
+                                <i class="fa fa-home"/>
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/my/waste/requests">
+                                Waste Requests
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            Log Service Request
+                        </li>
+                    </ol>
+                </nav>
+
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <h2 class="mb-4">Log Service Request</h2>
+
+                        <form action="/my/waste/request/create"
+                              method="post"
+                              class="o_portal_waste_form">
+                            <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
+
+                            <!-- 2 COLUMNS (md) / 6 FIELDS -->
+                            <div class="row">
+                                <!-- LEFT COLUMN -->
+                                <div class="col-md-6">
+                                    <!-- Ticket Type -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Ticket Type</label>
+                                        <select name="ticket_type" class="form-select">
+                                            <option value="pickup">Pickup</option>
+                                            <option value="followup">Follow-up</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Service Requested -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Service Requested</label>
+                                        <select name="service_requested_id" class="form-select">
+                                            <option value="">Select service</option>
+                                            <t t-foreach="services" t-as="srv">
+                                                <option t-att-value="srv.id">
+                                                    <t t-esc="srv.display_name"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+
+                                    <!-- Waste Type -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Waste Type</label>
+                                        <select name="waste_type_id" class="form-select">
+                                            <option value="">Select waste type</option>
+                                            <t t-foreach="waste_types" t-as="wt">
+                                                <option t-att-value="wt.id">
+                                                    <t t-esc="wt.display_name"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- RIGHT COLUMN -->
+                                <div class="col-md-6">
+                                    <!-- Waste Details -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Waste Details</label>
+                                        <select name="waste_details_id" class="form-select">
+                                            <option value="">Select waste details</option>
+                                            <t t-foreach="waste_details" t-as="wd">
+                                                <option t-att-value="wd.id">
+                                                    <t t-esc="wd.display_name"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+
+                                    <!-- Collection address -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Collection address</label>
+                                        <select name="pickup_point_id" class="form-select">
+                                            <option value="">Select recognised address</option>
+                                            <t t-foreach="pickup_points" t-as="pp">
+                                                <option t-att-value="pp.id">
+                                                    <t t-esc="pp.display_name"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+
+                                    <!-- Container Type (bin / tank) -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Container Type</label>
+                                        <select id="container_type" name="container_type" class="form-select">
+                                            <option value="">Select container type</option>
+                                            <option value="tank">Tank</option>
+                                            <option value="bin">Bin</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Container Size when Bin (bin_type_id) -->
+                            <div class="mb-3 d-none" id="bin_type_group">
+                                <label class="form-label">Container Size (Bin)</label>
+                                <select name="bin_type_id" class="form-select">
+                                    <option value="">Select bin size</option>
+                                    <t t-foreach="bin_types" t-as="bt">
+                                        <option t-att-value="bt.id">
+                                            <t t-esc="bt.display_name"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+
+                            <!-- Container Size when Tank (tank_volume_id) -->
+                            <div class="mb-3 d-none" id="tank_volume_group">
+                                <label class="form-label">Container Size (Tank volume)</label>
+                                <select name="tank_volume_id" class="form-select">
+                                    <option value="">Select tank volume</option>
+                                    <t t-foreach="tank_volumes" t-as="tv">
+                                        <option t-att-value="tv.id">
+                                            <t t-esc="tv.display_name"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-4">
+                                <label class="form-label">Service Description</label>
+                                <textarea name="service_description"
+                                          class="form-control"
+                                          rows="4"
+                                          placeholder="Describe the service you require"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                Submit Request
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JS to toggle Bin / Tank size -->
+            <script type="text/javascript">
+                (function () {
+                function toggleSize() {
+                var ct = document.getElementById('container_type').value;
+                var binGroup = document.getElementById('bin_type_group');
+                var tankGroup = document.getElementById('tank_volume_group');
+
+                if (ct === 'bin') {
+                binGroup.classList.remove('d-none');
+                tankGroup.classList.add('d-none');
+                } else if (ct === 'tank') {
+                tankGroup.classList.remove('d-none');
+                binGroup.classList.add('d-none');
+                } else {
+                binGroup.classList.add('d-none');
+                tankGroup.classList.add('d-none');
+                }
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                var sel = document.getElementById('container_type');
+                if (sel) {
+                sel.addEventListener('change', toggleSize);
+                toggleSize();
+                }
+                });
+                })();
+            </script>
+        </t>
+    </template>
+
+
+    <!-- -
+         THANK YOU PAGE: /my/waste/request/thankyou/<id>
+         - -->
+    <template id="portal_waste_request_thankyou" name="Service Request Logged">
+        <t t-call="website.layout">
+            <div class="container my-5">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 text-center">
+                        <h2 class="mb-3">Thank you!</h2>
+                        <p class="lead">
+                            Service Request
+                            <strong>#
+                                <t t-esc="wsr.name"/>
+                            </strong>
+                            has been successfully logged.
+                            <br/>
+                            Keep an eye out for a quotation from one of our dedicated team members.
+                        </p>
+                        <div class="mt-4">
+                            <a t-att-href="'/my/waste/request/%s' % wsr.id"
+                               class="btn btn-primary me-2">
+                                View this Request
+                            </a>
+                            <a href="/my/waste/requests" class="btn btn-secondary">
+                                View All Requests
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+
+    <!-- -
+         DETAIL PAGE (READ-ONLY): /my/waste/request/<id>
+         - -->
+    <template id="portal_waste_request_detail" name="Service Request Detail">
+        <t t-call="website.layout">
+            <div class="container my-5">
+
+                <!-- BREADCRUMB -->
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/home">
+                                <i class="fa fa-home"/>
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/my/waste/requests">
+                                Waste Requests
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            <t t-esc="wsr.name"/>
+                        </li>
+                    </ol>
+                </nav>
+                <t t-if="portal_msg == 'worksheet_saved'">
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <strong>Worksheet saved.</strong>
+                        Your changes have been updated.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"/>
+                    </div>
+                </t>
+
+
+                <!-- HEADER -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                    <div>
+                        <h2 class="mb-1">
+                            Service Request
+                            <span class="text-muted">·</span>
+                            <span class="fw-bold">
+                                <t t-esc="wsr.name"/>
+                            </span>
+                        </h2>
+                        <div class="text-muted small">
+                            Logged on:
+                            <t t-esc="wsr.service_request_date"/>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-primary px-3 py-2 text-uppercase">
+                            <t t-esc="wsr.state or 'draft'"/>
+                        </span>
+                        <div class="small text-muted mt-1">
+                            Ticket:
+                            <t t-esc="wsr.ticket_type or ''"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAIN CONTENT ROW -->
+                <div class="row g-4">
+                    <!-- LEFT: CUSTOMER & SERVICE -->
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-user me-2"/>
+                                    Customer &amp; Service
+                                </h5>
+                            </div>
+                            <div class="card-body">
+
+                                <!-- Customer -->
+                                <div class="mb-3">
+                                    <div class="text-muted text-uppercase small">Customer</div>
+                                    <div class="fw-semibold">
+                                        <t t-esc="wsr.partner_id.display_name or '-'"/>
+                                    </div>
+                                </div>
+
+                                <!-- Service Requested -->
+                                <div class="mb-3">
+                                    <div class="text-muted text-uppercase small">Service Requested</div>
+                                    <div class="fw-semibold">
+                                        <t t-esc="wsr.service_requested_id.display_name or '-'"/>
+                                    </div>
+                                </div>
+
+                                <!-- Waste Type / Details -->
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <div class="text-muted text-uppercase small">Waste Type</div>
+                                        <div>
+                                            <t t-esc="wsr.waste_type_id.display_name or '-'"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="text-muted text-uppercase small">Waste Details</div>
+                                        <div>
+                                            <t t-esc="wsr.waste_details_id.display_name or '-'"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Container / Size -->
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <div class="text-muted text-uppercase small">Container Type</div>
+                                        <div>
+                                            <t t-esc="wsr.container_type_id.display_name or '-'"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="text-muted text-uppercase small">Bin / Tank Size</div>
+                                        <div>
+                                            <t t-if="wsr.bin_type_id">
+                                                <t t-esc="wsr.bin_type_id.display_name"/>
+                                            </t>
+                                            <t t-elif="wsr.tank_volume_id">
+                                                <t t-esc="wsr.tank_volume_id.display_name"/>
+                                            </t>
+                                            <t t-else="">
+                                                -
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="mt-3">
+                                    <div class="text-muted text-uppercase small">Service Description</div>
+                                    <p class="mb-0">
+                                        <t t-esc="wsr.service_description or 'No description provided.'"/>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: LOCATIONS & CONTAINERS -->
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-map-marker me-2"/>
+                                    Locations &amp; Containers
+                                </h5>
+                            </div>
+                            <div class="card-body">
+
+                                <!-- Pickup points -->
+                                <div class="mb-3">
+                                    <div class="text-muted text-uppercase small">Pickup Points</div>
+                                    <div>
+                                        <t t-if="wsr.pickup_point_ids">
+                                            <ul class="mb-0 ps-3">
+                                                <li t-foreach="wsr.pickup_point_ids" t-as="pp">
+                                                    <t t-esc="pp.display_name"/>
+                                                </li>
+                                            </ul>
+                                        </t>
+                                        <t t-else="">
+                                            -
+                                        </t>
+                                    </div>
+                                </div>
+
+                                <!-- Dropoff points -->
+                                <div class="mb-3">
+                                    <div class="text-muted text-uppercase small">Drop-off Points</div>
+                                    <div>
+                                        <t t-if="wsr.dropoff_point_ids">
+                                            <ul class="mb-0 ps-3">
+                                                <li t-foreach="wsr.dropoff_point_ids" t-as="dp">
+                                                    <t t-esc="dp.display_name"/>
+                                                </li>
+                                            </ul>
+                                        </t>
+                                        <t t-else="">
+                                            -
+                                        </t>
+                                    </div>
+                                </div>
+
+                                <!-- Summary text -->
+                                <div class="mb-3">
+                                    <div class="text-muted text-uppercase small">
+                                        Bins / Tanks Summary
+                                    </div>
+                                    <div class="small">
+                                        <t t-if="wsr.pickup_point_bins_summary">
+                                            <t t-esc="wsr.pickup_point_bins_summary"/>
+                                        </t>
+                                        <t t-else="">
+                                            No containers have been assigned yet.
+                                        </t>
+                                    </div>
+                                </div>
+
+                                <!-- Simple counts -->
+                                <div class="row mt-3">
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted text-uppercase small">Bins Count</div>
+                                        <div class="fw-semibold">
+                                            <t t-esc="wsr.bin_line_count or 0"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="text-muted text-uppercase small">Ticket Type</div>
+                                        <div class="fw-semibold text-capitalize">
+                                            <t t-esc="wsr.ticket_type or '-'"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECOND ROW: TANK & BILLING + LATEST WORKSHEET -->
+                <div class="row g-4 mt-3">
+                    <!-- Tank / Billing -->
+                    <div class="col-lg-6" t-if="not wsr.bin_type_id">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-tint me-2"/>
+                                    Tank &amp; Billing
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <div class="text-muted text-uppercase small">Liters (planned)</div>
+                                        <div class="fw-semibold">
+                                            <t t-esc="wsr.liters_collected or 0.0"/>
+                                            L
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted text-uppercase small">Billing Volume</div>
+                                        <div class="fw-semibold">
+                                            <t t-esc="wsr.billing_kl or 0.0"/>
+                                            kL
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted text-uppercase small">Estimated Amount (Excl. VAT)</div>
+                                    <div class="fw-semibold">
+                                        R
+                                        <t t-esc="wsr.billing_amount or 0.0"/>
+                                    </div>
+                                </div>
+
+                                <div class="small text-muted">
+                                    * This is an indicative billing amount based on the requested volume and tariff.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Latest worksheet summary -->
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-clipboard-check me-2"/>
+                                    Latest Worksheet Summary
+                                </h5>
+                                <span class="badge bg-secondary" t-if="wsr.worksheet_count">
+                                    <t t-esc="wsr.worksheet_count"/>
+                                    worksheet(s)
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <t t-if="wsr.worksheet_count">
+                                    <div class="mb-2">
+                                        <div class="text-muted text-uppercase small">Arrival Time</div>
+                                        <div>
+                                            <t t-esc="wsr.latest_worksheet_arrival_time or '-'"/>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="text-muted text-uppercase small">Return Time</div>
+                                        <div>
+                                            <t t-esc="wsr.latest_worksheet_return_date or '-'"/>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <div class="text-muted text-uppercase small">Kilometers</div>
+                                            <div>
+                                                <t t-esc="wsr.latest_worksheet_kilometers or 0"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-muted text-uppercase small">Quantity Collected</div>
+                                            <div>
+                                                <t t-esc="wsr.latest_worksheet_quantity_collected or 0.0"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="text-muted text-uppercase small">Notes</div>
+                                        <div class="small border rounded p-2 bg-light"
+                                             t-if="wsr.latest_worksheet_notes_html">
+                                            <t t-raw="wsr.latest_worksheet_notes_html"/>
+                                        </div>
+                                        <div class="small text-muted" t-else="">
+                                            No worksheet notes captured.
+                                        </div>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted mb-0">
+                                        No worksheet has been captured yet for this request.
+                                    </p>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- ALL WORKSHEETS TABLE (EDITABLE VIA PORTAL) -->
+                <!-- ALL WORKSHEETS TABLE (simple & safe) -->
+                <t t-if="worksheets">
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fa fa-list-ul me-2"/>
+                                All Worksheets for this Request
+                            </h5>
+                            <span class="badge bg-secondary">
+                                <t t-esc="len(worksheets)"/>
+                                worksheet(s)
+                            </span>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40%;">Worksheet</th>
+                                        <th style="width: 40%;">Created On</th>
+                                        <th class="text-end" style="width: 20%;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="worksheets" t-as="ws">
+                                        <td>
+                                            <t t-esc="ws.name or ''"/>
+                                        </td>
+                                        <td>
+                                            <t t-esc="ws.create_date"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <a t-att-href="'/my/waste/worksheet/%s' % ws.id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fa fa-edit me-1"/>
+                                                Edit
+                                            </a>
+                                            <a t-att-href="'/my/waste/worksheet/%s/edit' % ws.id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fa fa-edit me-1"/>
+                                                Open
+                                            </a>
+                                        </td>
+
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+                <t t-else="">
+                    <p class="text-muted mt-3 mb-0">
+                        No worksheets have been captured yet for this request.
+                    </p>
+                </t>
+
+
+                <!-- BACK BUTTON -->
+                <div class="mt-4">
+                    <a href="/my/waste/requests" class="btn btn-outline-secondary">
+                        <i class="fa fa-arrow-left me-1"/>
+                        Back to Requests
+                    </a>
+                </div>
+            </div>
+        </t>
+    </template>
+    <template id="portal_waste_worksheet_form" name="Edit Worksheet">
+        <t t-call="website.layout">
+            <div class="container my-5">
+                <!-- BREADCRUMB -->
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/home">
+                                <i class="fa fa-home"/>
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a t-att-href="'/my/waste/request/%s' % worksheet.service_request_id.id">
+                                Service Request
+                                <t t-esc="worksheet.service_request_id.name or ''"/>
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            Edit Worksheet
+                        </li>
+                    </ol>
+                </nav>
+
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <h2 class="mb-4">
+                            Edit Worksheet
+                            <small class="text-muted">
+                                <t t-esc="worksheet.name or ''"/>
+                            </small>
+                        </h2>
+
+                        <form t-att-action="'/my/waste/worksheet/%s/save' % worksheet.id"
+                              method="post"
+                              enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
+
+                            <!-- ROW 1: Arrival / Return -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Arrival Date/Time</label>
+                                    <input type="datetime-local"
+                                           name="arrival_time"
+                                           class="form-control"
+                                           t-att-value="worksheet.arrival_time and worksheet.arrival_time.strftime('%Y-%m-%dT%H:%M') or ''"/>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Return Date/Time</label>
+                                    <input type="datetime-local"
+                                           name="return_date"
+                                           class="form-control"
+                                           t-att-value="worksheet.return_date and worksheet.return_date.strftime('%Y-%m-%dT%H:%M') or ''"/>
+                                </div>
+                            </div>
+
+                            <!-- ROW 2: Kilometers / Quantity -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kilometers</label>
+                                    <input type="number"
+                                           name="kilometers"
+                                           class="form-control"
+                                           min="0"
+                                           t-att-value="worksheet.kilometers or 0"/>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Quantity Collected</label>
+                                    <input type="number"
+                                           name="quantity_collected"
+                                           class="form-control"
+                                           step="0.01"
+                                           min="0"
+                                           t-att-value="worksheet.quantity_collected or 0.0"/>
+                                    <div class="form-text">
+                                        This will also update the request quantity for billing.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- NOTES -->
+                            <div class="mb-3">
+                                <label class="form-label">Worksheet Notes</label>
+                                <textarea name="notes_html"
+                                          rows="5"
+                                          class="form-control"
+                                          placeholder="Add notes for this service visit.">
+                                    <t t-esc="worksheet.notes_html or ''"/>
+                                </textarea>
+                            </div>
+
+                            <!-- FILE UPLOADS -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <strong>Documents</strong>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Manifest Document</label>
+                                        <input type="file" name="manifest_document" class="form-control"/>
+                                        <div class="form-text" t-if="worksheet.manifest_document_filename">
+                                            Current file:
+                                            <t t-esc="worksheet.manifest_document_filename"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Weighbridge Slip</label>
+                                        <input type="file" name="weighbridge_slip" class="form-control"/>
+                                        <div class="form-text" t-if="worksheet.weighbridge_slip_filename">
+                                            Current file:
+                                            <t t-esc="worksheet.weighbridge_slip_filename"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Safety Certificate</label>
+                                        <input type="file" name="safety_certificate" class="form-control"/>
+                                        <div class="form-text" t-if="worksheet.safety_certificate_filename">
+                                            Current file:
+                                            <t t-esc="worksheet.safety_certificate_filename"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <a t-att-href="'/my/waste/request/%s' % worksheet.service_request_id.id"
+                                   class="btn btn-outline-secondary">
+                                    <i class="fa fa-arrow-left me-1"/>
+                                    Back to Request
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-save me-1"/>
+                                    Save Changes
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>
+

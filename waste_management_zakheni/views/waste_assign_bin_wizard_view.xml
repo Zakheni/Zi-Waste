@@ -1,102 +1,127 @@
 <odoo>
-    <!-- UPDATED WIZARD FORM VIEW -->
     <record id="view_waste_assign_bin_wizard_form"
             model="ir.ui.view">
         <field name="name">waste.request.assign.bin.wizard.form</field>
         <field name="model">waste.request.assign.bin.wizard</field>
         <field name="arch" type="xml">
             <form string="Assign Bins to Pickup Points">
-                <group>
-                    <field name="request_id" readonly="1"/>
-                    <field name="svc_code" readonly="1"/>
-                </group>
+                <sheet>
+                    <div class="alert alert-info d-flex align-items-start" style="font-size:14px;">
+                        <i class="fa fa-info-circle" style="font-size:20px; margin-right:10px; margin-top:2px;"></i>
+                        <div>
+                            <strong>Bin Visibility</strong>
+                            <br/>
+                            <p>You can make bins visible by clicking the hamburger menu on the left side of the table
+                                header and selecting the fields you need.
+                            </p>
+                        </div>
+                    </div>
 
-                <!-- ✅ Only for shunting -->
-                <group invisible="svc_code != 'shunting of bins'">
-                    <field name="shunt_to_id" options="{'no_create': True}"/>
-                    <field name="customer_id"/>
-                    <field name="bin_type_id" invisible="1"/>
-                </group>
+                    <group>
+                        <group>
+                            <field name="request_id" invisible="1" readonly="1" options="{'no_open': True}"/>
+                            <field name="svc_code" invisible="1" readonly="1"/>
+                            <field name="partner_id" invisible="1" readonly="1" options="{'no_open': True}"/>
+                        </group>
+                        <group>
+                            <field name="bin_type_id" invisible="1" readonly="1" options="{'no_open': True}"/>
+                            <field name="waste_type_id" invisible="1" readonly="1" options="{'no_open': True}"/>
+                        </group>
 
-                <group>
+                    </group>
+
                     <field name="line_ids">
-                        <tree editable="bottom" create="1" edit="1">
-                            <field name="pickup_point_id"/>
-                            <field name="svc_code"/>
-                            <field name="customer_id" invisible="0"/>
-                            <field name="bin_type_id" invisible="0"/>
+                        <tree editable="bottom" create="1" edit="1" >
 
-                            <field name="container_ids"
-                                   widget="many2many_tags"
-                                   invisible="svc_code in ['shunting of bins','swapping of bins']"/>
+                            <!-- Pickup Point
+                                 Show for everything except 'placement of bins'
+                            -->
+                            <field name="pickup_point_id"
+                                   optional="show"
+                                   invisible="svc_code == 'placement of bins'"/>
 
-                            <field name="shunt_container_ids"
+                            <!-- Bin Lifted
+                                 Show for:
+                                   - shunting of bins
+                                   - removal of bins
+                                   - general collection & desposal / disposal
+                                   - swapping of bins
+                                 Hide only for:
+                                   - placement of bins
+                            -->
+                            <field name="bin_lifted_ids"
                                    widget="many2many_tags"
-                                   invisible="svc_code != 'shunting of bins'"/>
+                                   optional="show"
+                                   invisible="svc_code == 'placement of bins'"/>
 
-                            <field name="lifted_container_ids"
+                            <!-- Drop-off Point
+                                 Show for:
+                                   - placement of bins
+                                   - shunting of bins
+                            -->
+                            <field name="dropoff_point_id"
+                                   optional="show"
+                                   invisible="svc_code not in ('placement of bins',
+                                           'shunting of bins')"/>
+
+                            <!-- Bin Dropped – controlled entirely by show_bin_dropped -->
+                            <field name="bin_dropped_ids"
                                    widget="many2many_tags"
-                                   invisible="svc_code != 'swapping of bins'"/>
-                            <field name="dropped_container_ids"
+                                   optional="show"
+                                   invisible="not show_bin_dropped"/>
+
+                             <field name="tank_ids"
                                    widget="many2many_tags"
-                                   invisible="svc_code != 'swapping of bins'"/>
-<!--                            <field name="pickup_shunt_point_id" string="Shunt To Location"/>-->
+                                   optional="show"
+                                  invisible="svc_code not in (
+                                               'waste collection &amp; disposal',
+                                               'waste collection and disposal',)"/>
+
+<!--                             Liters – simple rule: only visible for waste collection scenarios -->
+                                                    <field name="liters_collected"
+                                                           optional="show"
+                                                           invisible="svc_code not in (
+                                               'waste collection &amp; disposal',
+                                               'waste collection and disposal',
+
+                                           )"/>
+
+                            <!--                        <field name="liters_remaining"-->
+                            <!--                               optional="show"-->
+                            <!--                               invisible="svc_code not in (-->
+                            <!--                   'waste collection &amp; disposal',-->
+                            <!--                   'waste collection and disposal',-->
+                            <!--               )"-->
+                            <!--                            readonly="0"/>-->
+                            <field name="bin_duplicate_warning" decoration-danger="1"
+                                   readonly="1"
+                                   optional="show"/>
+                            <!-- keep helper fields for domains -->
+                            <field name="partner_id" invisible="1" optional="hide"/>
+                            <field name="bin_type_id" invisible="1" optional="hide"/>
+                            <field name="waste_type_id" invisible="1" optional="hide"/>
+                            <field name="svc_code" invisible="1" optional="hide"/>
+                            <field name="show_bin_dropped" invisible="1" optional="hide"/>
+                            <field name="request_id" invisible="1" optional="hide"/>
 
                         </tree>
                     </field>
-                </group>
 
-                <footer>
-                    <button name="action_confirm" type="object" string="Apply" class="btn-primary"/>
-                    <button string="Cancel" special="cancel" class="btn-secondary"/>
-                </footer>
+                    <footer>
+                        <button name="action_confirm" type="object"
+                                string="Apply" class="btn-primary"/>
+                        <button string="Cancel" special="cancel"
+                                class="btn-secondary"/>
+                    </footer>
+                </sheet>
+
+
             </form>
-            <!--            <form string="Assign Bins to Pickup Points">-->
-            <!--                <group>-->
-            <!--                    <field name="request_id" readonly="1"/>-->
-            <!--                    <field name="svc_code" readonly="1"/>-->
-            <!--                </group>-->
-            <!--                <group>-->
-            <!--                    <field name="line_ids">-->
-            <!--                        <tree editable="bottom" create="1" edit="1">-->
-            <!--                            <field name="svc_code"/>-->
-            <!--                            <field name="pickup_point_id"/>-->
 
-            <!--                            &lt;!&ndash; Placement / Removal / Collection &ndash;&gt;-->
-            <!--                            <field name="container_ids"-->
-            <!--                                   widget="many2many_tags"-->
-            <!--                                   invisible="svc_code in ['shunting of bins','swapping of bins']"/>-->
-
-            <!--                            &lt;!&ndash; Shunting &ndash;&gt;-->
-            <!--                            <field name="shunt_container_ids"-->
-            <!--                                   widget="many2many_tags"-->
-            <!--                                   invisible="svc_code != 'shunting of bins'"/>-->
-
-            <!--                            &lt;!&ndash; Swapping &ndash;&gt;-->
-            <!--                            <field name="lifted_container_ids"-->
-            <!--                                   widget="many2many_tags"-->
-            <!--                                   invisible="svc_code != 'swapping of bins'"/>-->
-            <!--                            <field name="dropped_container_ids"-->
-            <!--                                   widget="many2many_tags"-->
-            <!--                                   invisible="svc_code != 'swapping of bins'"/>-->
-            <!--                        </tree>-->
-            <!--                    </field>-->
-            <!--                </group>-->
-            <!--                <footer>-->
-            <!--                    <button name="action_confirm"-->
-            <!--                            type="object"-->
-            <!--                            string="Apply"-->
-            <!--                            class="btn-primary"/>-->
-            <!--                    <button string="Cancel"-->
-            <!--                            special="cancel"-->
-            <!--                            class="btn-secondary"/>-->
-            <!--                </footer>-->
-            <!--            </form>-->
 
         </field>
     </record>
 
-    <!-- ACTION GOES HERE -->
     <record id="action_waste_assign_bin_wizard"
             model="ir.actions.act_window">
         <field name="name">Assign Bins</field>
@@ -107,56 +132,4 @@
     </record>
 </odoo>
 
-        <!--    &lt;!&ndash; ACTION (SAME ID AS YESTERDAY) &ndash;&gt;-->
-        <!--    <record id="action_waste_assign_bin_wizard"-->
-        <!--            model="ir.actions.act_window">-->
-        <!--        <field name="name">Assign Bins</field>-->
-        <!--        <field name="res_model">waste.request.assign.bin.wizard</field>-->
-        <!--        <field name="view_mode">form</field>-->
-        <!--        <field name="target">new</field>-->
-        <!--        <field name="view_id" ref="view_waste_assign_bin_wizard_form"/>-->
-        <!--    </record>-->
-        <!--</odoo>-->
 
-
-        <!--<odoo>-->
-        <!--    <record id="view_waste_assign_bin_wizard_form" model="ir.ui.view">-->
-        <!--        <field name="name">dropoff_container_ids.form</field>-->
-        <!--        <field name="model">waste.request.assign.bin.wizard</field>-->
-        <!--        <field name="arch" type="xml">-->
-        <!--            <form string="Assign Bins to Pickup Points">-->
-        <!--                <group>-->
-        <!--                    <field name="request_id" readonly="1"/>-->
-        <!--                </group>-->
-        <!--                <group>-->
-        <!--                    <field name="line_ids">-->
-        <!--                        <tree editable="bottom">-->
-        <!--                            <field name="pickup_point_id"/>-->
-        <!--                            <field name="container_ids" widget="many2many_tags"/>-->
-        <!--                        </tree>-->
-        <!--                    </field>-->
-        <!--                </group>-->
-        <!--                <footer>-->
-        <!--                    <button name="action_confirm"-->
-        <!--                            type="object"-->
-        <!--                            string="Apply"-->
-        <!--                            class="btn-primary"/>-->
-        <!--                    <button string="Cancel"-->
-        <!--                            special="cancel"-->
-        <!--                            class="btn-secondary"/>-->
-        <!--                </footer>-->
-        <!--            </form>-->
-        <!--        </field>-->
-        <!--    </record>-->
-
-        <!--        &lt;!&ndash; ACTION GOES HERE &ndash;&gt;-->
-        <!--        <record id="action_waste_assign_bin_wizard"-->
-        <!--                model="ir.actions.act_window">-->
-        <!--            <field name="name">Assign Bins</field>-->
-        <!--            <field name="res_model">waste.request.assign.bin.wizard</field>-->
-        <!--            <field name="view_mode">form</field>-->
-        <!--            <field name="target">new</field>-->
-        <!--            <field name="view_id" ref="view_waste_assign_bin_wizard_form"/>-->
-        <!--        </record>-->
-
-        <!--</odoo>-->

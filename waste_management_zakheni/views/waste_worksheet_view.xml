@@ -57,7 +57,7 @@
                                 class="oe_stat_button"
                                 icon="fa-truck"
                                 string="Assign Bins"
-                                invisible="state == 'done'"
+                                invisible="state == 'done' or hide_bin == False"
                         >
 
                             <!-- Pickup Points -->
@@ -152,80 +152,223 @@
                             <field name="bin_type_id" readonly="1"
                                    options="{'no_open': True}"
                                    invisible="hide_tank == True and hide_bin == False"/>
+                            <!--                            <field name="container_type_id" readonly="1"/>-->
                             <field name="container_type_id" readonly="1" widget="radio"
                                    options="{'horizontal': True}"/>
 
 
+                            <!--                             <field name="pickup_id" invisible="1"/>-->
+                            <!--                            <field name="customer_id" invisible="1"/>-->
                             <field name="hide_droppoff_container_ids_placement" invisible="1"/>
                             <field name="hide_droppoff_container_ids_removal" invisible="1"/>
                             <field name="hide_droppoff_container_ids_collection" invisible="1"/>
                             <field name="hide_droppoff_container_ids_is_bin" invisible="1"/>
 
-
-                            <!--                            <field name="pickup_point_id" readonly="state != 'draft'" invisible="0"/>-->
-                            <!--                            <field name="pickup_point_ids" readonly="1" widget="many2many_tags" invisible="0"/>-->
-
-                            <!--                            <field name="customer_id" />-->
-                            <field name="wizard_pickup_point_ids" widget="many2many_tags" readonly="1"/>
-                            <field name="pickup_point_bins_summary" readonly="1" class="text-muted"
-                                   style="font-size:10px;"
-                                   placeholder="No bins assigned yet."/>
-                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="1"
-                                   invisible="hide_droppoff_container_ids_placement == False or hide_tank == True"/>
-
-
-                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="0"
-                                   invisible="hide_droppoff_container_ids_removal == False"
-                                   required="1"/>
-
-
-                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="0"
-                                   invisible="hide_droppoff_container_ids_collection == False or hide_droppoff_container_ids_is_bin == False "/>
-
-
                             <field name="hide_lifted_bin_ids_swap" invisible="1"/>
                             <field name="hide_dropped_bin_ids_swap" invisible="1"/>
                             <field name="hide_dropped_to_swap" invisible="1"/>
-                            <!--  Swap  -->
-                            <field name="lifted_bin_ids" widget="many2many_tags" readonly="1"
-                                   invisible="hide_lifted_bin_ids_swap == False"/>
-
-                            <field name="dropped_bin_ids" widget="many2many_tags" readonly="1"
-                                   invisible="hide_dropped_to_swap == False"/>
-
-                            <field name="pickup_point_id" invisible="hide_dropped_to_swap == False"
-                                   readonly="1"/>
-
-                            <field name="hide_shunt_container_ids" invisible="1"/>
-                            <field name="hide_shunt_to_id" invisible="1"/>
-
-                            <field name="shunt_container_ids" string="Bin Lifted" widget="many2many_tags"
-                                   readonly="1"
-                                   invisible="hide_shunt_container_ids == False"/>
-
-                            <field name="shunt_to_id" string="Drop off Point" readonly="1"
-                                   invisible="hide_shunt_to_id == False"/>
 
                             <field name="hide_tank_ids" invisible="1"/>
                             <field name="hide_tank_volume" invisible="1"/>
                             <field name="hide_liters_collected" invisible="1"/>
                             <field name="hide_liters_remaining" invisible="1"/>
                             <field name="hide_service_collection" invisible="1"/>
+                            <field name="hide_shunt_container_ids" invisible="1"/>
 
+                            <field name="hide_hazardous_fields" invisible="1"/>
+                            <field name="hide_general" invisible="1"/>
+                            <field name="hide_none_general" invisible="1"/>
+                            <field name="hide_service_placement" invisible="1"/>
+                            <field name="hide_disposal_site" invisible="1"/>
+                            <field name="qty_updated_from_worksheet" invisible="1"/>
 
-                            <field name="tank_ids" widget="many2many_tags"
-                                   invisible="hide_tank_ids == False or hide_service_collection == False"
-                                   readonly="1"
-
+                            <field name="pickup_point_bins_summary" readonly="1" class="text-muted"
+                                   style="font-size:10px;"
+                                   placeholder="No bins assigned yet."/>
+                            <field name="pickup_point_ids" widget="many2many_tags" readonly="1"
+                                   domain="[('partner_id', '=', partner_id)]"
+                                   invisible="hide_droppoff_container_ids_placement
+                                              or (not hide_droppoff_container_ids_collection
+                                                  and not hide_tank_volume
+                                                  and not hide_lifted_bin_ids_swap
+                                                  and not hide_shunt_container_ids
+                                                  and not hide_droppoff_container_ids_removal)"
                             />
-                            <field name="tank_volume_id" readonly="0"
-                                   invisible="hide_tank_volume == False or hide_service_collection == False"/>
+
+                            <field name="bin_lifted_ids"
+                                   widget="many2many_tags" readonly="1"
+                                   domain="[('pickup_point_id', 'in', pickup_point_ids),
+                                               ('pickup_point_id.partner_id', '=', partner_id),
+                                               ('status', 'in', ['in_use', 'un_use']),
+                                               ('inUse', '=', True),
+                                               ('container_type_id.name', 'ilike', 'bin')
+                                            ]"
+                                   invisible="hide_droppoff_container_ids_placement
+                                              or (not hide_droppoff_container_ids_collection
+                                                  and not hide_lifted_bin_ids_swap
+                                                  and not hide_shunt_container_ids
+                                                  and not hide_droppoff_container_ids_removal)
+                                              or hide_tank_volume"
+                            />
+
+                            <!-- bin_dropped_ids for placement / general use -->
+                            <field name="bin_dropped_ids" widget="many2many_tags" readonly="1"
+                                   domain="[('partner_id', '=', False),
+                                               ('pickup_point_id', '=', False),
+                                               ('status', '=', 'intact'),
+                                               ('inUse', '=', False),
+                                               ('dropoff_point_id', '=', False),
+
+                                           ]"
+                                   invisible="(not hide_droppoff_container_ids_placement
+                                               and not hide_droppoff_container_ids_collection
+                                               and not hide_lifted_bin_ids_swap)
+                                               or hide_general
+                                               or hide_tank_volume
+                                               or hide_lifted_bin_ids_swap"
+                            />
+
+                            <!-- bin_dropped_ids for swap / shunt behaviour -->
+                            <field name="bin_dropped_ids" widget="many2many_tags" readonly="1"
+                                   domain="[('partner_id', '=', False),
+                                               ('pickup_point_id', '=', False),
+                                               ('status', '=', 'intact'),
+                                               ('inUse', '=', False),
+                                               ('dropoff_point_id', '=', False),
+                                           ]"
+                                   invisible="not hide_lifted_bin_ids_swap
+                                              or (not hide_general and hide_shunt_container_ids)"
+                            />
+
+                            <field name="dropoff_point_ids" widget="many2many_tags" readonly="1"
+                                   domain="[('partner_id', '=', partner_id)]"
+                                   invisible="(not hide_droppoff_container_ids_placement
+                                               and not hide_shunt_container_ids)
+                                               or hide_tank_volume"
+                            />
+                            <field name="product_uom_qty" string="No. of Bins" readonly="1"
+                                   invisible="not partner_id or hide_bin == False"/>
+                            <label for="product_uom_qty" string="Quantity (kL)"/>
+
+                            <div class="o_row">
+                                <field name="product_uom_qty"
+                                       readonly="state == 'done'"
+                                       class="oe_inline"/>
+                                <div class="oe_inline text-success"
+                                     invisible="qty_updated_from_worksheet == False">
+                                    <span>Updated from worksheet</span>
+                                </div>
+                            </div>
+
+                            <!--                            <field name="tank_ids" widget="many2many_tags"-->
+                            <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
+                            <!--                                              or hide_bin"-->
+
+                            <field name="truck_tanker_id" readonly="1"  string="Tank Truck"
+                                   options="{'no_open': True}"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                                                           or hide_bin"
+                            />
+
+
+                            <!--                            <field name="product_uom_qty"-->
+                            <!--                                   string="Quantity (kL)"-->
+                            <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
+                            <!--                                              or hide_bin"-->
+<!--                            help="Billing quantity in kiloliters, used for tariff (1–4 kL flat, 5+ incremental)."/>-->
                             <field name="liters_collected" readonly="1"
-                                   invisible="hide_liters_collected == False or hide_service_collection == False"/>
-                            <field name="liters_remaining" readonly="1"
-                                   invisible="hide_liters_remaining == False or hide_service_collection == False"/>
-                            <field name="product_uom_qty" string="Bin no." readonly="1"/>
-                            <field name="planned_date" string="Planned Date" readonly="1"/>
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                              or hide_bin"/>
+                            <field name="billing_amount" readonly="1"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                              or hide_bin"/>
+                            <field name="liters_collected"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                              or hide_bin"
+                            />
+
+                            <!--                            <field name="liters_remaining"-->
+                            <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
+                            <!--                                               or hide_bin"-->
+                            <!--                            />-->
+
+
+                            <!--                            <field name="planned_date" string="Planned Date"-->
+                            <!--                                   readonly="state != 'draft'-->
+                            <!--                                             and state != 'cancelled'-->
+                            <!--                                             and state != 'generated'"/>-->
+
+
+                            <!--                            <field name="hide_droppoff_container_ids_placement" invisible="1"/>-->
+                            <!--                            <field name="hide_droppoff_container_ids_removal" invisible="1"/>-->
+                            <!--                            <field name="hide_droppoff_container_ids_collection" invisible="1"/>-->
+                            <!--                            <field name="hide_droppoff_container_ids_is_bin" invisible="1"/>-->
+
+
+                            <!--                            &lt;!&ndash;                            <field name="pickup_point_id" readonly="state != 'draft'" invisible="0"/>&ndash;&gt;-->
+                            <!--                            &lt;!&ndash;                            <field name="pickup_point_ids" readonly="1" widget="many2many_tags" invisible="0"/>&ndash;&gt;-->
+
+                            <!--                            &lt;!&ndash;                            <field name="customer_id" />&ndash;&gt;-->
+                            <!--                            <field name="wizard_pickup_point_ids" widget="many2many_tags" readonly="1"/>-->
+                            <!--&lt;!&ndash;                            <field name="pickup_point_bins_summary" readonly="1" class="text-muted"&ndash;&gt;-->
+                            <!--&lt;!&ndash;                                   style="font-size:10px;"&ndash;&gt;-->
+                            <!--&lt;!&ndash;&lt;!&ndash;                                   placeholder="No bins assigned yet."/>&ndash;&gt;&ndash;&gt;-->
+                            <!--&lt;!&ndash;                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="1"&ndash;&gt;-->
+                            <!--&lt;!&ndash;                                   invisible="hide_droppoff_container_ids_placement == False or hide_tank == True"/>&ndash;&gt;-->
+
+
+                            <!--&lt;!&ndash;                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="0"&ndash;&gt;-->
+                            <!--&lt;!&ndash;                                   invisible="hide_droppoff_container_ids_removal == False"&ndash;&gt;-->
+                            <!--&lt;!&ndash;                                   required="1"/>&ndash;&gt;-->
+
+
+                            <!--&lt;!&ndash;                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="0"&ndash;&gt;-->
+                            <!--&lt;!&ndash;                                   invisible="hide_droppoff_container_ids_collection == False or hide_droppoff_container_ids_is_bin == False "/>&ndash;&gt;-->
+
+
+                            <!--                            <field name="hide_lifted_bin_ids_swap" invisible="1"/>-->
+                            <!--                            <field name="hide_dropped_bin_ids_swap" invisible="1"/>-->
+                            <!--                            <field name="hide_dropped_to_swap" invisible="1"/>-->
+                            <!--                            &lt;!&ndash;  Swap  &ndash;&gt;-->
+                            <!--                            <field name="lifted_bin_ids" widget="many2many_tags" readonly="1"-->
+                            <!--                                   invisible="hide_lifted_bin_ids_swap == False"/>-->
+
+                            <!--                            <field name="dropped_bin_ids" widget="many2many_tags" readonly="1"-->
+                            <!--                                   invisible="hide_dropped_to_swap == False"/>-->
+
+                            <!--                            <field name="pickup_point_id" invisible="hide_dropped_to_swap == False"-->
+                            <!--                                   readonly="1"/>-->
+
+                            <!--                            <field name="hide_shunt_container_ids" invisible="1"/>-->
+                            <!--                            <field name="hide_shunt_to_id" invisible="1"/>-->
+
+                            <!--                            <field name="shunt_container_ids" string="Bin Lifted" widget="many2many_tags"-->
+                            <!--                                   readonly="1"-->
+                            <!--                                   invisible="hide_shunt_container_ids == False"/>-->
+
+                            <!--                            <field name="shunt_to_id" string="Drop off Point" readonly="1"-->
+                            <!--                                   invisible="hide_shunt_to_id == False"/>-->
+
+                            <!--                            <field name="hide_tank_ids" invisible="1"/>-->
+                            <!--                            <field name="hide_tank_volume" invisible="1"/>-->
+                            <!--                            <field name="hide_liters_collected" invisible="1"/>-->
+                            <!--                            <field name="hide_liters_remaining" invisible="1"/>-->
+                            <!--                            <field name="hide_service_collection" invisible="1"/>-->
+
+
+                            <!--                            <field name="tank_ids" widget="many2many_tags"-->
+                            <!--                                   invisible="hide_tank_ids == False or hide_service_collection == False"-->
+                            <!--                                   readonly="1"-->
+
+                            <!--                            />-->
+                            <!--                            <field name="tank_volume_id" readonly="0"-->
+                            <!--                                   invisible="hide_tank_volume == False or hide_service_collection == False"/>-->
+                            <!--                            <field name="liters_collected" readonly="1"-->
+                            <!--                                   invisible="hide_liters_collected == False or hide_service_collection == False"/>-->
+                            <!--                            <field name="liters_remaining" readonly="1"-->
+                            <!--                                   invisible="hide_liters_remaining == False or hide_service_collection == False"/>-->
+                            <!--&lt;!&ndash;                            <field name="product_uom_qty" string="Bin no." readonly="1"/>&ndash;&gt;-->
+                            <!--                            <field name="planned_date" string="Planned Date" readonly="1"/>-->
 
 
                         </group>
