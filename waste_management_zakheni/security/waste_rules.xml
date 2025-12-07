@@ -1,41 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Admin/Manager full -->
+    <!-- Admin: own records OR from portal -->
     <record id="wmz_rule_manifest_admin" model="ir.rule">
         <field name="name">Manifest: Admin</field>
         <field name="model_id" ref="model_waste_service_request"/>
-        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin'))]"/>-->
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin'))]"/>
-        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="domain_force">
+            ['|',
+            ('create_uid', '=', user.id),
+            ('from_portal', '=', True)
+            ]
+        </field>
     </record>
 
+    <!-- Admin Clerk: own records OR from portal -->
+    <record id="wmz_rule_manifest_admin_clerk" model="ir.rule">
+        <field name="name">Manifest: Admin Clerk</field>
+        <field name="model_id" ref="model_waste_service_request"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>
+        <field name="domain_force">
+            ['|',
+            ('create_uid', '=', user.id),
+            ('from_portal', '=', True)
+            ]
+        </field>
+    </record>
 
+    <!-- Manager: own records OR from portal -->
     <record id="wmz_rule_manifest_manager" model="ir.rule">
         <field name="name">Manifest: Manager</field>
         <field name="model_id" ref="model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>
-        <field name="domain_force">[]</field>
+        <field name="domain_force">
+            ['|',
+            ('create_uid', '=', user.id),
+            ('from_portal', '=', True)
+            ]
+        </field>
     </record>
 
+    <!-- Finance: done OR own OR from portal -->
     <record id="wmz_rule_manifest_finance" model="ir.rule">
         <field name="name">Manifest: Finance</field>
         <field name="model_id" ref="model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_finance'))]"/>
-        <field name="domain_force">[('state','=','done')]</field>
+        <field name="domain_force">
+            ['|', '|',
+            ('state', '=', 'done'),
+            ('create_uid', '=', user.id),
+            ('from_portal', '=', True)
+            ]
+        </field>
     </record>
 
+    <!-- Driver: state in X OR from portal -->
     <record id="wmz_rule_manifest_driver" model="ir.rule">
         <field name="name">Manifest: Driver</field>
         <field name="model_id" ref="model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_driver'))]"/>
-        <field name="domain_force">[('state', 'in', ['scheduled', 'dispatched', 'service_delivered'])]</field>
-    </record>
-
-
-    <record id="wmz_rule_worksheet_driver" model="ir.rule">
-        <field name="name">Worksheet: Driver</field>
-        <field name="model_id" ref="model_waste_worksheet"/>
-        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_driver'))]"/>
-       <field name="domain_force">[('create_uid','=',user.id)]</field>
+        <field name="domain_force">
+            ['|',
+            ('state', 'in', ['scheduled', 'dispatched', 'service_delivered']),
+            ('from_portal', '=', True)
+            ]
+        </field>
     </record>
 </odoo>

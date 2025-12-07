@@ -1,9 +1,17 @@
 import re
 import logging
+from datetime import datetime, timedelta, time
+
+from babel.dates import format_date
+from dateutil.relativedelta import relativedelta
+
+import pytz
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessDenied, ValidationError
 from .service_provider import SA_PROVINCES
+
+import logging
 
 _logger = logging.getLogger(__name__)
 
@@ -41,7 +49,7 @@ class WasteServiceRequest(models.Model):
     )
 
     pickup_id = fields.Char(string="Pickup Point Name", related='pickup_point_id.name',)
-    planned_date = fields.Datetime(string='Planned Date', )
+    planned_date = fields.Datetime(string='Planned Date', tracking=True )
 
     quote_no = fields.Char(string="Quote No.")
     service_description = fields.Text(string='Service Description')
@@ -74,6 +82,12 @@ class WasteServiceRequest(models.Model):
     reject_reason = fields.Text(string="Enter Reject Reason", tracking=True,  store=True)
     amend_comment = fields.Text(string="Enter Amend Comment", tracking=True, store=True)
     driver_work_email = fields.Char(string="Driver Work email", related="vehicle_id.driver_email", store=True)
+
+    from_portal = fields.Boolean(
+        string="Created from portal",
+        default=False,
+        help="Marked True when the service request is logged from the customer portal.",
+    )
 
     busy_driver_ids = fields.Many2many(
         'res.partner',
@@ -234,6 +248,19 @@ class WasteServiceRequest(models.Model):
         ('done', 'Authorised'),
         ('none', 'None'),
     ], default='draft', tracking=True)
+
+    # ✅ new helper field for human label
+    state_label = fields.Char(
+        string="Status Label",
+        compute="_compute_state_label",
+        store=False,
+    )
+
+    @api.depends('state')
+    def _compute_state_label(self):
+        selection = dict(self._fields['state'].selection)
+        for rec in self:
+            rec.state_label = selection.get(rec.state, rec.state or '')
 
     @api.constrains("state", "planned_date", "driver_id", "vehicle_id", "wizard_pickup_point_ids")
     def _check_required_fields_in_states(self):
@@ -1662,6 +1689,7 @@ class WasteServiceRequest(models.Model):
     # ----------------------------------------------------------------------
     # SUMMARY OF PICKUP / DROPOFF POINTS & BINS (READ-ONLY TEXT)
     # ----------------------------------------------------------------------
+
     pickup_point_bins_summary = fields.Text(
         string="Pickup/Dropoff Points & Bins Summary",
         compute="_compute_pickup_point_bins_summary",
@@ -1682,7 +1710,25 @@ class WasteServiceRequest(models.Model):
         "service_requested_id",
     )
     def _compute_pickup_point_bins_summary(self):
+        user = self.env.user
+        # 🔒 Portal-only user (has portal, no internal user rights)
+        is_pure_portal = user.has_group("base.group_portal") and not user.has_group("base.group_user")
+
         for rec in self:
+            # --------------------------------------------------------------
+            # 1) PORTAL CUSTOMER: DO NOT TOUCH RESTRICTED MODELS
+            # --------------------------------------------------------------
+            if is_pure_portal:
+                rec.pickup_point_bins_summary = _(
+                    "Pickup, drop-off and container details are managed internally by our operations team."
+                )
+                # Very important: skip all logic that touches container_type_id,
+                # pickup_point_ids, tank_ids, etc.
+                continue
+
+            # --------------------------------------------------------------
+            # 2) INTERNAL USERS: ORIGINAL FULL LOGIC
+            # --------------------------------------------------------------
             parts = []
 
             if rec._is_tank_job():
@@ -1743,7 +1789,7 @@ class WasteServiceRequest(models.Model):
                 continue  # ✅ skip bin logic for tank jobs
 
             # ------------------------------------------------------------------
-            # 🔹 NORMAL (BIN) LOGIC – your existing behaviour
+            # 🔹 NORMAL (BIN) LOGIC – existing behaviour
             # ------------------------------------------------------------------
 
             # current service code (normalized)
@@ -1766,9 +1812,9 @@ class WasteServiceRequest(models.Model):
                     vol_label = ""
                     if hasattr(tank, "tank_volume_id") and tank.tank_volume_id:
                         vol_label = (
-                            tank.tank_volume_id.display_name
-                            or tank.tank_volume_id.name
-                            or ""
+                                tank.tank_volume_id.display_name
+                                or tank.tank_volume_id.name
+                                or ""
                         )
                     if vol_label:
                         tank_infos.append(f"{tank.display_name} ({vol_label})")
@@ -1787,26 +1833,22 @@ class WasteServiceRequest(models.Model):
                     tank_text = f"Tanks: {tanks_label}"
 
                 # --------------------------------------------------
-                # Existing summary logic per service type
+                # Summary logic per service type
                 # --------------------------------------------------
 
-                # ---------- PLACEMENT OF BINS ----------
                 if svc_code == "placement of bins":
                     point_label = dp.display_name if dp else (pp.display_name if pp else "Unknown")
                     text = f"{point_label} [Placed: {dropped_names}]"
 
-                # ---------- SHUNTING OF BINS ----------
                 elif svc_code == "shunting of bins":
                     src = pp.display_name if pp else "Unknown"
                     dst = dp.display_name if dp else "Unknown"
                     text = f"{src} → {dst} [Shunted: {lifted_names}]"
 
-                # ---------- REMOVAL OF BINS ----------
                 elif svc_code == "removal of bins":
                     point_label = pp.display_name if pp else "Unknown"
                     text = f"{point_label} [Removed: {lifted_names}]"
 
-                # ---------- WASTE / GENERAL COLLECTION & DISPOSAL ----------
                 elif svc_code in (
                         "waste collection & disposal",
                         "waste collection and disposal",
@@ -1822,28 +1864,26 @@ class WasteServiceRequest(models.Model):
                     else:
                         text = f"{point_label} [-]"
 
-                # ---------- SWAPPING OF BINS ----------
                 elif svc_code == "swapping of bins":
                     point_label = pp.display_name if pp else "Unknown"
                     text = f"{point_label} [Lifted: {lifted_names} | Dropped: {dropped_names}]"
 
-                # ---------- FALLBACK ----------
                 else:
                     point_label = pp.display_name if pp else (dp.display_name if dp else "Unknown")
                     all_bins = (line.bin_lifted_ids | line.bin_dropped_ids).mapped("display_name")
                     if len(all_bins) > 3:
-                        shown = ", ".join(all_bins[:3]) + ", ..."
+                        shown = ", ".join(all_bins[:3]) + ", " + "..."
                     else:
                         shown = ", ".join(all_bins) if all_bins else "-"
                     text = f"{point_label} [{shown}]"
 
-                # 🔹 Append tank + liters info at the end (if any)
                 if tank_text:
                     text = f"{text} ({tank_text})"
 
                 parts.append(text)
 
             rec.pickup_point_bins_summary = ", ".join(parts) if parts else ""
+
 
     wizard_pickup_point_count = fields.Integer(
         compute="_compute_wizard_pickup_point_count",
@@ -1953,6 +1993,535 @@ class WasteServiceRequest(models.Model):
             "res_id": self.sale_order_id.id,
             "target": "current",
         }
+    #---------- Print Manifet PDF____________
+
+    def action_print_manifest_pdf(self):
+        self.ensure_one()
+        if self.state != "done":
+            raise UserError(_("Only Authorised (Done) manifests can be printed."))
+        return self.env.ref("waste_management_zakheni.action_manifest_report_pdf").report_action(self)
+
+    @api.model
+    def get_dashboard_kpis(self):
+        """KPIs for the OWL dashboard."""
+        today = fields.Date.context_today(self)
+        start_of_day = datetime.combine(today, datetime.min.time())
+        end_of_day = datetime.combine(today, datetime.max.time())
+
+        # This month window (based on service_request_date)
+        start_month = today.replace(day=1)
+        end_month = (start_month + relativedelta(months=1)) - relativedelta(days=1)
+        start_month_dt = datetime.combine(start_month, datetime.min.time())
+        end_month_dt = datetime.combine(end_month, datetime.max.time())
+
+        Request = self.env['waste.service.request']
+
+        open_states = ('draft', 'generated', 'scheduled', 'assigned', 'dispatched')
+        open_count = Request.search_count([('state', 'in', open_states)])
+
+        scheduled_today = Request.search_count([
+            ('state', '=', 'scheduled'),
+            ('planned_date', '>=', start_of_day),
+            ('planned_date', '<=', end_of_day),
+        ])
+
+        in_progress = Request.search_count([
+            ('state', 'in', ('dispatched', 'service_delivered')),
+        ])
+
+        done_count = Request.search_count([('state', '=', 'done')])
+
+        rejected_count = Request.search_count([
+            '|', ('state', '=', 'cancelled'), ('is_rejected', '=', True)
+        ])
+
+        # Billing this month (use only delivered/done)
+        month_domain = [
+            ('state', 'in', ('service_delivered', 'done')),
+            ('service_request_date', '>=', start_month_dt),
+            ('service_request_date', '<=', end_month_dt),
+        ]
+        month_recs = Request.search(month_domain)
+
+        tank_kl = 0.0
+        billing_amount = 0.0
+        for rec in month_recs:
+            billing_amount += (rec.billing_amount or 0.0)
+            if rec._is_tank_job():
+                tank_kl += (rec.billing_kl or 0.0)
+
+        return {
+            "open_requests": open_count,
+            "scheduled_today": scheduled_today,
+            "in_progress": in_progress,
+            "done_count": done_count,
+            "rejected_count": rejected_count,
+            "tank_kl_month": tank_kl,
+            "billing_amount_month": billing_amount,
+        }
+
+
+    def _to_date_str(self, val):
+        if not val:
+            return ""
+        if isinstance(val, str):
+            return val[:10]
+        try:
+            return fields.Datetime.to_string(val)[:10]
+        except Exception:
+            try:
+                return fields.Date.to_string(val)
+            except Exception:
+                return ""
+
+    @api.model
+    def get_dashboard_payload(self, filters=None):
+        filters = filters or {}
+
+        # ---------------- Helper: link manifests <-> sale orders ----------------
+        def _manifest_ids_from_so_ids(so_ids):
+            if not so_ids:
+                return []
+            OR = []
+            if "sale_order_id" in self._fields:
+                OR += [("sale_order_id", "in", so_ids)]
+            if "order_id" in self._fields:
+                OR += [("order_id", "in", so_ids)]
+            if "so_id" in self._fields:
+                OR += [("so_id", "in", so_ids)]
+            if "sale_order_ids" in self._fields:
+                OR += [("sale_order_ids", "in", so_ids)]
+            if "order_ids" in self._fields:
+                OR += [("order_ids", "in", so_ids)]
+            if "so_ids" in self._fields:
+                OR += [("so_ids", "in", so_ids)]
+            if "order_line_id" in self._fields:
+                OR += [("order_line_id.order_id", "in", so_ids)]
+
+            if not OR:
+                return []
+
+            if len(OR) == 1:
+                dom = OR
+            else:
+                dom = ["|"] * (len(OR) - 1) + OR
+
+            return self.search(dom).ids
+
+        # ---------------- Make SO/Invoice filters also filter manifests ----------------
+        SO = self.env["sale.order"].sudo()
+        INV = self.env["account.move"].sudo()
+
+        so_ids_from_filter = set()
+
+        if filters.get("sale_order_number"):
+            so_recs = SO.search([("name", "ilike", filters["sale_order_number"])], limit=500)
+            so_ids_from_filter |= set(so_recs.ids)
+
+        if filters.get("invoice_number"):
+            inv_domain = [
+                ("move_type", "in", ["out_invoice", "out_refund"]),
+                ("state", "!=", "cancel"),
+                ("name", "ilike", filters["invoice_number"]),
+            ]
+            inv_recs = INV.search(inv_domain, limit=500)
+            linked_sos = inv_recs.invoice_line_ids.mapped("sale_line_ids.order_id")
+            so_ids_from_filter |= set(linked_sos.ids)
+
+        # ---------------- Filters (split into common vs date) ----------------
+        domain_common = []
+
+        if so_ids_from_filter:
+            manifest_ids = _manifest_ids_from_so_ids(list(so_ids_from_filter))
+            domain_common.append(("id", "in", manifest_ids or [0]))
+
+        if filters.get("manifest_number"):
+            domain_common.append(("name", "ilike", filters["manifest_number"]))
+
+        if filters.get("company_id"):
+            domain_common.append(("company_id", "=", int(filters["company_id"])))
+        if filters.get("partner_id"):
+            domain_common.append(("partner_id", "=", int(filters["partner_id"])))
+        if filters.get("ticket_type"):
+            domain_common.append(("ticket_type", "=", filters["ticket_type"]))
+
+        # domain for KPIs/charts uses service_request_date
+        domain = list(domain_common)
+        if filters.get("date_from"):
+            domain.append(("service_request_date", ">=", filters["date_from"]))
+        if filters.get("date_to"):
+            domain.append(("service_request_date", "<=", filters["date_to"]))
+
+        # helper: safe YYYY-MM / YYYY-MM-DD from datetime|string
+        def _date_to_str(val, fmt="%Y-%m-%d"):
+            if not val:
+                return ""
+            if isinstance(val, str):
+                return val[:10] if fmt == "%Y-%m-%d" else val[:7]
+            return val.strftime(fmt)
+
+        # ---------------- KPIs ----------------
+        kpis = {
+            "open_requests": self.search_count(domain + [
+                ("state", "in", ["draft", "generated", "scheduled", "assigned", "dispatched", "service_delivered"])
+            ]),
+            "scheduled_count": self.search_count(domain + [("state", "=", "scheduled")]),
+            "in_progress": self.search_count(
+                domain + [("state", "in", ["assigned", "dispatched", "service_delivered"])]),
+            "done_count": self.search_count(domain + [("state", "=", "done")]),
+            # "rejected_count": self.search_count(
+            #     domain + ["|", ("state", "=", "cancelled"), ("is_rejected", "=", True)]),
+            "rejected_count": self.search_count(domain + [("state", "=", "cancelled")]),
+            "tank_kl_month": 0.0,
+            "billing_amount_month": 0.0,
+        }
+
+        recs = self.search(domain)
+        if "billing_kl" in self._fields:
+            kpis["tank_kl_month"] = float(sum(recs.mapped("billing_kl") or []) or 0.0)
+        if "billing_amount" in self._fields:
+            kpis["billing_amount_month"] = float(sum(recs.mapped("billing_amount") or []) or 0.0)
+
+        # ---------------- Charts ----------------
+        by_status = self.read_group(domain, ["__count"], ["state"], lazy=False)
+        by_service = self.read_group(domain, ["__count"], ["service_requested_id"], lazy=False)
+
+        top_customers = self.read_group(domain, ["__count"], ["partner_id"], lazy=False)
+        top_customers = sorted(top_customers, key=lambda x: x.get("__count", 0), reverse=True)[:10]
+
+        # ---------------- Manifest Table ----------------
+        manifest_summary = []
+        mf_fields = ["name", "partner_id", "state", "billing_amount", "service_requested_id", "service_request_date"]
+        if "bin_lifted_ids" in self._fields:
+            mf_fields.append("bin_lifted_ids")
+        if "bin_dropped_ids" in self._fields:
+            mf_fields.append("bin_dropped_ids")
+
+        mf_rows = self.search_read(domain, mf_fields, limit=50, order="service_request_date desc")
+
+        for r in mf_rows[:10]:
+            lifted = len(r.get("bin_lifted_ids") or [])
+            dropped = len(r.get("bin_dropped_ids") or [])
+            manifest_summary.append({
+                "id": r.get("id"),
+                "name": r.get("name"),
+                "partner_id": r.get("partner_id"),
+                "partner": r["partner_id"][1] if r.get("partner_id") else "",
+                "state": r.get("state"),
+                "service": r["service_requested_id"][1] if r.get("service_requested_id") else "",
+                "service_request_date": r.get("service_request_date") or "",
+                "date": _date_to_str(r.get("service_request_date"), "%Y-%m-%d"),
+                "amount": float(r.get("billing_amount") or 0.0),
+                "bin_lifted": lifted,
+                "bin_dropped": dropped,
+                "bin_count": lifted + dropped,
+            })
+
+        manifests = []
+        for r in mf_rows:
+            manifests.append({
+                "name": r.get("name"),
+                "customer": r["partner_id"][1] if r.get("partner_id") else "",
+                "state": r.get("state"),
+                "bin_count": len(r.get("bin_lifted_ids") or []),
+            })
+
+        # ---------------- Customer by Service ----------------
+        customer_by_service = []
+        groups = self.read_group(domain, ["__count"], ["partner_id", "service_requested_id"], lazy=False)
+        for g in groups:
+            customer_by_service.append({
+                "customer": g["partner_id"][1] if g.get("partner_id") else "Unknown",
+                "service": g["service_requested_id"][1] if g.get("service_requested_id") else "Unknown",
+                "count": g.get("__count", 0),
+            })
+        customer_by_service = sorted(customer_by_service, key=lambda x: x["count"], reverse=True)
+
+        # ---------------- Driver by trips ----------------
+        driver_by_trips = []
+        driver_counts = {}
+        if "driver_id" in self._fields:
+            rows_driver = self.search_read(domain, ["driver_id"])
+            for r in rows_driver:
+                d = r.get("driver_id")
+                if not d:
+                    continue
+                driver_counts[d[1]] = driver_counts.get(d[1], 0) + 1
+        for name, cnt in sorted(driver_counts.items(), key=lambda x: x[1], reverse=True):
+            driver_by_trips.append({"driver": name, "trips": cnt})
+
+        # ---------------- Revenue analysis (by month) ----------------
+        revenue = {}
+        if "service_request_date" in self._fields and "billing_amount" in self._fields:
+            rev_rows = self.search_read(domain, ["service_request_date", "billing_amount"])
+            for r in rev_rows:
+                dt = r.get("service_request_date")
+                if not dt:
+                    continue
+                key = _date_to_str(dt, "%Y-%m")
+                revenue[key] = revenue.get(key, 0.0) + float(r.get("billing_amount") or 0.0)
+        revenue_analysis = [{"label": k, "amount": float(v)} for k, v in sorted(revenue.items())]
+        _logger.info("Revenue rows: %s", len(revenue_analysis))
+
+        # ---------------- Tank series (FIXED: build ONCE with fallback) ----------------
+        gran = filters.get("tank_granularity") or "day"
+        now = fields.Datetime.now()
+
+        if filters.get("date_from"):
+            df = filters["date_from"]
+            start = fields.Datetime.from_string((df + " 00:00:00") if isinstance(df, str) else df)
+        else:
+            start = now - timedelta(days=180 if gran == "week" else 60)
+
+        tank_domain = list(domain) + [
+            ("service_request_date", ">=", fields.Datetime.to_string(start)),
+            ("service_request_date", "<=", fields.Datetime.to_string(now)),
+        ]
+
+        tank_domain_with_type = list(tank_domain)
+        if "container_type_id" in self._fields:
+            tank_domain_with_type += [("container_type_id.name", "ilike", "tank")]
+
+        use_domain = tank_domain_with_type
+        if self.search_count(use_domain) == 0:
+            use_domain = tank_domain
+
+        tank_series = []
+        if "billing_kl" in self._fields:
+            tank_rows = self.search_read(use_domain, ["service_request_date", "billing_kl"])
+            bucket = {}
+            for r in tank_rows:
+                dt = r.get("service_request_date")
+                if not dt:
+                    continue
+                dt_obj = fields.Datetime.from_string(dt) if isinstance(dt, str) else dt
+                if gran == "week":
+                    iso = dt_obj.isocalendar()
+                    key = f"{iso.year}-W{iso.week:02d}"
+                else:
+                    key = dt_obj.strftime("%Y-%m-%d")
+                bucket[key] = bucket.get(key, 0.0) + float(r.get("billing_kl") or 0.0)
+
+            tank_series = [{"label": k, "kl": float(v)} for k, v in sorted(bucket.items(), key=lambda x: x[0])]
+
+        _logger.info("Tank domain count (with type): %s", self.search_count(tank_domain_with_type))
+        _logger.info("Tank domain count (fallback): %s", self.search_count(tank_domain))
+        _logger.info("Tank series size: %s", len(tank_series))
+
+        # ---------------- Today schedule + assignment pie (HARD FILTER in PYTHON) ----------------
+        schedule_states = ["scheduled", "assigned", "dispatched"]
+
+        schedule_field = None
+        for f in ("planned_date", "scheduled_date", "schedule_date", "dispatch_date"):
+            if f in self._fields:
+                schedule_field = f
+                break
+
+        todays = []
+        assignment_pie = {"labels": ["Driver Jobs", "Service Provider Jobs"], "values": [0, 0]}
+
+        if schedule_field:
+            tz_name = self.env.context.get("tz") or self.env.user.tz or "UTC"
+            today_local = fields.Date.context_today(self)
+
+            broad_domain = list(domain_common) + [
+                ("state", "in", schedule_states),
+                (schedule_field, "!=", False),
+            ]
+
+            today_fields = ["name", "partner_id", schedule_field, "vehicle_id", "driver_id", "state",
+                            "is_service_provider", "provider_id"]
+            today_fields = [f for f in today_fields if f in self._fields]
+
+            candidates = self.search_read(broad_domain, today_fields, order=f"{schedule_field} asc", limit=500)
+
+            filtered = []
+            for r in candidates:
+                dt = r.get(schedule_field)
+                if not dt:
+                    continue
+                dt_utc = fields.Datetime.from_string(dt) if isinstance(dt, str) else dt
+                dt_local = fields.Datetime.context_timestamp(self, dt_utc)
+                if dt_local.date() == today_local:
+                    filtered.append(r)
+
+            todays = filtered
+
+            sp_count = 0
+            driver_count = 0
+            for r in todays:
+                if r.get("is_service_provider") or r.get("provider_id"):
+                    sp_count += 1
+                else:
+                    driver_count += 1
+
+            assignment_pie = {
+                "labels": ["Driver Jobs", "Service Provider Jobs"],
+                "values": [driver_count, sp_count],
+            }
+
+            _logger.info("Dashboard today schedule field=%s tz=%s candidates=%s todays=%s",
+                         schedule_field, tz_name, len(candidates), len(todays))
+        else:
+            _logger.warning("Dashboard: no schedule field found (planned_date/scheduled_date/...)")
+
+        # ---------------- Users pie ----------------
+        Users = self.env["res.users"].sudo()
+        active_users = Users.search([("active", "=", True)])
+        inactive_count = Users.search_count([("active", "=", False)])
+
+        internal_active = active_users.filtered(lambda u: u.has_group("base.group_user"))
+        portal_active = active_users.filtered(
+            lambda u: u.has_group("base.group_portal") and not u.has_group("base.group_user"))
+
+        users_pie = {
+            "labels": ["Internal (Active)", "Portal (Active)", "Inactive"],
+            "values": [len(internal_active), len(portal_active), int(inactive_count)],
+        }
+
+        # ---------------- Bin Report (Dropped) TABLE ----------------
+        bin_report_table = []
+        bin_dropped_field = "bin_dropped_ids"
+
+        if bin_dropped_field in self._fields:
+            drop_rows = self.search_read(
+                domain,
+                [f for f in ["name", "pickup_point_id", bin_dropped_field, "service_request_date"] if
+                 f in self._fields],
+                limit=80,
+                order="service_request_date desc"
+            )
+
+            all_container_ids = set()
+            for r in drop_rows:
+                for cid in (r.get(bin_dropped_field) or []):
+                    all_container_ids.add(cid)
+
+            container_name_map = {}
+            if all_container_ids:
+                Container = self.env["waste.container"].sudo() if "waste.container" in self.env else self.env[
+                    "stock.lot"].sudo()
+                for c in Container.browse(list(all_container_ids)).exists():
+                    container_name_map[c.id] = c.display_name
+
+            for r in drop_rows:
+                manifest_name = r.get("name") or ""
+                drop_point = r["pickup_point_id"][1] if r.get("pickup_point_id") else ""
+                date_str = _date_to_str(r.get("service_request_date"), "%Y-%m-%d")
+
+                for cid in (r.get(bin_dropped_field) or []):
+                    bin_report_table.append({
+                        "key": f"{manifest_name}:{cid}",
+                        "manifest": manifest_name,
+                        "dropoff_point": drop_point,
+                        "bin": container_name_map.get(cid, str(cid)),
+                        "date": date_str,
+                        "request_id": [r.get("id"), manifest_name] if r.get("id") else False,
+                    })
+
+            # ✅ Limit to 10 rows max
+            bin_report_table = bin_report_table[:10]
+
+        # ---------------- Bin Report (CHART) ----------------
+        lifted_total = 0
+        dropped_total = 0
+
+        if "bin_lifted_ids" in self._fields:
+            for r in self.search_read(domain, ["bin_lifted_ids"]):
+                lifted_total += len(r.get("bin_lifted_ids") or [])
+        if "bin_dropped_ids" in self._fields:
+            for r in self.search_read(domain, ["bin_dropped_ids"]):
+                dropped_total += len(r.get("bin_dropped_ids") or [])
+
+        bin_report = [
+            {"label": "Bins Lifted", "count": int(lifted_total)},
+            {"label": "Bins Dropped", "count": int(dropped_total)},
+        ]
+        bin_report_chart = [{"label": "Total Bins Lifted", "count": int(lifted_total)}]
+
+        # ---------------- Sales Orders analytics ----------------
+        so_domain = []
+        if filters.get("date_from"):
+            so_domain.append(("date_order", ">=", filters["date_from"]))
+        if filters.get("date_to"):
+            so_domain.append(("date_order", "<=", filters["date_to"]))
+        if filters.get("sale_order_number"):
+            so_domain.append(("name", "ilike", filters["sale_order_number"]))
+
+        so_by_customer = []
+        so_groups = SO.read_group(so_domain, ["__count"], ["partner_id"], lazy=False)
+        for g in so_groups:
+            so_by_customer.append({
+                "customer": g["partner_id"][1] if g.get("partner_id") else "Unknown",
+                "count": g.get("__count", 0),
+            })
+        so_by_customer = sorted(so_by_customer, key=lambda x: x["count"], reverse=True)
+
+        inv_domain = [("move_type", "=", "out_invoice")]
+        if filters.get("invoice_number"):
+            inv_domain.append(("name", "ilike", filters["invoice_number"]))
+
+        invoices = INV.search(inv_domain, limit=200)
+        so_invoice_map = []
+        for inv in invoices:
+            so_name = inv.invoice_origin or ""
+            so_invoice_map.append({
+                "key": f"{so_name}|{inv.name}",
+                "sale_order": so_name,
+                "invoice": inv.name,
+                "total": float(inv.amount_total or 0.0),
+                "invoice_id": [inv.id, inv.name],
+            })
+
+        so_invoice_totals = []
+        for x in so_invoice_map[:10]:
+            so_invoice_totals.append({
+                "key": x["key"],
+                "sale_order": x["sale_order"],
+                "invoice": x["invoice"],
+                "total": x["total"],
+                "invoice_id": x.get("invoice_id"),
+            })
+
+        so_by_manifest = []
+
+        return {
+            "kpis": kpis,
+            "by_status": by_status,
+            "by_service": by_service,
+            "top_customers": top_customers,
+            "tank_series": tank_series,
+            "todays": todays,
+            "assignment_pie": assignment_pie,
+            "users_pie": users_pie,
+            "manifest_summary": manifest_summary,
+            "so_invoice_totals": so_invoice_totals,
+
+            "bin_report_table": bin_report_table,
+            "bin_report": bin_report,
+
+            "manifests": manifests,
+            "customer_by_service": customer_by_service,
+            "driver_by_trips": driver_by_trips,
+            "revenue_analysis": revenue_analysis,
+            "bin_report_chart": bin_report_chart,
+            "so_by_customer": so_by_customer,
+            "so_by_manifest": so_by_manifest,
+            "so_invoice_map": so_invoice_map,
+        }
+
+
+    def action_print_dashboard_report(self, payload=None):
+        payload = payload or {}
+
+        return self.env.ref(
+            "waste_management_zakheni.action_waste_dashboard_report_pdf"
+        ).report_action(
+            [],  # ❌ DO NOT PASS docids
+            data={
+                "filters": payload  # ✅ PASS FILTERS
+            }
+        )
 
 
 class SaleOrder(models.Model):
@@ -2028,6 +2597,8 @@ class FleetVehicle(models.Model):
         help="Tick if this vehicle has a fixed tank for liquid waste (e.g. 7000L, 9000L, etc.)."
     )
 
+
+
     tank_volume_id = fields.Many2one(
         'tank.volume',
         string="Tank Volume",
@@ -2060,3 +2631,47 @@ class FleetVehicleModel(models.Model):
             'tank_truck': 'set default',
         },
     )
+
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+
+    sale_order_id = fields.Many2one(
+        'sale.order',
+        string="Sales Order",
+        compute="_compute_sale_order_id",
+        store=True,
+        readonly=False,
+    )
+
+    service_request_id = fields.Many2one(
+        'waste.service.request',
+        string="Manifest",
+        ondelete="set null",
+        domain="[('sale_order_id', '=', sale_order_id)]",
+    )
+
+    @api.depends('invoice_line_ids.sale_line_ids.order_id')
+    def _compute_sale_order_id(self):
+        for move in self:
+            orders = move.invoice_line_ids.sale_line_ids.order_id
+            move.sale_order_id = orders[:1].id if orders else False
+
+    @api.onchange('sale_order_id')
+    def _onchange_sale_order_id(self):
+        """When SO is chosen, restrict and auto-pick the manifest."""
+        for move in self:
+            if not move.sale_order_id:
+                move.service_request_id = False
+                return {
+                    'domain': {'service_request_id': []}
+                }
+
+            domain = [('sale_order_id', '=', move.sale_order_id.id)]
+
+            # auto-pick first manifest for that SO (optional but recommended)
+            manifest = self.env['waste.service.request'].search(domain, limit=1)
+            move.service_request_id = manifest or False
+
+            return {
+                'domain': {'service_request_id': domain}
+            }

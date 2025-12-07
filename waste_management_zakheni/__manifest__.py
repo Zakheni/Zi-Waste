@@ -2,12 +2,13 @@
     "name": "Waste Management",
     "version": "1.0",
     "author": "Lesiba",
-    "depends": ['base', 'mail', 'sale', 'product', 'account', 'fleet', 'hr','stock','portal','website'],
+    "depends": ['base', 'mail', 'sale', 'product', 'account', 'fleet', 'hr', 'stock', 'portal', 'website'],
     "data": [
 
         "security/waste_portal_groups.xml",
         "security/waste_portal_rules.xml",
         "security/waste_groups.xml",
+        "security/waste_portal_access.xml",
         "security/ir.model.access.csv",
         "security/waste_rules.xml",
         "data/sequence.xml",
@@ -16,7 +17,16 @@
         "data/mai_assign_to_driver.xml",
         "data/mail_worksheet_completion.xml",
         "data/mail_invide_service_provider.xml",
+        "data/mail_client_portal_worksheet_completion.xml",
+        "data/mail_client_portal_request_completion.xml",
+        # "report/waste_dashboard_report_action.xml",
+        "report/portal_waste_report_pdf.xml",
+        "report/report_waste_dashboard_pdf.xml",
+        "views/report_manifest.xml",
         # "data/waste_config.xml",
+        # "views/waste_dashboard_action.xml",
+        "views/portal_waste_dashboard.xml",
+        "views/portal_waste_report_html.xml",
         "views/waste_portal_templates.xml",
         "views/hide_sale_menu.xml",
         "views/pickup_point_views.xml",
@@ -25,6 +35,7 @@
         "views/waste_service_request_extra_line.xml",
         "views/waste_product_views.xml",
         "views/product_inherit.view.xml",
+        "views/account_move_view.xml",
         "views/sale_order_view.xml",
         "views/hr_employee_view.xml",
         "views/fleet_vehicle_module.xml",
@@ -50,12 +61,50 @@
         "popups/view_safety_certificate_up_pop.xml",
         "popups/view_weighbridge_slip_popup.xml",
         "popups/view_weighbridge_slip_up_pop.xml",
+        "views/waste_dashboard_menu.xml",
         "views/menu.xml",
     ],
 
-    'assets': {
-        'web.assets_backend': [
-            'waste_management_zakheni/static/src/scss/waste_kanban.scss',
+    # 'assets': {
+    #     'web.assets_backend': [
+    #         'waste_management_zakheni/static/src/scss/waste_kanban.scss',
+    #     ],
+    # },
+
+    # "assets": {
+    #     "web.assets_backend": [
+    #         'web/static/lib/Chart/Chart.js',
+    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.js",
+    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.xml",
+    #         # optional css:
+    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.css",
+    #     ],
+    # },
+
+    # "assets": {
+    #     "web.assets_backend": [
+    #         "/web/static/lib/chartjs/chart.umd.js",
+    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.js",
+    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.xml",
+    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.css",
+    #     ],
+    # },
+
+    "assets": {
+        "web.assets_frontend": [
+            "/web/static/lib/chartjs/chart.umd.js",
+        ],
+    },
+
+    "assets": {
+        "web.assets_backend": [
+            # Chart.js (try both, Odoo builds differ)
+            "web/static/lib/chartjs/chart.umd.js",
+            "web/static/lib/Chart/Chart.js",
+
+            "waste_management_zakheni/static/src/dashboard/waste_dashboard.js",
+            "waste_management_zakheni/static/src/dashboard/waste_dashboard.xml",
+            "waste_management_zakheni/static/src/dashboard/waste_dashboard.css",
         ],
     },
 

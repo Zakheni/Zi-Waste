@@ -1,7 +1,7 @@
 <odoo>
     <menuitem id="menu_pickup_root"
               name="Waste Management"
-              sequence="1"
+              sequence="2"
               web_icon="waste_management_zakheni.group_wmz_admin,waste_management_zakheni/static/description/icon.png"/>
 
     <menuitem id="menu_waste_container"

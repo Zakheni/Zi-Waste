@@ -26,13 +26,13 @@ class WasteWorksheet(models.Model):
         ondelete="set null"
     )
     # Delivery information
-    arrival_time = fields.Datetime(string='Arrival Date')
-    return_date = fields.Datetime(string='Return Date')
-    unit_of_measure = fields.Many2one('uom.uom', string='Units of Measure')
-    kilometers = fields.Integer(string='Kilometers')
+    arrival_time = fields.Datetime(string='Arrival Date', tracking=True)
+    return_date = fields.Datetime(string='Return Date', tracking=True)
+    unit_of_measure = fields.Many2one('uom.uom', string='Units of Measure', tracking=True)
+    kilometers = fields.Integer(string='Kilometers', tracking=True)
     quantity_collected = fields.Float(string='Quantity Collected')
-    driver_signature = fields.Binary(string="Driver Signature", )
-    service_provider_signature = fields.Binary(string="Service Provider Signature", )
+    driver_signature = fields.Binary(string="Driver Signature" )
+    service_provider_signature = fields.Binary(string="Service Provider Signature" )
     planned_date = fields.Datetime(string='Planned Date', related='service_request_id.planned_date', store=True)
 
     partner_id = fields.Many2one('res.partner', string="Customer", related='service_request_id.partner_id')
@@ -304,6 +304,17 @@ class WasteWorksheet(models.Model):
         ("in_progress", "In Progress"),
         ("done", "Done"),
     ], string="Status", default="draft", tracking=True)
+
+    state_label = fields.Char(
+        compute="_compute_state_label",
+        store=False,
+    )
+
+    @api.depends('state')
+    def _compute_state_label(self):
+        selection = dict(self._fields['state'].selection)
+        for rec in self:
+            rec.state_label = selection.get(rec.state, rec.state or '')
 
     # ----------------------
     # Button Actions

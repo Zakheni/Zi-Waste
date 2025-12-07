@@ -7,6 +7,12 @@
             <tree default_order="create_date desc" string="Waste Service Request">
                 <field name="name"/>
                 <field name="partner_id"/>
+                <field name="from_portal" optional="hide"/>
+                <field name="create_uid" optional="hide"/>
+                <field name="write_uid" optional="hide"/>
+                <field name="create_date" widget="badge" optional="hide"/>
+                <field name="write_date" widget="badge" optional="hide"/>
+
                 <field name="service_requested_id"/>
                 <field name="container_type_id"/>
                 <field name="bin_dropped_ids" widget="many2many_tags" optional="hide"/>
@@ -65,6 +71,11 @@
                             string="Create Invoice" class="btn-primary"
                             invisible="state != 'done'"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance"/>
+                    <button name="action_print_manifest_pdf"
+                            type="object"
+                            string="Print"
+                            class="btn btn-primary"
+                            invisible="state != 'done'"/>
 
 
                     <button name="action_open_simple_provider_wizard"
@@ -267,6 +278,7 @@
                             <field name="hide_dropped_bin_ids_swap" invisible="1"/>
                             <field name="hide_dropped_to_swap" invisible="1"/>
 
+                            <field name="from_portal" invisible="1"/>
                             <field name="hide_tank_ids" invisible="1"/>
                             <field name="hide_tank_volume" invisible="1"/>
                             <field name="hide_liters_collected" invisible="1"/>
@@ -365,7 +377,7 @@
                             <!--                            </div>-->
 
                             <field name="product_uom_qty"
-                                  invisible="(not hide_general and not hide_tank_volume)
+                                   invisible="(not hide_general and not hide_tank_volume)
                                               or hide_bin"
                                    readonly="state != 'draft' and state != 'scheduled' and state != 'generated' and state != 'cancelled'"
                             />

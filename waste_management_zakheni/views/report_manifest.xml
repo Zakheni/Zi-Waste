@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+         1) REPORT ACTION (Manifest PDF)
+    - -->
+    <record id="action_manifest_report_pdf" model="ir.actions.report">
+        <field name="name">Waste Manifest</field>
+        <field name="model">waste.service.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">waste_management_zakheni.report_manifest_pdf</field>
+        <field name="report_file">waste_management_zakheni.report_manifest_pdf</field>
+        <field name="print_report_name">'Manifest - %s' % (object.name or '')</field>
+
+        <!-- Adds it to form Print menu -->
+        <field name="binding_model_id" ref="model_waste_service_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!--
+         2) REPORT TEMPLATE
+    -->
+    <template id="report_manifest_pdf">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+
+                <t t-if="not docs">
+                    <div class="page">
+                        <h3>Waste Manifest</h3>
+                        <p class="text-muted">No manifest record selected.</p>
+                    </div>
+                </t>
+
+                <t t-foreach="docs" t-as="doc">
+                    <div class="page" style="font-size:12px;">
+
+                        <!-- Header -->
+                        <div class="row mb-2">
+                            <div class="col-7">
+                                <h2 style="margin:0;">Waste Manifest</h2>
+                                <div class="text-muted" style="font-size:12px;">
+                                    Status:
+                                    <span t-esc="dict(doc._fields['state'].selection).get(doc.state, doc.state or '')"/>
+                                </div>
+                            </div>
+
+                            <div class="col-5 text-end" style="font-size:12px;">
+                                <div>
+                                    <strong>Manifest No:</strong>
+                                    <span t-esc="doc.name or ''"/>
+                                </div>
+                                <div>
+                                    <strong>Planned Date:</strong>
+                                    <span t-esc="doc.planned_date or ''"/>
+                                </div>
+                                <div>
+                                    <strong>Request Date:</strong>
+                                    <span t-esc="doc.service_request_date or ''"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customer / SO -->
+                        <table class="table table-sm" style="font-size:12px; margin-bottom:10px;">
+                            <tbody>
+                                <tr>
+                                    <td style="width:25%;"><strong>Customer</strong></td>
+                                    <td t-esc="doc.partner_id.display_name or ''"/>
+                                    <td style="width:25%;"><strong>Ticket Type</strong></td>
+                                    <td t-esc="doc.ticket_type or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Quote No</strong></td>
+                                    <td t-esc="doc.quote_no or ''"/>
+                                    <td><strong>Sales Order</strong></td>
+                                    <td t-esc="doc.sale_order_id.name or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Service Description</strong></td>
+                                    <td colspan="3" t-esc="doc.service_description or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Service / Waste -->
+                        <table class="table table-sm" style="font-size:12px; margin-bottom:10px;">
+                            <tbody>
+                                <tr>
+                                    <td style="width:25%;"><strong>Service Requested</strong></td>
+                                    <td t-esc="doc.service_requested_id.display_name or ''"/>
+                                    <td style="width:25%;"><strong>Container Type</strong></td>
+                                    <td t-esc="doc.container_type_id.display_name or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Waste Type</strong></td>
+                                    <td t-esc="doc.waste_type_id.display_name or ''"/>
+                                    <td><strong>Waste Details</strong></td>
+                                    <td t-esc="doc.waste_details_id.display_name or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>UN No / SIN No</strong></td>
+                                    <td t-esc="doc.UN_No_SIN_No or ''"/>
+                                    <td><strong>Waste Profile / Data Sheet No</strong></td>
+                                    <td t-esc="doc.waste_profile_Data_sheet_No or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>DTNumber</strong></td>
+                                    <td t-esc="doc.DTNumber or ''"/>
+                                    <td><strong>Disposal Site</strong></td>
+                                    <td t-esc="doc.disposal_site_id.display_name or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Points / Vehicle -->
+                        <table class="table table-sm" style="font-size:12px; margin-bottom:10px;">
+                            <tbody>
+                                <tr>
+                                    <td style="width:25%;"><strong>Pickup Points</strong></td>
+                                    <td>
+                                        <t t-esc="', '.join(doc.pickup_point_ids.mapped('display_name')) if doc.pickup_point_ids else ''"/>
+                                    </td>
+                                    <td style="width:25%;"><strong>Drop-off Points</strong></td>
+                                    <td>
+                                        <t t-esc="', '.join(doc.dropoff_point_ids.mapped('display_name')) if doc.dropoff_point_ids else ''"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Vehicle</strong></td>
+                                    <td t-esc="doc.vehicle_id.display_name or ''"/>
+                                    <td><strong>Trailer</strong></td>
+                                    <td t-esc="doc.trailer_id.display_name or ''"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Driver</strong></td>
+                                    <td t-esc="doc.driver_id.display_name or ''"/>
+                                    <td><strong>Assistance</strong></td>
+                                    <td t-esc="doc.assistance_id.display_name or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Summary -->
+                        <div class="mt-2" style="font-size:12px;">
+                            <strong>Pickup / Drop-off and Containers Summary</strong>
+                            <div style="border:1px solid #ddd; padding:8px; border-radius:6px;">
+                                <span t-esc="doc.pickup_point_bins_summary or ''"/>
+                            </div>
+                        </div>
+
+                        <!-- Bins -->
+                        <div class="mt-3">
+                            <div style="font-weight:600;">Bins Lifted &amp; Dropped</div>
+                            <table class="table table-sm" style="font-size:12px;">
+                                <thead>
+                                    <tr>
+                                        <th style="width:50%;">Lifted</th>
+                                        <th style="width:50%;">Dropped</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <t t-if="doc.bin_lifted_ids">
+                                                <t t-foreach="doc.bin_lifted_ids" t-as="b">
+                                                    <div t-esc="b.display_name"/>
+                                                </t>
+                                            </t>
+                                            <t t-else=""><span class="text-muted">-</span></t>
+                                        </td>
+                                        <td>
+                                            <t t-if="doc.bin_dropped_ids">
+                                                <t t-foreach="doc.bin_dropped_ids" t-as="b">
+                                                    <div t-esc="b.display_name"/>
+                                                </t>
+                                            </t>
+                                            <t t-else=""><span class="text-muted">-</span></t>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Billing -->
+                        <div class="row mt-2">
+                            <div class="col-6">
+                                <table class="table table-sm" style="font-size:12px;">
+                                    <tbody>
+                                        <tr><td><strong>Quantity</strong></td><td t-esc="doc.product_uom_qty or 0.0"/></tr>
+                                        <tr><td><strong>Liters Collected</strong></td><td t-esc="doc.liters_collected or 0.0"/></tr>
+                                        <tr><td><strong>Billing kL</strong></td><td t-esc="doc.billing_kl or 0.0"/></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm" style="font-size:12px;">
+                                    <tbody>
+                                        <tr><td><strong>Billing Amount (Excl. VAT)</strong></td><td t-esc="doc.billing_amount or 0.0"/></tr>
+                                        <tr><td><strong>Unit Price</strong></td><td t-esc="doc.price_unit or 0.0"/></tr>
+                                        <tr><td><strong>Product</strong></td><td t-esc="doc.product_id.display_name or ''"/></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Footer (✅ NO __import__) -->
+                        <div class="mt-2 text-muted" style="font-size:11px;">
+                            Printed by <t t-esc="doc.env.user.name"/> —
+                            Last updated:
+                            <t t-esc="doc.write_date or doc.create_date or ''"/>
+                        </div>
+
+                    </div>
+                </t>
+
+            </t>
+        </t>
+    </template>
+
+</odoo>

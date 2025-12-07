@@ -1,43 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- -
-         EXTEND PORTAL HOME: add Waste tiles
-         - -->
+    <!--
+        EXTEND PORTAL HOME: Waste Management Tiles
+    -->
     <template id="waste_portal_my_home"
               inherit_id="portal.portal_my_home"
-              name="Waste Portal Home extension"
+              name="Waste Portal Home Extension"
               priority="30">
 
         <xpath expr="//div[@id='portal_common_category']" position="inside">
 
-            <!-- Tile: View Logged Requests -->
+            <!-- ================================================= -->
+            <!-- Waste Requests -->
+            <!-- ================================================= -->
             <t t-call="portal.portal_docs_entry">
                 <t t-set="icon" t-value="'/portal/static/src/img/portal-connection.svg'"/>
                 <t t-set="title">Waste Requests</t>
                 <t t-set="url" t-value="'/my/waste/requests'"/>
                 <t t-set="text">
-                    View logged service requests
+                    View and track all logged waste service requests
                 </t>
                 <t t-set="placeholder_count" t-value="'waste_request_count'"/>
                 <t t-set="count" t-value="waste_request_count"/>
             </t>
 
-            <!-- Tile: Log Service Request -->
-            <t t-call="portal.portal_docs_entry">
-                <t t-set="icon" t-value="'/portal/static/src/img/portal-addresses.svg'"/>
-                <t t-set="title">Log Service Request</t>
-                <t t-set="url" t-value="'/my/waste/request/new'"/>
-                <t t-set="text">
-                    Log a new waste service request
+            <!-- ================================================= -->
+            <!-- Log New Service Request (Customers only) -->
+            <!-- ================================================= -->
+            <t t-if="not request.env.user.has_group('waste_management_zakheni.group_wmz_client_agent')">
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="icon" t-value="'/portal/static/src/img/portal-addresses.svg'"/>
+                    <t t-set="title">Log Service Request</t>
+                    <t t-set="url" t-value="'/my/waste/request/new'"/>
+                    <t t-set="text">
+                        Submit a new waste collection or service request
+                    </t>
+                    <!-- Config card: no counter expected -->
+                    <t t-set="config_card" t-value="True"/>
                 </t>
-                <!-- config card so it doesn’t expect a counter -->
-                <t t-set="config_card" t-value="True"/>
             </t>
+
+            <!-- ================================================= -->
+            <!-- Reporting & Dashboard (Customers only) -->
+            <!-- ================================================= -->
+            <!-- Customer Dashboard -->
+            <t t-if="not request.env.user.has_group('waste_management_zakheni.group_wmz_client_agent')">
+                <t t-call="portal.portal_docs_entry">
+                    <t t-set="icon" t-value="'/portal/static/src/img/portal-addresses.svg'"/>
+                    <t t-set="title">Reporting &amp; Dashboard</t>
+                    <t t-set="url" t-value="'/my/waste'"/>
+                    <t t-set="text">View analytics, trips, revenue, and performance reports</t>
+                    <t t-set="config_card" t-value="True"/>
+                </t>
+            </t>
+
+            <!--            &lt;!&ndash; Agent Dashboard &ndash;&gt;-->
+            <!--            <t t-if="request.env.user.has_group('waste_management_zakheni.group_wmz_client_agent')">-->
+            <!--                <t t-call="portal.portal_docs_entry">-->
+            <!--                    <t t-set="icon" t-value="'/portal/static/src/img/portal-addresses.svg'"/>-->
+            <!--                    <t t-set="title">Operations Dashboard</t>-->
+            <!--                    <t t-set="url" t-value="'/my/waste'"/>-->
+            <!--                    <t t-set="text">View assigned trips, worksheets, and performance</t>-->
+            <!--                    <t t-set="config_card" t-value="True"/>-->
+            <!--                </t>-->
+            <!--            </t>-->
+
 
         </xpath>
     </template>
-
 
     <!-- -
          LIST PAGE: /my/waste/requests
@@ -61,8 +92,19 @@
                 </nav>
 
                 <div class="row justify-content-center">
-                    <div class="col-lg-10">
+                    <div class="col-lg-12">
                         <h2 class="mb-4">My Service Requests</h2>
+
+                        <t t-if="portal_msg == 'no_worksheet_access'">
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <strong>Access restricted.</strong>
+                                You do not have permission to access service worksheets.
+                                If you believe this is an error, please contact your account manager.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                        aria-label="Close"/>
+                            </div>
+                        </t>
+
 
                         <table class="table table-hover mt-3">
                             <thead class="thead-light">
@@ -107,7 +149,8 @@
                                     <!-- Status -->
                                     <td>
                                         <span class="badge bg-primary">
-                                            <t t-esc="req.state"/>
+                                            <!--                                            <t t-esc="req.state"/>-->
+                                            <t t-esc="req.state_label or ''"/>
                                         </span>
                                     </td>
                                 </tr>
@@ -154,13 +197,34 @@
                 </nav>
 
                 <div class="row justify-content-center">
-                    <div class="col-lg-8">
+                    <div class="col-lg-12">
                         <h2 class="mb-4">Log Service Request</h2>
 
                         <form action="/my/waste/request/create"
                               method="post"
                               class="o_portal_waste_form">
                             <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
+
+                            <!-- LEFT COLUMN -->
+                            <div class="col-md-6">
+
+                                <!-- Client / Company (from res.partner) -->
+                                <div class="mb-3">
+                                    <label class="form-label">Client / Company</label>
+                                    <select name="client_partner_id" id="client_partner_id" class="form-select">
+                                        <t t-foreach="client_companies" t-as="cli">
+                                            <option t-att-value="cli.id"
+                                                    t-att-selected="str(cli.id) == str(default_client_id) and 'selected' or None">
+                                                <t t-esc="cli.display_name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                    <div class="form-text">
+                                        Select the company you are requesting service for.
+                                    </div>
+                                </div>
+                            </div>
+
 
                             <!-- 2 COLUMNS (md) / 6 FIELDS -->
                             <div class="row">
@@ -219,12 +283,23 @@
 
                                     <!-- Collection address -->
                                     <div class="mb-3">
-                                        <label class="form-label">Collection address</label>
-                                        <select name="pickup_point_id" class="form-select">
+                                        <label class="form-label d-flex justify-content-between align-items-center">
+                                            <span>Collection address</span>
+
+                                            <!-- ✅ MUST be type="button" -->
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#addPickupPointModal">
+                                                + Add
+                                            </button>
+                                        </label>
+
+                                        <select id="pickup_point_id" name="pickup_point_id" class="form-select">
                                             <option value="">Select recognised address</option>
                                             <t t-foreach="pickup_points" t-as="pp">
                                                 <option t-att-value="pp.id">
-                                                    <t t-esc="pp.display_name"/>
+                                                    <t t-esc="pp.name"/>
                                                 </option>
                                             </t>
                                         </select>
@@ -281,17 +356,197 @@
                                 Submit Request
                             </button>
                         </form>
+                        <div class="modal fade" id="addPickupPointModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Add Collection Address</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"/>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        <div class="mb-2">
+                                            <label class="form-label">Address Name</label>
+                                            <input id="pp_name" class="form-control" placeholder="e.g. Main Office"/>
+                                        </div>
+
+                                        <div id="pp_error" class="alert alert-danger d-none mt-2"></div>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel
+                                        </button>
+                                        <button type="button" id="pp_save_btn" class="btn btn-primary">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
                     </div>
                 </div>
             </div>
 
             <!-- JS to toggle Bin / Tank size -->
+            <!-- JS: Toggle Bin/Tank size + Load Pickup Points by selected customer -->
+            <script src="/web/static/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
             <script type="text/javascript">
                 (function () {
+                // Minimal JSON-RPC caller for Odoo "type='json'" routes
+                function jsonRpc(url, params) {
+                return fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin', // send session cookie
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                jsonrpc: "2.0",
+                method: "call",
+                params: params || {},
+                id: Date.now()
+                })
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                if (data &amp;&amp; data.error) {
+                console.error("JSON-RPC error:", data.error);
+                return [];
+                }
+                return (data &amp;&amp; data.result) ? data.result : [];
+                })
+                .catch(function (err) {
+                console.error("Fetch RPC failed:", err);
+                return [];
+                });
+                }
+
+                function loadPickupPoints(partnerId) {
+                var ppSel = document.getElementById('pickup_point_id');
+                if (!ppSel) return;
+
+                ppSel.innerHTML = '<option value="">Select recognised address</option>';
+                if (!partnerId) return;
+
+                jsonRpc('/my/waste/pickup_points', { partner_id: partnerId })
+                .then(function (res) {
+                (res || []).forEach(function (item) {
+                var opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.name;
+                ppSel.appendChild(opt);
+                });
+                });
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                var custSel = document.getElementById('client_partner_id');
+                if (!custSel) return;
+
+                custSel.addEventListener('change', function () {
+                loadPickupPoints(this.value);
+                });
+
+                // initial load
+                loadPickupPoints(custSel.value);
+                });
+                })();
+            </script>
+            <script type="text/javascript">
+                (function () {
+
+                async function jsonCall(url, payload) {
+                const res = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload || {})
+                });
+                return await res.json();
+                }
+
+                function hideModalSafe(modalId) {
+                const modalEl = document.getElementById(modalId);
+                if (!modalEl) return;
+
+                // ✅ If bootstrap is available, use it
+                if (window.bootstrap &amp;&amp; window.bootstrap.Modal) {
+                const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.hide();
+                return;
+                }
+
+                // ✅ Fallback (no bootstrap global)
+                modalEl.classList.remove('show');
+                modalEl.style.display = 'none';
+                modalEl.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('modal-open');
+                document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+                }
+
+                async function addPickupPoint(ev) {
+                if (ev) ev.preventDefault();
+
+                const partnerId = document.getElementById('client_partner_id')?.value;
+                const name = document.getElementById('pp_name')?.value?.trim();
+
+                const errBox = document.getElementById('pp_error');
+                if (errBox) {
+                errBox.classList.add('d-none');
+                errBox.textContent = '';
+                }
+
+                if (!partnerId) {
+                if (errBox) { errBox.textContent = "Please select a client/company first.";
+                errBox.classList.remove('d-none'); }
+                return;
+                }
+                if (!name) {
+                if (errBox) { errBox.textContent = "Address Name is required."; errBox.classList.remove('d-none'); }
+                return;
+                }
+
+                const resp = await jsonCall('/my/waste/pickup_points/create', {
+                partner_id: partnerId,
+                name: name
+                });
+
+                if (resp &amp;&amp; resp.error) {
+                if (errBox) { errBox.textContent = resp.error; errBox.classList.remove('d-none'); }
+                return;
+                }
+
+                // ✅ Add to dropdown + select it
+                const sel = document.getElementById('pickup_point_id');
+                if (sel) {
+                const opt = document.createElement('option');
+                opt.value = resp.id;
+                opt.textContent = resp.name || name; // ✅ never blank
+                sel.appendChild(opt);
+                sel.value = String(resp.id);
+                }
+
+                // reset input
+                const inp = document.getElementById('pp_name');
+                if (inp) inp.value = '';
+
+                hideModalSafe('addPickupPointModal');
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                const btn = document.getElementById('pp_save_btn');
+                if (btn) btn.addEventListener('click', addPickupPoint);
+                });
+
+                })();
+            </script>
+            <script type="text/javascript">
+                (function () {
+
                 function toggleSize() {
-                var ct = document.getElementById('container_type').value;
-                var binGroup = document.getElementById('bin_type_group');
-                var tankGroup = document.getElementById('tank_volume_group');
+                const ct = document.getElementById('container_type')?.value;
+                const binGroup = document.getElementById('bin_type_group');
+                const tankGroup = document.getElementById('tank_volume_group');
+
+                if (!binGroup || !tankGroup) return;
 
                 if (ct === 'bin') {
                 binGroup.classList.remove('d-none');
@@ -306,14 +561,19 @@
                 }
 
                 document.addEventListener('DOMContentLoaded', function () {
-                var sel = document.getElementById('container_type');
-                if (sel) {
+                const sel = document.getElementById('container_type');
+                if (!sel) return;
+
                 sel.addEventListener('change', toggleSize);
+
+                // 🔥 important: run once on load
                 toggleSize();
-                }
                 });
+
                 })();
             </script>
+
+
         </t>
     </template>
 
@@ -357,6 +617,47 @@
          - -->
     <template id="portal_waste_request_detail" name="Service Request Detail">
         <t t-call="website.layout">
+
+            <!-- Access Denied Popup for Portal Users -->
+            <div class="modal fade" id="noAccessModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fa fa-lock me-2"/>
+                                Access Restricted
+                            </h5>
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"/>
+                        </div>
+
+                        <div class="modal-body">
+                            <p>
+                                You don’t have permission to view some internal service
+                                details for this request.
+                            </p>
+                            <p class="mb-0">
+                                If you believe you should have access, please contact your
+                                account manager or system administrator and provide the
+                                Service Request number.
+                            </p>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button"
+                                    class="btn btn-primary"
+                                    data-bs-dismiss="modal">
+                                OK, Got it
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
             <div class="container my-5">
 
                 <!-- BREADCRUMB -->
@@ -377,6 +678,8 @@
                         </li>
                     </ol>
                 </nav>
+
+                <!-- Success message when worksheet saved -->
                 <t t-if="portal_msg == 'worksheet_saved'">
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <strong>Worksheet saved.</strong>
@@ -385,7 +688,6 @@
                                 aria-label="Close"/>
                     </div>
                 </t>
-
 
                 <!-- HEADER -->
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
@@ -404,7 +706,8 @@
                     </div>
                     <div class="text-end">
                         <span class="badge bg-primary px-3 py-2 text-uppercase">
-                            <t t-esc="wsr.state or 'draft'"/>
+                            <!--                            <t t-esc="wsr.state or 'draft'"/>-->
+                            <t t-esc="wsr.state_label or 'Draft'"/>
                         </span>
                         <div class="small text-muted mt-1">
                             Ticket:
@@ -415,6 +718,7 @@
 
                 <!-- MAIN CONTENT ROW -->
                 <div class="row g-4">
+                    <!-- LEFT: CUSTOMER & SERVICE -->
                     <!-- LEFT: CUSTOMER & SERVICE -->
                     <div class="col-lg-6">
                         <div class="card shadow-sm h-100">
@@ -430,15 +734,15 @@
                                 <div class="mb-3">
                                     <div class="text-muted text-uppercase small">Customer</div>
                                     <div class="fw-semibold">
-                                        <t t-esc="wsr.partner_id.display_name or '-'"/>
+                                        <t t-esc="customer_name"/>
                                     </div>
                                 </div>
 
-                                <!-- Service Requested -->
+                                <!-- Service Requested (now visible to both) -->
                                 <div class="mb-3">
                                     <div class="text-muted text-uppercase small">Service Requested</div>
                                     <div class="fw-semibold">
-                                        <t t-esc="wsr.service_requested_id.display_name or '-'"/>
+                                        <t t-esc="service_requested_name"/>
                                     </div>
                                 </div>
 
@@ -447,13 +751,13 @@
                                     <div class="col-6 mb-3">
                                         <div class="text-muted text-uppercase small">Waste Type</div>
                                         <div>
-                                            <t t-esc="wsr.waste_type_id.display_name or '-'"/>
+                                            <t t-esc="waste_type_name"/>
                                         </div>
                                     </div>
                                     <div class="col-6 mb-3">
                                         <div class="text-muted text-uppercase small">Waste Details</div>
                                         <div>
-                                            <t t-esc="wsr.waste_details_id.display_name or '-'"/>
+                                            <t t-esc="waste_details_name"/>
                                         </div>
                                     </div>
                                 </div>
@@ -463,17 +767,17 @@
                                     <div class="col-6 mb-3">
                                         <div class="text-muted text-uppercase small">Container Type</div>
                                         <div>
-                                            <t t-esc="wsr.container_type_id.display_name or '-'"/>
+                                            <t t-esc="container_type_name"/>
                                         </div>
                                     </div>
                                     <div class="col-6 mb-3">
                                         <div class="text-muted text-uppercase small">Bin / Tank Size</div>
                                         <div>
-                                            <t t-if="wsr.bin_type_id">
-                                                <t t-esc="wsr.bin_type_id.display_name"/>
+                                            <t t-if="bin_type_name">
+                                                <t t-esc="bin_type_name"/>
                                             </t>
-                                            <t t-elif="wsr.tank_volume_id">
-                                                <t t-esc="wsr.tank_volume_id.display_name"/>
+                                            <t t-elif="tank_volume_name">
+                                                <t t-esc="tank_volume_name"/>
                                             </t>
                                             <t t-else="">
                                                 -
@@ -508,10 +812,10 @@
                                 <div class="mb-3">
                                     <div class="text-muted text-uppercase small">Pickup Points</div>
                                     <div>
-                                        <t t-if="wsr.pickup_point_ids">
+                                        <t t-if="pickup_points_list">
                                             <ul class="mb-0 ps-3">
-                                                <li t-foreach="wsr.pickup_point_ids" t-as="pp">
-                                                    <t t-esc="pp.display_name"/>
+                                                <li t-foreach="pickup_points_list" t-as="pp">
+                                                    <t t-esc="pp"/>
                                                 </li>
                                             </ul>
                                         </t>
@@ -525,10 +829,10 @@
                                 <div class="mb-3">
                                     <div class="text-muted text-uppercase small">Drop-off Points</div>
                                     <div>
-                                        <t t-if="wsr.dropoff_point_ids">
+                                        <t t-if="dropoff_points_list">
                                             <ul class="mb-0 ps-3">
-                                                <li t-foreach="wsr.dropoff_point_ids" t-as="dp">
-                                                    <t t-esc="dp.display_name"/>
+                                                <li t-foreach="dropoff_points_list" t-as="dp">
+                                                    <t t-esc="dp"/>
                                                 </li>
                                             </ul>
                                         </t>
@@ -544,8 +848,8 @@
                                         Bins / Tanks Summary
                                     </div>
                                     <div class="small">
-                                        <t t-if="wsr.pickup_point_bins_summary">
-                                            <t t-esc="wsr.pickup_point_bins_summary"/>
+                                        <t t-if="bins_summary_text">
+                                            <t t-esc="bins_summary_text"/>
                                         </t>
                                         <t t-else="">
                                             No containers have been assigned yet.
@@ -558,7 +862,7 @@
                                     <div class="col-6 mb-2">
                                         <div class="text-muted text-uppercase small">Bins Count</div>
                                         <div class="fw-semibold">
-                                            <t t-esc="wsr.bin_line_count or 0"/>
+                                            <t t-esc="bin_line_count"/>
                                         </div>
                                     </div>
                                     <div class="col-6 mb-2">
@@ -572,12 +876,16 @@
                             </div>
                         </div>
                     </div>
+
+
+                    <!-- RIGHT: LOCATIONS & CONTAINERS (Generic, no pickup.point access) -->
+
                 </div>
 
                 <!-- SECOND ROW: TANK & BILLING + LATEST WORKSHEET -->
                 <div class="row g-4 mt-3">
                     <!-- Tank / Billing -->
-                    <div class="col-lg-6" t-if="not wsr.bin_type_id">
+                    <div class="col-lg-6">
                         <div class="card shadow-sm h-100">
                             <div class="card-header bg-light">
                                 <h5 class="mb-0">
@@ -619,121 +927,59 @@
                     </div>
 
                     <!-- Latest worksheet summary -->
-                    <div class="col-lg-6">
-                        <div class="card shadow-sm h-100">
+
+                </div>
+
+
+                <!-- ALL WORKSHEETS TABLE – ONLY FOR AGENTS -->
+                <t t-if="is_agent">
+                    <t t-if="worksheets">
+                        <div class="card shadow-sm mt-4">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">
-                                    <i class="fa fa-clipboard-check me-2"/>
-                                    Latest Worksheet Summary
+                                    <i class="fa fa-list-ul me-2"/>
+                                    All Worksheets for this Request
                                 </h5>
-                                <span class="badge bg-secondary" t-if="wsr.worksheet_count">
-                                    <t t-esc="wsr.worksheet_count"/>
+                                <span class="badge bg-secondary">
+                                    <t t-esc="len(worksheets)"/>
                                     worksheet(s)
                                 </span>
                             </div>
-                            <div class="card-body">
-                                <t t-if="wsr.worksheet_count">
-                                    <div class="mb-2">
-                                        <div class="text-muted text-uppercase small">Arrival Time</div>
-                                        <div>
-                                            <t t-esc="wsr.latest_worksheet_arrival_time or '-'"/>
-                                        </div>
-                                    </div>
-                                    <div class="mb-2">
-                                        <div class="text-muted text-uppercase small">Return Time</div>
-                                        <div>
-                                            <t t-esc="wsr.latest_worksheet_return_date or '-'"/>
-                                        </div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-6">
-                                            <div class="text-muted text-uppercase small">Kilometers</div>
-                                            <div>
-                                                <t t-esc="wsr.latest_worksheet_kilometers or 0"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-muted text-uppercase small">Quantity Collected</div>
-                                            <div>
-                                                <t t-esc="wsr.latest_worksheet_quantity_collected or 0.0"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mb-2">
-                                        <div class="text-muted text-uppercase small">Notes</div>
-                                        <div class="small border rounded p-2 bg-light"
-                                             t-if="wsr.latest_worksheet_notes_html">
-                                            <t t-raw="wsr.latest_worksheet_notes_html"/>
-                                        </div>
-                                        <div class="small text-muted" t-else="">
-                                            No worksheet notes captured.
-                                        </div>
-                                    </div>
-                                </t>
-                                <t t-else="">
-                                    <p class="text-muted mb-0">
-                                        No worksheet has been captured yet for this request.
-                                    </p>
-                                </t>
+                            <div class="card-body p-0">
+                                <table class="table mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 40%;">Worksheet</th>
+                                            <th style="width: 40%;">Created On</th>
+                                            <th class="text-end" style="width: 20%;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="worksheets" t-as="ws">
+                                            <td>
+                                                <t t-esc="ws.name or ''"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="ws.create_date"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <a t-att-href="'/my/waste/worksheet/%s/edit' % ws.id"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fa fa-edit me-1"/>
+                                                    Edit
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    </div>
-
-                </div>
-                <!-- ALL WORKSHEETS TABLE (EDITABLE VIA PORTAL) -->
-                <!-- ALL WORKSHEETS TABLE (simple & safe) -->
-                <t t-if="worksheets">
-                    <div class="card shadow-sm mt-4">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fa fa-list-ul me-2"/>
-                                All Worksheets for this Request
-                            </h5>
-                            <span class="badge bg-secondary">
-                                <t t-esc="len(worksheets)"/>
-                                worksheet(s)
-                            </span>
-                        </div>
-                        <div class="card-body p-0">
-                            <table class="table mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 40%;">Worksheet</th>
-                                        <th style="width: 40%;">Created On</th>
-                                        <th class="text-end" style="width: 20%;">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="worksheets" t-as="ws">
-                                        <td>
-                                            <t t-esc="ws.name or ''"/>
-                                        </td>
-                                        <td>
-                                            <t t-esc="ws.create_date"/>
-                                        </td>
-                                        <td class="text-end">
-                                            <a t-att-href="'/my/waste/worksheet/%s' % ws.id"
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="fa fa-edit me-1"/>
-                                                Edit
-                                            </a>
-                                            <a t-att-href="'/my/waste/worksheet/%s/edit' % ws.id"
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="fa fa-edit me-1"/>
-                                                Open
-                                            </a>
-                                        </td>
-
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </t>
-                <t t-else="">
-                    <p class="text-muted mt-3 mb-0">
-                        No worksheets have been captured yet for this request.
-                    </p>
+                    </t>
+                    <t t-else="">
+                        <p class="text-muted mt-3 mb-0">
+                            No worksheets have been captured yet for this request.
+                        </p>
+                    </t>
                 </t>
 
 
@@ -745,8 +991,20 @@
                     </a>
                 </div>
             </div>
+
+            <!-- JS: modal is only opened when clicking restricted links -->
+            <script type="text/javascript">
+                (function () {
+                document.addEventListener('DOMContentLoaded', function () {
+                // No auto-open; the modal opens via data-bs-toggle="modal" links.
+                });
+                })();
+            </script>
+
         </t>
     </template>
+
+
     <template id="portal_waste_worksheet_form" name="Edit Worksheet">
         <t t-call="website.layout">
             <div class="container my-5">
@@ -771,7 +1029,7 @@
                 </nav>
 
                 <div class="row justify-content-center">
-                    <div class="col-lg-8">
+                    <div class="col-lg-12">
                         <h2 class="mb-4">
                             Edit Worksheet
                             <small class="text-muted">
@@ -779,9 +1037,113 @@
                             </small>
                         </h2>
 
+
+                        <div class="col-lg-12">
+
+
+                            <!-- ✅ Success message when worksheet saved -->
+                            <t t-if="portal_msg == 'worksheet_saved'">
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <strong>Worksheet updated.</strong>
+                                    Your changes have been saved successfully.
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"/>
+                                </div>
+                            </t>
+                        </div>
+
                         <form t-att-action="'/my/waste/worksheet/%s/save' % worksheet.id"
                               method="post"
-                              enctype="multipart/form-data">
+                              enctype="multipart/form-data"
+                              class="o_portal_waste_worksheet_form">
+
+                            <div class="card shadow-sm border-0 mb-3">
+                                <div class="card-body">
+                                    <div class="row g-3">
+
+                                        <div class="col-md-3">
+                                            <div class="text-muted small">Planned Date</div>
+                                            <div class="fw-semibold">
+                                                <t t-esc="planned_date or '-'"/>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <div class="text-muted small">Pickup Point(s)</div>
+                                            <div>
+                                                <t t-if="pickup_points">
+                                                    <t t-foreach="pickup_points" t-as="pp">
+                                                        <span class="badge rounded-pill bg-primary me-1 mb-1">
+                                                            <t t-esc="pp.display_name"/>
+                                                        </span>
+                                                    </t>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="text-muted">-</span>
+                                                </t>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <div class="text-muted small">Drop-off Point(s)</div>
+                                            <div>
+                                                <t t-if="dropoff_points">
+                                                    <t t-foreach="dropoff_points" t-as="dp">
+                                                        <span class="badge rounded-pill bg-secondary me-1 mb-1">
+                                                            <t t-esc="dp.display_name"/>
+                                                        </span>
+                                                    </t>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="text-muted">-</span>
+                                                </t>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <div class="text-muted small">Quantity (product_uom_qty)</div>
+                                            <div class="fw-semibold">
+                                                <t t-esc="product_uom_qty or 0.0"/>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="text-muted small">Bins Lifted</div>
+                                            <div>
+                                                <t t-if="bin_lifted">
+                                                    <t t-foreach="bin_lifted" t-as="b">
+                                                        <span class="badge rounded-pill bg-success me-1 mb-1">
+                                                            <t t-esc="b.display_name"/>
+                                                        </span>
+                                                    </t>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="text-muted">-</span>
+                                                </t>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="text-muted small">Bins Dropped</div>
+                                            <div>
+                                                <t t-if="bin_dropped">
+                                                    <t t-foreach="bin_dropped" t-as="b">
+                                                        <span class="badge rounded-pill bg-warning text-dark me-1 mb-1">
+                                                            <t t-esc="b.display_name"/>
+                                                        </span>
+                                                    </t>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="text-muted">-</span>
+                                                </t>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+
                             <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
 
                             <!-- ROW 1: Arrival / Return -->
@@ -802,7 +1164,7 @@
                                 </div>
                             </div>
 
-                            <!-- ROW 2: Kilometers / Quantity -->
+                            <!-- ROW 2: Kilometers / Quantities -->
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Kilometers</label>
@@ -813,18 +1175,38 @@
                                            t-att-value="worksheet.kilometers or 0"/>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Quantity Collected</label>
+                                    <label class="form-label">Quantity</label>
                                     <input type="number"
-                                           name="quantity_collected"
+                                           name="product_uom_qty"
                                            class="form-control"
                                            step="0.01"
                                            min="0"
-                                           t-att-value="worksheet.quantity_collected or 0.0"/>
+                                           t-att-value="worksheet.product_uom_qty or 0.0"/>
                                     <div class="form-text">
-                                        This will also update the request quantity for billing.
+                                        This updates the sales order line quantity for billing.
+                                    </div>
+                                </div>
+
+                            </div>
+                            <!-- ROW 3: Unit of Measure -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Unit of Measure</label>
+                                    <select name="unit_of_measure" class="form-select">
+                                        <option value="">Select unit</option>
+                                        <t t-foreach="uoms" t-as="u">
+                                            <option t-att-value="u.id"
+                                                    t-att-selected="worksheet.unit_of_measure.id == u.id and 'selected' or None">
+                                                <t t-esc="u.display_name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                    <div class="form-text">
+                                        Pick the unit used for this quantity (e.g. kL, L, km, etc.).
                                     </div>
                                 </div>
                             </div>
+
 
                             <!-- NOTES -->
                             <div class="mb-3">
@@ -839,38 +1221,404 @@
 
                             <!-- FILE UPLOADS -->
                             <div class="card mb-3">
-                                <div class="card-header bg-light">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                     <strong>Documents</strong>
                                 </div>
                                 <div class="card-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Manifest Document</label>
-                                        <input type="file" name="manifest_document" class="form-control"/>
-                                        <div class="form-text" t-if="worksheet.manifest_document_filename">
-                                            Current file:
-                                            <t t-esc="worksheet.manifest_document_filename"/>
+
+                                    <!-- Helper vars for visibility -->
+                                    <t t-set="svc_name"
+                                       t-value="(worksheet.service_requested_id.name or '').strip().lower()"/>
+                                    <t t-set="w_type"
+                                       t-value="(worksheet.waste_type_id.name or '').strip().lower()"/>
+
+                                    <!-- Manifest Document -->
+                                    <div class="mb-3"
+                                         t-if="svc_name == 'placement of bins' or w_type in ('general non compactable', 'general compactable', 'hazardous')">
+
+
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <label class="form-label mb-0">Manifest Document</label>
+                                                <div class="small text-muted"
+                                                     t-if="worksheet.manifest_document_filename">
+                                                    Current file:
+                                                    <t t-esc="worksheet.manifest_document_filename"/>
+                                                </div>
+                                                <div class="small text-muted" t-else="">
+                                                    No file uploaded yet.
+                                                </div>
+                                            </div>
+                                            <div class="btn-group">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-primary"
+                                                        t-if="worksheet.manifest_document"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#manifestPreviewModal">
+                                                    Preview
+                                                </button>
+                                                <a t-if="worksheet.manifest_document"
+                                                   t-att-href="'/web/content/waste.worksheet/%s/manifest_document?download=1' % worksheet.id"
+                                                   class="btn btn-sm btn-outline-secondary"
+                                                   target="_blank">
+                                                    Download
+                                                </a>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#manifestEditBlock">
+                                                    Edit
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Edit block (collapsed by default) -->
+                                        <div class="collapse mt-2" id="manifestEditBlock">
+                                            <input type="file"
+                                                   name="manifest_document"
+                                                   class="form-control form-control-sm doc-file-input"
+                                                   data-doc-type="manifest"
+                                                   id="manifest_document_input"/>
+                                            <div id="manifest_new_file_hint"
+                                                 class="small mt-1 text-success d-none">
+                                                New file selected:
+                                                <span class="doc-new-file-name"></span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary mt-2 doc-clear-change"
+                                                    data-input-id="manifest_document_input"
+                                                    data-hint-id="manifest_new_file_hint">
+                                                Clear change
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <div class="mb-3">
-                                        <label class="form-label">Weighbridge Slip</label>
-                                        <input type="file" name="weighbridge_slip" class="form-control"/>
-                                        <div class="form-text" t-if="worksheet.weighbridge_slip_filename">
-                                            Current file:
-                                            <t t-esc="worksheet.weighbridge_slip_filename"/>
+                                    <!-- Weighbridge Slip -->
+                                    <div class="mb-3"
+                                         t-if="svc_name != 'placement of bins' and w_type in ('general non compactable', 'general compactable', 'hazardous')">
+
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <label class="form-label mb-0">Weighbridge Slip</label>
+                                                <div class="small text-muted"
+                                                     t-if="worksheet.weighbridge_slip_filename">
+                                                    Current file:
+                                                    <t t-esc="worksheet.weighbridge_slip_filename"/>
+                                                </div>
+                                                <div class="small text-muted" t-else="">
+                                                    No file uploaded yet.
+                                                </div>
+                                            </div>
+                                            <div class="btn-group">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-primary"
+                                                        t-if="worksheet.weighbridge_slip"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#weighbridgePreviewModal">
+                                                    Preview
+                                                </button>
+                                                <a t-if="worksheet.weighbridge_slip"
+                                                   t-att-href="'/web/content/waste.worksheet/%s/weighbridge_slip?download=1' % worksheet.id"
+                                                   class="btn btn-sm btn-outline-secondary"
+                                                   target="_blank">
+                                                    Download
+                                                </a>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#weighbridgeEditBlock">
+                                                    Edit
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="collapse mt-2" id="weighbridgeEditBlock">
+                                            <input type="file"
+                                                   name="weighbridge_slip"
+                                                   class="form-control form-control-sm doc-file-input"
+                                                   data-doc-type="weighbridge"
+                                                   id="weighbridge_slip_input"/>
+                                            <div id="weighbridge_new_file_hint"
+                                                 class="small mt-1 text-success d-none">
+                                                New file selected:
+                                                <span class="doc-new-file-name"></span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary mt-2 doc-clear-change"
+                                                    data-input-id="weighbridge_slip_input"
+                                                    data-hint-id="weighbridge_new_file_hint">
+                                                Clear change
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <div class="mb-3">
-                                        <label class="form-label">Safety Certificate</label>
-                                        <input type="file" name="safety_certificate" class="form-control"/>
-                                        <div class="form-text" t-if="worksheet.safety_certificate_filename">
-                                            Current file:
-                                            <t t-esc="worksheet.safety_certificate_filename"/>
+                                    <!-- Safety Certificate -->
+                                    <div class="mb-3"
+                                         t-if="svc_name != 'placement of bins' and w_type == 'hazardous'">
+
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <label class="form-label mb-0">Safety Certificate</label>
+                                                <div class="small text-muted"
+                                                     t-if="worksheet.safety_certificate_filename">
+                                                    Current file:
+                                                    <t t-esc="worksheet.safety_certificate_filename"/>
+                                                </div>
+                                                <div class="small text-muted" t-else="">
+                                                    No file uploaded yet.
+                                                </div>
+                                            </div>
+                                            <div class="btn-group">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-primary"
+                                                        t-if="worksheet.safety_certificate"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#safetyPreviewModal">
+                                                    Preview
+                                                </button>
+                                                <a t-if="worksheet.safety_certificate"
+                                                   t-att-href="'/web/content/waste.worksheet/%s/safety_certificate?download=1' % worksheet.id"
+                                                   class="btn btn-sm btn-outline-secondary"
+                                                   target="_blank">
+                                                    Download
+                                                </a>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#safetyEditBlock">
+                                                    Edit
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="collapse mt-2" id="safetyEditBlock">
+                                            <input type="file"
+                                                   name="safety_certificate"
+                                                   class="form-control form-control-sm doc-file-input"
+                                                   data-doc-type="safety"
+                                                   id="safety_certificate_input"/>
+                                            <div id="safety_new_file_hint"
+                                                 class="small mt-1 text-success d-none">
+                                                New file selected:
+                                                <span class="doc-new-file-name"></span>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary mt-2 doc-clear-change"
+                                                    data-input-id="safety_certificate_input"
+                                                    data-hint-id="safety_new_file_hint">
+                                                Clear change
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- SIGNATURES WITH SIGNATUREPAD -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <strong>Signatures</strong>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label class="form-label mb-0">Driver Signature</label>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#driverSignatureEditBlock">
+                                                    Edit
+                                                </button>
+                                            </div>
+
+                                            <!-- Existing signature preview -->
+                                            <div class="mb-2" t-if="worksheet.driver_signature">
+                                                <div class="small text-muted">Current signature</div>
+                                                <img t-att-src="'/web/image/waste.worksheet/%s/driver_signature' % worksheet.id"
+                                                     class="img-thumbnail mb-2"
+                                                     style="max-height:120px;object-fit:contain;"/>
+                                            </div>
+
+                                            <!-- Edit block (canvas) -->
+                                            <div class="collapse show" id="driverSignatureEditBlock">
+                                                <div class="border rounded p-2 bg-white">
+                                                    <canvas id="driverSignaturePad"
+                                                            style="width:100%;height:150px;"
+                                                            class="w-100"></canvas>
+                                                </div>
+
+                                                <input type="hidden"
+                                                       name="driver_signature_data"
+                                                       id="driver_signature_data"/>
+
+                                                <div class="d-flex align-items-center mt-2 gap-2">
+                                                    <button type="button"
+                                                            id="driverSignatureClear"
+                                                            class="btn btn-sm btn-outline-secondary">
+                                                        Clear
+                                                    </button>
+                                                    <button type="button"
+                                                            id="driverSignaturePreviewBtn"
+                                                            class="btn btn-sm btn-outline-primary"
+                                                    >
+                                                        Preview change
+                                                    </button>
+                                                    <span id="driverSignatureChangedLabel"
+                                                          class="small text-success ms-2 d-none">
+                                                        Signature changed (will save on update)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label class="form-label mb-0">Customer Signature</label>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#customerSignatureEditBlock">
+                                                    Edit
+                                                </button>
+                                            </div>
+
+                                            <!-- Existing signature preview -->
+                                            <div class="mb-2" t-if="worksheet.service_provider_signature">
+                                                <div class="small text-muted">Current signature</div>
+                                                <img t-att-src="'/web/image/waste.worksheet/%s/service_provider_signature' % worksheet.id"
+                                                     class="img-thumbnail mb-2"
+                                                     style="max-height:120px;object-fit:contain;"/>
+                                            </div>
+
+                                            <!-- Edit block (canvas) -->
+                                            <div class="collapse show" id="customerSignatureEditBlock">
+                                                <div class="border rounded p-2 bg-white">
+                                                    <canvas id="customerSignaturePad"
+                                                            style="width:100%;height:150px;"
+                                                            class="w-100"></canvas>
+                                                </div>
+
+                                                <input type="hidden"
+                                                       name="service_provider_signature_data"
+                                                       id="service_provider_signature_data"/>
+
+                                                <div class="d-flex align-items-center mt-2 gap-2">
+                                                    <button type="button"
+                                                            id="customerSignatureClear"
+                                                            class="btn btn-sm btn-outline-secondary">
+                                                        Clear
+                                                    </button>
+                                                    <button type="button"
+                                                            id="customerSignaturePreviewBtn"
+                                                            class="btn btn-sm btn-outline-primary"
+                                                    >
+                                                        Preview change
+                                                    </button>
+                                                    <span id="customerSignatureChangedLabel"
+                                                          class="small text-success ms-2 d-none">
+                                                        Signature changed (will save on update)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- PHOTOS -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <strong>Photos</strong>
+                                    <span class="badge bg-secondary" t-if="worksheet.image_ids">
+                                        <t t-esc="len(worksheet.image_ids)"/>
+                                        photo(s)
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Existing photos with preview -->
+                                    <div class="row g-3" t-if="worksheet.image_ids">
+                                        <div class="col-sm-6 col-md-4" t-foreach="worksheet.image_ids" t-as="img">
+                                            <div class="border rounded p-2 h-100 d-flex flex-column justify-content-between">
+                                                <div class="text-center mb-2">
+                                                    <a href="javascript:void(0);"
+                                                       class="ws-photo-thumb d-inline-block"
+                                                       t-att-data-img-url="'/web/image/waste.worksheet.image/%s/image' % img.id"
+                                                       t-att-data-img-title="img.name or 'Photo'"
+                                                       data-bs-toggle="modal"
+                                                       data-bs-target="#photoZoomModal">
+                                                        <img t-att-src="'/web/image/waste.worksheet.image/%s/image' % img.id"
+                                                             class="img-fluid"
+                                                             style="max-height:150px; object-fit:contain;"/>
+                                                    </a>
+                                                </div>
+
+                                                <div class="small mb-1 text-center">
+                                                    <t t-esc="img.name or 'Photo'"/>
+                                                </div>
+
+                                                <div class="d-flex justify-content-center mb-2">
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-secondary"
+                                                            t-att-data-bs-target="'#photoEdit_%s' % img.id"
+                                                            data-bs-toggle="collapse">
+                                                        Edit
+                                                    </button>
+                                                </div>
+
+                                                <!-- Edit block (collapsed) -->
+                                                <div class="collapse" t-att-id="'photoEdit_%s' % img.id">
+                                                    <!-- DESCRIPTION (editable) -->
+                                                    <div class="mb-2">
+                                                        <input type="text"
+                                                               class="form-control form-control-sm text-center"
+                                                               t-att-name="'edit_image_name_%s' % img.id"
+                                                               t-att-value="img.name or ''"
+                                                               placeholder="Photo description"/>
+                                                    </div>
+
+                                                    <!-- REPLACE IMAGE FILE -->
+                                                    <div class="mb-2">
+                                                        <input type="file"
+                                                               class="form-control form-control-sm"
+                                                               t-att-name="'edit_image_%s' % img.id"/>
+                                                        <div class="form-text">
+                                                            Choose a file to replace this photo.
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- REMOVE CHECKBOX -->
+                                                    <div class="form-check d-inline-block mt-1">
+                                                        <input class="form-check-input"
+                                                               type="checkbox"
+                                                               name="remove_image_ids"
+                                                               t-att-value="img.id"
+                                                               t-att-id="'img_rm_%s' % img.id"/>
+                                                        <label class="form-check-label"
+                                                               t-att-for="'img_rm_%s' % img.id">
+                                                            Remove this photo
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--                                       Add new photos-->
+                                    <div class="mt-3">
+                                        <label class="form-label">Add new photos</label>
+                                        <input type="file"
+                                               name="new_images"
+                                               class="form-control"
+                                               multiple="multiple"/>
+                                        <div class="form-text">
+                                            You can select multiple images to add to this worksheet.
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
 
                             <div class="d-flex justify-content-between mt-4">
                                 <a t-att-href="'/my/waste/request/%s' % worksheet.service_request_id.id"
@@ -887,9 +1635,265 @@
                         </form>
                     </div>
                 </div>
+
+
             </div>
+
+            <!-- Manifest Preview Modal -->
+            <div class="modal fade" id="manifestPreviewModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Manifest Document Preview</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                        </div>
+                        <div class="modal-body" style="height:70vh;">
+                            <iframe t-att-src="'/web/content/waste.worksheet/%s/manifest_document' % worksheet.id"
+                                    style="width:100%;height:100%;border:none;"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weighbridge Slip Preview Modal -->
+            <div class="modal fade" id="weighbridgePreviewModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Weighbridge Slip Preview</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                        </div>
+                        <div class="modal-body" style="height:70vh;">
+                            <iframe t-att-src="'/web/content/waste.worksheet/%s/weighbridge_slip' % worksheet.id"
+                                    style="width:100%;height:100%;border:none;"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Certificate Preview Modal -->
+            <div class="modal fade" id="safetyPreviewModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Safety Certificate Preview</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                        </div>
+                        <div class="modal-body" style="height:70vh;">
+                            <iframe t-att-src="'/web/content/waste.worksheet/%s/safety_certificate' % worksheet.id"
+                                    style="width:100%;height:100%;border:none;"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PHOTO ZOOM MODAL -->
+            <div class="modal fade" id="photoZoomModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                Photo Preview
+                            </h5>
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"/>
+                        </div>
+                        <div class="modal-body text-center" style="background-color:#000;">
+                            <img id="photoZoomModalImg"
+                                 src=""
+                                 alt="Photo"
+                                 style="max-width:100%;max-height:80vh;"
+                                 class="img-fluid"/>
+                            <div id="photoZoomModalCaption"
+                                 class="mt-2 text-light small">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+            <script type="text/javascript">
+                (function () {
+                function setupSignaturePad(canvasId, clearBtnId, changedLabelId, previewBtnId) {
+                var canvas = document.getElementById(canvasId);
+                if (!canvas || !window.SignaturePad) {
+                return null;
+                }
+
+                function resizeCanvas() {
+                var ratio = window.devicePixelRatio || 1;
+                var rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * ratio;
+                canvas.height = 150 * ratio;
+                var ctx = canvas.getContext('2d');
+                ctx.scale(ratio, ratio);
+                }
+
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+
+                var pad = new window.SignaturePad(canvas, {
+                backgroundColor: 'rgb(255,255,255)'
+                });
+
+                var clearBtn = document.getElementById(clearBtnId);
+                var changedLabel = document.getElementById(changedLabelId);
+                var previewBtn = document.getElementById(previewBtnId);
+
+                // Mark as changed when user draws
+                pad.onEnd = function () {
+                if (changedLabel) {
+                changedLabel.classList.remove('d-none');
+                }
+                if (previewBtn) {
+                previewBtn.disabled = false;
+                }
+                };
+
+                if (clearBtn) {
+                clearBtn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                pad.clear();
+                if (changedLabel) {
+                changedLabel.classList.add('d-none');
+                }
+                if (previewBtn) {
+                previewBtn.disabled = true;
+                }
+                });
+                }
+                return pad;
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                // --- SIGNATURES ---
+                var driverPad = setupSignaturePad(
+                'driverSignaturePad',
+                'driverSignatureClear',
+                'driverSignatureChangedLabel',
+                'driverSignaturePreviewBtn'
+                );
+                var customerPad = setupSignaturePad(
+                'customerSignaturePad',
+                'customerSignatureClear',
+                'customerSignatureChangedLabel',
+                'customerSignaturePreviewBtn'
+                );
+
+                var form = document.querySelector('form.o_portal_waste_worksheet_form');
+                if (form) {
+                form.addEventListener('submit', function () {
+                var driverField = document.getElementById('driver_signature_data');
+                var customerField = document.getElementById('service_provider_signature_data');
+
+                if (driverPad &amp;&amp; !driverPad.isEmpty()) {
+                driverField.value = driverPad.toDataURL('image/png');
+                } else if (driverField) {
+                driverField.value = '';
+                }
+
+                if (customerPad &amp;&amp; !customerPad.isEmpty()) {
+                customerField.value = customerPad.toDataURL('image/png');
+                } else if (customerField) {
+                customerField.value = '';
+                }
+                });
+                }
+
+                // Signature preview modal
+                var sigModal = document.getElementById('signatureZoomModal');
+                var sigImg = document.getElementById('signatureZoomModalImg');
+
+                var driverPrevBtn = document.getElementById('driverSignaturePreviewBtn');
+                if (driverPrevBtn &amp;&amp; driverPad &amp;&amp; sigModal &amp;&amp; sigImg) {
+                driverPrevBtn.addEventListener('click', function () {
+                if (!driverPad.isEmpty()) {
+                sigImg.src = driverPad.toDataURL('image/png');
+                var modal = bootstrap.Modal.getOrCreateInstance(sigModal);
+                modal.show();
+                }
+                });
+                }
+
+                var customerPrevBtn = document.getElementById('customerSignaturePreviewBtn');
+                if (customerPrevBtn &amp;&amp; customerPad &amp;&amp; sigModal &amp;&amp; sigImg) {
+                customerPrevBtn.addEventListener('click', function () {
+                if (!customerPad.isEmpty()) {
+                sigImg.src = customerPad.toDataURL('image/png');
+                var modal = bootstrap.Modal.getOrCreateInstance(sigModal);
+                modal.show();
+                }
+                });
+                }
+
+                // --- PHOTO ZOOM (existing) ---
+                var zoomLinks = document.querySelectorAll('.ws-photo-thumb');
+                var zoomImg = document.getElementById('photoZoomModalImg');
+                var zoomCaption = document.getElementById('photoZoomModalCaption');
+
+                zoomLinks.forEach(function (link) {
+                link.addEventListener('click', function () {
+                var url = this.getAttribute('data-img-url');
+                var title = this.getAttribute('data-img-title') || 'Photo';
+
+                if (zoomImg) {
+                zoomImg.src = url;
+                }
+                if (zoomCaption) {
+                zoomCaption.textContent = title;
+                }
+                });
+                });
+
+                // --- DOCUMENT NEW FILE HINTS ---
+                var docInputs = document.querySelectorAll('.doc-file-input');
+                docInputs.forEach(function (input) {
+                input.addEventListener('change', function () {
+                var hintId = input.id.replace('_input', '_new_file_hint');
+                var hint = document.getElementById(hintId);
+                if (!hint) {
+                return;
+                }
+                var span = hint.querySelector('.doc-new-file-name');
+                if (input.files &amp;&amp; input.files.length) {
+                if (span) {
+                span.textContent = input.files[0].name;
+                }
+                hint.classList.remove('d-none');
+                } else {
+                hint.classList.add('d-none');
+                }
+                });
+                });
+
+                // Clear document change (reset file input)
+                var clearBtns = document.querySelectorAll('.doc-clear-change');
+                clearBtns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                var inputId = btn.getAttribute('data-input-id');
+                var hintId = btn.getAttribute('data-hint-id');
+                var inp = document.getElementById(inputId);
+                var hint = document.getElementById(hintId);
+
+                if (inp) {
+                inp.value = '';
+                }
+                if (hint) {
+                hint.classList.add('d-none');
+                }
+                });
+                });
+                });
+                })();
+            </script>
+
         </t>
     </template>
+
 
 </odoo>
 

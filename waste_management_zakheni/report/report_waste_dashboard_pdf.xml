@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- =========================
+         REPORT ACTION
+         ========================= -->
+    <record id="action_waste_dashboard_report_pdf" model="ir.actions.report">
+        <field name="name">Waste Dashboard Report</field>
+        <field name="model">waste.service.request</field>
+        <field name="report_type">qweb-pdf</field>
+
+        <!-- MUST MATCH the QWeb template t-name -->
+        <field name="report_name">waste_management_zakheni.waste_dashboard_report_pdf</field>
+        <field name="report_file">waste_management_zakheni.waste_dashboard_report_pdf</field>
+
+        <field name="print_report_name">'Waste_Dashboard_%s' % (object.name or '')</field>
+        <field name="binding_model_id" ref="model_waste_service_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- =========================
+         QWEB TEMPLATE
+         ========================= -->
+    <template id="waste_dashboard_report_pdf" name="Waste Dashboard PDF Report">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <main class="o_report_layout">
+                    <div class="page">
+
+                        <h2>Waste Dashboard Report</h2>
+
+                        <div class="mb-2">
+                            <strong>Generated for:</strong>
+                            <t t-esc="user.name"/>
+                            <br/>
+                            <strong>Printed at:</strong>
+                            <!-- ✅ FIX: DO NOT use fields.Datetime.now() inside QWeb -->
+                            <t t-esc="printed_at"/>
+                        </div>
+
+                        <t t-if="filters">
+                            <div class="mb-2">
+                                <strong>Filters:</strong>
+                                <ul class="mt-1">
+                                    <li t-if="filters.get('date_from')">Date From: <t t-esc="filters.get('date_from')"/></li>
+                                    <li t-if="filters.get('date_to')">Date To: <t t-esc="filters.get('date_to')"/></li>
+                                    <li t-if="filters.get('manifest_number')">Manifest: <t t-esc="filters.get('manifest_number')"/></li>
+                                    <li t-if="filters.get('sale_order_number')">Sales Order: <t t-esc="filters.get('sale_order_number')"/></li>
+                                    <li t-if="filters.get('invoice_number')">Invoice: <t t-esc="filters.get('invoice_number')"/></li>
+                                    <li t-if="filters.get('company_id')">Company ID: <t t-esc="filters.get('company_id')"/></li>
+                                    <li t-if="filters.get('partner_id')">Customer ID: <t t-esc="filters.get('partner_id')"/></li>
+                                    <li t-if="filters.get('ticket_type')">Ticket Type: <t t-esc="filters.get('ticket_type')"/></li>
+                                </ul>
+                            </div>
+                        </t>
+
+                        <hr/>
+
+                        <h4>Summary</h4>
+                        <p>
+                            Total manifests:
+                            <strong><t t-esc="len(docs)"/></strong>
+                        </p>
+
+                        <t t-if="kpis">
+                            <table class="table table-sm" style="width:100%; border-collapse:collapse;">
+                                <thead>
+                                    <tr>
+                                        <th style="border-bottom:1px solid #ddd; padding:6px;">Open</th>
+                                        <th style="border-bottom:1px solid #ddd; padding:6px;">Scheduled</th>
+                                        <th style="border-bottom:1px solid #ddd; padding:6px;">In Progress</th>
+                                        <th style="border-bottom:1px solid #ddd; padding:6px;">Done</th>
+                                        <th style="border-bottom:1px solid #ddd; padding:6px;">Rejected</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding:6px;"><t t-esc="kpis.get('open', 0)"/></td>
+                                        <td style="padding:6px;"><t t-esc="kpis.get('scheduled', 0)"/></td>
+                                        <td style="padding:6px;"><t t-esc="kpis.get('in_progress', 0)"/></td>
+                                        <td style="padding:6px;"><t t-esc="kpis.get('done', 0)"/></td>
+                                        <td style="padding:6px;"><t t-esc="kpis.get('rejected', 0)"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <hr/>
+
+                        <h4>Manifest Rows</h4>
+                        <table class="table table-sm o_main_table" style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Manifest</th>
+                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Customer</th>
+                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Date</th>
+                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Status</th>
+                                    <th style="border-bottom:1px solid #ccc; padding:6px; text-align:right;">Bins</th>
+                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Sales Order</th>
+                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Invoice</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <t t-if="not manifest_rows">
+                                    <tr>
+                                        <td colspan="7" style="padding:10px; text-align:center; color:#888;">
+                                            No records found for selected filters.
+                                        </td>
+                                    </tr>
+                                </t>
+
+                                <t t-foreach="manifest_rows" t-as="r" t-key="r.get('manifest')">
+                                    <tr>
+                                        <td style="padding:6px;"><t t-esc="r.get('manifest')"/></td>
+                                        <td style="padding:6px;"><t t-esc="r.get('customer')"/></td>
+                                        <td style="padding:6px;"><t t-esc="r.get('date')"/></td>
+                                        <td style="padding:6px;"><t t-esc="r.get('status')"/></td>
+                                        <td style="padding:6px; text-align:right;"><t t-esc="r.get('bin_count')"/></td>
+                                        <td style="padding:6px;"><t t-esc="r.get('so')"/></td>
+                                        <td style="padding:6px;"><t t-esc="r.get('invoice')"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <t t-if="so_inv_rows">
+                            <hr/>
+                            <h4>Sales Order ↔ Invoice (Totals)</h4>
+                            <table class="table table-sm" style="width:100%; border-collapse:collapse;">
+                                <thead>
+                                    <tr>
+                                        <th style="border-bottom:1px solid #ccc; padding:6px;">Manifest</th>
+                                        <th style="border-bottom:1px solid #ccc; padding:6px;">Sales Order</th>
+                                        <th style="border-bottom:1px solid #ccc; padding:6px;">Invoice</th>
+                                        <th style="border-bottom:1px solid #ccc; padding:6px; text-align:right;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="so_inv_rows" t-as="x" t-key="x.get('invoice')">
+                                        <tr>
+                                            <td style="padding:6px;"><t t-esc="x.get('manifest')"/></td>
+                                            <td style="padding:6px;"><t t-esc="x.get('sale_order')"/></td>
+                                            <td style="padding:6px;"><t t-esc="x.get('invoice')"/></td>
+                                            <td style="padding:6px; text-align:right;">
+                                                <t t-esc="('%.2f' % (x.get('total', 0.0)))"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+
+                            <p class="mt-2">
+                                <strong>Total invoices:</strong>
+                                <t t-esc="('%.2f' % (so_inv_total or 0.0))"/>
+                            </p>
+                        </t>
+
+                    </div>
+                </main>
+            </t>
+        </t>
+    </template>
+
+</odoo>

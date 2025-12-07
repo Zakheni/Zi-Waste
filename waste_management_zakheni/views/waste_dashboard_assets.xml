@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <template id="assets_backend" inherit_id="web.assets_backend">
+    <xpath expr="." position="inside">
+      <script type="module" src="/waste_management_zakheni/static/src/dashboard/waste_dashboard.js"/>
+      <t t-call="waste_management_zakheni.WasteDashboard"/>
+      <template id="waste_dashboard_templates" inherit_id="web.assets_backend" name="Waste Dashboard Templates">
+        <xpath expr="." position="inside">
+          <link rel="stylesheet" href="/waste_management_zakheni/static/src/dashboard/waste_dashboard.css"/>
+        </xpath>
+      </template>
+    </xpath>
+  </template>
+</odoo>

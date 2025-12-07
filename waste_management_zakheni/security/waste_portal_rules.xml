@@ -1,27 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Customers: only their own requests -->
-    <record id="wsr_rule_portal_customer_own" model="ir.rule">
-        <field name="name">WSR portal customer own</field>
+    <!-- Customer: can only see their own requests -->
+    <record id="rule_wmz_customer_own_requests" model="ir.rule">
+        <field name="name">WMZ Customer - Own Requests</field>
         <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_customer'))]"/>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="True"/>
-        <field name="perm_unlink" eval="False"/>
-        <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+        <field name="global" eval="False"/>
+        <!--        <field name="domain_force">-->
+        <!--            [('partner_id', '=', user.partner_id.id)]-->
+        <!--        </field>-->
+        <field name="domain_force">
+            [
+            ('partner_id.commercial_partner_id', '=', user.partner_id.commercial_partner_id.id)
+            ]
+        </field>
     </record>
 
-    <!-- Agents: can read all manifests, no write -->
-    <record id="wsr_rule_portal_agent_all_read" model="ir.rule">
-        <field name="name">WSR portal agent all read</field>
+    <!-- Agent: sees ONLY own-company requests in specific states -->
+    <record id="rule_wmz_agent_waste_request_company" model="ir.rule">
+        <field name="name">WMZ Agent - Own Company Requests (selected states)</field>
         <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="False"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="global" eval="False"/>
+        <field name="domain_force">
+            [
+            ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
+            ('partner_id', 'child_of', user.partner_id.commercial_partner_id.id)
+            ]
+        </field>
     </record>
 
+    <!-- Agent: worksheets only for their company's customers -->
+    <record id="rule_wmz_agent_worksheet_company" model="ir.rule">
+        <field name="name">WMZ Agent - Worksheets Own Company</field>
+        <field name="model_id" ref="waste_management_zakheni.model_waste_worksheet"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>
+        <field name="global" eval="False"/>
+        <field name="domain_force">
+            [
+            ('service_request_id.partner_id.commercial_partner_id',
+            '=', user.partner_id.commercial_partner_id.id)
+            ]
+        </field>
+    </record>
+
+    <!-- Customer: NO worksheets at all -->
+    <record id="rule_wmz_customer_no_worksheet" model="ir.rule">
+        <field name="name">WMZ Customer - No Worksheets</field>
+        <field name="model_id" ref="waste_management_zakheni.model_waste_worksheet"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_customer'))]"/>
+        <field name="global" eval="False"/>
+        <!-- Always false, so they never see any worksheet -->
+        <field name="domain_force">[(0, '=', 1)]</field>
+    </record>
+
+
+    <!-- Portal read-only access to worksheet images -->
+    <record id="access_waste_worksheet_image_portal" model="ir.model.access">
+        <field name="name">waste.worksheet.image portal read</field>
+        <field name="model_id" ref="waste_management_zakheni.model_waste_worksheet_image"/>
+        <field name="group_id" ref="base.group_portal"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <!-- (Optional) Agent read/write access if you want them to edit via backend as well -->
+    <record id="access_waste_worksheet_image_agent" model="ir.model.access">
+        <field name="name">waste.worksheet.image agent rw</field>
+        <field name="model_id" ref="waste_management_zakheni.model_waste_worksheet_image"/>
+        <field name="group_id" ref="waste_management_zakheni.group_wmz_client_agent"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+
 </odoo>
+
+
+        <!--<?xml version="1.0" encoding="utf-8"?>-->
+        <!--<odoo>-->
+
+        <!--    &lt;!&ndash; Customer: can only see their own requests &ndash;&gt;-->
+        <!--    <record id="rule_wmz_customer_own_requests" model="ir.rule">-->
+        <!--        <field name="name">WMZ Customer - Own Requests</field>-->
+        <!--        <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_customer'))]"/>-->
+        <!--        <field name="global" eval="False"/>-->
+        <!--        <field name="domain_force">-->
+        <!--            [('partner_id', '=', user.partner_id.id)]-->
+        <!--        </field>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; Agent: scheduled requests for same commercial company &ndash;&gt;-->
+        <!--    <record id="rule_wmz_agent_waste_request_company" model="ir.rule">-->
+        <!--        <field name="name">WMZ Agent - Own Company Scheduled Requests</field>-->
+        <!--        <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>-->
+        <!--        <field name="global" eval="False"/>-->
+        <!--        <field name="domain_force">-->
+        <!--            [-->
+        <!--                ('state', '=', 'scheduled'),-->
+        <!--                ('partner_id.commercial_partner_id', '=', user.partner_id.commercial_partner_id.id)-->
+        <!--            ]-->
+        <!--        </field>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; Agent: worksheets only for their company's customers &ndash;&gt;-->
+        <!--    <record id="rule_wmz_agent_worksheet_company" model="ir.rule">-->
+        <!--        <field name="name">WMZ Agent - Worksheets Own Company</field>-->
+        <!--        <field name="model_id" ref="waste_management_zakheni.model_waste_worksheet"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>-->
+        <!--        <field name="global" eval="False"/>-->
+        <!--        <field name="domain_force">-->
+        <!--            [-->
+        <!--                ('service_request_id.partner_id.commercial_partner_id',-->
+        <!--                 '=', user.partner_id.commercial_partner_id.id)-->
+        <!--            ]-->
+        <!--        </field>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; Customer: no worksheets at all &ndash;&gt;-->
+        <!--    <record id="rule_wmz_customer_no_worksheet" model="ir.rule">-->
+        <!--        <field name="name">WMZ Customer - No Worksheets</field>-->
+        <!--        <field name="model_id" ref="waste_management_zakheni.model_waste_worksheet"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_customer'))]"/>-->
+        <!--        <field name="global" eval="False"/>-->
+        <!--        &lt;!&ndash; Always false domain &ndash;&gt;-->
+        <!--        <field name="domain_force">[(0, '=', 1)]</field>-->
+        <!--    </record>-->
+
+        <!--</odoo>-->
+
+
+        <!--<?xml version="1.0" encoding="utf-8"?>-->
+        <!--<odoo>-->
+
+        <!--    &lt;!&ndash; ============================-->
+        <!--         waste.service.request rules-->
+        <!--         ============================ &ndash;&gt;-->
+
+        <!--    &lt;!&ndash; CUSTOMER: can only see their own requests &ndash;&gt;-->
+        <!--    <record id="rule_wmz_customer_own_requests" model="ir.rule">-->
+        <!--        <field name="name">WMZ Customer - Own Requests</field>-->
+        <!--        <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_customer'))]"/>-->
+        <!--        <field name="global" eval="False"/>-->
+        <!--        <field name="domain_force">-->
+        <!--            [-->
+        <!--                ('partner_id', '=', user.partner_id.id)-->
+        <!--            ]-->
+        <!--        </field>-->
+        <!--        <field name="perm_read" eval="1"/>-->
+        <!--        <field name="perm_write" eval="0"/>-->
+        <!--        <field name="perm_create" eval="1"/>-->
+        <!--        <field name="perm_unlink" eval="0"/>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; AGENT: sees ONLY scheduled requests for customers-->
+        <!--         under the same commercial company as the agent &ndash;&gt;-->
+        <!--    <record id="rule_wmz_agent_waste_request_company" model="ir.rule">-->
+        <!--        <field name="name">WMZ Agent - Own Company Scheduled Requests</field>-->
+        <!--        <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>-->
+        <!--        <field name="global" eval="False"/>-->
+        <!--        <field name="domain_force">-->
+        <!--            [-->
+        <!--                ('state', '=', 'scheduled'),-->
+        <!--                ('partner_id.commercial_partner_id', '=', user.partner_id.commercial_partner_id.id)-->
+        <!--            ]-->
+        <!--        </field>-->
+        <!--        <field name="perm_read" eval="1"/>-->
+        <!--        <field name="perm_write" eval="0"/>-->
+        <!--        <field name="perm_create" eval="0"/>-->
+        <!--        <field name="perm_unlink" eval="0"/>-->
+        <!--    </record>-->
+
+
+        <!--    &lt;!&ndash; ============================-->
+        <!--         waste.worksheet rules-->
+        <!--         ============================ &ndash;&gt;-->
+
+        <!--    &lt;!&ndash; AGENT: can work on worksheets for requests in certain states-->
+        <!--         AND belonging to same commercial partner &ndash;&gt;-->
+        <!--    <record id="rule_wmz_agent_worksheet_company" model="ir.rule">-->
+        <!--        <field name="name">WMZ Agent - Worksheets Own Company</field>-->
+        <!--        <field name="model_id" ref="waste_management_zakheni.model_waste_worksheet"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>-->
+        <!--        <field name="global" eval="False"/>-->
+        <!--        <field name="domain_force">-->
+        <!--            [-->
+        <!--                ('service_request_id.state', 'in', ['scheduled', 'assigned', 'generated', 'dispatched']),-->
+        <!--                ('service_request_id.partner_id.commercial_partner_id', '=', user.partner_id.commercial_partner_id.id)-->
+        <!--            ]-->
+        <!--        </field>-->
+        <!--        <field name="perm_read" eval="1"/>-->
+        <!--        <field name="perm_write" eval="1"/>-->
+        <!--        <field name="perm_create" eval="1"/>-->
+        <!--        <field name="perm_unlink" eval="0"/>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; CUSTOMER: DO NOT see any worksheets at all &ndash;&gt;-->
+        <!--    <record id="rule_wmz_customer_no_worksheet" model="ir.rule">-->
+        <!--        <field name="name">WMZ Customer - No Worksheets</field>-->
+        <!--        <field name="model_id" ref="waste_management_zakheni.model_waste_worksheet"/>-->
+        <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_customer'))]"/>-->
+        <!--        <field name="global" eval="False"/>-->
+        <!--        <field name="domain_force">-->
+        <!--            [(0, '=', 1)]-->
+        <!--        </field>-->
+        <!--        <field name="perm_read" eval="1"/>-->
+        <!--        <field name="perm_write" eval="0"/>-->
+        <!--        <field name="perm_create" eval="0"/>-->
+        <!--        <field name="perm_unlink" eval="0"/>-->
+        <!--    </record>-->
+
+        <!--</odoo>-->

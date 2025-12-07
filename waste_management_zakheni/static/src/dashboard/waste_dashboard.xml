@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+  <t t-name="waste_management_zakheni.WasteDashboard">
+    <div class="o_waste_dashboard p-3 position-relative o_waste_scroll">
+
+      <!-- Loading overlay -->
+        <t t-if="state.loading">
+        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+             style="background: rgba(255,255,255,.6); z-index: 10;">
+          <div class="alert alert-info m-0">Loading dashboard…</div>
+        </div>
+      </t>
+
+        <!-- Header -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="m-0">Waste Management Dashboard</h2>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary" t-on-click="onRefresh">Refresh</button>
+              <button class="btn btn-outline-primary" t-on-click="printDashboard">Print PDF</button>
+        </div>
+      </div>
+
+        <!-- KPI Cards (with icons restored) -->
+        <div class="row g-3 mb-3">
+
+        <div class="col-12 col-md-4 col-xl-2">
+          <div class="card h-100 o_kpi_card border-start border-4 border-primary" style="cursor:pointer"
+               t-on-click="openOpenClick">
+            <div class="card-body d-flex align-items-center gap-3">
+              <div class="o_kpi_icon bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center"
+                   style="width:44px;height:44px;">
+                <i class="fa fa-inbox"/>
+              </div>
+                <div>
+                <div class="text-muted">Open Requests</div>
+                    <div class="h3 m-0"><t t-esc="state.kpis.open_requests"/></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-md-4 col-xl-2">
+          <div class="card h-100 o_kpi_card border-start border-4 border-info" style="cursor:pointer"
+               t-on-click="openScheduledClick">
+            <div class="card-body d-flex align-items-center gap-3">
+              <div class="o_kpi_icon bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center"
+                   style="width:44px;height:44px;">
+                <i class="fa fa-calendar"/>
+              </div>
+                <div>
+                <div class="text-muted">Scheduled</div>
+                    <div class="h3 m-0"><t t-esc="state.kpis.scheduled_count"/></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-md-4 col-xl-2">
+          <div class="card h-100 o_kpi_card border-start border-4 border-warning" style="cursor:pointer"
+               t-on-click="openInProgressClick">
+            <div class="card-body d-flex align-items-center gap-3">
+              <div class="o_kpi_icon bg-warning-subtle text-warning rounded-circle d-flex align-items-center justify-content-center"
+                   style="width:44px;height:44px;">
+                <i class="fa fa-truck"/>
+              </div>
+                <div>
+                <div class="text-muted">In Progress</div>
+                    <div class="h3 m-0"><t t-esc="state.kpis.in_progress"/></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-md-4 col-xl-2">
+          <div class="card h-100 o_kpi_card border-start border-4 border-success" style="cursor:pointer"
+               t-on-click="openDoneClick">
+            <div class="card-body d-flex align-items-center gap-3">
+              <div class="o_kpi_icon bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center"
+                   style="width:44px;height:44px;">
+                <i class="fa fa-check-circle"/>
+              </div>
+                <div>
+                <div class="text-muted">Authorised</div>
+                    <div class="h3 m-0"><t t-esc="state.kpis.done_count"/></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-md-4 col-xl-2">
+          <div class="card h-100 o_kpi_card border-start border-4 border-danger" style="cursor:pointer"
+               t-on-click="openRejectedClick">
+            <div class="card-body d-flex align-items-center gap-3">
+              <div class="o_kpi_icon bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center"
+                   style="width:44px;height:44px;">
+                <i class="fa fa-ban"/>
+              </div>
+                <div>
+                <div class="text-muted">Rejected / Flagged</div>
+                    <div class="h3 m-0"><t t-esc="state.kpis.rejected_count"/></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-md-4 col-xl-2">
+          <div class="card h-100 o_kpi_card border-start border-4 border-dark">
+            <div class="card-body d-flex align-items-center gap-3">
+              <div class="o_kpi_icon bg-dark-subtle text-dark rounded-circle d-flex align-items-center justify-content-center"
+                   style="width:44px;height:44px;">
+                <i class="fa fa-money"/>
+              </div>
+                <div>
+                <div class="text-muted">Billing (This Month)</div>
+                    <div class="h5 m-0">R <t t-esc="(state.kpis.billing_amount_month || 0).toFixed(2)"/></div>
+                    <div class="text-muted mt-1">Tank kL: <t t-esc="(state.kpis.tank_kl_month || 0).toFixed(2)"/></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+        <!-- Charts row 1 -->
+        <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Requests by Status</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="statusCanvas"/>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Requests by Service</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="serviceCanvas"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <!-- Charts row 2 -->
+        <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Top Customers</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="topCustomersCanvas"/>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>Tank kL (<t t-esc="state.filters.tank_granularity"/>)</span>
+                <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" t-on-click="onTankDay">Day</button>
+                    <button class="btn btn-outline-secondary" t-on-click="onTankWeek">Week</button>
+              </div>
+            </div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="tankCanvas"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <!-- Charts row 3 -->
+        <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Customer by Service Offering</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="customerServiceCanvas"/>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Driver by Trips Traveled</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="driverTripsCanvas"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <!-- Charts row 4 -->
+        <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Revenue Analysis</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="revenueCanvas"/>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Bin Report</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="binCanvas"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <!-- Sales Orders by Customer -->
+        <div class="card mb-3">
+        <div class="card-header">Sales Order by Customer</div>
+            <div class="card-body" style="height:320px;">
+          <canvas t-ref="soCustomerCanvas"/>
+        </div>
+      </div>
+
+        <!-- Pie charts row -->
+        <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Today Jobs: Driver vs Service Provider</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="assignmentPieCanvas"/>
+            </div>
+          </div>
+        </div>
+
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Users: Internal / Portal / Inactive</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="usersPieCanvas"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+         <!-- Filters -->
+        <div class="card mb-3">
+        <div class="card-header">Filters</div>
+            <div class="card-body">
+          <div class="row g-2">
+            <div class="col-12 col-md-3">
+              <label class="form-label">Date From</label>
+                <input class="form-control" type="date" t-model="state.filters.date_from"/>
+            </div>
+              <div class="col-12 col-md-3">
+              <label class="form-label">Date To</label>
+                  <input class="form-control" type="date" t-model="state.filters.date_to"/>
+            </div>
+              <div class="col-12 col-md-2">
+              <label class="form-label">Manifest No.</label>
+                  <input class="form-control" placeholder="e.g. WSR-0001" t-model="state.filters.manifest_number"/>
+            </div>
+              <div class="col-12 col-md-2">
+              <label class="form-label">Sales Order No.</label>
+                  <input class="form-control" placeholder="e.g. SO123" t-model="state.filters.sale_order_number"/>
+            </div>
+              <div class="col-12 col-md-2">
+              <label class="form-label">Invoice No.</label>
+                  <input class="form-control" placeholder="e.g. INV/2025/..." t-model="state.filters.invoice_number"/>
+            </div>
+          </div>
+
+                <div class="mt-3 d-flex gap-2">
+            <button class="btn btn-primary" t-on-click="onApplyFilters">Apply</button>
+                    <button class="btn btn-outline-secondary" t-on-click="onClearFilters">Clear</button>
+          </div>
+        </div>
+      </div>
+
+        <!-- Summary tables row 1 -->
+        <div class="row g-3 mb-3">
+
+        <!-- Manifest summary -->
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>Manifest Table (Summary)</span>
+                <button class="btn btn-sm btn-outline-primary" t-on-click="openManifestList">View all</button>
+            </div>
+              <div class="card-body p-0">
+              <table class="table table-hover m-0">
+                <thead>
+                  <tr>
+                    <th>Manifest</th>
+                      <th>Customer</th>
+                      <th>Date</th>
+                      <th class="text-end">Bin Count</th>
+                  </tr>
+                </thead>
+                  <tbody>
+                  <t t-if="!(state.manifest_summary || []).length">
+                    <tr><td colspan="4" class="text-muted p-3">No manifests found for current filter.</td></tr>
+                  </t>
+                      <t t-foreach="(state.manifest_summary || [])" t-as="m" t-key="m.id">
+                    <tr style="cursor:pointer" t-on-click="() => openManifestRowClick(m)">
+                      <td><t t-esc="m.name || ''"/></td>
+                        <td><t t-esc="m.partner || (m.partner_id ? m.partner_id[1] : '')"/></td>
+                        <td><t t-esc="m.date || m.service_request_date || ''"/></td>
+                        <td class="text-end"><t t-esc="m.bin_count || 0"/></td>
+                    </tr>
+                  </t>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+            <!-- Sales Order ↔ Invoice totals (RESTORED) -->
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>Sales Order ↔ Invoice (Totals)</span>
+                <button class="btn btn-sm btn-outline-primary" t-on-click="openInvoiceTotalsList">View all</button>
+            </div>
+              <div class="card-body p-0">
+              <table class="table table-hover m-0">
+                <thead>
+                  <tr>
+                    <th>Sales Order</th>
+                      <th>Invoice</th>
+                      <th class="text-end">Total</th>
+                  </tr>
+                </thead>
+                  <tbody>
+                  <t t-if="!(state.so_invoice_totals || []).length">
+                    <tr><td colspan="3" class="text-muted p-3">No invoice totals found for current filter.</td></tr>
+                  </t>
+                      <t t-foreach="(state.so_invoice_totals || [])" t-as="x" t-key="x.key || x.id">
+                    <tr style="cursor:pointer" t-on-click="() => openInvoiceTotalsRowClick(x)">
+                      <td><t t-esc="x.sale_order || (x.sale_order_id ? x.sale_order_id[1] : '')"/></td>
+                        <td><t t-esc="x.invoice || (x.invoice_id ? x.invoice_id[1] : '')"/></td>
+                        <td class="text-end">
+                        <t t-esc="((x.total || x.amount_total || 0) * 1).toFixed(2)"/>
+                      </td>
+                    </tr>
+                  </t>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+        <!-- Summary tables row 2 -->
+        <div class="row g-3 mb-3">
+
+        <!-- Bin Report (Dropped) (RESTORED) -->
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>Bin Report (Dropped)</span>
+                <button class="btn btn-sm btn-outline-primary" t-on-click="openBinReportList">View all</button>
+            </div>
+              <div class="card-body p-0">
+              <table class="table table-hover m-0">
+                <thead>
+                  <tr>
+                    <th>Manifest</th>
+                      <th>Bin</th>
+                      <th>Pickup Point</th>
+                      <th>Date</th>
+                  </tr>
+                </thead>
+                  <tbody>
+                  <t t-if="!(state.bin_report || []).length">
+                    <tr><td colspan="4" class="text-muted p-3">No bin drops found for current filter.</td></tr>
+                  </t>
+                      <t t-foreach="(state.bin_report || [])" t-as="b" t-key="b.key || b.id">
+                    <tr style="cursor:pointer" t-on-click="() => openBinReportRowClick(b)">
+                      <td><t t-esc="b.manifest || (b.request_id ? b.request_id[1] : '')"/></td>
+                        <td><t t-esc="b.bin || (b.container_id ? b.container_id[1] : '')"/></td>
+                        <td>
+                        <t t-esc="b.dropoff_point || b.pickup_point || (b.pickup_point_id ? b.pickup_point_id[1] : '')"/>
+                      </td>
+                        <td><t t-esc="b.date || ''"/></td>
+                    </tr>
+                  </t>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+            <!-- Today schedule (FULL COLUMNS RESTORED) -->
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>Today’s Schedule</span>
+                <button class="btn btn-sm btn-outline-primary" t-on-click="openTodayListClick">Open list</button>
+            </div>
+              <div class="card-body p-0">
+              <table class="table table-hover m-0">
+                <thead>
+                  <tr>
+                    <th>Request</th>
+                      <th>Customer</th>
+                      <th>Planned Date</th>
+                      <th>Type</th>
+                      <th>Provider / Truck</th>
+                      <th>Driver</th>
+                      <th>Status</th>
+                  </tr>
+                </thead>
+                  <tbody>
+                  <t t-if="!(state.todays || []).length">
+                    <tr><td colspan="7" class="text-muted p-3">No jobs scheduled today.</td></tr>
+                  </t>
+
+                      <t t-foreach="(state.todays || [])" t-as="r" t-key="r.id">
+                    <tr style="cursor:pointer" t-on-click="() => openTodayRowClick(r)">
+                      <td><t t-esc="r.name"/></td>
+                        <td><t t-esc="r.partner_id ? r.partner_id[1] : ''"/></td>
+                        <td><t t-esc="r.planned_date || r.scheduled_date || r.schedule_date || r.dispatch_date || ''"/></td>
+                        <td>
+                        <t t-if="r.is_service_provider">Service Provider</t>
+                            <t t-else="">Driver</t>
+                      </td>
+                        <td>
+                        <t t-if="r.is_service_provider">
+                          <t t-esc="r.provider_id ? r.provider_id[1] : ''"/>
+                        </t>
+                            <t t-else="">
+                          <t t-esc="r.vehicle_id ? r.vehicle_id[1] : ''"/>
+                        </t>
+                      </td>
+                        <td><t t-esc="r.driver_id ? r.driver_id[1] : ''"/></td>
+                        <td><t t-esc="r.state"/></td>
+                    </tr>
+                  </t>
+
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </t>
+
+</templates>
