@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_wmz_inherit" model="ir.ui.view">
+        <field name="name">res.company.form.wmz.inherit</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Put it under the general company info tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Waste Management" name="wmz_settings"
+                      >
+                    <group string="Service Configuration">
+                        <field name="wmz_service_ids" widget="many2many_tags"/>
+                        <field name="wmz_container_type_ids" widget="many2many_tags"/>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

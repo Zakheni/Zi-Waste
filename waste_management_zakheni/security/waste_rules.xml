@@ -13,9 +13,23 @@
         </field>
     </record>
 
-    <!-- Admin Clerk: own records OR from portal -->
+<!--    &lt;!&ndash; Admin Clerk &ndash;&gt;-->
+<!--    <record id="wmz_rule_manifest_admin_clerk" model="ir.rule">-->
+<!--        <field name="name">Manifest: Admin Clerk (by company)</field>-->
+<!--        <field name="model_id" ref="model_waste_service_request"/>-->
+<!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
+<!--        <field name="domain_force">-->
+<!--            ['&amp;', '|',-->
+<!--            ('company_id', 'in', company_ids),-->
+<!--            ('create_uid', '=', user.id),-->
+<!--            ('from_portal', '=', True)-->
+<!--            ]-->
+<!--        </field>-->
+<!--    </record>-->
+
+      <!-- Admin Clerk -->
     <record id="wmz_rule_manifest_admin_clerk" model="ir.rule">
-        <field name="name">Manifest: Admin Clerk</field>
+        <field name="name">Manifest: Admin Clerk (by company)</field>
         <field name="model_id" ref="model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>
         <field name="domain_force">
@@ -25,6 +39,8 @@
             ]
         </field>
     </record>
+
+
 
     <!-- Manager: own records OR from portal -->
     <record id="wmz_rule_manifest_manager" model="ir.rule">

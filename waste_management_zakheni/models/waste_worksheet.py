@@ -12,13 +12,23 @@ class WasteWorksheet(models.Model):
         # copy=False,
         readonly=True,
         default='New')
+
     company_id = fields.Many2one(
         'res.company',
+        related="service_request_id.company_id",
         string='Company',
         default=lambda self: self.env.company,
         index=True,
+        store=True,
+        readonly=True,
     )
 
+    # company_id = fields.Many2one(
+    #     "res.company",
+    #     related="service_request_id.company_id",
+    #     store=True,
+    #     readonly=True,
+    # )
 
     service_request_id = fields.Many2one(
         "waste.service.request",
@@ -160,27 +170,66 @@ class WasteWorksheet(models.Model):
         readonly=True,
     )
 
+    # ✅ Allowed lists come from the manifest's customer config
+    allowed_service_ids = fields.Many2many(
+        "service.request",
+        related="service_request_id.partner_id.commercial_partner_id.wmz_service_ids",
+        string="Allowed Services",
+        readonly=True,
+    )
+
+    allowed_container_type_ids = fields.Many2many(
+        "container.type",
+        related="service_request_id.partner_id.commercial_partner_id.wmz_container_type_ids",
+        string="Allowed Container Types",
+        readonly=True,
+    )
+
+    allowed_waste_type_ids = fields.Many2many(
+        "waste.type",
+        related="service_request_id.partner_id.commercial_partner_id.wmz_waste_type_ids",
+        string="Allowed Waste Types",
+        readonly=True,
+    )
+
     truck_tanker_id = fields.Many2one('tank.volume', string="Track Tanker", related="service_request_id.tank_volume_id", store=False)
 
-    service_requested_id = fields.Many2one('service.request', related='service_request_id.service_requested_id', string="Service Requested")
+    service_requested_id = fields.Many2one(
+        'service.request',
+        related='service_request_id.service_requested_id',
+        string="Service Requested",
+        # domain="[('id', 'in', allowed_service_ids)]",
+    )
     waste_type_id = fields.Many2one('waste.type',related='service_request_id.waste_type_id', string="Waste Type")
     waste_details_id = fields.Many2one('waste.details',related='service_request_id.waste_details_id', string="Waste Details")
     bin_type_id = fields.Many2one('bin.type',related='service_request_id.bin_type_id', string="Bin Type")
     tank_volume_id = fields.Many2one('tank.volume',related='service_request_id.tank_volume_id', string="Tank Volume")
-    container_type_id = fields.Many2one('container.type',related='service_request_id.container_type_id', string="Container type")
-    # pickup_point_ids = fields.Many2many(
-    #     'pickup.point',
-    #     'waste_worksheet_pickup_rel',  # <-- NEW table name
-    #     'worksheet_id',  # <-- FK to waste.worksheet
-    #     'pickup_point_id',  # FK to pickup.point (can stay same)
-    #     string="Pickup Points",
-    # )
+    container_type_id = fields.Many2one(
+        'container.type',
+        related='service_request_id.container_type_id',
+        string="Container type",
+        # domain="[('id', 'in', allowed_container_type_ids)]",
+    )
+
     liters_collected = fields.Float(string="Liters Collected", related='service_request_id.liters_collected', )
-    # liters_remaining = fields.Float(string="Liters Remaining",  related='service_request_id.liters_remaining', )
-    # product_id = fields.Many2one('product.product', string="Product",  related='service_request_id.product_id',)
-    # product_uom_qty = fields.Float(string="Quantity",  related='service_request_id.product_uom_qty',)
-    # price_unit = fields.Float(string="Unit Price",  related='service_request_id.price_unit',)
     sale_order_id = fields.Many2one('sale.order', string="Sales Order")
+
+    @api.onchange("company_id")
+    def _onchange_company_id_wmz(self):
+        for rec in self:
+            company = rec.company_id or rec.env.company
+            service_ids = company.wmz_service_ids.ids if company.wmz_service_ids else []
+            container_ids = company.wmz_container_type_ids.ids if company.wmz_container_type_ids else []
+
+            domain = {}
+            if service_ids:
+                domain["service_requested_id"] = [("id", "in", service_ids)]
+            if container_ids:
+                domain["container_type_id"] = [("id", "in", container_ids)]
+
+            if domain:
+                return {"domain": domain}
+            return {}
 
     hide_waste_type = fields.Boolean(compute='_compute_field_visibility')
     hide_waste_details = fields.Boolean(compute='_compute_field_visibility')

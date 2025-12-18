@@ -56,15 +56,30 @@ class WasteClientPortal(CustomerPortal):
         WasteRequest = request.env['waste.service.request'].sudo()
         commercial_id = user.partner_id.commercial_partner_id.id
 
-        # base domain
+        # # base domain
+        # if user.has_group(self.AGENT_GROUP):
+        #     domain = [
+        #         ('partner_id', 'child_of', commercial_id),
+        #         ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
+        #     ]
         if user.has_group(self.AGENT_GROUP):
             domain = [
                 ('partner_id', 'child_of', commercial_id),
                 ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
+                # ✅ only show records that use a service provider
+                ('is_service_provider', '=', True),
+                # (optional but recommended) ensure provider is selected
+                ('provider_id', '!=', False),
             ]
+
         else:
+            # domain = [
+            #     ('partner_id.commercial_partner_id', '=', commercial_id),
+            # ]
             domain = [
                 ('partner_id.commercial_partner_id', '=', commercial_id),
+                ('is_service_provider', '=', True),
+                ('provider_id', '!=', False),
             ]
 
         # apply state filter BEFORE search
@@ -177,6 +192,7 @@ class WasteClientPortal(CustomerPortal):
             'pickup_point_ids': [(6, 0, pickup_point_ids)],
             'container_type_id': container_type_id or False,
             'from_portal': True,
+            'company_id': env.user.company_id.id,  # ✅ Internal company
         }
         # wsr = env['waste.service.request'].sudo().create(vals)
 
@@ -558,6 +574,45 @@ class WasteClientPortal(CustomerPortal):
         # ✅ WRITE EVERYTHING (including signatures) IN ONE GO
         if vals:
             ws.write(vals)
+
+        # ============================================================
+        # ✅ AFTER SAVE: update states
+        # ============================================================
+        ws_sudo = ws.sudo()
+
+        # 1) Worksheet state -> done
+        worksheet_became_done = False
+        if 'state' in ws_sudo._fields and ws_sudo.state in ('in_progress', 'progress', 'ongoing'):
+            ws_sudo.write({'state': 'done'})
+            worksheet_became_done = True
+
+        # 2) Manifest state: dispatched -> service_delivered
+        req = ws_sudo.service_request_id.sudo()
+        manifest_became_delivered = False
+        if req and req.exists() and 'state' in req._fields and req.state == 'dispatched':
+            req.write({'state': 'service_delivered'})
+            manifest_became_delivered = True
+
+        # ============================================================
+        # ✅ SEND EMAIL: mail_tmpl_service_request_worksheet_completion
+        # ============================================================
+        # (send only when state changed, to avoid duplicate emails)
+        if worksheet_became_done or manifest_became_delivered:
+            tmpl = request.env.ref(
+                'waste_management_zakheni.mail_tmpl_service_request_worksheet_completion',
+                raise_if_not_found=False
+            )
+            if tmpl:
+                # safest: send to the record that matches the template's model
+                model = (tmpl.model_id.model if tmpl.model_id else '')
+                if model == 'waste.service.request' and req:
+                    tmpl.sudo().send_mail(req.id, force_send=True, raise_exception=False)
+                elif model == 'waste.worksheet':
+                    tmpl.sudo().send_mail(ws_sudo.id, force_send=True, raise_exception=False)
+                else:
+                    # fallback (most common is manifest)
+                    if req:
+                        tmpl.sudo().send_mail(req.id, force_send=True, raise_exception=False)
 
         # ---------------- PHOTOS: EDIT + REMOVE + ADD ----------------
         Image = request.env['waste.worksheet.image'].sudo()

@@ -16,10 +16,141 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
         <h2 class="m-0">Waste Management Dashboard</h2>
             <div class="d-flex gap-2">
-              <button class="btn btn-outline-secondary" t-on-click="onRefresh">Refresh</button>
-              <button class="btn btn-outline-primary" t-on-click="printDashboard">Print PDF</button>
+<!--              <button class="btn btn-outline-secondary" t-on-click="onRefresh">Refresh</button>-->
+                <!--                <button class="btn btn-outline-primary" t-on-click="printDashboard">Print PDF</button>-->
+                <!--                          <button type="button" class="btn btn-outline-primary" t-on-click="exportDashboardXlsx">-->
+                <!--  Export Excel-->
+                <!--</button>-->
+                <button class="btn btn-sm btn-outline-secondary" t-on-click="onRefresh">
+                  <i class="fa fa-refresh me-1"></i>
+                    Refresh
+                </button>
+
+                <button class="btn btn-sm btn-outline-success" t-on-click="printDashboard">
+                    <i class="fa fa-print me-1"></i>
+                    Print PDF
+                </button>
+
+                <button type="button" class="btn btn-sm btn-outline-info" t-on-click="exportDashboardXlsx">
+                    <i class="fa fa-file-excel-o me-1"></i>
+                    Export Excel
+                </button>
+
         </div>
       </div>
+
+        <!-- Filters -->
+        <!--        <div class="card mb-3">-->
+        <!--        <div class="card-header">Filters</div>-->
+        <!--            <div class="card-body">-->
+        <!--          <div class="row g-2">-->
+        <!--            <div class="col-12 col-md-3">-->
+        <!--              <label class="form-label">Date From</label>-->
+        <!--                <input class="form-control" type="date" t-model="state.filters.date_from"/>-->
+        <!--            </div>-->
+        <!--              <div class="col-12 col-md-3">-->
+        <!--              <label class="form-label">Date To</label>-->
+        <!--                  <input class="form-control" type="date" t-model="state.filters.date_to"/>-->
+        <!--            </div>-->
+
+        <!--              <div class="col-12 col-md-3">-->
+        <!--  <label class="form-label">Customer</label>-->
+        <!--                  <select class="form-select" t-model="state.filters.partner_id">-->
+        <!--    <option t-att-value="false">All Customers</option>-->
+        <!--                      <t t-foreach="(state.customers || [])" t-as="c" t-key="c.id">-->
+        <!--      <option t-att-value="c.id"><t t-esc="c.name"/></option>-->
+        <!--    </t>-->
+        <!--  </select>-->
+        <!--</div>-->
+
+        <!--              <div class="col-12 col-md-2">-->
+        <!--              <label class="form-label">Manifest No.</label>-->
+        <!--                  <input class="form-control" placeholder="e.g. WSR-0001" t-model="state.filters.manifest_number"/>-->
+        <!--            </div>-->
+        <!--              <div class="col-12 col-md-2">-->
+        <!--              <label class="form-label">Sales Order No.</label>-->
+        <!--                  <input class="form-control" placeholder="e.g. SO123" t-model="state.filters.sale_order_number"/>-->
+        <!--            </div>-->
+        <!--              <div class="col-12 col-md-2">-->
+        <!--              <label class="form-label">Invoice No.</label>-->
+        <!--                  <input class="form-control" placeholder="e.g. INV/2025/..." t-model="state.filters.invoice_number"/>-->
+        <!--            </div>-->
+        <!--          </div>-->
+
+        <!--                <div class="mt-3 d-flex gap-2">-->
+        <!--            <button class="btn btn-primary" t-on-click="onApplyFilters">Apply</button>-->
+        <!--                    <button class="btn btn-outline-secondary" t-on-click="onClearFilters">Clear</button>-->
+        <!--          </div>-->
+        <!--        </div>-->
+        <!--      </div>-->
+        <div class="card mb-3">
+  <div class="card-header py-2">
+    <span class="fw-semibold">Filters</span>
+  </div>
+
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-end">
+
+                  <div class="col-12 col-lg-2">
+                    <label class="form-label small mb-1">Date From</label>
+                      <input class="form-control form-control-sm" type="date"
+                             t-model="state.filters.date_from"/>
+                  </div>
+
+                    <div class="col-12 col-lg-2">
+                    <label class="form-label small mb-1">Date To</label>
+                        <input class="form-control form-control-sm" type="date"
+                               t-model="state.filters.date_to"/>
+                  </div>
+
+                    <div class="col-12 col-lg-3">
+                    <label class="form-label small mb-1">Customer</label>
+                        <select class="form-select form-select-sm"
+                                t-model="state.filters.partner_id">
+                      <option t-att-value="false">All Customers</option>
+                            <t t-foreach="(state.customers || [])" t-as="c" t-key="c.id">
+                        <option t-att-value="c.id"><t t-esc="c.name"/></option>
+                      </t>
+                    </select>
+                  </div>
+
+                    <div class="col-12 col-lg-2">
+                    <label class="form-label small mb-1">Manifest</label>
+                        <input class="form-control form-control-sm"
+                               placeholder="WSR-0001"
+                               t-model="state.filters.manifest_number"/>
+                  </div>
+
+                    <div class="col-12 col-lg-2">
+                    <label class="form-label small mb-1">Sales Order</label>
+                        <input class="form-control form-control-sm"
+                               placeholder="SO123"
+                               t-model="state.filters.sale_order_number"/>
+                  </div>
+
+                    <div class="col-12 col-lg-2">
+                    <label class="form-label small mb-1">Invoice</label>
+                        <input class="form-control form-control-sm"
+                               placeholder="INV/2025/..."
+                               t-model="state.filters.invoice_number"/>
+                  </div>
+
+                    <!-- Buttons (same row, right aligned) -->
+                    <div class="col-12 col-lg-3 d-flex gap-2 justify-content-lg-end">
+                    <button class="btn btn-sm btn-outline-primary" t-on-click="onApplyFilters">
+                      <i class="fa fa-filter me-1"></i>
+                        Apply
+                    </button>
+                        <button class="btn btn-sm btn-outline-secondary" t-on-click="onClearFilters">
+                      <i class="fa fa-eraser me-1"></i>
+                            Clear
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
 
         <!-- KPI Cards (with icons restored) -->
         <div class="row g-3 mb-3">
@@ -212,6 +343,77 @@
         </div>
       </div>
 
+        <div class="row g-3 mb-3">
+
+      <!-- Bin Revenue Chart -->
+            <div class="col-12 col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Bin Revenue (Top 10)</div>
+              <div class="card-body" style="height:320px;">
+              <canvas t-ref="binRevenueCanvas"/>
+            </div>
+          </div>
+        </div>
+
+            <!-- Bin Revenue Table -->
+            <div class="col-12 col-lg-6">
+      <div class="card h-100">
+        <div class="card-header">
+          Bin Revenue Table (Top 10)
+        </div>
+          <div class="card-body p-0">
+          <table class="table table-hover m-0">
+            <thead>
+              <tr>
+                <th>Bin</th>
+                  <th class="text-end">Trips</th>
+                  <th class="text-end">Lifted</th>
+                  <th class="text-end">Dropped</th>
+                  <th class="text-end">Revenue</th>
+              </tr>
+            </thead>
+              <tbody>
+              <t t-if="!(state.bin_revenue_table || []).length">
+                <tr><td colspan="5" class="text-muted p-3">No bin revenue found for current filter.</td></tr>
+              </t>
+<!--                  <t t-foreach="(state.bin_revenue_table || [])" t-as="r" t-key="r.key">-->
+<!--                <tr>-->
+<!--                  <td><t t-esc="r.bin"/></td>-->
+<!--                    <td class="text-end"><t t-esc="r.trips || 0"/></td>-->
+<!--                    <td class="text-end"><t t-esc="r.lifted || 0"/></td>-->
+<!--                    <td class="text-end"><t t-esc="r.dropped || 0"/></td>-->
+<!--                    <td class="text-end">R <t t-esc="((r.revenue || 0) * 1).toFixed(2)"/></td>-->
+<!--                </tr>-->
+<!--              </t>-->
+                <t t-foreach="state.bin_revenue_table" t-as="r" t-key="r.key">
+  <tr style="cursor:pointer"
+      t-on-click="() => onBinRevenueRowClick(r)">
+
+    <td><t t-esc="r.bin"/></td>
+     <td class="text-end"><t t-esc="r.trips"/></td>
+    <td class="text-end"><t t-esc="r.lifted"/></td>
+    <td class="text-end"><t t-esc="r.dropped"/></td>
+     <td class="text-end">R<t t-esc="r.revenue"/></td>
+
+    <!-- Optional action button (prevents double click) -->
+<!--    <td class="text-end">-->
+<!--      <button class="btn btn-sm btn-outline-primary"-->
+<!--              t-on-click.stop="(ev) => onBinRevenueViewClick(ev, r)">-->
+<!--        View-->
+<!--      </button>-->
+<!--    </td>-->
+  </tr>
+</t>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+      </div>
+
+
         <!-- Sales Orders by Customer -->
         <div class="card mb-3">
         <div class="card-header">Sales Order by Customer</div>
@@ -241,77 +443,62 @@
         </div>
       </div>
 
-         <!-- Filters -->
-        <div class="card mb-3">
-        <div class="card-header">Filters</div>
-            <div class="card-body">
-          <div class="row g-2">
-            <div class="col-12 col-md-3">
-              <label class="form-label">Date From</label>
-                <input class="form-control" type="date" t-model="state.filters.date_from"/>
-            </div>
-              <div class="col-12 col-md-3">
-              <label class="form-label">Date To</label>
-                  <input class="form-control" type="date" t-model="state.filters.date_to"/>
-            </div>
-              <div class="col-12 col-md-2">
-              <label class="form-label">Manifest No.</label>
-                  <input class="form-control" placeholder="e.g. WSR-0001" t-model="state.filters.manifest_number"/>
-            </div>
-              <div class="col-12 col-md-2">
-              <label class="form-label">Sales Order No.</label>
-                  <input class="form-control" placeholder="e.g. SO123" t-model="state.filters.sale_order_number"/>
-            </div>
-              <div class="col-12 col-md-2">
-              <label class="form-label">Invoice No.</label>
-                  <input class="form-control" placeholder="e.g. INV/2025/..." t-model="state.filters.invoice_number"/>
-            </div>
-          </div>
-
-                <div class="mt-3 d-flex gap-2">
-            <button class="btn btn-primary" t-on-click="onApplyFilters">Apply</button>
-                    <button class="btn btn-outline-secondary" t-on-click="onClearFilters">Clear</button>
-          </div>
-        </div>
-      </div>
 
         <!-- Summary tables row 1 -->
         <div class="row g-3 mb-3">
 
-        <!-- Manifest summary -->
+          <!-- Manifest summary -->
             <div class="col-12 col-lg-6">
-          <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <span>Manifest Table (Summary)</span>
-                <button class="btn btn-sm btn-outline-primary" t-on-click="openManifestList">View all</button>
-            </div>
-              <div class="card-body p-0">
-              <table class="table table-hover m-0">
-                <thead>
-                  <tr>
-                    <th>Manifest</th>
-                      <th>Customer</th>
-                      <th>Date</th>
-                      <th class="text-end">Bin Count</th>
-                  </tr>
-                </thead>
-                  <tbody>
-                  <t t-if="!(state.manifest_summary || []).length">
-                    <tr><td colspan="4" class="text-muted p-3">No manifests found for current filter.</td></tr>
-                  </t>
-                      <t t-foreach="(state.manifest_summary || [])" t-as="m" t-key="m.id">
-                    <tr style="cursor:pointer" t-on-click="() => openManifestRowClick(m)">
-                      <td><t t-esc="m.name || ''"/></td>
-                        <td><t t-esc="m.partner || (m.partner_id ? m.partner_id[1] : '')"/></td>
-                        <td><t t-esc="m.date || m.service_request_date || ''"/></td>
-                        <td class="text-end"><t t-esc="m.bin_count || 0"/></td>
-                    </tr>
-                  </t>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+  <div class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Manifest Table (Summary)</span>
+        <button class="btn btn-sm btn-outline-primary" t-on-click="openManifestList">View all</button>
+    </div>
+
+      <div class="card-body p-0">
+      <table class="table table-hover m-0">
+        <thead>
+          <tr>
+            <th>Manifest</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th class="text-end">Bin Count</th>
+          </tr>
+        </thead>
+
+          <tbody>
+          <t t-if="!(state.manifest_summary || []).length">
+            <tr>
+              <td colspan="4" class="text-muted p-3">No manifests found for current filter.</td>
+            </tr>
+          </t>
+
+
+            <t t-foreach="(state.manifest_summary || [])" t-as="m" t-key="m.id">
+  <tr style="cursor:pointer" t-on-click="() => openManifestRowClick(m)">
+    <td>
+      <t t-esc="m.name || ''"/>
+      <!-- Small filter/drill button -->
+      <button type="button"
+              class="btn btn-sm btn-outline-secondary ms-2"
+              t-on-click.stop="() => applyManifestFilterClick(m)">
+        Filter
+      </button>
+    </td>
+    <td><t t-esc="m.partner || (m.partner_id ? m.partner_id[1] : '')"/></td>
+    <td><t t-esc="m.date || m.service_request_date || ''"/></td>
+    <td class="text-end"><t t-esc="m.bin_count || 0"/></td>
+  </tr>
+</t>
+
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
 
             <!-- Sales Order ↔ Invoice totals (RESTORED) -->
             <div class="col-12 col-lg-6">
@@ -337,7 +524,7 @@
                     <tr style="cursor:pointer" t-on-click="() => openInvoiceTotalsRowClick(x)">
                       <td><t t-esc="x.sale_order || (x.sale_order_id ? x.sale_order_id[1] : '')"/></td>
                         <td><t t-esc="x.invoice || (x.invoice_id ? x.invoice_id[1] : '')"/></td>
-                        <td class="text-end">
+                        <td class="text-end">R
                         <t t-esc="((x.total || x.amount_total || 0) * 1).toFixed(2)"/>
                       </td>
                     </tr>
@@ -396,6 +583,8 @@
             <div class="card-header d-flex justify-content-between align-items-center">
               <span>Today’s Schedule</span>
                 <button class="btn btn-sm btn-outline-primary" t-on-click="openTodayListClick">Open list</button>
+
+
             </div>
               <div class="card-body p-0">
               <table class="table table-hover m-0">

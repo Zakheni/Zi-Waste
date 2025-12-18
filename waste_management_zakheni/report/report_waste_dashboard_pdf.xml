@@ -1,165 +1,1070 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+<!--    <template id="waste_dashboard_report_pdf" name="Waste Dashboard PDF Report (Advanced)">-->
+<!--    <t t-call="web.html_container">-->
+<!--        <t t-call="web.external_layout">-->
+<!--            <main class="o_report_layout">-->
+<!--                <div class="page">-->
+
+<!--                    <style>-->
+<!--                        /* ================= BASE ================= */-->
+<!--                        body {-->
+<!--                            font-family: Arial, sans-serif;-->
+<!--                            font-size: 11px;-->
+<!--                            color: #111827;-->
+<!--                        }-->
+
+<!--                        .wmz-muted { color:#6b7280; }-->
+<!--                        .wmz-right { text-align:right; }-->
+
+<!--                        /* ================= HEADER ================= */-->
+<!--                        .wmz-header {-->
+<!--                            background-color:#0f172a;-->
+<!--                            color:#ffffff;-->
+<!--                            padding:14px 18px;-->
+<!--                            border-radius:10px;-->
+<!--                            margin-bottom:14px;-->
+<!--                        }-->
+<!--                        .wmz-header h2 {-->
+<!--                            margin:0;-->
+<!--                            font-size:18px;-->
+<!--                            font-weight:bold;-->
+<!--                        }-->
+<!--                        .wmz-header .meta {-->
+<!--                            font-size:10px;-->
+<!--                            margin-top:4px;-->
+<!--                            opacity:0.9;-->
+<!--                        }-->
+<!--                        .wmz-tag {-->
+<!--                            display:inline-block;-->
+<!--                            margin:4px 6px 0 0;-->
+<!--                            padding:3px 8px;-->
+<!--                            font-size:9px;-->
+<!--                            border-radius:20px;-->
+<!--                            background:#1e40af;-->
+<!--                            color:white;-->
+<!--                        }-->
+
+<!--                        /* ================= KPI ================= */-->
+<!--                        .wmz-kpi-table {-->
+<!--                            width:100%;-->
+<!--                            border-collapse:separate;-->
+<!--                            border-spacing:8px;-->
+<!--                            margin-top:10px;-->
+<!--                        }-->
+<!--                        .wmz-kpi {-->
+<!--                            border:1px solid #e5e7eb;-->
+<!--                            border-radius:10px;-->
+<!--                            padding:10px;-->
+<!--                            background:#f9fafb;-->
+<!--                        }-->
+<!--                        .wmz-kpi-label {-->
+<!--                            font-size:9px;-->
+<!--                            text-transform:uppercase;-->
+<!--                            color:#6b7280;-->
+<!--                            font-weight:bold;-->
+<!--                        }-->
+<!--                        .wmz-kpi-value {-->
+<!--                            font-size:20px;-->
+<!--                            font-weight:bold;-->
+<!--                            margin-top:4px;-->
+<!--                        }-->
+
+<!--                        /* ================= SECTION ================= */-->
+<!--                        .wmz-section {-->
+<!--                            border:1px solid #e5e7eb;-->
+<!--                            border-radius:10px;-->
+<!--                            padding:12px;-->
+<!--                            margin-top:14px;-->
+<!--                        }-->
+<!--                        .wmz-section-title {-->
+<!--                            font-size:12px;-->
+<!--                            font-weight:bold;-->
+<!--                            border-left:4px solid #2563eb;-->
+<!--                            padding-left:8px;-->
+<!--                            margin-bottom:10px;-->
+<!--                        }-->
+
+<!--                        /* ================= TABLE ================= */-->
+<!--                        .wmz-table {-->
+<!--                            width:100%;-->
+<!--                            border-collapse:collapse;-->
+<!--                            border:1px solid #e5e7eb;-->
+<!--                        }-->
+
+<!--                        /* 🔥 HEADER STYLE (BOLD + BG COLOR) */-->
+<!--                        .wmz-table thead th {-->
+<!--                            background-color:#2563eb;-->
+<!--                            color:#ffffff;-->
+<!--                            font-weight:bold;-->
+<!--                            padding:8px;-->
+<!--                            border-right:1px solid rgba(255,255,255,0.4);-->
+<!--                            border-bottom:2px solid #1e40af;-->
+<!--                            text-align:left;-->
+<!--                        }-->
+<!--                        .wmz-table thead th:last-child {-->
+<!--                            border-right:none;-->
+<!--                        }-->
+
+<!--                        .wmz-table tbody td {-->
+<!--                            padding:7px;-->
+<!--                            border-bottom:1px solid #e5e7eb;-->
+<!--                        }-->
+<!--                        .wmz-table tbody tr:nth-child(even) {-->
+<!--                            background:#f9fafb;-->
+<!--                        }-->
+
+<!--                        /* ================= STATUS ================= */-->
+<!--                        .wmz-status {-->
+<!--                            padding:2px 8px;-->
+<!--                            border-radius:12px;-->
+<!--                            font-size:9px;-->
+<!--                            font-weight:bold;-->
+<!--                            display:inline-block;-->
+<!--                        }-->
+<!--                        .wmz-done { background:#dcfce7; color:#166534; }-->
+<!--                        .wmz-rejected { background:#fee2e2; color:#991b1b; }-->
+<!--                        .wmz-progress { background:#dbeafe; color:#1e40af; }-->
+<!--                        .wmz-scheduled { background:#ffedd5; color:#9a3412; }-->
+
+<!--                        /* ================= FOOTER ================= */-->
+<!--                        .wmz-footer {-->
+<!--                            margin-top:14px;-->
+<!--                            border-top:1px dashed #e5e7eb;-->
+<!--                            padding-top:6px;-->
+<!--                            font-size:9px;-->
+<!--                            color:#6b7280;-->
+<!--                        }-->
+<!--                        .page-number:before { content: counter(page); }-->
+<!--                        .page-count:before { content: counter(pages); }-->
+<!--                    </style>-->
+
+<!--                    &lt;!&ndash; HEADER &ndash;&gt;-->
+<!--                    <div class="wmz-header">-->
+<!--                        <h2>Waste Dashboard Report</h2>-->
+<!--                        <div class="meta">-->
+<!--                            Generated for <strong><t t-esc="user.name"/></strong>-->
+<!--                            • Printed at <strong><t t-esc="printed_at"/></strong>-->
+<!--                        </div>-->
+
+<!--                        <t t-if="filters">-->
+<!--                            <div>-->
+<!--                                <t t-if="filters.get('date_from')">-->
+<!--                                    <span class="wmz-tag">From: <t t-esc="filters.get('date_from')"/></span>-->
+<!--                                </t>-->
+<!--                                <t t-if="filters.get('date_to')">-->
+<!--                                    <span class="wmz-tag">To: <t t-esc="filters.get('date_to')"/></span>-->
+<!--                                </t>-->
+<!--                                <t t-if="filters.get('manifest_number')">-->
+<!--                                    <span class="wmz-tag">Manifest: <t t-esc="filters.get('manifest_number')"/></span>-->
+<!--                                </t>-->
+<!--                                <t t-if="filters.get('sale_order_number')">-->
+<!--                                    <span class="wmz-tag">SO: <t t-esc="filters.get('sale_order_number')"/></span>-->
+<!--                                </t>-->
+<!--                                <t t-if="filters.get('invoice_number')">-->
+<!--                                    <span class="wmz-tag">Invoice: <t t-esc="filters.get('invoice_number')"/></span>-->
+<!--                                </t>-->
+<!--                            </div>-->
+<!--                        </t>-->
+<!--                    </div>-->
+
+<!--                    &lt;!&ndash; KPI &ndash;&gt;-->
+<!--                    <table class="wmz-kpi-table">-->
+<!--                        <tr>-->
+<!--                            <td class="wmz-kpi">-->
+<!--                                <div class="wmz-kpi-label">Total Manifests</div>-->
+<!--                                <div class="wmz-kpi-value"><t t-esc="len(docs)"/></div>-->
+<!--                            </td>-->
+<!--                            <td class="wmz-kpi">-->
+<!--                                <div class="wmz-kpi-label">Open</div>-->
+<!--                                <div class="wmz-kpi-value"><t t-esc="kpis.get('open',0)"/></div>-->
+<!--                            </td>-->
+<!--                            <td class="wmz-kpi">-->
+<!--                                <div class="wmz-kpi-label">In Progress</div>-->
+<!--                                <div class="wmz-kpi-value"><t t-esc="kpis.get('in_progress',0)"/></div>-->
+<!--                            </td>-->
+<!--                            <td class="wmz-kpi">-->
+<!--                                <div class="wmz-kpi-label">Done</div>-->
+<!--                                <div class="wmz-kpi-value"><t t-esc="kpis.get('done',0)"/></div>-->
+<!--                            </td>-->
+<!--                        </tr>-->
+<!--                    </table>-->
+
+<!--                    &lt;!&ndash; MANIFEST TABLE &ndash;&gt;-->
+<!--                    <div class="wmz-section">-->
+<!--                        <div class="wmz-section-title">Manifest Details</div>-->
+
+<!--                        <table class="wmz-table">-->
+<!--                            <thead>-->
+<!--                                <tr>-->
+<!--                                    <th>Manifest</th>-->
+<!--                                    <th>Customer</th>-->
+<!--                                    <th>Date</th>-->
+<!--                                    <th>Status</th>-->
+<!--                                    <th class="wmz-right">Bins</th>-->
+<!--                                    <th>Sales Order</th>-->
+<!--                                    <th>Invoice</th>-->
+<!--                                </tr>-->
+<!--                            </thead>-->
+<!--                            <tbody>-->
+<!--                                <t t-if="not manifest_rows">-->
+<!--                                    <tr>-->
+<!--                                        <td colspan="7" class="wmz-muted" style="text-align:center;">-->
+<!--                                            No records found.-->
+<!--                                        </td>-->
+<!--                                    </tr>-->
+<!--                                </t>-->
+
+<!--                                <t t-foreach="manifest_rows" t-as="r">-->
+<!--                                    <tr>-->
+<!--                                        <td><t t-esc="r.get('manifest')"/></td>-->
+<!--                                        <td><t t-esc="r.get('customer')"/></td>-->
+<!--                                        <td><t t-esc="r.get('date')"/></td>-->
+<!--                                        <td>-->
+<!--                                            <t t-set="s" t-value="r.get('status')"/>-->
+<!--                                            <t t-if="s == 'done'"><span class="wmz-status wmz-done">Done</span></t>-->
+<!--                                            <t t-elif="s == 'cancelled'"><span class="wmz-status wmz-rejected">Rejected</span></t>-->
+<!--                                            <t t-elif="s == 'scheduled'"><span class="wmz-status wmz-scheduled">Scheduled</span></t>-->
+<!--                                            <t t-else=""><span class="wmz-status wmz-progress">In Progress</span></t>-->
+<!--                                        </td>-->
+<!--                                        <td class="wmz-right"><t t-esc="r.get('bin_count')"/></td>-->
+<!--                                        <td><t t-esc="r.get('so')"/></td>-->
+<!--                                        <td><t t-esc="r.get('invoice')"/></td>-->
+<!--                                    </tr>-->
+<!--                                </t>-->
+<!--                            </tbody>-->
+<!--                        </table>-->
+<!--                    </div>-->
+
+<!--                    &lt;!&ndash; FOOTER &ndash;&gt;-->
+<!--                    <div class="wmz-footer">-->
+<!--                        Page <span class="page-number"/> of <span class="page-count"/>-->
+<!--                    </div>-->
+
+<!--                </div>-->
+<!--            </main>-->
+<!--        </t>-->
+<!--    </t>-->
+<!--</template>-->
+
+
+<!--    <template id="waste_dashboard_report_pdf" name="Waste Dashboard PDF Report (Advanced)">-->
+<!--    <t t-call="web.html_container">-->
+<!--        <t t-call="web.external_layout">-->
+<!--            <main class="o_report_layout">-->
+<!--                <div class="page">-->
+
+<!--                    <style type="text/css">-->
+<!--                        /* ============ Base ============ */-->
+<!--                        .wmz-wrap { font-family: Arial, sans-serif; color:#111827; }-->
+<!--                        .wmz-small { font-size:10px; color:#6b7280; }-->
+<!--                        .wmz-muted { color:#6b7280; }-->
+<!--                        .wmz-hr { border-top:1px solid #e5e7eb; margin:10px 0; }-->
+
+<!--                        /* ============ Header (advanced) ============ */-->
+<!--                        .wmz-hero {-->
+<!--                            border-radius:14px;-->
+<!--                            padding:16px 18px;-->
+<!--                            background:#0b1220;-->
+<!--                            border:1px solid #111827;-->
+<!--                            color:#fff;-->
+<!--                            position:relative;-->
+<!--                            overflow:hidden;-->
+<!--                            margin-bottom:12px;-->
+<!--                        }-->
+<!--                        /* safe “gradient effect” using subtle overlays */-->
+<!--                        .wmz-hero:before{-->
+<!--                            content:"";-->
+<!--                            position:absolute; left:-60px; top:-40px;-->
+<!--                            width:260px; height:260px;-->
+<!--                            background:#1d4ed8;-->
+<!--                            opacity:.18;-->
+<!--                            border-radius:999px;-->
+<!--                        }-->
+<!--                        .wmz-hero:after{-->
+<!--                            content:"";-->
+<!--                            position:absolute; right:-90px; bottom:-70px;-->
+<!--                            width:340px; height:340px;-->
+<!--                            background:#22c55e;-->
+<!--                            opacity:.12;-->
+<!--                            border-radius:999px;-->
+<!--                        }-->
+<!--                        .wmz-hero .title {-->
+<!--                            font-size:18px;-->
+<!--                            font-weight:800;-->
+<!--                            margin:0;-->
+<!--                            letter-spacing:.2px;-->
+<!--                            position:relative;-->
+<!--                            z-index:2;-->
+<!--                        }-->
+<!--                        .wmz-hero .meta {-->
+<!--                            margin-top:6px;-->
+<!--                            font-size:11px;-->
+<!--                            opacity:.92;-->
+<!--                            position:relative;-->
+<!--                            z-index:2;-->
+<!--                        }-->
+<!--                        .wmz-tags { margin-top:10px; position:relative; z-index:2; }-->
+<!--                        .wmz-tag {-->
+<!--                            display:inline-block;-->
+<!--                            padding:3px 10px;-->
+<!--                            margin:2px 6px 0 0;-->
+<!--                            border-radius:999px;-->
+<!--                            background:rgba(255,255,255,.08);-->
+<!--                            border:1px solid rgba(255,255,255,.18);-->
+<!--                            font-size:10px;-->
+<!--                        }-->
+
+<!--                        /* ============ Section block ============ */-->
+<!--                        .wmz-section {-->
+<!--                            border:1px solid #e5e7eb;-->
+<!--                            border-radius:14px;-->
+<!--                            padding:12px 12px 10px 12px;-->
+<!--                            margin-top:12px;-->
+<!--                            background:#ffffff;-->
+<!--                        }-->
+<!--                        .wmz-section-title {-->
+<!--                            font-size:12px;-->
+<!--                            font-weight:800;-->
+<!--                            margin:0 0 10px 0;-->
+<!--                            padding-left:10px;-->
+<!--                            border-left:4px solid #2563eb;-->
+<!--                        }-->
+<!--                        .wmz-section-sub {-->
+<!--                            font-size:10px;-->
+<!--                            color:#6b7280;-->
+<!--                            margin:-6px 0 10px 14px;-->
+<!--                        }-->
+
+<!--                        /* ============ KPI Grid (table based) ============ */-->
+<!--                        .wmz-kpi-table { width:100%; border-collapse:separate; border-spacing:8px; }-->
+<!--                        .wmz-kpi {-->
+<!--                            border:1px solid #e5e7eb;-->
+<!--                            border-radius:14px;-->
+<!--                            padding:10px 12px;-->
+<!--                            background:#f9fafb;-->
+<!--                        }-->
+<!--                        .wmz-kpi .k-label{-->
+<!--                            font-size:10px; color:#6b7280;-->
+<!--                            text-transform:uppercase; letter-spacing:.6px;-->
+<!--                        }-->
+<!--                        .wmz-kpi .k-value{-->
+<!--                            margin-top:5px;-->
+<!--                            font-size:20px;-->
+<!--                            font-weight:900;-->
+<!--                            color:#111827;-->
+<!--                        }-->
+<!--                        .wmz-kpi .k-foot{-->
+<!--                            margin-top:3px;-->
+<!--                            font-size:10px;-->
+<!--                            color:#6b7280;-->
+<!--                        }-->
+
+<!--                        /* ============ Tables (premium) ============ */-->
+<!--                        .wmz-table {-->
+<!--                            width:100%;-->
+<!--                            border-collapse:collapse;-->
+<!--                            font-size:10.5px;-->
+<!--                            border:1px solid #e5e7eb;-->
+<!--                            border-radius:14px;-->
+<!--                            overflow:hidden;-->
+<!--                        }-->
+<!--                        .wmz-table thead th{-->
+<!--                            background:#111827;-->
+<!--                            color:#fff;-->
+<!--                            padding:8px 8px;-->
+<!--                            text-align:left;-->
+<!--                            font-weight:800;-->
+<!--                            letter-spacing:.2px;-->
+<!--                            border-bottom:1px solid #0b1220;-->
+<!--                        }-->
+<!--                        .wmz-table tbody td{-->
+<!--                            padding:7px 8px;-->
+<!--                            border-bottom:1px solid #eef2f7;-->
+<!--                            vertical-align:top;-->
+<!--                        }-->
+<!--                        .wmz-table tbody tr:nth-child(even){ background:#fcfcfd; }-->
+<!--                        .wmz-right{ text-align:right; }-->
+
+<!--                        /* ============ Status chips ============ */-->
+<!--                        .wmz-chip{-->
+<!--                            display:inline-block;-->
+<!--                            padding:2px 8px;-->
+<!--                            border-radius:999px;-->
+<!--                            font-size:10px;-->
+<!--                            font-weight:800;-->
+<!--                            border:1px solid transparent;-->
+<!--                        }-->
+<!--                        .wmz-chip.done{ background:#ecfdf5; color:#065f46; border-color:#a7f3d0; }-->
+<!--                        .wmz-chip.rejected{ background:#fef2f2; color:#991b1b; border-color:#fecaca; }-->
+<!--                        .wmz-chip.scheduled{ background:#fff7ed; color:#9a3412; border-color:#fed7aa; }-->
+<!--                        .wmz-chip.progress{ background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }-->
+<!--                        .wmz-chip.other{ background:#f3f4f6; color:#111827; border-color:#e5e7eb; }-->
+
+<!--                        /* ============ Footer / page numbers ============ */-->
+<!--                        .wmz-footer{-->
+<!--                            margin-top:10px;-->
+<!--                            border-top:1px dashed #e5e7eb;-->
+<!--                            padding-top:8px;-->
+<!--                            font-size:9.5px;-->
+<!--                            color:#6b7280;-->
+<!--                        }-->
+<!--                        .wmz-pagenum:before { content: counter(page); }-->
+<!--                        .wmz-pagecount:before { content: counter(pages); }-->
+<!--                    </style>-->
+
+<!--                    <div class="wmz-wrap">-->
+
+<!--                        &lt;!&ndash; HERO HEADER &ndash;&gt;-->
+<!--                        <div class="wmz-hero">-->
+<!--                            <p class="title">Waste Dashboard Report</p>-->
+<!--                            <div class="meta">-->
+<!--                                Generated for <strong><t t-esc="user.name"/></strong>-->
+<!--                                &amp;•&amp; Printed at <strong><t t-esc="printed_at"/></strong>-->
+<!--                            </div>-->
+
+<!--                            <t t-if="filters">-->
+<!--                                <div class="wmz-tags">-->
+<!--                                    <t t-if="filters.get('date_from')">-->
+<!--                                        <span class="wmz-tag">From: <t t-esc="filters.get('date_from')"/></span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('date_to')">-->
+<!--                                        <span class="wmz-tag">To: <t t-esc="filters.get('date_to')"/></span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('manifest_number')">-->
+<!--                                        <span class="wmz-tag">Manifest: <t t-esc="filters.get('manifest_number')"/></span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('sale_order_number')">-->
+<!--                                        <span class="wmz-tag">SO: <t t-esc="filters.get('sale_order_number')"/></span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('invoice_number')">-->
+<!--                                        <span class="wmz-tag">Invoice: <t t-esc="filters.get('invoice_number')"/></span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('ticket_type')">-->
+<!--                                        <span class="wmz-tag">Ticket: <t t-esc="filters.get('ticket_type')"/></span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('partner_id')">-->
+<!--                                        <span class="wmz-tag">Customer ID: <t t-esc="filters.get('partner_id')"/></span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('company_id')">-->
+<!--                                        <span class="wmz-tag">Company ID: <t t-esc="filters.get('company_id')"/></span>-->
+<!--                                    </t>-->
+<!--                                </div>-->
+<!--                            </t>-->
+<!--                        </div>-->
+
+<!--                        &lt;!&ndash; KPI SECTION &ndash;&gt;-->
+<!--                        <div class="wmz-section">-->
+<!--                            <div class="wmz-section-title">Executive Summary</div>-->
+<!--                            <div class="wmz-section-sub">-->
+<!--                                High-level operational snapshot based on selected filters.-->
+<!--                            </div>-->
+
+<!--                            <table class="wmz-kpi-table">-->
+<!--                                <tr>-->
+<!--                                    <td class="wmz-kpi">-->
+<!--                                        <div class="k-label">Total Manifests</div>-->
+<!--                                        <div class="k-value"><t t-esc="len(docs)"/></div>-->
+<!--                                        <div class="k-foot">Matching manifest records</div>-->
+<!--                                    </td>-->
+<!--                                    <td class="wmz-kpi">-->
+<!--                                        <div class="k-label">Open</div>-->
+<!--                                        <div class="k-value"><t t-esc="kpis.get('open', 0)"/></div>-->
+<!--                                        <div class="k-foot">Draft / Generated / Assigned</div>-->
+<!--                                    </td>-->
+<!--                                    <td class="wmz-kpi">-->
+<!--                                        <div class="k-label">Scheduled</div>-->
+<!--                                        <div class="k-value"><t t-esc="kpis.get('scheduled', 0)"/></div>-->
+<!--                                        <div class="k-foot">Planned &amp; queued</div>-->
+<!--                                    </td>-->
+<!--                                    <td class="wmz-kpi">-->
+<!--                                        <div class="k-label">In Progress</div>-->
+<!--                                        <div class="k-value"><t t-esc="kpis.get('in_progress', 0)"/></div>-->
+<!--                                        <div class="k-foot">Dispatched / Delivered</div>-->
+<!--                                    </td>-->
+<!--                                </tr>-->
+<!--                                <tr>-->
+<!--                                    <td class="wmz-kpi">-->
+<!--                                        <div class="k-label">Done</div>-->
+<!--                                        <div class="k-value"><t t-esc="kpis.get('done', 0)"/></div>-->
+<!--                                        <div class="k-foot">Authorised</div>-->
+<!--                                    </td>-->
+<!--                                    <td class="wmz-kpi">-->
+<!--                                        <div class="k-label">Rejected</div>-->
+<!--                                        <div class="k-value"><t t-esc="kpis.get('rejected', 0)"/></div>-->
+<!--                                        <div class="k-foot">Cancelled</div>-->
+<!--                                    </td>-->
+<!--                                    <td class="wmz-kpi">-->
+<!--                                        <div class="k-label">Tank kL (Month)</div>-->
+<!--                                        <div class="k-value"><t t-esc="('%.2f' % (kpis.get('tank_kl_month', 0.0) or 0.0))"/></div>-->
+<!--                                        <div class="k-foot">Total billed kL</div>-->
+<!--                                    </td>-->
+<!--                                    <td class="wmz-kpi">-->
+<!--                                        <div class="k-label">Billing Amount (Month)</div>-->
+<!--                                        <div class="k-value"><t t-esc="('%.2f' % (kpis.get('billing_amount_month', 0.0) or 0.0))"/></div>-->
+<!--                                        <div class="k-foot">Excl. VAT</div>-->
+<!--                                    </td>-->
+<!--                                </tr>-->
+<!--                            </table>-->
+<!--                        </div>-->
+
+<!--                        &lt;!&ndash; MANIFEST TABLE &ndash;&gt;-->
+<!--                        <div class="wmz-section">-->
+<!--                            <div class="wmz-section-title">Manifest Details</div>-->
+<!--                            <div class="wmz-section-sub">Recent manifests matching the dashboard filters.</div>-->
+
+<!--                            <table class="wmz-table">-->
+<!--                                <thead>-->
+<!--                                    <tr>-->
+<!--                                        <th style="width:12%;">Manifest</th>-->
+<!--                                        <th style="width:22%;">Customer</th>-->
+<!--                                        <th style="width:10%;">Date</th>-->
+<!--                                        <th style="width:12%;">Status</th>-->
+<!--                                        <th style="width:8%;" class="wmz-right">Bins</th>-->
+<!--                                        <th style="width:18%;">Sales Order</th>-->
+<!--                                        <th style="width:18%;">Invoice</th>-->
+<!--                                    </tr>-->
+<!--                                </thead>-->
+<!--                                <tbody>-->
+<!--                                    <t t-if="not manifest_rows">-->
+<!--                                        <tr>-->
+<!--                                            <td colspan="7" class="wmz-muted" style="padding:12px; text-align:center;">-->
+<!--                                                No records found for selected filters.-->
+<!--                                            </td>-->
+<!--                                        </tr>-->
+<!--                                    </t>-->
+
+<!--                                    <t t-foreach="manifest_rows" t-as="r" t-key="r.get('manifest')">-->
+<!--                                        <tr>-->
+<!--                                            <td><t t-esc="r.get('manifest')"/></td>-->
+<!--                                            <td><t t-esc="r.get('customer')"/></td>-->
+<!--                                            <td><t t-esc="r.get('date')"/></td>-->
+<!--                                            <td>-->
+<!--                                                <t t-set="st" t-value="(r.get('status') or '')"/>-->
+<!--                                                <t t-if="st == 'done'"><span class="wmz-chip done">Done</span></t>-->
+<!--                                                <t t-elif="st == 'cancelled'"><span class="wmz-chip rejected">Rejected</span></t>-->
+<!--                                                <t t-elif="st == 'scheduled'"><span class="wmz-chip scheduled">Scheduled</span></t>-->
+<!--                                                <t t-elif="st in ('assigned','dispatched','service_delivered')"><span class="wmz-chip progress">In Progress</span></t>-->
+<!--                                                <t t-else=""><span class="wmz-chip other"><t t-esc="st"/></span></t>-->
+<!--                                            </td>-->
+<!--                                            <td class="wmz-right"><t t-esc="r.get('bin_count')"/></td>-->
+<!--                                            <td><t t-esc="r.get('so')"/></td>-->
+<!--                                            <td><t t-esc="r.get('invoice')"/></td>-->
+<!--                                        </tr>-->
+<!--                                    </t>-->
+<!--                                </tbody>-->
+<!--                            </table>-->
+<!--                        </div>-->
+
+<!--                        &lt;!&ndash; SO ↔ INVOICE TABLE &ndash;&gt;-->
+<!--                        <t t-if="so_inv_rows">-->
+<!--                            <div class="wmz-section">-->
+<!--                                <div class="wmz-section-title">Sales Order ↔ Invoice Totals</div>-->
+<!--                                <div class="wmz-section-sub">Invoices linked to sales orders (and their totals).</div>-->
+
+<!--                                <table class="wmz-table">-->
+<!--                                    <thead>-->
+<!--                                        <tr>-->
+<!--                                            <th style="width:18%;">Manifest</th>-->
+<!--                                            <th style="width:26%;">Sales Order</th>-->
+<!--                                            <th style="width:26%;">Invoice</th>-->
+<!--                                            <th style="width:30%;" class="wmz-right">Total</th>-->
+<!--                                        </tr>-->
+<!--                                    </thead>-->
+<!--                                    <tbody>-->
+<!--                                        <t t-foreach="so_inv_rows" t-as="x" t-key="x.get('invoice')">-->
+<!--                                            <tr>-->
+<!--                                                <td><t t-esc="x.get('manifest')"/></td>-->
+<!--                                                <td><t t-esc="x.get('sale_order')"/></td>-->
+<!--                                                <td><t t-esc="x.get('invoice')"/></td>-->
+<!--                                                <td class="wmz-right"><t t-esc="('%.2f' % (x.get('total', 0.0)))"/></td>-->
+<!--                                            </tr>-->
+<!--                                        </t>-->
+<!--                                    </tbody>-->
+<!--                                </table>-->
+
+<!--                                <div class="wmz-footer">-->
+<!--                                    <strong>Invoice Total:</strong>-->
+<!--                                    <t t-esc="('%.2f' % (so_inv_total or 0.0))"/>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </t>-->
+
+<!--                        &lt;!&ndash; Footer &ndash;&gt;-->
+<!--                        <div class="wmz-footer">-->
+<!--                            Report generated from dashboard filters. Page <span class="wmz-pagenum"></span> of <span class="wmz-pagecount"></span>.-->
+<!--                        </div>-->
+
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </main>-->
+<!--        </t>-->
+<!--    </t>-->
+<!--</template>-->
 
     <!-- =========================
-         REPORT ACTION
+         QWEB TEMPLATE (Modern Style)
          ========================= -->
-    <record id="action_waste_dashboard_report_pdf" model="ir.actions.report">
-        <field name="name">Waste Dashboard Report</field>
-        <field name="model">waste.service.request</field>
-        <field name="report_type">qweb-pdf</field>
+<!--    <template id="waste_dashboard_report_pdf" name="Waste Dashboard PDF Report (Modern)">-->
+<!--        <t t-call="web.html_container">-->
+<!--            <t t-call="web.external_layout">-->
+<!--                <main class="o_report_layout">-->
+<!--                    <div class="page">-->
 
-        <!-- MUST MATCH the QWeb template t-name -->
-        <field name="report_name">waste_management_zakheni.waste_dashboard_report_pdf</field>
-        <field name="report_file">waste_management_zakheni.waste_dashboard_report_pdf</field>
+<!--                        &lt;!&ndash; ====== STYLE (wkhtmltopdf safe) ====== &ndash;&gt;-->
+<!--                        <style type="text/css">-->
+<!--                            .wmz-header{-->
+<!--                            background:#1f2937; color:#fff; padding:16px 18px;-->
+<!--                            border-radius:10px; margin-bottom:14px;-->
+<!--                            }-->
+<!--                            .wmz-header h2{ margin:0; font-size:18px; letter-spacing:.2px; }-->
+<!--                            .wmz-sub{ margin-top:4px; font-size:11px; opacity:.9; }-->
+<!--                            .wmz-badges{ margin-top:8px; font-size:11px; }-->
+<!--                            .wmz-badge{-->
+<!--                            display:inline-block; padding:3px 8px; margin:2px 6px 0 0;-->
+<!--                            background:#111827; border:1px solid rgba(255,255,255,.25);-->
+<!--                            border-radius:999px;-->
+<!--                            }-->
 
-        <field name="print_report_name">'Waste_Dashboard_%s' % (object.name or '')</field>
-        <field name="binding_model_id" ref="model_waste_service_request"/>
-        <field name="binding_type">report</field>
-    </record>
+<!--                            .wmz-section-title{-->
+<!--                            font-size:13px; font-weight:700; color:#111827;-->
+<!--                            margin:16px 0 8px 0;-->
+<!--                            padding-bottom:6px; border-bottom:1px solid #e5e7eb;-->
+<!--                            }-->
 
-    <!-- =========================
-         QWEB TEMPLATE
-         ========================= -->
-    <template id="waste_dashboard_report_pdf" name="Waste Dashboard PDF Report">
-        <t t-call="web.html_container">
-            <t t-call="web.external_layout">
-                <main class="o_report_layout">
-                    <div class="page">
+<!--                            .wmz-kpis{ width:100%; border-collapse:separate; border-spacing:8px; margin:6px 0 10px 0; }-->
+<!--                            .wmz-kpi{-->
+<!--                            background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px;-->
+<!--                            padding:10px 12px;-->
+<!--                            }-->
+<!--                            .wmz-kpi .label{ font-size:10px; color:#6b7280; text-transform:uppercase;-->
+<!--                            letter-spacing:.6px; }-->
+<!--                            .wmz-kpi .value{ font-size:18px; font-weight:800; color:#111827; margin-top:4px; }-->
 
-                        <h2>Waste Dashboard Report</h2>
+<!--                            .wmz-meta{-->
+<!--                            width:100%; border-collapse:collapse; margin-top:10px;-->
+<!--                            font-size:11px; color:#374151;-->
+<!--                            }-->
+<!--                            .wmz-meta td{ padding:3px 0; }-->
+<!--                            .wmz-meta td:first-child{ color:#6b7280; width:110px; }-->
 
-                        <div class="mb-2">
-                            <strong>Generated for:</strong>
-                            <t t-esc="user.name"/>
-                            <br/>
-                            <strong>Printed at:</strong>
-                            <!-- ✅ FIX: DO NOT use fields.Datetime.now() inside QWeb -->
-                            <t t-esc="printed_at"/>
-                        </div>
+<!--                            .wmz-table{-->
+<!--                            width:100%; border-collapse:collapse; font-size:11px;-->
+<!--                            border:1px solid #e5e7eb; border-radius:10px; overflow:hidden;-->
+<!--                            }-->
+<!--                            .wmz-table thead th{-->
+<!--                            background:#f3f4f6; color:#111827; font-weight:700;-->
+<!--                            padding:8px; border-bottom:1px solid #e5e7eb; text-align:left;-->
+<!--                            }-->
+<!--                            .wmz-table tbody td{-->
+<!--                            padding:7px 8px; border-bottom:1px solid #eef2f7; vertical-align:top;-->
+<!--                            }-->
+<!--                            .wmz-table tbody tr:nth-child(even){ background:#fcfcfd; }-->
+<!--                            .wmz-right{ text-align:right; }-->
 
-                        <t t-if="filters">
-                            <div class="mb-2">
-                                <strong>Filters:</strong>
-                                <ul class="mt-1">
-                                    <li t-if="filters.get('date_from')">Date From: <t t-esc="filters.get('date_from')"/></li>
-                                    <li t-if="filters.get('date_to')">Date To: <t t-esc="filters.get('date_to')"/></li>
-                                    <li t-if="filters.get('manifest_number')">Manifest: <t t-esc="filters.get('manifest_number')"/></li>
-                                    <li t-if="filters.get('sale_order_number')">Sales Order: <t t-esc="filters.get('sale_order_number')"/></li>
-                                    <li t-if="filters.get('invoice_number')">Invoice: <t t-esc="filters.get('invoice_number')"/></li>
-                                    <li t-if="filters.get('company_id')">Company ID: <t t-esc="filters.get('company_id')"/></li>
-                                    <li t-if="filters.get('partner_id')">Customer ID: <t t-esc="filters.get('partner_id')"/></li>
-                                    <li t-if="filters.get('ticket_type')">Ticket Type: <t t-esc="filters.get('ticket_type')"/></li>
-                                </ul>
-                            </div>
-                        </t>
+<!--                            .wmz-muted{ color:#6b7280; }-->
+<!--                            .wmz-note{-->
+<!--                            margin-top:10px; font-size:10px; color:#6b7280;-->
+<!--                            border-top:1px dashed #e5e7eb; padding-top:8px;-->
+<!--                            }-->
 
-                        <hr/>
+<!--                            .wmz-pill{-->
+<!--                            display:inline-block; padding:2px 8px; border-radius:999px;-->
+<!--                            background:#eef2ff; color:#3730a3; font-size:10px; font-weight:700;-->
+<!--                            }-->
+<!--                            .wmz-pill.done{ background:#ecfdf5; color:#065f46; }-->
+<!--                            .wmz-pill.cancelled{ background:#fef2f2; color:#991b1b; }-->
+<!--                            .wmz-pill.scheduled{ background:#fff7ed; color:#9a3412; }-->
+<!--                            .wmz-pill.progress{ background:#eff6ff; color:#1d4ed8; }-->
+<!--                        </style>-->
 
-                        <h4>Summary</h4>
-                        <p>
-                            Total manifests:
-                            <strong><t t-esc="len(docs)"/></strong>
-                        </p>
+<!--                        &lt;!&ndash; ====== HEADER ====== &ndash;&gt;-->
+<!--                        <div class="wmz-header">-->
+<!--                            <h2>Waste Dashboard Report</h2>-->
+<!--                            <div class="wmz-sub">-->
+<!--                                Generated for-->
+<!--                                <strong>-->
+<!--                                    <t t-esc="user.name"/>-->
+<!--                                </strong>-->
+<!--                                • Printed at-->
+<!--                                <strong>-->
+<!--                                    <t t-esc="printed_at"/>-->
+<!--                                </strong>-->
+<!--                            </div>-->
 
-                        <t t-if="kpis">
-                            <table class="table table-sm" style="width:100%; border-collapse:collapse;">
-                                <thead>
-                                    <tr>
-                                        <th style="border-bottom:1px solid #ddd; padding:6px;">Open</th>
-                                        <th style="border-bottom:1px solid #ddd; padding:6px;">Scheduled</th>
-                                        <th style="border-bottom:1px solid #ddd; padding:6px;">In Progress</th>
-                                        <th style="border-bottom:1px solid #ddd; padding:6px;">Done</th>
-                                        <th style="border-bottom:1px solid #ddd; padding:6px;">Rejected</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td style="padding:6px;"><t t-esc="kpis.get('open', 0)"/></td>
-                                        <td style="padding:6px;"><t t-esc="kpis.get('scheduled', 0)"/></td>
-                                        <td style="padding:6px;"><t t-esc="kpis.get('in_progress', 0)"/></td>
-                                        <td style="padding:6px;"><t t-esc="kpis.get('done', 0)"/></td>
-                                        <td style="padding:6px;"><t t-esc="kpis.get('rejected', 0)"/></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </t>
+<!--                            <t t-if="filters">-->
+<!--                                <div class="wmz-badges">-->
+<!--                                    <t t-if="filters.get('date_from')">-->
+<!--                                        <span class="wmz-badge">From:-->
+<!--                                            <t t-esc="filters.get('date_from')"/>-->
+<!--                                        </span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('date_to')">-->
+<!--                                        <span class="wmz-badge">To:-->
+<!--                                            <t t-esc="filters.get('date_to')"/>-->
+<!--                                        </span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('manifest_number')">-->
+<!--                                        <span class="wmz-badge">Manifest:-->
+<!--                                            <t t-esc="filters.get('manifest_number')"/>-->
+<!--                                        </span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('sale_order_number')">-->
+<!--                                        <span class="wmz-badge">SO:-->
+<!--                                            <t t-esc="filters.get('sale_order_number')"/>-->
+<!--                                        </span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('invoice_number')">-->
+<!--                                        <span class="wmz-badge">Invoice:-->
+<!--                                            <t t-esc="filters.get('invoice_number')"/>-->
+<!--                                        </span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('ticket_type')">-->
+<!--                                        <span class="wmz-badge">Ticket:-->
+<!--                                            <t t-esc="filters.get('ticket_type')"/>-->
+<!--                                        </span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('partner_id')">-->
+<!--                                        <span class="wmz-badge">Customer ID:-->
+<!--                                            <t t-esc="filters.get('partner_id')"/>-->
+<!--                                        </span>-->
+<!--                                    </t>-->
+<!--                                    <t t-if="filters.get('company_id')">-->
+<!--                                        <span class="wmz-badge">Company ID:-->
+<!--                                            <t t-esc="filters.get('company_id')"/>-->
+<!--                                        </span>-->
+<!--                                    </t>-->
+<!--                                </div>-->
+<!--                            </t>-->
+<!--                        </div>-->
 
-                        <hr/>
+<!--                        &lt;!&ndash; ====== SUMMARY / KPIs ====== &ndash;&gt;-->
+<!--                        <div class="wmz-section-title">Summary</div>-->
+<!--                        <table class="wmz-kpis">-->
+<!--                            <tr>-->
+<!--                                <td class="wmz-kpi">-->
+<!--                                    <div class="label">Total Manifests</div>-->
+<!--                                    <div class="value">-->
+<!--                                        <t t-esc="len(docs)"/>-->
+<!--                                    </div>-->
+<!--                                </td>-->
+<!--                                <td class="wmz-kpi">-->
+<!--                                    <div class="label">Open</div>-->
+<!--                                    <div class="value">-->
+<!--                                        <t t-esc="kpis.get('open', 0)"/>-->
+<!--                                    </div>-->
+<!--                                </td>-->
+<!--                                <td class="wmz-kpi">-->
+<!--                                    <div class="label">Scheduled</div>-->
+<!--                                    <div class="value">-->
+<!--                                        <t t-esc="kpis.get('scheduled', 0)"/>-->
+<!--                                    </div>-->
+<!--                                </td>-->
+<!--                                <td class="wmz-kpi">-->
+<!--                                    <div class="label">In Progress</div>-->
+<!--                                    <div class="value">-->
+<!--                                        <t t-esc="kpis.get('in_progress', 0)"/>-->
+<!--                                    </div>-->
+<!--                                </td>-->
+<!--                                <td class="wmz-kpi">-->
+<!--                                    <div class="label">Done</div>-->
+<!--                                    <div class="value">-->
+<!--                                        <t t-esc="kpis.get('done', 0)"/>-->
+<!--                                    </div>-->
+<!--                                </td>-->
+<!--                                <td class="wmz-kpi">-->
+<!--                                    <div class="label">Rejected</div>-->
+<!--                                    <div class="value">-->
+<!--                                        <t t-esc="kpis.get('rejected', 0)"/>-->
+<!--                                    </div>-->
+<!--                                </td>-->
+<!--                            </tr>-->
+<!--                        </table>-->
 
-                        <h4>Manifest Rows</h4>
-                        <table class="table table-sm o_main_table" style="width:100%; border-collapse:collapse;">
-                            <thead>
-                                <tr>
-                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Manifest</th>
-                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Customer</th>
-                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Date</th>
-                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Status</th>
-                                    <th style="border-bottom:1px solid #ccc; padding:6px; text-align:right;">Bins</th>
-                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Sales Order</th>
-                                    <th style="border-bottom:1px solid #ccc; padding:6px;">Invoice</th>
-                                </tr>
-                            </thead>
+<!--                        &lt;!&ndash; ====== MANIFEST TABLE ====== &ndash;&gt;-->
+<!--                        <div class="wmz-section-title">Manifest Rows</div>-->
 
-                            <tbody>
-                                <t t-if="not manifest_rows">
-                                    <tr>
-                                        <td colspan="7" style="padding:10px; text-align:center; color:#888;">
-                                            No records found for selected filters.
-                                        </td>
-                                    </tr>
+<!--                        <table class="wmz-table">-->
+<!--                            <thead>-->
+<!--                                <tr>-->
+<!--                                    <th style="width:12%;">Manifest</th>-->
+<!--                                    <th style="width:20%;">Customer</th>-->
+<!--                                    <th style="width:10%;">Date</th>-->
+<!--                                    <th style="width:10%;">Status</th>-->
+<!--                                    <th style="width:8%;" class="wmz-right">Bins</th>-->
+<!--                                    <th style="width:20%;">Sales Order</th>-->
+<!--                                    <th style="width:20%;">Invoice</th>-->
+<!--                                </tr>-->
+<!--                            </thead>-->
+<!--                            <tbody>-->
+<!--                                <t t-if="not manifest_rows">-->
+<!--                                    <tr>-->
+<!--                                        <td colspan="7" class="wmz-muted" style="padding:12px; text-align:center;">-->
+<!--                                            No records found for selected filters.-->
+<!--                                        </td>-->
+<!--                                    </tr>-->
+<!--                                </t>-->
+
+<!--                                <t t-foreach="manifest_rows" t-as="r" t-key="r.get('manifest')">-->
+<!--                                    <tr>-->
+<!--                                        <td>-->
+<!--                                            <t t-esc="r.get('manifest')"/>-->
+<!--                                        </td>-->
+<!--                                        <td>-->
+<!--                                            <t t-esc="r.get('customer')"/>-->
+<!--                                        </td>-->
+<!--                                        <td>-->
+<!--                                            <t t-esc="r.get('date')"/>-->
+<!--                                        </td>-->
+<!--                                        <td>-->
+<!--                                            <t t-set="st" t-value="(r.get('status') or '')"/>-->
+<!--                                            <t t-if="st == 'done'">-->
+<!--                                                <span class="wmz-pill done">Done</span>-->
+<!--                                            </t>-->
+<!--                                            <t t-elif="st == 'cancelled'">-->
+<!--                                                <span class="wmz-pill cancelled">Rejected</span>-->
+<!--                                            </t>-->
+<!--                                            <t t-elif="st == 'scheduled'">-->
+<!--                                                <span class="wmz-pill scheduled">Scheduled</span>-->
+<!--                                            </t>-->
+<!--                                            <t t-elif="st in ('assigned','dispatched','service_delivered')">-->
+<!--                                                <span class="wmz-pill progress">In Progress</span>-->
+<!--                                            </t>-->
+<!--                                            <t t-else="">-->
+<!--                                                <span class="wmz-pill">-->
+<!--                                                    <t t-esc="st"/>-->
+<!--                                                </span>-->
+<!--                                            </t>-->
+<!--                                        </td>-->
+<!--                                        <td class="wmz-right">-->
+<!--                                            <t t-esc="r.get('bin_count')"/>-->
+<!--                                        </td>-->
+<!--                                        <td>-->
+<!--                                            <t t-esc="r.get('so')"/>-->
+<!--                                        </td>-->
+<!--                                        <td>-->
+<!--                                            <t t-esc="r.get('invoice')"/>-->
+<!--                                        </td>-->
+<!--                                    </tr>-->
+<!--                                </t>-->
+<!--                            </tbody>-->
+<!--                        </table>-->
+
+<!--                        &lt;!&ndash; ====== SO ↔ INVOICE TABLE ====== &ndash;&gt;-->
+<!--                        <t t-if="so_inv_rows">-->
+<!--                            <div class="wmz-section-title">Sales Order ↔ Invoice (Totals)</div>-->
+
+<!--                            <table class="wmz-table">-->
+<!--                                <thead>-->
+<!--                                    <tr>-->
+<!--                                        <th style="width:18%;">Manifest</th>-->
+<!--                                        <th style="width:26%;">Sales Order</th>-->
+<!--                                        <th style="width:26%;">Invoice</th>-->
+<!--                                        <th style="width:30%;" class="wmz-right">Total</th>-->
+<!--                                    </tr>-->
+<!--                                </thead>-->
+<!--                                <tbody>-->
+<!--                                    <t t-foreach="so_inv_rows" t-as="x" t-key="x.get('invoice')">-->
+<!--                                        <tr>-->
+<!--                                            <td>-->
+<!--                                                <t t-esc="x.get('manifest')"/>-->
+<!--                                            </td>-->
+<!--                                            <td>-->
+<!--                                                <t t-esc="x.get('sale_order')"/>-->
+<!--                                            </td>-->
+<!--                                            <td>-->
+<!--                                                <t t-esc="x.get('invoice')"/>-->
+<!--                                            </td>-->
+<!--                                            <td class="wmz-right">-->
+<!--                                                <t t-esc="('%.2f' % (x.get('total', 0.0)))"/>-->
+<!--                                            </td>-->
+<!--                                        </tr>-->
+<!--                                    </t>-->
+<!--                                </tbody>-->
+<!--                            </table>-->
+
+<!--                            <div class="wmz-note">-->
+<!--                                <strong>Invoice Total:</strong>-->
+<!--                                <t t-esc="('%.2f' % (so_inv_total or 0.0))"/>-->
+<!--                            </div>-->
+<!--                        </t>-->
+
+<!--                        <div class="wmz-note">-->
+<!--                            This report is generated from the Waste Dashboard filters and reflects matching manifests,-->
+<!--                            sales orders and invoices.-->
+<!--                        </div>-->
+
+<!--                    </div>-->
+<!--                </main>-->
+<!--            </t>-->
+<!--        </t>-->
+<!--    </template>-->
+
+<!--</odoo>-->
+
+
+<!--        <?xml version="1.0" encoding="utf-8"?>-->
+<!--        <odoo>-->
+
+            <!-- =========================
+                 REPORT ACTION
+                 ========================= -->
+            <record id="action_waste_dashboard_report_pdf" model="ir.actions.report">
+                <field name="name">Waste Dashboard Report</field>
+                <field name="model">waste.service.request</field>
+                <field name="report_type">qweb-pdf</field>
+
+                <!-- MUST MATCH the QWeb template t-name -->
+                <field name="report_name">waste_management_zakheni.waste_dashboard_report_pdf</field>
+                <field name="report_file">waste_management_zakheni.waste_dashboard_report_pdf</field>
+
+                <field name="print_report_name">'Waste_Dashboard_%s' % (object.name or '')</field>
+                <field name="binding_model_id" ref="model_waste_service_request"/>
+                <field name="binding_type">report</field>
+            </record>
+
+            <!-- =========================
+                 QWEB TEMPLATE
+                 ========================= -->
+            <template id="waste_dashboard_report_pdf" name="Waste Dashboard PDF Report">
+                <t t-call="web.html_container">
+                    <t t-call="web.external_layout">
+                        <main class="o_report_layout">
+                            <div class="page">
+
+                                <h2>Waste Dashboard Report</h2>
+
+                                <div class="mb-2">
+                                    <strong>Generated for:</strong>
+                                    <t t-esc="user.name"/>
+                                    <br/>
+                                    <strong>Printed at:</strong>
+                                    <!-- ✅ FIX: DO NOT use fields.Datetime.now() inside QWeb -->
+                                    <t t-esc="printed_at"/>
+                                </div>
+
+                                <t t-if="filters">
+                                    <div class="mb-2">
+                                        <strong>Filters:</strong>
+                                        <ul class="mt-1">
+                                            <li t-if="filters.get('date_from')">Date From: <t t-esc="filters.get('date_from')"/></li>
+                                            <li t-if="filters.get('date_to')">Date To: <t t-esc="filters.get('date_to')"/></li>
+                                            <li t-if="filters.get('manifest_number')">Manifest: <t t-esc="filters.get('manifest_number')"/></li>
+                                            <li t-if="filters.get('sale_order_number')">Sales Order: <t t-esc="filters.get('sale_order_number')"/></li>
+                                            <li t-if="filters.get('invoice_number')">Invoice: <t t-esc="filters.get('invoice_number')"/></li>
+                                            <li t-if="filters.get('company_id')">Company ID: <t t-esc="filters.get('company_id')"/></li>
+                                            <li t-if="filters.get('partner_id')">Customer ID: <t t-esc="filters.get('partner_id')"/></li>
+                                            <li t-if="filters.get('ticket_type')">Ticket Type: <t t-esc="filters.get('ticket_type')"/></li>
+                                        </ul>
+                                    </div>
                                 </t>
 
-                                <t t-foreach="manifest_rows" t-as="r" t-key="r.get('manifest')">
-                                    <tr>
-                                        <td style="padding:6px;"><t t-esc="r.get('manifest')"/></td>
-                                        <td style="padding:6px;"><t t-esc="r.get('customer')"/></td>
-                                        <td style="padding:6px;"><t t-esc="r.get('date')"/></td>
-                                        <td style="padding:6px;"><t t-esc="r.get('status')"/></td>
-                                        <td style="padding:6px; text-align:right;"><t t-esc="r.get('bin_count')"/></td>
-                                        <td style="padding:6px;"><t t-esc="r.get('so')"/></td>
-                                        <td style="padding:6px;"><t t-esc="r.get('invoice')"/></td>
-                                    </tr>
-                                </t>
-                            </tbody>
-                        </table>
+                                <hr/>
 
-                        <t t-if="so_inv_rows">
-                            <hr/>
-                            <h4>Sales Order ↔ Invoice (Totals)</h4>
-                            <table class="table table-sm" style="width:100%; border-collapse:collapse;">
-                                <thead>
-                                    <tr>
-                                        <th style="border-bottom:1px solid #ccc; padding:6px;">Manifest</th>
-                                        <th style="border-bottom:1px solid #ccc; padding:6px;">Sales Order</th>
-                                        <th style="border-bottom:1px solid #ccc; padding:6px;">Invoice</th>
-                                        <th style="border-bottom:1px solid #ccc; padding:6px; text-align:right;">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="so_inv_rows" t-as="x" t-key="x.get('invoice')">
+                                <h4>Summary</h4>
+                                <p>
+                                    Total manifests:
+                                    <strong><t t-esc="len(docs)"/></strong>
+                                </p>
+
+                                <t t-if="kpis">
+                                    <table class="table table-sm" style="width:100%; border-collapse:collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th style="border-bottom:1px solid #ddd; padding:6px;">Open</th>
+                                                <th style="border-bottom:1px solid #ddd; padding:6px;">Scheduled</th>
+                                                <th style="border-bottom:1px solid #ddd; padding:6px;">In Progress</th>
+                                                <th style="border-bottom:1px solid #ddd; padding:6px;">Done</th>
+                                                <th style="border-bottom:1px solid #ddd; padding:6px;">Rejected</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="padding:6px;"><t t-esc="kpis.get('open', 0)"/></td>
+                                                <td style="padding:6px;"><t t-esc="kpis.get('scheduled', 0)"/></td>
+                                                <td style="padding:6px;"><t t-esc="kpis.get('in_progress', 0)"/></td>
+                                                <td style="padding:6px;"><t t-esc="kpis.get('done', 0)"/></td>
+                                                <td style="padding:6px;"><t t-esc="kpis.get('rejected', 0)"/></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </t>
+
+                                <hr/>
+
+                                <h4>Manifest Rows</h4>
+                                <table class="table table-sm o_main_table" style="width:100%; border-collapse:collapse;">
+                                    <thead>
                                         <tr>
-                                            <td style="padding:6px;"><t t-esc="x.get('manifest')"/></td>
-                                            <td style="padding:6px;"><t t-esc="x.get('sale_order')"/></td>
-                                            <td style="padding:6px;"><t t-esc="x.get('invoice')"/></td>
-                                            <td style="padding:6px; text-align:right;">
-                                                <t t-esc="('%.2f' % (x.get('total', 0.0)))"/>
-                                            </td>
+                                            <th style="border-bottom:1px solid #ccc; padding:6px;">Manifest</th>
+                                            <th style="border-bottom:1px solid #ccc; padding:6px;">Customer</th>
+                                            <th style="border-bottom:1px solid #ccc; padding:6px;">Date</th>
+                                            <th style="border-bottom:1px solid #ccc; padding:6px;">Status</th>
+                                            <th style="border-bottom:1px solid #ccc; padding:6px; text-align:right;">Bins</th>
+                                            <th style="border-bottom:1px solid #ccc; padding:6px;">Sales Order</th>
+                                            <th style="border-bottom:1px solid #ccc; padding:6px;">Invoice</th>
                                         </tr>
-                                    </t>
-                                </tbody>
-                            </table>
+                                    </thead>
 
-                            <p class="mt-2">
-                                <strong>Total invoices:</strong>
-                                <t t-esc="('%.2f' % (so_inv_total or 0.0))"/>
-                            </p>
-                        </t>
+                                    <tbody>
+                                        <t t-if="not manifest_rows">
+                                            <tr>
+                                                <td colspan="7" style="padding:10px; text-align:center; color:#888;">
+                                                    No records found for selected filters.
+                                                </td>
+                                            </tr>
+                                        </t>
 
-                    </div>
-                </main>
-            </t>
-        </t>
-    </template>
+                                        <t t-foreach="manifest_rows" t-as="r" t-key="r.get('manifest')">
+                                            <tr>
+                                                <td style="padding:6px;"><t t-esc="r.get('manifest')"/></td>
+                                                <td style="padding:6px;"><t t-esc="r.get('customer')"/></td>
+                                                <td style="padding:6px;"><t t-esc="r.get('date')"/></td>
+                                                <td style="padding:6px;"><t t-esc="r.get('status')"/></td>
+                                                <td style="padding:6px; text-align:right;"><t t-esc="r.get('bin_count')"/></td>
+                                                <td style="padding:6px;"><t t-esc="r.get('so')"/></td>
+                                                <td style="padding:6px;"><t t-esc="r.get('invoice')"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
 
-</odoo>
+                                <t t-if="so_inv_rows">
+                                    <hr/>
+                                    <h4>Sales Order ↔ Invoice (Totals)</h4>
+                                    <table class="table table-sm" style="width:100%; border-collapse:collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th style="border-bottom:1px solid #ccc; padding:6px;">Manifest</th>
+                                                <th style="border-bottom:1px solid #ccc; padding:6px;">Sales Order</th>
+                                                <th style="border-bottom:1px solid #ccc; padding:6px;">Invoice</th>
+                                                <th style="border-bottom:1px solid #ccc; padding:6px; text-align:right;">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="so_inv_rows" t-as="x" t-key="x.get('invoice')">
+                                                <tr>
+                                                    <td style="padding:6px;"><t t-esc="x.get('manifest')"/></td>
+                                                    <td style="padding:6px;"><t t-esc="x.get('sale_order')"/></td>
+                                                    <td style="padding:6px;"><t t-esc="x.get('invoice')"/></td>
+                                                    <td style="padding:6px; text-align:right;">
+                                                        <t t-esc="('%.2f' % (x.get('total', 0.0)))"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+
+                                    <p class="mt-2">
+                                        <strong>Total invoices:</strong>
+                                        <t t-esc="('%.2f' % (so_inv_total or 0.0))"/>
+                                    </p>
+                                </t>
+
+                            </div>
+                        </main>
+                    </t>
+                </t>
+            </template>
+
+        </odoo>
