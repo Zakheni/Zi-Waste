@@ -170,24 +170,45 @@ class WasteWorksheet(models.Model):
         readonly=True,
     )
 
-    # ✅ Allowed lists come from the manifest's customer config
+    # # ✅ Allowed lists come from the manifest's customer config
+    # allowed_service_ids = fields.Many2many(
+    #     "service.request",
+    #     related="service_request_id.partner_id.commercial_partner_id.wmz_service_ids",
+    #     string="Allowed Services",
+    #     readonly=True,
+    # )
+    #
+    # allowed_container_type_ids = fields.Many2many(
+    #     "container.type",
+    #     related="service_request_id.partner_id.commercial_partner_id.wmz_container_type_ids",
+    #     string="Allowed Container Types",
+    #     readonly=True,
+    # )
+    #
+    # allowed_waste_type_ids = fields.Many2many(
+    #     "waste.type",
+    #     related="service_request_id.partner_id.commercial_partner_id.wmz_waste_type_ids",
+    #     string="Allowed Waste Types",
+    #     readonly=True,
+    # )
+
     allowed_service_ids = fields.Many2many(
         "service.request",
-        related="service_request_id.partner_id.commercial_partner_id.wmz_service_ids",
+        related="company_id.wmz_service_ids",
         string="Allowed Services",
         readonly=True,
     )
 
     allowed_container_type_ids = fields.Many2many(
         "container.type",
-        related="service_request_id.partner_id.commercial_partner_id.wmz_container_type_ids",
+        related="company_id.wmz_container_type_ids",
         string="Allowed Container Types",
         readonly=True,
     )
 
     allowed_waste_type_ids = fields.Many2many(
         "waste.type",
-        related="service_request_id.partner_id.commercial_partner_id.wmz_waste_type_ids",
+        related="company_id.wmz_waste_type_ids",
         string="Allowed Waste Types",
         readonly=True,
     )
@@ -214,22 +235,39 @@ class WasteWorksheet(models.Model):
     liters_collected = fields.Float(string="Liters Collected", related='service_request_id.liters_collected', )
     sale_order_id = fields.Many2one('sale.order', string="Sales Order")
 
+    # @api.onchange("company_id")
+    # def _onchange_company_id_wmz(self):
+    #     for rec in self:
+    #         company = rec.company_id or rec.env.company
+    #         service_ids = company.wmz_service_ids.ids if company.wmz_service_ids else []
+    #         container_ids = company.wmz_container_type_ids.ids if company.wmz_container_type_ids else []
+    #
+    #         domain = {}
+    #         if service_ids:
+    #             domain["service_requested_id"] = [("id", "in", service_ids)]
+    #         if container_ids:
+    #             domain["container_type_id"] = [("id", "in", container_ids)]
+    #
+    #         if domain:
+    #             return {"domain": domain}
+    #         return {}
+
     @api.onchange("company_id")
     def _onchange_company_id_wmz(self):
         for rec in self:
             company = rec.company_id or rec.env.company
-            service_ids = company.wmz_service_ids.ids if company.wmz_service_ids else []
-            container_ids = company.wmz_container_type_ids.ids if company.wmz_container_type_ids else []
 
-            domain = {}
-            if service_ids:
-                domain["service_requested_id"] = [("id", "in", service_ids)]
-            if container_ids:
-                domain["container_type_id"] = [("id", "in", container_ids)]
+            service_ids = company.wmz_service_ids.ids or []
+            container_ids = company.wmz_container_type_ids.ids or []
+            waste_ids = getattr(company, "wmz_waste_type_ids", self.env["waste.type"]).ids or []
 
-            if domain:
-                return {"domain": domain}
-            return {}
+            return {
+                "domain": {
+                    "service_requested_id": [("id", "in", service_ids)] if service_ids else [("id", "!=", 0)],
+                    "container_type_id": [("id", "in", container_ids)] if container_ids else [("id", "!=", 0)],
+                    "waste_type_id": [("id", "in", waste_ids)] if waste_ids else [("id", "!=", 0)],
+                }
+            }
 
     hide_waste_type = fields.Boolean(compute='_compute_field_visibility')
     hide_waste_details = fields.Boolean(compute='_compute_field_visibility')
@@ -377,14 +415,23 @@ class WasteWorksheet(models.Model):
 
         # ---------- Button: start worksheet / dispatch truck ----------
 
+    # def action_start(self):
+    #     for rec in self:
+    #         # Update worksheet state
+    #         rec.state = 'in_progress'
+    #
+    #         # Update related service request to Dispatched
+    #         if rec.service_request_id and rec.service_request_id.state in ('scheduled', 'assigned', 'generated'):
+    #             rec.service_request_id.with_context(skip_auto_state=True).write({
+    #                 'state': 'dispatched'
+    #             })
+
     def action_start(self):
         for rec in self:
-            # Update worksheet state
             rec.state = 'in_progress'
 
-            # Update related service request to Dispatched
             if rec.service_request_id and rec.service_request_id.state in ('scheduled', 'assigned', 'generated'):
-                rec.service_request_id.with_context(skip_auto_state=True).write({
+                rec.service_request_id.sudo().with_context(skip_auto_state=True).write({
                     'state': 'dispatched'
                 })
 

@@ -18,6 +18,8 @@
                       invisible="'is_company' == False">
 
                     <group string="Service Configuration" col="2">
+
+                        <field name="wmz_use_company_config"/>
                         <field name="wmz_service_ids"
                                widget="many2many_tags"
                                options="{'no_create_edit': True}"

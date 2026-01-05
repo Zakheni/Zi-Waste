@@ -14,6 +14,7 @@
         "data/sequence.xml",
         "data/mail_reject_manifest.xml",
         "data/mail_amend_manifest.xml",
+        "data/mail_authorise_manifest.xml",
         "data/mai_assign_to_driver.xml",
         "data/mail_worksheet_completion.xml",
         "data/mail_invide_service_provider.xml",
@@ -37,7 +38,7 @@
         "views/product_inherit.view.xml",
         "views/account_move_view.xml",
         "views/sale_order_view.xml",
-        # "views/res_company_view.xml",
+        "views/res_company_view.xml",
         "views/hr_employee_view.xml",
         "views/fleet_vehicle_module.xml",
         "views/fleet_vehicle_views.xml",
@@ -55,6 +56,7 @@
         "views/amend_service_request_widzard.xml",
         "views/waste_assign_bin_wizard_view.xml",
         # "views/waste_worksheet_assign_bin_wizard_view.xml",
+        # 'views/remove_powered_by_odoo.xml',
         "views/container_type_view.xml",
         "popups/view_manifest_document_popup.xml",
         "popups/view_manifest_document_up_pop.xml",
@@ -91,13 +93,19 @@
     #     ],
     # },
 
+    # "assets": {
+    #     "web.assets_frontend": [
+    #         "/web/static/lib/chartjs/chart.umd.js",
+    #         "waste_management_zakheni/static/src/css/branding.css",
+    #     ],
+    # },
+
     "assets": {
         "web.assets_frontend": [
             "/web/static/lib/chartjs/chart.umd.js",
+            "waste_management_zakheni/static/src/css/branding.css",
         ],
-    },
 
-    "assets": {
         "web.assets_backend": [
             # Chart.js (try both, Odoo builds differ)
             "web/static/lib/chartjs/chart.umd.js",
@@ -106,6 +114,7 @@
             "waste_management_zakheni/static/src/dashboard/waste_dashboard.js",
             "waste_management_zakheni/static/src/dashboard/waste_dashboard.xml",
             "waste_management_zakheni/static/src/dashboard/waste_dashboard.css",
+
         ],
     },
 

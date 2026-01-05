@@ -11,6 +11,29 @@
                            options="{'no_create': True}"
                            domain="[('sale_order_id', '=', sale_order_id)]"/>
                 </group>
+
+
+            </xpath>
+
+            <xpath expr="//button[@name='action_register_payment']" position="attributes">
+                <!-- Only these groups can see it -->
+                <attribute name="groups">
+                    waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance
+                </attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="account_move_form_limit_register_payment_batch" model="ir.ui.view">
+        <field name="name">account.move.form.limit.register.payment.batch</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="pastel_batch_payment.account_move_form_inherit_register_payment_batch"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_register_payment_batch']" position="attributes">
+                <attribute name="groups">
+                    waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance
+                </attribute>
             </xpath>
         </field>
     </record>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+
     <!--
         EXTEND PORTAL HOME: Waste Management Tiles
     -->
@@ -306,14 +307,28 @@
                                     </div>
 
                                     <!-- Container Type (bin / tank) -->
+                                    <!--                                    <div class="mb-3">-->
+                                    <!--                                        <label class="form-label">Container Type</label>-->
+                                    <!--                                        <select id="container_types" name="container_types" class="form-select">-->
+                                    <!--                                            <option value="">Select container type</option>-->
+                                    <!--                                            <option value="tank">Tank</option>-->
+                                    <!--                                            <option value="bin">Bin</option>-->
+                                    <!--                                        </select>-->
+                                    <!--                                    </div>-->
+                                    <!-- Container Type (from company config: container.type records) -->
                                     <div class="mb-3">
                                         <label class="form-label">Container Type</label>
-                                        <select id="container_type" name="container_type" class="form-select">
+                                        <select id="container_type_id" name="container_type_id" class="form-select">
                                             <option value="">Select container type</option>
-                                            <option value="tank">Tank</option>
-                                            <option value="bin">Bin</option>
+                                            <t t-foreach="container_types" t-as="ct">
+                                                <option t-att-value="ct.id"
+                                                        t-att-data-kind="(ct.name or '').strip().lower()">
+                                                    <t t-esc="ct.display_name"/>
+                                                </option>
+                                            </t>
                                         </select>
                                     </div>
+
                                 </div>
                             </div>
 
@@ -393,11 +408,10 @@
             <script src="/web/static/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
             <script type="text/javascript">
                 (function () {
-                // Minimal JSON-RPC caller for Odoo "type='json'" routes
                 function jsonRpc(url, params) {
                 return fetch(url, {
                 method: 'POST',
-                credentials: 'same-origin', // send session cookie
+                credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                 jsonrpc: "2.0",
@@ -406,51 +420,106 @@
                 id: Date.now()
                 })
                 })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                if (data &amp;&amp; data.error) {
-                console.error("JSON-RPC error:", data.error);
-                return [];
-                }
-                return (data &amp;&amp; data.result) ? data.result : [];
-                })
-                .catch(function (err) {
-                console.error("Fetch RPC failed:", err);
+                .then(r => r.json())
+                .then(data => (data &amp;&amp; data.result) ? data.result : (data.error ? {error: data.error} : []))
+                .catch(err => {
+                console.error("RPC failed:", err);
                 return [];
                 });
                 }
 
                 function loadPickupPoints(partnerId) {
-                var ppSel = document.getElementById('pickup_point_id');
-                if (!ppSel) return;
+                const sel = document.getElementById('pickup_point_id');
+                if (!sel) return;
 
-                ppSel.innerHTML = '<option value="">Select recognised address</option>';
+                sel.innerHTML = '<option value="">Select recognised address</option>';
                 if (!partnerId) return;
 
                 jsonRpc('/my/waste/pickup_points', { partner_id: partnerId })
-                .then(function (res) {
-                (res || []).forEach(function (item) {
-                var opt = document.createElement('option');
-                opt.value = item.id;
-                opt.textContent = item.name;
-                ppSel.appendChild(opt);
+                .then(function (rows) {
+                (rows || []).forEach(function (pp) {
+                const opt = document.createElement('option');
+                opt.value = pp.id;
+                opt.textContent = pp.name;
+                sel.appendChild(opt);
                 });
                 });
                 }
 
                 document.addEventListener('DOMContentLoaded', function () {
-                var custSel = document.getElementById('client_partner_id');
-                if (!custSel) return;
+                const clientSel = document.getElementById('client_partner_id');
+                if (!clientSel) return;
 
-                custSel.addEventListener('change', function () {
+                clientSel.addEventListener('change', function () {
                 loadPickupPoints(this.value);
                 });
 
-                // initial load
-                loadPickupPoints(custSel.value);
+                loadPickupPoints(clientSel.value);
                 });
                 })();
             </script>
+
+
+            <!--            <script type="text/javascript">-->
+            <!--                (function () {-->
+            <!--                // Minimal JSON-RPC caller for Odoo "type='json'" routes-->
+            <!--                function jsonRpc(url, params) {-->
+            <!--                return fetch(url, {-->
+            <!--                method: 'POST',-->
+            <!--                credentials: 'same-origin', // send session cookie-->
+            <!--                headers: { 'Content-Type': 'application/json' },-->
+            <!--                body: JSON.stringify({-->
+            <!--                jsonrpc: "2.0",-->
+            <!--                method: "call",-->
+            <!--                params: params || {},-->
+            <!--                id: Date.now()-->
+            <!--                })-->
+            <!--                })-->
+            <!--                .then(function (r) { return r.json(); })-->
+            <!--                .then(function (data) {-->
+            <!--                if (data &amp;&amp; data.error) {-->
+            <!--                console.error("JSON-RPC error:", data.error);-->
+            <!--                return [];-->
+            <!--                }-->
+            <!--                return (data &amp;&amp; data.result) ? data.result : [];-->
+            <!--                })-->
+            <!--                .catch(function (err) {-->
+            <!--                console.error("Fetch RPC failed:", err);-->
+            <!--                return [];-->
+            <!--                });-->
+            <!--                }-->
+
+            <!--                function loadPickupPoints(partnerId) {-->
+            <!--                var ppSel = document.getElementById('pickup_point_id');-->
+            <!--                if (!ppSel) return;-->
+
+            <!--                ppSel.innerHTML = '<option value="">Select recognised address</option>';-->
+            <!--                if (!partnerId) return;-->
+
+            <!--                jsonRpc('/my/waste/pickup_points', { partner_id: partnerId })-->
+            <!--                .then(function (res) {-->
+            <!--                (res || []).forEach(function (item) {-->
+            <!--                var opt = document.createElement('option');-->
+            <!--                opt.value = item.id;-->
+            <!--                opt.textContent = item.name;-->
+            <!--                ppSel.appendChild(opt);-->
+            <!--                });-->
+            <!--                });-->
+            <!--                }-->
+
+            <!--                document.addEventListener('DOMContentLoaded', function () {-->
+            <!--                var custSel = document.getElementById('client_partner_id');-->
+            <!--                if (!custSel) return;-->
+
+            <!--                custSel.addEventListener('change', function () {-->
+            <!--                loadPickupPoints(this.value);-->
+            <!--                });-->
+
+            <!--                // initial load-->
+            <!--                loadPickupPoints(custSel.value);-->
+            <!--                });-->
+            <!--                })();-->
+            <!--            </script>-->
             <script type="text/javascript">
                 (function () {
 
@@ -542,16 +611,22 @@
                 (function () {
 
                 function toggleSize() {
-                const ct = document.getElementById('container_type')?.value;
+                const sel = document.getElementById('container_type_id');
                 const binGroup = document.getElementById('bin_type_group');
                 const tankGroup = document.getElementById('tank_volume_group');
+                if (!sel || !binGroup || !tankGroup) return;
 
-                if (!binGroup || !tankGroup) return;
+                const opt = sel.options[sel.selectedIndex];
+                const kind = (opt &amp;&amp; opt.dataset &amp;&amp; opt.dataset.kind) ? opt.dataset.kind : '';
 
-                if (ct === 'bin') {
+                // We detect by name. Make sure your container.type names contain "bin" or "tank"
+                const isBin = kind.includes('bin');
+                const isTank = kind.includes('tank');
+
+                if (isBin) {
                 binGroup.classList.remove('d-none');
                 tankGroup.classList.add('d-none');
-                } else if (ct === 'tank') {
+                } else if (isTank) {
                 tankGroup.classList.remove('d-none');
                 binGroup.classList.add('d-none');
                 } else {
@@ -561,17 +636,49 @@
                 }
 
                 document.addEventListener('DOMContentLoaded', function () {
-                const sel = document.getElementById('container_type');
+                const sel = document.getElementById('container_type_id');
                 if (!sel) return;
-
                 sel.addEventListener('change', toggleSize);
-
-                // 🔥 important: run once on load
                 toggleSize();
                 });
 
                 })();
             </script>
+
+            <!--            <script type="text/javascript">-->
+            <!--                (function () {-->
+
+            <!--                function toggleSize() {-->
+            <!--                const ct = document.getElementById('container_type')?.value;-->
+            <!--                const binGroup = document.getElementById('bin_type_group');-->
+            <!--                const tankGroup = document.getElementById('tank_volume_group');-->
+
+            <!--                if (!binGroup || !tankGroup) return;-->
+
+            <!--                if (ct === 'bin') {-->
+            <!--                binGroup.classList.remove('d-none');-->
+            <!--                tankGroup.classList.add('d-none');-->
+            <!--                } else if (ct === 'tank') {-->
+            <!--                tankGroup.classList.remove('d-none');-->
+            <!--                binGroup.classList.add('d-none');-->
+            <!--                } else {-->
+            <!--                binGroup.classList.add('d-none');-->
+            <!--                tankGroup.classList.add('d-none');-->
+            <!--                }-->
+            <!--                }-->
+
+            <!--                document.addEventListener('DOMContentLoaded', function () {-->
+            <!--                const sel = document.getElementById('container_type');-->
+            <!--                if (!sel) return;-->
+
+            <!--                sel.addEventListener('change', toggleSize);-->
+
+            <!--                // 🔥 important: run once on load-->
+            <!--                toggleSize();-->
+            <!--                });-->
+
+            <!--                })();-->
+            <!--            </script>-->
 
 
         </t>

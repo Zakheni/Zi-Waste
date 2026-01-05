@@ -54,6 +54,8 @@
                         <group string="Optional Geo (for closest matching)">
                             <field name="latitude"/>
                             <field name="longitude"/>
+                            <field name="company_id"/>
+
                         </group>
                     </group>
                 </sheet>

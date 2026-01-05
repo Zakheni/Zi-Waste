@@ -12,7 +12,7 @@
                 <field name="write_uid" optional="hide"/>
                 <field name="create_date" widget="badge" optional="hide"/>
                 <field name="write_date" widget="badge" optional="hide"/>
-
+                <field name="company_id" widget="badge" optional="hide"/>
                 <field name="service_requested_id"/>
                 <field name="container_type_id"/>
                 <field name="bin_dropped_ids" widget="many2many_tags" optional="hide"/>
@@ -36,7 +36,7 @@
 
                     <button string="Draft" type="object" name="action_draft" class="btn-primary"
 
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+                            groups="waste_management_zakheni.group_wmz_admin"/>
 
                     <!-- NEW: Schedule -->
                     <button string="Schedule"
@@ -60,17 +60,17 @@
                     <!--                            invisible="state != 'scheduled' or is_service_provider == True"/>-->
                     <button string="Authorise" type="object" name="action_mark_done" class="btn-success"
                             invisible="state != 'service_delivered' or worksheet_count == 0"
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>
                     <button string="Reject" type="object" name="action_cancelled" class="btn-danger"
                             invisible="state != 'service_delivered' or worksheet_count == 0"
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>
                     <button string="Amend" type="object" name="action_amend" class="btn-primary"
                             invisible="state != 'cancelled' or worksheet_count == 0"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
                     <button name="action_open_related_sales" type="object"
                             string="Create Invoice" class="btn-primary"
                             invisible="state != 'done'"
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance"/>
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance"/>
                     <button name="action_print_manifest_pdf"
                             type="object"
                             string="Print"
@@ -86,12 +86,20 @@
 
                     />
 
+                    <!--                    <button name="action_push_extra_products_to_so"-->
+                    <!--                            type="object"-->
+                    <!--                            string="Update Sales Order"-->
+                    <!--                            class="btn-primary"-->
+                    <!--                            invisible="sale_order_id == False or state != 'scheduled' and state != 'dispatched' and state != 'cancelled' and state != 'service_delivered' or extra_product_count == 0 "-->
+                    <!--                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"-->
+
+                    <!--                    />-->
                     <button name="action_push_extra_products_to_so"
                             type="object"
                             string="Update Sales Order"
                             class="btn-primary"
-                            groups="waste_management_zakheni.group_wmz_admin,aste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"
-                            invisible="sale_order_id == False or state != 'scheduled' and state != 'dispatched' and state != 'cancelled' and state != 'service_delivered' or extra_product_count == 0 "/>
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"
+                            invisible="sale_order_id == False or state not in ('scheduled','dispatched','cancelled','service_delivered') or extra_product_count == 0"/>
 
 
                     <field name="state" widget="statusbar"
@@ -109,18 +117,28 @@
                             <field name="worksheet_count" widget="statinfo"/>
                         </button>
 
+                        <!--                        <button name="action_open_product_selector"-->
+                        <!--                                type="object"-->
+                        <!--                                class="oe_stat_button"-->
+                        <!--                                icon="fa-shopping-cart"-->
+                        <!--                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"-->
+                        <!--                                invisible="state != 'scheduled' and state != 'dispatched' and state != 'cancelled' and state != 'service_delivered'"-->
+
+                        <!--                        >-->
+                        <!--                            <field name="extra_product_count"-->
+                        <!--                                   widget="statinfo"-->
+                        <!--                                   string="Extra Products"/>-->
+                        <!--                        </button>-->
+
                         <button name="action_open_product_selector"
                                 type="object"
                                 class="oe_stat_button"
                                 icon="fa-shopping-cart"
-                                groups="waste_management_zakheni.group_wmz_admin,aste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"
-                                invisible="state != 'scheduled' and state != 'dispatched' and state != 'cancelled' and state != 'service_delivered'"
-
-                        >
-                            <field name="extra_product_count"
-                                   widget="statinfo"
-                                   string="Extra Products"/>
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"
+                                invisible="state not in ('scheduled','dispatched','cancelled','service_delivered')">
+                            <field name="extra_product_count" widget="statinfo" string="Extra Products"/>
                         </button>
+
                         <button name="action_open_bin_assignment_wizard"
                                 type="object"
                                 class="oe_stat_button"
@@ -176,7 +194,7 @@
                                 icon="fa-external-link"
                                 string="Sales Order"
                                 invisible="sale_order_id == False"
-                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_finance">
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance">
                             <!--                            <field name="sale_order_count" widget="statinfo" string="Order(s)"/>-->
                             <field name="sale_order_id" widget="statinfo" string="Order(s)"/>
                         </button>
@@ -246,8 +264,7 @@
                                                      ('state', '=', 'sale'),
                                                      ('invoice_status', '=', 'to invoice'),
                                                      ('service_request_id', '=', False)]"
-                                   invisible="not partner_id"
-                            />
+                                   invisible="not partner_id"/>
 
 
                             <field name="hide_waste_type" invisible="1"/>
@@ -258,14 +275,14 @@
                             <field name="service_requested_id"
                                    options="{'no_open': True}"
                                    readonly="state != 'draft'"
-                                   domain="[('id', 'in', allowed_service_ids)]"
+
 
                             />
 
                             <field name="waste_type_id" readonly="state != 'draft'"
                                    options="{'no_open': True}"
                                    invisible="hide_waste_type == True"
-                                   domain="[('id', 'in', allowed_waste_type_ids)]"
+
                             />
 
                             <field name="waste_details_id"
@@ -276,7 +293,7 @@
                             <!--                            <field name="container_type_id" readonly="state != 'draft'" widget="radio"-->
                             <!--                                   options="{'horizontal': True}"/>-->
                             <field name="container_type_id" options="{'no_open': True}" readonly="state != 'draft'"
-                                   domain="[('id', 'in', allowed_container_type_ids)]"/>
+                            />
                             <field name="bin_type_id"
                                    options="{'no_open': True}"
 
@@ -289,6 +306,12 @@
                                    invisible="(not hide_general and not hide_tank_volume)
                                                                            or hide_bin"
                             />
+
+                            <!--                            <separator string="DEBUG"/>-->
+                            <!--                            <field name="company_id" readonly="1"/>-->
+                            <!--                            <field name="allowed_service_count" readonly="1"/>-->
+                            <!--                            <field name="allowed_container_count" readonly="1"/>-->
+                            <!--                            <field name="allowed_waste_count" readonly="1"/>-->
 
 
                         </group>

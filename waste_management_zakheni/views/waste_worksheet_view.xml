@@ -80,7 +80,7 @@
                                 class="oe_stat_button"
                                 icon="fa-external-link"
                                 string="Sale Order"
-                                groups="waste_management_zakheni.group_wmz_admin,aste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"
                                 invisible="request_sale_order_id == False">
                             <field name="request_sale_order_id" widget="statinfo" string="Sales"/>
                         </button>
@@ -136,7 +136,9 @@
 
                             <field name="request_sale_order_id"
                                    options="{'no_open': True}"
-                                   readonly="1"/>
+                                   readonly="1"
+                                   groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"
+                            />
                             <field name="service_requested_id"
                                    options="{'no_open': True}"
                                    readonly="1"
@@ -273,7 +275,7 @@
                             <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
                             <!--                                              or hide_bin"-->
 
-                            <field name="truck_tanker_id" readonly="1"  string="Tank Truck"
+                            <field name="truck_tanker_id" readonly="1" string="Tank Truck"
                                    options="{'no_open': True}"
                                    invisible="(not hide_general and not hide_tank_volume)
                                                                            or hide_bin"
@@ -284,7 +286,7 @@
                             <!--                                   string="Quantity (kL)"-->
                             <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
                             <!--                                              or hide_bin"-->
-<!--                            help="Billing quantity in kiloliters, used for tariff (1–4 kL flat, 5+ incremental)."/>-->
+                            <!--                            help="Billing quantity in kiloliters, used for tariff (1–4 kL flat, 5+ incremental)."/>-->
                             <field name="liters_collected" readonly="1"
                                    invisible="(not hide_general and not hide_tank_volume)
                                               or hide_bin"/>

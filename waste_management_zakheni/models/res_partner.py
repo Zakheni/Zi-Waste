@@ -7,6 +7,12 @@ class ResPartner(models.Model):
         'pickup.point', 'partner_id', string='Pickup Points'
     )
 
+    wmz_use_company_config = fields.Boolean(
+        string="Use Company Service Configuration",
+        default=True,
+        help="If enabled, this customer inherits services/container types from the company."
+    )
+
     wmz_service_ids = fields.Many2many(
         "service.request",
         "wmz_partner_service_rel",

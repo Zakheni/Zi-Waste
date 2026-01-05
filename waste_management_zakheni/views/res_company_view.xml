@@ -11,8 +11,34 @@
                 <page string="Waste Management" name="wmz_settings"
                       >
                     <group string="Service Configuration">
-                        <field name="wmz_service_ids" widget="many2many_tags"/>
-                        <field name="wmz_container_type_ids" widget="many2many_tags"/>
+<!--                        <field name="wmz_service_ids" widget="many2many_tags"/>-->
+<!--                        <field name="wmz_container_type_ids" widget="many2many_tags"/>-->
+<!--                        -->
+<!--                        <field name="wmz_waste_type_ids"-->
+<!--                               widget="many2many_tags"-->
+<!--                               options="{'no_create_edit': True}"-->
+<!--                               placeholder="Select waste types for this company..."-->
+<!--                               string="Waste Types for Company"/>-->
+                         <field name="wmz_service_ids"
+                               widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               placeholder="Select services for this company..."
+                               string="Waste Services for Company"/>
+
+                        <field name="wmz_container_type_ids"
+                               widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               placeholder="Select container types for this company..."
+                               string="Container Types for Company"/>
+
+                        <field name="wmz_waste_type_ids"
+                               widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               placeholder="Select waste types for this company..."
+                               string="Waste Types for Company"/>
+
+                          <field name="wmz_bin_type_ids" widget="many2many_tags"/>
+                        <field name="wmz_tank_volume_ids" widget="many2many_tags"/>
                     </group>
                 </page>
             </xpath>

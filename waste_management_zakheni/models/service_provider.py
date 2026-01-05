@@ -18,6 +18,8 @@ class ServiceProvider(models.Model):
     _name = "wms.service.provider"
     _description = "Waste Service Provider"
     _order = "name"
+    _company_auto = True
+
 
     # Basic info
     name = fields.Char(string="Service Provider Name", required=True)
@@ -25,6 +27,16 @@ class ServiceProvider(models.Model):
     suburb = fields.Char(required=True)
     city = fields.Char(string="City/Town", required=True)
     province = fields.Selection(SA_PROVINCES, required=True)
+
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True
+    )
+
+
 
     # Contacts
     phone = fields.Char(required=True)

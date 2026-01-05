@@ -76,6 +76,7 @@
                             <!--                            <field name="bin_type_id" required="1" invisible="hide_bin == False"/>-->
                             <!--                            <field name="tank_volume_id" required="1" invisible="hide_tank == False"/>-->
                             <field name="inUse"/>
+                             <field name="company_id"/>
 
                         </group>
                     </group>

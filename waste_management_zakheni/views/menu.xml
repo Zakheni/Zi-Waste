@@ -30,7 +30,7 @@
               name="Customers"
               parent="menu_pickup_root"
               action="action_res_company_custom"
-              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>
 
     <menuitem id="menu_waste_configuration_site"
               name="Configuration"

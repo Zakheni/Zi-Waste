@@ -68,6 +68,8 @@ export class WasteDashboard extends Component {
       bin_report: [],
       customers: [],
       bin_revenue_table: [],
+      companies: [],   // ✅ NEW (dropdown list)
+
 
       // chart instances (we destroy/rebuild)
       statusChart: null,
@@ -82,6 +84,10 @@ export class WasteDashboard extends Component {
       binChart: null,
       soCustomerChart: null,
       binRevenueChart: null,
+      revenueCompanyChart: null,
+      mode: { show_bins: true, show_tanks: true },
+
+
     });
 
     // ---------------- Refs ----------------
@@ -97,6 +103,8 @@ export class WasteDashboard extends Component {
     this.binCanvas = useRef("binCanvas");
     this.soCustomerCanvas = useRef("soCustomerCanvas");
     this.binRevenueCanvas = useRef("binRevenueCanvas");
+    this.revenueCompanyCanvas = useRef("revenueCompanyCanvas");
+
 
     // ---------------- Datasets ----------------
     this._statusGroups = [];
@@ -113,6 +121,8 @@ export class WasteDashboard extends Component {
     this._binRevenueChart = [];
     this._revenueByCustomer = [];
     this._tankByCustomer = [];
+    this._revenueByCompany = [];
+
 
 
     // ---------------- Buttons ----------------
@@ -305,6 +315,10 @@ export class WasteDashboard extends Component {
 //    this._revenueByCustomer = this._arr(payload?.revenue_by_customer || payload?.revenueByCustomer);
     this._revenueByCustomer = this._arr(payload?.revenue_by_customer);
     this._tankByCustomer = this._arr(payload?.tank_by_customer);
+//    this._revenueByCompany = this._arr(payload?.revenue_by_company);
+    this._revenueByCompany = this._arr(payload?.revenue_by_company);
+
+
 
 
 
@@ -315,6 +329,13 @@ export class WasteDashboard extends Component {
     this.state.bin_report = this._arr(payload?.bin_report_table);
     this.state.customers = Array.isArray(payload?.customers) ? payload.customers : [];
     this.state.bin_revenue_table = this._arr(payload?.bin_revenue_table);
+
+    this.state.companies = Array.isArray(payload?.companies) ? payload.companies : [];
+    this.state.customers = Array.isArray(payload?.customers) ? payload.customers : [];
+    this.state.mode = payload?.mode || { show_bins: true, show_tanks: true };
+
+
+
 
 
   }
@@ -484,6 +505,10 @@ openTodayRowClick(row) {
     const Chart = window.Chart;
     if (!Chart) return;
 
+          // ✅ Must match payload.mode from python
+      const showBins = !!this.state.mode?.show_bins;
+      const showTanks = !!this.state.mode?.show_tanks;
+
     this._destroyCharts([
       "statusChart",
       "serviceChart",
@@ -497,7 +522,124 @@ openTodayRowClick(row) {
       "binChart",
       "soCustomerChart",
       "binRevenueChart",
+      "revenueCompanyChart",
+
     ]);
+
+
+
+//     // ✅ Revenue by Company (BAR)
+//    const ctx = this._ctx(this.revenueByCompanyCanvas);
+//    if (ctx) {
+//      const rows = this._arr(this._revenueByCompany);
+//      const labels = rows.length ? rows.map((r) => r.company || "Unknown") : ["No Data"];
+//      const values = rows.length ? rows.map((r) => r.amount || 0) : [0];
+//
+//      this.state.revenueByCompanyChart = new Chart(ctx, {
+//        type: "bar",
+//        data: {
+//          labels,
+//          datasets: [{
+//           label: "Revenue", data: values }],
+//        },
+//        options: {
+//          responsive: true,
+//          maintainAspectRatio: false,
+//        },
+//      });
+//    }
+
+//// ✅ Revenue by Company (BAR) — custom colors
+//const ctx = this._ctx(this.revenueByCompanyCanvas);
+//if (ctx) {
+//  const rows = this._arr(this._revenueByCompany);
+//  const labels = rows.length ? rows.map((r) => r.company || "Unknown") : ["No Data"];
+//  const values = rows.length ? rows.map((r) => r.amount || 0) : [0];
+//
+//  this.state.revenueByCompanyChart = new Chart(ctx, {
+//    type: "bar",
+//    data: {
+//      labels,
+//      datasets: [
+//        {
+//          label: "Revenue",
+//          data: values,
+//
+//          // ✅ pick your colors here
+//          backgroundColor: "rgba(102, 126, 234, 0.35)", // soft purple/blue
+//          borderColor: "rgba(102, 126, 234, 1)",        // solid line
+//          borderWidth: 2,
+//          borderRadius: 8,
+//        },
+//      ],
+//    },
+//    options: {
+//      responsive: true,
+//      maintainAspectRatio: false,
+//      plugins: {
+//        legend: { display: true },
+//        tooltip: { enabled: true },
+//      },
+//      scales: {
+//        x: {
+//          grid: { display: false },
+//          ticks: { maxRotation: 0, minRotation: 0 },
+//        },
+//        y: {
+//          beginAtZero: true,
+//          ticks: {
+//            callback: (v) => "R " + Number(v || 0).toLocaleString(),
+//          },
+//        },
+//      },
+//    },
+//  });
+//}
+// ✅ Revenue by Company (BAR) — very visible colors (to confirm it changed)
+const cRevCo = this._ctx(this.revenueByCompanyCanvas);
+if (cRevCo) {
+  const rows = this._arr(this._revenueByCompany);
+
+  const labels = rows.length ? rows.map((r) => r.company || "Unknown") : ["No Data"];
+  const values = rows.length ? rows.map((r) => r.amount || 0) : [0];
+
+  // multi-color bars (obvious)
+  const bg = labels.map((_, i) => `hsla(${(i * 55) % 360}, 85%, 60%, 0.45)`);
+  const bd = labels.map((_, i) => `hsla(${(i * 55) % 360}, 85%, 45%, 1)`);
+
+  this.state.revenueByCompanyChart = new Chart(cRevCo, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Revenue by Company",
+          data: values,
+          backgroundColor: bg,
+          borderColor: bd,
+          borderWidth: 2,
+          borderRadius: 8,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: { display: true } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (v) => "R " + Number(v || 0).toLocaleString(),
+          },
+        },
+        x: { grid: { display: false } },
+      },
+    },
+  });
+}
+
 
     // 1) Requests by Status
     const c1 = this._ctx(this.statusCanvas);
@@ -538,17 +680,6 @@ openTodayRowClick(row) {
       });
     }
 
-    // 4) Tank series
-//    const c4 = this._ctx(this.tankCanvas);
-//    if (c4) {
-//      const labels = this._arr(this._tankSeries).map((x) => x.label || "Unknown");
-//      const values = this._arr(this._tankSeries).map((x) => x.kl || 0);
-//      this.state.tankChart = new Chart(c4, {
-//        type: "line",
-//        data: { labels, datasets: [{ label: "kL", data: values }] },
-//        options: { responsive: true, maintainAspectRatio: false },
-//      });
-//    }
 
     // 4) Tank kL by Customer (BAR: Y=Customer, X=kL)
     const c4 = this._ctx(this.tankCanvas);
@@ -620,38 +751,6 @@ openTodayRowClick(row) {
       });
     }
 
-    // 9) Revenue analysis
-//    const c9 = this._ctx(this.revenueCanvas);
-//    if (c9) {
-//      const rows = this._arr(this._revenueAnalysis);
-//      const labels = rows.map((r) => r.label || "");
-//      const values = rows.map((r) => r.amount || 0);
-//      this.state.revenueChart = new Chart(c9, {
-//        type: "line",
-//        data: { labels, datasets: [{ label: "Revenue", data: values }] },
-//        options: { responsive: true, maintainAspectRatio: false },
-//      });
-//    }
-
-//    // 9) Revenue by Customer (BAR: Y=Customer, X=Revenue)
-//    const c9 = this._ctx(this.revenueCanvas);
-//    if (c9) {
-//      const rows = this._arr(this._revenueByCustomer);
-//
-//      const labels = rows.length ? rows.map((r) => r.customer || "Unknown") : ["No Data"];
-//      const values = rows.length ? rows.map((r) => r.amount || 0) : [0];
-//
-//      this.state.revenueChart = new Chart(c9, {
-//        type: "bar",
-//        data: { labels, datasets: [{ label: "Revenue", data: values }] },
-//        options: {
-//          responsive: true,
-//          maintainAspectRatio: false,
-//          indexAxis: "y", // ✅ horizontal bar => Y = customer, X = revenue
-//        },
-//      });
-//    }
-
     // 9) Revenue by Customer (BAR: Y=Customer, X=Revenue)
     const c9 = this._ctx(this.revenueCanvas);
     if (c9) {
@@ -668,6 +767,33 @@ openTodayRowClick(row) {
           maintainAspectRatio: false,
           indexAxis: "y",
         },
+      });
+    }
+
+    // 9B) Revenue by Company (BAR)
+    const c9b = this._ctx(this.revenueCompanyCanvas);
+    if (c9b) {
+      const rows = this._arr(this._revenueByCompany);
+      const labels = rows.length ? rows.map((r) => r.company || "Unknown") : ["No Data"];
+      const values = rows.length ? rows.map((r) => r.amount || 0) : [0];
+
+      this.state.revenueCompanyChart = new Chart(c9b, {
+        type: "bar",
+        data: { labels, datasets: [{ label: "Revenue", data: values }] },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: "y" },
+      });
+    }
+
+     // 9C Revenue by Company (BAR)
+    const c9C  = this._ctx(this.revenueByCompanyCanvas);
+    if (c9C) {
+      const rows = this._arr(this._revenueByCompany);
+      const labels = rows.length ? rows.map((r) => r.company || "No Company") : ["No Data"];
+      const values = rows.length ? rows.map((r) => r.amount || 0) : [0];
+      this.state.revenueByCompanyChart = new Chart(c9C, {
+        type: "bar",
+        data: { labels, datasets: [{ label: "Revenue", data: values }] },
+        options: { responsive: true, maintainAspectRatio: false },
       });
     }
 

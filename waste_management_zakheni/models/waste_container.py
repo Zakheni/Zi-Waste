@@ -6,6 +6,7 @@ class WasteContainer(models.Model):
     _name = 'waste.container'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Waste Container'
+    _company_auto = True
 
     _sql_constraints = [
         (
@@ -27,6 +28,14 @@ class WasteContainer(models.Model):
         if vals.get('name', 'New') == 'New':
             vals['name'] = self.env['ir.sequence'].next_by_code('waste.container') or 'New'
         return super().create(vals)
+
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True
+    )
 
     pickup_point_ids = fields.Many2many(
         'pickup.point',

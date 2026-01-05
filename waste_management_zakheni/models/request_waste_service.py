@@ -26,9 +26,15 @@ class WasteServiceRequest(models.Model):
         default='New')
     pickup_point_id = fields.Many2one('pickup.point', string="Pickup Point", ondelete='cascade')
 
+    # company_id = fields.Many2one(
+    #     'res.company',
+    #     string='Company',
+    #     default=lambda self: self.env.company,
+    #     index=True,
+    # )
     company_id = fields.Many2one(
-        'res.company',
-        string='Company',
+        "res.company",
+        required=True,
         default=lambda self: self.env.company,
         index=True,
     )
@@ -58,9 +64,18 @@ class WasteServiceRequest(models.Model):
     partner_id = fields.Many2one(
         'res.partner',
         string='Customer',
-        domain="[('is_company','=',True)]",
-        readonly=True
+        # domain="[('is_company','=',True)]",
+        # domain=[("is_company", "=", True), ("customer_rank", ">", 0)],
+
+        domain=lambda self: [
+            ('is_company', '=', True),
+            ('customer_rank', '>', 0),
+            ('id', '!=', self.env.user.partner_id.id),
+        ]
+
     )
+
+
 
     pickup_id = fields.Char(string="Pickup Point Name", related='pickup_point_id.name',)
     planned_date = fields.Datetime(string='Planned Date', tracking=True )
@@ -634,43 +649,164 @@ class WasteServiceRequest(models.Model):
             rec.message_post(body=body)
 
         # these are just related helpers for the domain
+    # allowed_service_ids = fields.Many2many(
+    #     "service.request",
+    #     related="partner_id.commercial_partner_id.wmz_service_ids",
+    #     string="Allowed Services",
+    #     readonly=True,
+    # )
+    #
+    # allowed_container_type_ids = fields.Many2many(
+    #     "container.type",
+    #     related="partner_id.commercial_partner_id.wmz_container_type_ids",
+    #     string="Allowed Container Types",
+    #     readonly=True,
+    # )
+    # allowed_waste_type_ids = fields.Many2many(
+    #     "waste.type",
+    #     related="partner_id.commercial_partner_id.wmz_waste_type_ids",
+    #     string="Allowed waste Types",
+    #     readonly=True,
+    # )
+    # allowed_service_ids = fields.Many2many(
+    #     "service.request",
+    #     related="company_id.wmz_service_ids",
+    #     string="Allowed Services",
+    #     readonly=True,
+    # )
+    #
+    # allowed_container_type_ids = fields.Many2many(
+    #     "container.type",
+    #     related="company_id.wmz_container_type_ids",
+    #     string="Allowed Container Types",
+    #     readonly=True,
+    # )
+    #
+    # allowed_waste_type_ids = fields.Many2many(
+    #     "waste.type",
+    #     related="company_id.wmz_waste_type_ids",
+    #     string="Allowed Waste Types",
+    #     readonly=True,
+    # )
+
+    # Link to your config tables (which link to product.attribute.value)
+
+
+    sale_order_id = fields.Many2one('sale.order', string="Sales Order")
+    # service_requested_id = fields.Many2one(
+    #     'service.request',
+    #     string="Service Requested",
+    #
+    # )
+    # waste_type_id = fields.Many2one('waste.type', string="Waste Type")
+    waste_details_id = fields.Many2one('waste.details', string="Waste Details")
+    bin_type_id = fields.Many2one('bin.type', string="Bin Type")
+    # container_type_id = fields.Many2one(
+    #     'container.type',
+    #     string="Container Type",
+    #
+    # )
+    tank_volume_id = fields.Many2one('tank.volume', string="Tank Volume")
+
+    @api.onchange()
+    def _onchange_force_company(self):
+        # Always keep seller company as the current company of the user session
+        self.company_id = self.env.company
+
+    # Use allowed_* fields computed from company or partner config
     allowed_service_ids = fields.Many2many(
         "service.request",
-        related="partner_id.commercial_partner_id.wmz_service_ids",
+        compute="_compute_allowed_configs",
         string="Allowed Services",
-        readonly=True,
+        store=False,
+        compute_sudo=True,
     )
-
     allowed_container_type_ids = fields.Many2many(
         "container.type",
-        related="partner_id.commercial_partner_id.wmz_container_type_ids",
+        compute="_compute_allowed_configs",
         string="Allowed Container Types",
-        readonly=True,
+        store=False,
+        compute_sudo=True,
     )
     allowed_waste_type_ids = fields.Many2many(
         "waste.type",
-        related="partner_id.commercial_partner_id.wmz_waste_type_ids",
-        string="Allowed waste Types",
-        readonly=True,
+        compute="_compute_allowed_configs",
+        string="Allowed Waste Types",
+        store=False,
+        compute_sudo=True,
     )
 
-    # Link to your config tables (which link to product.attribute.value)
-    sale_order_id = fields.Many2one('sale.order', string="Sales Order")
-    service_requested_id = fields.Many2one(
-        'service.request',
-        string="Service Requested",
+    # Fields using domains based on allowed_* fields
+    service_requested_id = fields.Many2one( "service.request", string="Service Requested", domain="[('id','in', allowed_service_ids)]", )
+    container_type_id = fields.Many2one( "container.type", string="Container Type", domain="[('id','in', allowed_container_type_ids)]", )
+    waste_type_id = fields.Many2one( "waste.type", string="Waste Type", domain="[('id','in', allowed_waste_type_ids)]", )
 
-    )
-    waste_type_id = fields.Many2one('waste.type', string="Waste Type")
-    waste_details_id = fields.Many2one('waste.details', string="Waste Details")
-    bin_type_id = fields.Many2one('bin.type', string="Bin Type")
-    container_type_id = fields.Many2one(
-        'container.type',
-        string="Container Type",
+    @api.depends("company_id")
+    def _compute_allowed_configs(self):
+        Service = self.env["service.request"].sudo()
+        ContainerType = self.env["container.type"].sudo()
+        WasteType = self.env["waste.type"].sudo()
 
-    )
-    tank_volume_id = fields.Many2one('tank.volume', string="Tank Volume")
+        empty_service = Service.browse()
+        empty_container = ContainerType.browse()
+        empty_waste = WasteType.browse()
 
+        for rec in self:
+            company = (rec.company_id or rec.env.company).sudo()
+
+            services = company.wmz_service_ids if "wmz_service_ids" in company._fields else empty_service
+            containers = company.wmz_container_type_ids if "wmz_container_type_ids" in company._fields else empty_container
+            wastes = company.wmz_waste_type_ids if "wmz_waste_type_ids" in company._fields else empty_waste
+
+            rec.allowed_service_ids = services or empty_service
+            rec.allowed_container_type_ids = containers or empty_container
+            rec.allowed_waste_type_ids = wastes or empty_waste
+
+    # @api.depends('company_id', 'partner_id')
+    # def _compute_allowed_configs(self):
+    #     WasteType = self.env['waste.type']
+    #     for rec in self:
+    #         company = rec.company_id or rec.env.company
+    #         partner = rec.partner_id.commercial_partner_id if rec.partner_id else False
+    #
+    #         # ✅ DEFAULT: company config (seller config)
+    #         services = company.wmz_service_ids
+    #         containers = company.wmz_container_type_ids
+    #         wastes = company.wmz_waste_type_ids if 'wmz_waste_type_ids' in company._fields else WasteType
+    #
+    #         # ✅ OPTIONAL OVERRIDE: only if field exists AND user disabled company config
+    #         if partner and 'wmz_use_company_config' in partner._fields and not partner.wmz_use_company_config:
+    #             services = partner.wmz_service_ids
+    #             containers = partner.wmz_container_type_ids
+    #             wastes = partner.wmz_waste_type_ids
+    #
+    #         rec.allowed_service_ids = services
+    #         rec.allowed_container_type_ids = containers
+    #         rec.allowed_waste_type_ids = wastes
+
+    # @api.constrains("company_id", "service_requested_id", "container_type_id", "waste_type_id")
+    # def _check_allowed_config(self):
+    #     for rec in self:
+    #         if rec.service_requested_id and rec.service_requested_id not in rec.allowed_service_ids:
+    #             raise ValidationError(_("Selected service is not allowed for this company."))
+    #
+    #         if rec.container_type_id and rec.container_type_id not in rec.allowed_container_type_ids:
+    #             raise ValidationError(_("Selected container type is not allowed for this company."))
+    #
+    #         if rec.waste_type_id and rec.waste_type_id not in rec.allowed_waste_type_ids:
+    #             raise ValidationError(_("Selected waste type is not allowed for this company."))
+
+    allowed_service_count = fields.Integer(compute="_compute_allowed_counts", store=False)
+    allowed_container_count = fields.Integer(compute="_compute_allowed_counts", store=False)
+    allowed_waste_count = fields.Integer(compute="_compute_allowed_counts", store=False)
+
+    def _compute_allowed_counts(self):
+        for rec in self:
+            rec.allowed_service_count = len(rec.allowed_service_ids)
+            rec.allowed_container_count = len(rec.allowed_container_type_ids)
+            rec.allowed_waste_count = len(rec.allowed_waste_type_ids)
+
+    # (Keep the rest of your existing logic...)
 
     hide_waste_type = fields.Boolean(compute='_compute_field_visibility')
     hide_waste_details = fields.Boolean(compute='_compute_field_visibility')
@@ -857,7 +993,8 @@ class WasteServiceRequest(models.Model):
             - Extra line: extra kL @ extra_rate (qty = extra_kL).
         """
         for rec in self:
-            so = rec.sale_order_id
+            # so = rec.sale_order_id
+            so = rec.sale_order_id.sudo()  # ✅ sudo SO
             if not so:
                 continue
 
@@ -956,7 +1093,7 @@ class WasteServiceRequest(models.Model):
             # NORMAL BIN JOB: keep existing qty-only sync
             # --------------------------------------------------------
             qty = rec.product_uom_qty or 0.0
-            line.with_context(skip_waste_sync=True).write({
+            line.sudo().with_context(skip_waste_sync=True).write({
                 'product_uom_qty': qty
             })
 
@@ -970,6 +1107,7 @@ class WasteServiceRequest(models.Model):
         current_company = user.company_id
 
         for vals in vals_list:
+            vals.setdefault("company_id", self.env.company.id)
             # Sequence
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].next_by_code(
@@ -977,8 +1115,9 @@ class WasteServiceRequest(models.Model):
                 ) or 'New'
 
             # Force company_id from USER company (portal or internal)
-            if not vals.get('company_id'):
-                vals['company_id'] = current_company.id
+            # if not vals.get('company_id'):
+            #     vals['company_id'] = current_company.id
+            # for vals in vals_list:
 
             # If using service provider => force-clear fleet fields
             if vals.get("is_service_provider") is True:
@@ -1213,26 +1352,299 @@ class WasteServiceRequest(models.Model):
 
         return True
 
+    # def action_mark_done(self):
+    #     for record in self:
+    #         # Normalised service code
+    #         svc_code = (record.service_requested_id.code or '').lower() \
+    #             if record.service_requested_id and hasattr(record.service_requested_id, 'code') \
+    #             else (record.service_requested_id.display_name or '').strip().lower()
+    #
+    #         # Destination pickup points (from the request)
+    #         dest_pps = record.pickup_point_ids
+    #         dest_pp_ids = dest_pps.ids
+    #         dest_pp_label = ", ".join(dest_pps.mapped("display_name")) if dest_pps else "Unknown"
+    #
+    #         # Customer for containers
+    #         cust = record.partner_id or record.partner_id
+    #
+    #         # -------------------------------------------------
+    #         # REMOVAL OF BINS  -> use bin_lifted_ids
+    #         # -------------------------------------------------
+    #         if svc_code == 'removal of bins':
+    #             for container in record.bin_lifted_ids:
+    #                 if 'pickup_point_ids' in container._fields:
+    #                     container.pickup_point_ids = [(5, 0, 0)]
+    #                 if 'pickup_point_id' in container._fields:
+    #                     container.pickup_point_id = False
+    #                 if 'dropoff_point_id' in container._fields:
+    #                     container.dropoff_point_id = False
+    #                 if 'partner_id' in container._fields:
+    #                     container.partner_id = False
+    #                 if 'status' in container._fields:
+    #                     container.status = 'un_use'
+    #                 if 'inUse' in container._fields:
+    #                     container.inUse = False
+    #                 # 🔹 clear reservation once the removal is completed
+    #                 if 'reserved_request_id' in container._fields and container.reserved_request_id == record:
+    #                     container.reserved_request_id = False
+    #
+    #                 record.message_post(body=f"Removed bin: {container.display_name}")
+    #
+    #         # -------------------------------------------------
+    #         # SWAPPING OF BINS -> bin_lifted_ids / bin_dropped_ids
+    #         # -------------------------------------------------
+    #         elif svc_code == 'swapping of bins':
+    #             # 1) Lifted bins: take them away from current points/customer
+    #             for lifted_bin in record.bin_lifted_ids:
+    #                 if 'pickup_point_ids' in lifted_bin._fields:
+    #                     lifted_bin.pickup_point_ids = [(5, 0, 0)]
+    #                 if 'pickup_point_id' in lifted_bin._fields:
+    #                     lifted_bin.pickup_point_id = False
+    #                 if 'dropoff_point_id' in lifted_bin._fields:
+    #                     lifted_bin.dropoff_point_id = False
+    #                 if 'partner_id' in lifted_bin._fields:
+    #                     lifted_bin.partner_id = False
+    #                 if 'status' in lifted_bin._fields:
+    #                     lifted_bin.status = 'un_use'
+    #                 if 'inUse' in lifted_bin._fields:
+    #                     lifted_bin.inUse = False
+    #                 # 🔹 clear reservation for lifted bins as well
+    #                 if 'reserved_request_id' in lifted_bin._fields and lifted_bin.reserved_request_id == record:
+    #                     lifted_bin.reserved_request_id = False
+    #
+    #                 from_label = ", ".join(
+    #                     lifted_bin.pickup_point_ids.mapped("display_name")
+    #                 ) if 'pickup_point_ids' in lifted_bin._fields and lifted_bin.pickup_point_ids else "Unknown"
+    #
+    #                 record.message_post(
+    #                     body=f"Lifted bin '{lifted_bin.display_name}' from '{from_label}'"
+    #                 )
+    #
+    #             # 2) Dropped bins: assign to destination pickup points + customer
+    #             for dropped_bin in record.bin_dropped_ids:
+    #                 dest_pp_single = dest_pps[:1] and dest_pps[0] or False
+    #
+    #                 if 'pickup_point_ids' in dropped_bin._fields and dest_pp_ids:
+    #                     dropped_bin.pickup_point_ids = [(6, 0, dest_pp_ids)]
+    #                 if 'pickup_point_id' in dropped_bin._fields and dest_pp_single:
+    #                     dropped_bin.pickup_point_id = dest_pp_single
+    #                 if 'dropoff_point_id' in dropped_bin._fields and dest_pp_single:
+    #                     dropped_bin.dropoff_point_id = dest_pp_single
+    #                 if 'partner_id' in dropped_bin._fields and cust:
+    #                     dropped_bin.partner_id = cust
+    #                 if 'status' in dropped_bin._fields:
+    #                     dropped_bin.status = 'in_use'
+    #                 if 'inUse' in dropped_bin._fields:
+    #                     dropped_bin.inUse = True
+    #                 # 🔹 clear reservation once swap is completed
+    #                 if 'reserved_request_id' in dropped_bin._fields and dropped_bin.reserved_request_id == record:
+    #                     dropped_bin.reserved_request_id = False
+    #
+    #                 label = dest_pp_single.display_name if dest_pp_single else dest_pp_label
+    #                 record.message_post(
+    #                     body=f"Dropped bin '{dropped_bin.display_name}' at '{label}'"
+    #                 )
+    #
+    #         # -------------------------------------------------
+    #         # SHUNTING OF BINS  (still uses shunt_* fields)
+    #         # -------------------------------------------------
+    #         elif svc_code == 'shunting of bins':
+    #             from_label = record.shunt_from_id.display_name if record.shunt_from_id else "Unknown"
+    #             to_label = record.shunt_to_id.display_name if record.shunt_to_id else "Unknown"
+    #
+    #             for bin_rec in record.shunt_container_ids:
+    #                 if 'pickup_point_id' in bin_rec._fields:
+    #                     bin_rec.pickup_point_id = record.shunt_to_id
+    #                 if 'pickup_point_ids' in bin_rec._fields and record.shunt_to_id:
+    #                     bin_rec.pickup_point_ids = [(4, record.shunt_to_id.id)]
+    #                 if 'dropoff_point_id' in bin_rec._fields and record.shunt_to_id:
+    #                     bin_rec.dropoff_point_id = record.shunt_to_id
+    #                 if 'partner_id' in bin_rec._fields and cust:
+    #                     bin_rec.partner_id = cust
+    #                 if 'status' in bin_rec._fields:
+    #                     bin_rec.status = 'in_use'
+    #                 if 'inUse' in bin_rec._fields:
+    #                     bin_rec.inUse = True
+    #                 # 🔹 clear reservation after shunt is done
+    #                 if 'reserved_request_id' in bin_rec._fields and bin_rec.reserved_request_id == record:
+    #                     bin_rec.reserved_request_id = False
+    #
+    #                 record.message_post(
+    #                     body=f"Shunted bin '{bin_rec.display_name}' from '{from_label}' to '{to_label}'"
+    #                 )
+    #
+    #         # -------------------------------------------------
+    #         # ✅ PLACEMENT OF BINS – driven by bin_line_ids
+    #         # -------------------------------------------------
+    #         elif svc_code == 'placement of bins':
+    #             # Use each line’s pickup/dropoff to place its bins
+    #             for line in record.bin_line_ids:
+    #                 # Prefer drop-off point, else pickup point
+    #                 dest_pp = line.dropoff_point_id or line.pickup_point_id
+    #                 label = dest_pp.display_name if dest_pp else dest_pp_label
+    #
+    #                 for container in line.bin_dropped_ids:
+    #                     if 'pickup_point_id' in container._fields and dest_pp:
+    #                         container.pickup_point_id = dest_pp
+    #                     if 'pickup_point_ids' in container._fields and dest_pp:
+    #                         container.pickup_point_ids = [(4, dest_pp.id)]
+    #                     if 'dropoff_point_id' in container._fields and dest_pp:
+    #                         container.dropoff_point_id = dest_pp
+    #                     if 'partner_id' in container._fields and cust:
+    #                         container.partner_id = cust
+    #                     if 'status' in container._fields:
+    #                         container.status = 'in_use'
+    #                     if 'inUse' in container._fields:
+    #                         container.inUse = True
+    #                     # 🔹 important: clear reservation so bin is available
+    #                     if 'reserved_request_id' in container._fields and container.reserved_request_id == record:
+    #                         container.reserved_request_id = False
+    #
+    #                     record.message_post(
+    #                         body=f"Placed bin: {container.display_name} at {label}"
+    #                     )
+    #
+    #         # -------------------------------------------------
+    #         # WASTE COLLECTION & DISPOSAL
+    #         # -------------------------------------------------
+    #         elif svc_code in (
+    #                 'waste collection & disposal',
+    #                 'waste collection and disposal',
+    #                 'general collection & desposal',
+    #         ):
+    #             containers = (record.bin_lifted_ids | record.bin_dropped_ids)
+    #             for container in containers:
+    #                 if 'pickup_point_ids' in container._fields:
+    #                     container.pickup_point_ids = [(5, 0, 0)]
+    #                 if 'pickup_point_id' in container._fields:
+    #                     container.pickup_point_id = False
+    #                 if 'dropoff_point_id' in container._fields:
+    #                     container.dropoff_point_id = False
+    #                 if 'partner_id' in container._fields:
+    #                     container.partner_id = False
+    #                 if 'status' in container._fields:
+    #                     container.status = 'un_use'
+    #                 if 'inUse' in container._fields:
+    #                     container.inUse = False
+    #                 # 🔹 clear reservation once collected/disposed
+    #                 if 'reserved_request_id' in container._fields and container.reserved_request_id == record:
+    #                     container.reserved_request_id = False
+    #
+    #                 record.message_post(
+    #                     body=f"Collected & Disposed bin: {container.display_name}"
+    #                 )
+    #
+    #         all_tanks = self.env['waste.container']
+    #
+    #         # 1) Log per-line liters + tanks
+    #         total_liters = 0.0
+    #         for line in record.bin_line_ids:
+    #             if not line.tank_ids:
+    #                 continue
+    #
+    #             all_tanks |= line.tank_ids
+    #
+    #             liters = line.liters_collected or 0.0
+    #             total_liters += liters
+    #
+    #             pp_label = (
+    #                 line.pickup_point_id.display_name
+    #                 if line.pickup_point_id
+    #                 else dest_pp_label
+    #             )
+    #
+    #             tank_bits = []
+    #             for tank in line.tank_ids:
+    #                 # Try to show tank volume
+    #                 vol_label = ""
+    #                 if "tank_volume_id" in tank._fields and tank.tank_volume_id:
+    #                     vol_label = (
+    #                             tank.tank_volume_id.display_name
+    #                             or tank.tank_volume_id.name
+    #                             or ""
+    #                     )
+    #
+    #                 if vol_label:
+    #                     tank_bits.append(f"{tank.display_name} ({vol_label})")
+    #                 else:
+    #                     tank_bits.append(tank.display_name)
+    #
+    #             tank_label = ", ".join(tank_bits) or "Unknown tank"
+    #
+    #             if liters:
+    #                 msg = (
+    #                     f"Collected {liters:g} L from tanks: {tank_label} "
+    #                     f"at {pp_label}"
+    #                 )
+    #             else:
+    #                 msg = f"Emptied tanks: {tank_label} at {pp_label}"
+    #
+    #             record.message_post(body=msg)
+    #
+    #         # 1b) Log overall kL + tariff summary for the job (if this is a Tank job)
+    #         if record._is_tank_job():
+    #             # Prefer your computed billing values from the request
+    #             liters_for_billing = record.liters_collected or total_liters
+    #             kl = record.billing_kl or (liters_for_billing / 1000.0 if liters_for_billing else 0.0)
+    #             base_kl, base_price, extra_rate = record._get_rate_params()
+    #             extra_kl = max(0.0, kl - base_kl)
+    #             amount = record.billing_amount or 0.0
+    #
+    #             tariff_msg = (
+    #                 f"Tank job summary: {kl:.2f} kL "
+    #                 f"({liters_for_billing:.0f} L). "
+    #                 f"Base: {base_kl:g} kL at R{base_price:,.2f}. "
+    #                 f"Extra: {extra_kl:.2f} kL at R{extra_rate:,.2f}/kL. "
+    #                 f"Total amount (excl. VAT): R{amount:,.2f}."
+    #             )
+    #             record.message_post(body=tariff_msg)
+    #
+    #         # 2) Actually empty / reset tank records (keep your existing logic here)
+    #         for tank in all_tanks:
+    #             if "pickup_point_ids" in tank._fields:
+    #                 tank.pickup_point_ids = [(6, 0, dest_pp_ids)]
+    #             if "pickup_point_id" in tank._fields and dest_pps:
+    #                 tank.pickup_point_id = dest_pps[0]
+    #             if "dropoff_point_id" in tank._fields and dest_pps:
+    #                 tank.dropoff_point_id = dest_pps[0]
+    #             if "partner_id" in tank._fields and cust:
+    #                 tank.partner_id = cust
+    #             if "status" in tank._fields:
+    #                 tank.status = "un_use"
+    #             if "inUse" in tank._fields:
+    #                 tank.inUse = False
+    #             if (
+    #                     "reserved_request_id" in tank._fields
+    #                     and tank.reserved_request_id == record
+    #             ):
+    #                 tank.reserved_request_id = False
+    #
+    #         record.state = "done"
+
     def action_mark_done(self):
         for record in self:
+            # ✅ run whole logic with sudo to avoid Sales Order access errors
+            rec = record.sudo()
+
             # Normalised service code
-            svc_code = (record.service_requested_id.code or '').lower() \
-                if record.service_requested_id and hasattr(record.service_requested_id, 'code') \
-                else (record.service_requested_id.display_name or '').strip().lower()
+            svc_code = (rec.service_requested_id.code or '').lower() \
+                if rec.service_requested_id and hasattr(rec.service_requested_id, 'code') \
+                else (rec.service_requested_id.display_name or '').strip().lower()
 
             # Destination pickup points (from the request)
-            dest_pps = record.pickup_point_ids
+            dest_pps = rec.pickup_point_ids
             dest_pp_ids = dest_pps.ids
             dest_pp_label = ", ".join(dest_pps.mapped("display_name")) if dest_pps else "Unknown"
 
             # Customer for containers
-            cust = record.partner_id or record.partner_id
+            cust = rec.partner_id or rec.partner_id
 
             # -------------------------------------------------
             # REMOVAL OF BINS  -> use bin_lifted_ids
             # -------------------------------------------------
             if svc_code == 'removal of bins':
-                for container in record.bin_lifted_ids:
+                for container in rec.bin_lifted_ids:
+                    container = container.sudo()
                     if 'pickup_point_ids' in container._fields:
                         container.pickup_point_ids = [(5, 0, 0)]
                     if 'pickup_point_id' in container._fields:
@@ -1246,17 +1658,18 @@ class WasteServiceRequest(models.Model):
                     if 'inUse' in container._fields:
                         container.inUse = False
                     # 🔹 clear reservation once the removal is completed
-                    if 'reserved_request_id' in container._fields and container.reserved_request_id == record:
+                    if 'reserved_request_id' in container._fields and container.reserved_request_id == rec:
                         container.reserved_request_id = False
 
-                    record.message_post(body=f"Removed bin: {container.display_name}")
+                    rec.message_post(body=f"Removed bin: {container.display_name}")
 
             # -------------------------------------------------
             # SWAPPING OF BINS -> bin_lifted_ids / bin_dropped_ids
             # -------------------------------------------------
             elif svc_code == 'swapping of bins':
                 # 1) Lifted bins: take them away from current points/customer
-                for lifted_bin in record.bin_lifted_ids:
+                for lifted_bin in rec.bin_lifted_ids:
+                    lifted_bin = lifted_bin.sudo()
                     if 'pickup_point_ids' in lifted_bin._fields:
                         lifted_bin.pickup_point_ids = [(5, 0, 0)]
                     if 'pickup_point_id' in lifted_bin._fields:
@@ -1270,19 +1683,20 @@ class WasteServiceRequest(models.Model):
                     if 'inUse' in lifted_bin._fields:
                         lifted_bin.inUse = False
                     # 🔹 clear reservation for lifted bins as well
-                    if 'reserved_request_id' in lifted_bin._fields and lifted_bin.reserved_request_id == record:
+                    if 'reserved_request_id' in lifted_bin._fields and lifted_bin.reserved_request_id == rec:
                         lifted_bin.reserved_request_id = False
 
                     from_label = ", ".join(
                         lifted_bin.pickup_point_ids.mapped("display_name")
                     ) if 'pickup_point_ids' in lifted_bin._fields and lifted_bin.pickup_point_ids else "Unknown"
 
-                    record.message_post(
+                    rec.message_post(
                         body=f"Lifted bin '{lifted_bin.display_name}' from '{from_label}'"
                     )
 
                 # 2) Dropped bins: assign to destination pickup points + customer
-                for dropped_bin in record.bin_dropped_ids:
+                for dropped_bin in rec.bin_dropped_ids:
+                    dropped_bin = dropped_bin.sudo()
                     dest_pp_single = dest_pps[:1] and dest_pps[0] or False
 
                     if 'pickup_point_ids' in dropped_bin._fields and dest_pp_ids:
@@ -1298,11 +1712,11 @@ class WasteServiceRequest(models.Model):
                     if 'inUse' in dropped_bin._fields:
                         dropped_bin.inUse = True
                     # 🔹 clear reservation once swap is completed
-                    if 'reserved_request_id' in dropped_bin._fields and dropped_bin.reserved_request_id == record:
+                    if 'reserved_request_id' in dropped_bin._fields and dropped_bin.reserved_request_id == rec:
                         dropped_bin.reserved_request_id = False
 
                     label = dest_pp_single.display_name if dest_pp_single else dest_pp_label
-                    record.message_post(
+                    rec.message_post(
                         body=f"Dropped bin '{dropped_bin.display_name}' at '{label}'"
                     )
 
@@ -1310,16 +1724,17 @@ class WasteServiceRequest(models.Model):
             # SHUNTING OF BINS  (still uses shunt_* fields)
             # -------------------------------------------------
             elif svc_code == 'shunting of bins':
-                from_label = record.shunt_from_id.display_name if record.shunt_from_id else "Unknown"
-                to_label = record.shunt_to_id.display_name if record.shunt_to_id else "Unknown"
+                from_label = rec.shunt_from_id.display_name if rec.shunt_from_id else "Unknown"
+                to_label = rec.shunt_to_id.display_name if rec.shunt_to_id else "Unknown"
 
-                for bin_rec in record.shunt_container_ids:
+                for bin_rec in rec.shunt_container_ids:
+                    bin_rec = bin_rec.sudo()
                     if 'pickup_point_id' in bin_rec._fields:
-                        bin_rec.pickup_point_id = record.shunt_to_id
-                    if 'pickup_point_ids' in bin_rec._fields and record.shunt_to_id:
-                        bin_rec.pickup_point_ids = [(4, record.shunt_to_id.id)]
-                    if 'dropoff_point_id' in bin_rec._fields and record.shunt_to_id:
-                        bin_rec.dropoff_point_id = record.shunt_to_id
+                        bin_rec.pickup_point_id = rec.shunt_to_id
+                    if 'pickup_point_ids' in bin_rec._fields and rec.shunt_to_id:
+                        bin_rec.pickup_point_ids = [(4, rec.shunt_to_id.id)]
+                    if 'dropoff_point_id' in bin_rec._fields and rec.shunt_to_id:
+                        bin_rec.dropoff_point_id = rec.shunt_to_id
                     if 'partner_id' in bin_rec._fields and cust:
                         bin_rec.partner_id = cust
                     if 'status' in bin_rec._fields:
@@ -1327,10 +1742,10 @@ class WasteServiceRequest(models.Model):
                     if 'inUse' in bin_rec._fields:
                         bin_rec.inUse = True
                     # 🔹 clear reservation after shunt is done
-                    if 'reserved_request_id' in bin_rec._fields and bin_rec.reserved_request_id == record:
+                    if 'reserved_request_id' in bin_rec._fields and bin_rec.reserved_request_id == rec:
                         bin_rec.reserved_request_id = False
 
-                    record.message_post(
+                    rec.message_post(
                         body=f"Shunted bin '{bin_rec.display_name}' from '{from_label}' to '{to_label}'"
                     )
 
@@ -1339,12 +1754,13 @@ class WasteServiceRequest(models.Model):
             # -------------------------------------------------
             elif svc_code == 'placement of bins':
                 # Use each line’s pickup/dropoff to place its bins
-                for line in record.bin_line_ids:
+                for line in rec.bin_line_ids:
                     # Prefer drop-off point, else pickup point
                     dest_pp = line.dropoff_point_id or line.pickup_point_id
                     label = dest_pp.display_name if dest_pp else dest_pp_label
 
                     for container in line.bin_dropped_ids:
+                        container = container.sudo()
                         if 'pickup_point_id' in container._fields and dest_pp:
                             container.pickup_point_id = dest_pp
                         if 'pickup_point_ids' in container._fields and dest_pp:
@@ -1358,10 +1774,10 @@ class WasteServiceRequest(models.Model):
                         if 'inUse' in container._fields:
                             container.inUse = True
                         # 🔹 important: clear reservation so bin is available
-                        if 'reserved_request_id' in container._fields and container.reserved_request_id == record:
+                        if 'reserved_request_id' in container._fields and container.reserved_request_id == rec:
                             container.reserved_request_id = False
 
-                        record.message_post(
+                        rec.message_post(
                             body=f"Placed bin: {container.display_name} at {label}"
                         )
 
@@ -1373,8 +1789,9 @@ class WasteServiceRequest(models.Model):
                     'waste collection and disposal',
                     'general collection & desposal',
             ):
-                containers = (record.bin_lifted_ids | record.bin_dropped_ids)
+                containers = (rec.bin_lifted_ids | rec.bin_dropped_ids)
                 for container in containers:
+                    container = container.sudo()
                     if 'pickup_point_ids' in container._fields:
                         container.pickup_point_ids = [(5, 0, 0)]
                     if 'pickup_point_id' in container._fields:
@@ -1388,18 +1805,18 @@ class WasteServiceRequest(models.Model):
                     if 'inUse' in container._fields:
                         container.inUse = False
                     # 🔹 clear reservation once collected/disposed
-                    if 'reserved_request_id' in container._fields and container.reserved_request_id == record:
+                    if 'reserved_request_id' in container._fields and container.reserved_request_id == rec:
                         container.reserved_request_id = False
 
-                    record.message_post(
+                    rec.message_post(
                         body=f"Collected & Disposed bin: {container.display_name}"
                     )
 
-            all_tanks = self.env['waste.container']
+            all_tanks = rec.env['waste.container']
 
             # 1) Log per-line liters + tanks
             total_liters = 0.0
-            for line in record.bin_line_ids:
+            for line in rec.bin_line_ids:
                 if not line.tank_ids:
                     continue
 
@@ -1416,6 +1833,7 @@ class WasteServiceRequest(models.Model):
 
                 tank_bits = []
                 for tank in line.tank_ids:
+                    tank = tank.sudo()
                     # Try to show tank volume
                     vol_label = ""
                     if "tank_volume_id" in tank._fields and tank.tank_volume_id:
@@ -1440,16 +1858,15 @@ class WasteServiceRequest(models.Model):
                 else:
                     msg = f"Emptied tanks: {tank_label} at {pp_label}"
 
-                record.message_post(body=msg)
+                rec.message_post(body=msg)
 
             # 1b) Log overall kL + tariff summary for the job (if this is a Tank job)
-            if record._is_tank_job():
-                # Prefer your computed billing values from the request
-                liters_for_billing = record.liters_collected or total_liters
-                kl = record.billing_kl or (liters_for_billing / 1000.0 if liters_for_billing else 0.0)
-                base_kl, base_price, extra_rate = record._get_rate_params()
+            if rec._is_tank_job():
+                liters_for_billing = rec.liters_collected or total_liters
+                kl = rec.billing_kl or (liters_for_billing / 1000.0 if liters_for_billing else 0.0)
+                base_kl, base_price, extra_rate = rec._get_rate_params()
                 extra_kl = max(0.0, kl - base_kl)
-                amount = record.billing_amount or 0.0
+                amount = rec.billing_amount or 0.0
 
                 tariff_msg = (
                     f"Tank job summary: {kl:.2f} kL "
@@ -1458,10 +1875,11 @@ class WasteServiceRequest(models.Model):
                     f"Extra: {extra_kl:.2f} kL at R{extra_rate:,.2f}/kL. "
                     f"Total amount (excl. VAT): R{amount:,.2f}."
                 )
-                record.message_post(body=tariff_msg)
+                rec.message_post(body=tariff_msg)
 
             # 2) Actually empty / reset tank records (keep your existing logic here)
             for tank in all_tanks:
+                tank = tank.sudo()
                 if "pickup_point_ids" in tank._fields:
                     tank.pickup_point_ids = [(6, 0, dest_pp_ids)]
                 if "pickup_point_id" in tank._fields and dest_pps:
@@ -1476,11 +1894,33 @@ class WasteServiceRequest(models.Model):
                     tank.inUse = False
                 if (
                         "reserved_request_id" in tank._fields
-                        and tank.reserved_request_id == record
+                        and tank.reserved_request_id == rec
                 ):
                     tank.reserved_request_id = False
 
-            record.state = "done"
+            # ✅ finish as sudo (same as your line, just on sudo record)
+            rec.state = "done"
+
+            # ============================================================
+            # ✅ SEND EMAIL TO FINANCE (PUT IT HERE)
+            # ============================================================
+            tmpl = rec.env.ref(
+                'waste_management_zakheni.mail_tmpl_service_request_authorize',
+                raise_if_not_found=False
+            )
+            if tmpl:
+                # get finance users for THIS company
+                finance_users = rec.env['res.users'].sudo().search([
+                    ('groups_id', 'in', rec.env.ref('waste_management_zakheni.group_wmz_finance').id),
+                    ('company_ids', 'in', rec.company_id.id),
+                    ('email', '!=', False),
+                ])
+
+                email_to = ",".join(finance_users.mapped('email'))
+                if email_to:
+                    tmpl.with_context(email_to=email_to).sudo().send_mail(
+                        rec.id, force_send=True, raise_exception=False
+                    )
 
     def action_cancelled(self):
         self.ensure_one()
@@ -1672,7 +2112,7 @@ class WasteServiceRequest(models.Model):
         self.ensure_one()
         action = self.env.ref(
             'waste_management_zakheni.action_waste_request_product_selector'
-        ).read()[0]
+        ).sudo().read()[0]
 
         ctx = dict(self.env.context)
         ctx.update({
@@ -1682,33 +2122,90 @@ class WasteServiceRequest(models.Model):
         action['context'] = ctx
         return action
 
+
     def action_push_extra_products_to_so(self):
-        """Create / update sale.order.line from extra products."""
+        """Create / update sale.order.line from extra products.
+
+        - Only WMZ Admin / Admin Clerk can run it
+        - sale.order.line create/write runs with sudo to avoid Sales access errors
+        """
+        allowed = (
+                self.env.user.has_group('waste_management_zakheni.group_wmz_admin') or
+                self.env.user.has_group('waste_management_zakheni.group_wmz_admin_clerk')
+        )
+        if not allowed:
+            raise AccessDenied(_("You are not allowed to update the Sales Order."))
+
+        SaleLine = self.env['sale.order.line'].sudo()
+
         for req in self:
             if not req.sale_order_id:
                 raise UserError(_('No Sales Order linked to this request.'))
-            so = req.sale_order_id
+            so = req.sale_order_id.sudo()  # safe access
+            lines = so.order_line.sudo()  # ✅ sudo the SO lines (optional but ok)
 
             for line in req.extra_product_line_ids:
+                # Guard: product must exist
+                if not line.product_id:
+                    continue
+
+                # Ensure description
+                desc = (
+                        line.product_id.get_product_multiline_description_sale()
+                        or line.product_id.display_name
+                )
+
                 if line.sale_order_line_id:
-                    # update existing SO line
-                    line.sale_order_line_id.write({
+                    # update existing SO line (sudo)
+                    SaleLine.browse(line.sale_order_line_id.id).write({
                         'product_uom_qty': line.quantity,
                         'price_unit': line.price_unit,
+                        'name': desc,
                     })
                 else:
-                    # create new SO line
+                    # create new SO line (sudo)
                     sol_vals = {
                         'order_id': so.id,
                         'product_id': line.product_id.id,
-                        'name': line.product_id.get_product_multiline_description_sale()
-                                or line.product_id.display_name,
+                        'name': desc,
                         'product_uom_qty': line.quantity,
                         'price_unit': line.price_unit,
                     }
-                    sol = self.env['sale.order.line'].create(sol_vals)
-                    line.sale_order_line_id = sol.id
+                    sol = SaleLine.create(sol_vals)
+
+                    # link back (normal write is fine; but keep it safe)
+                    line.sudo().write({'sale_order_line_id': sol.id})
+
         return True
+
+    # def action_push_extra_products_to_so(self):
+    #     """Create / update sale.order.line from extra products."""
+    #     for req in self:
+    #         if not req.sale_order_id:
+    #             raise UserError(_('No Sales Order linked to this request.'))
+    #         so = req.sale_order_id
+    #
+    #         for line in req.extra_product_line_ids:
+    #             if line.sale_order_line_id:
+    #                 # update existing SO line
+    #                 line.sale_order_line_id.write({
+    #                     'product_uom_qty': line.quantity,
+    #                     'price_unit': line.price_unit,
+    #                 })
+    #             else:
+    #                 # create new SO line
+    #                 sol_vals = {
+    #                     'order_id': so.id,
+    #                     'product_id': line.product_id.id,
+    #                     'name': line.product_id.get_product_multiline_description_sale()
+    #                             or line.product_id.display_name,
+    #                     'product_uom_qty': line.quantity,
+    #                     'price_unit': line.price_unit,
+    #                 }
+    #                 sol = self.env['sale.order.line'].create(sol_vals)
+    #                 line.sale_order_line_id = sol.id
+    #     return True
+
 
     wizard_pickup_point_ids = fields.Many2many(
         'pickup.point',
@@ -1994,7 +2491,7 @@ class WasteServiceRequest(models.Model):
     # ---------------------------------------------------------
     def action_open_bin_assignment_wizard(self):
         self.ensure_one()
-        action = self.env.ref('waste_management_zakheni.action_waste_assign_bin_wizard').read()[0]
+        action = self.env.ref('waste_management_zakheni.action_waste_assign_bin_wizard').sudo().read()[0]
         action['context'] = {
             'default_request_id': self.id,
             'active_id': self.id,
@@ -2036,23 +2533,21 @@ class WasteServiceRequest(models.Model):
 
     def _build_dashboard_domain(self, filters=None):
         filters = filters or {}
+
         domain_common = []
 
-        # -------------------------------------------------------
-        # 0) Models (sudo because dashboard aggregates)
-        # -------------------------------------------------------
+        company, scope_domain, show_bins, show_tanks = self._company_scope_from_filters(filters)
+
+        # ✅ apply company config restrictions everywhere
+        domain_common += scope_domain
+
         SO = self.env["sale.order"].sudo()
         INV = self.env["account.move"].sudo()
 
-        # -------------------------------------------------------
-        # 1) Manifest number
-        # -------------------------------------------------------
-        if filters.get("manifest_number"):
-            domain_common.append(("name", "ilike", filters["manifest_number"]))
+        # ✅ allowed companies from top-right company switcher
+        allowed_company_ids = self.env.companies.ids or []
 
-        # -------------------------------------------------------
-        # 2) Safe company_id
-        # -------------------------------------------------------
+        # ---------------- Safe company_id ----------------
         company_val = filters.get("company_id")
         company_id = False
         if isinstance(company_val, (list, tuple)) and company_val:
@@ -2062,12 +2557,17 @@ class WasteServiceRequest(models.Model):
         elif isinstance(company_val, str):
             company_id = int(company_val) if company_val.isdigit() else False
 
+        # ✅ Apply company filter:
+        # - if user selected a company: force it
+        # - else: use allowed companies from switcher
         if company_id:
             domain_common.append(("company_id", "=", int(company_id)))
+        else:
+            # IMPORTANT: so switching company in the UI actually changes dashboard
+            if allowed_company_ids and "company_id" in self._fields:
+                domain_common.append(("company_id", "in", allowed_company_ids))
 
-        # -------------------------------------------------------
-        # 3) Safe partner_id
-        # -------------------------------------------------------
+        # ---------------- Safe partner_id (Customer) ----------------
         partner_val = filters.get("partner_id")
         partner_id = False
         if isinstance(partner_val, (list, tuple)) and partner_val:
@@ -2080,25 +2580,21 @@ class WasteServiceRequest(models.Model):
         if partner_id:
             domain_common.append(("partner_id", "=", int(partner_id)))
 
-        # -------------------------------------------------------
-        # 4) Ticket type
-        # -------------------------------------------------------
+        # ---------------- Manifest number ----------------
+        if filters.get("manifest_number"):
+            domain_common.append(("name", "ilike", filters["manifest_number"]))
+
+        # ---------------- Ticket type ----------------
         if filters.get("ticket_type"):
             domain_common.append(("ticket_type", "=", filters["ticket_type"]))
 
-        # -------------------------------------------------------
-        # 5) SO / Invoice filters => MUST FILTER MANIFESTS
-        #    We translate them into manifest IDs, then apply:
-        #    ("id","in", manifest_ids)
-        # -------------------------------------------------------
+        # ---------------- SO / Invoice filters ----------------
         so_ids = set()
 
-        # 5.1 From Sale Order filter
         if filters.get("sale_order_number"):
             so_recs = SO.search([("name", "ilike", filters["sale_order_number"])], limit=500)
             so_ids |= set(so_recs.ids)
 
-        # 5.2 From Invoice filter
         if filters.get("invoice_number"):
             inv_recs = INV.search([
                 ("move_type", "in", ["out_invoice", "out_refund"]),
@@ -2106,20 +2602,18 @@ class WasteServiceRequest(models.Model):
                 ("name", "ilike", filters["invoice_number"]),
             ], limit=500)
 
-            # Prefer your stored computed field if you have it
+            # if you have a direct sale_order_id on invoice, use it, else fallback
             if "sale_order_id" in INV._fields:
                 so_ids |= set(inv_recs.mapped("sale_order_id").ids)
             else:
-                # fallback: via invoice lines -> sale lines -> SO
                 so_ids |= set(inv_recs.invoice_line_ids.mapped("sale_line_ids.order_id").ids)
 
-        # 5.3 Convert SOs -> manifests (waste.service.request)
         if so_ids:
-            domain_common.append(("sale_order_id", "in", list(so_ids)))
+            # if your manifest links to SO in another field, add alternatives here
+            if "sale_order_id" in self._fields:
+                domain_common.append(("sale_order_id", "in", list(so_ids)))
 
-        # -------------------------------------------------------
-        # 6) Date filters (dashboard uses service_request_date)
-        # -------------------------------------------------------
+        # ---------------- Date filters ----------------
         domain = list(domain_common)
         if filters.get("date_from"):
             domain.append(("service_request_date", ">=", filters["date_from"]))
@@ -2197,6 +2691,50 @@ class WasteServiceRequest(models.Model):
                 return fields.Date.to_string(val)
             except Exception:
                 return ""
+
+    def _company_scope_from_filters(self, filters=None):
+        """Return (company, scope_domain, show_bins, show_tanks)."""
+        filters = filters or {}
+
+        # resolve company
+        company_id = filters.get("company_id")
+        try:
+            company_id = int(company_id) if company_id else False
+        except Exception:
+            company_id = False
+
+        company = self.env["res.company"].sudo().browse(company_id).exists() if company_id else self.env.company.sudo()
+
+        # safe recordsets
+        Service = self.env["service.request"].sudo()
+        CType = self.env["container.type"].sudo()
+        WType = self.env["waste.type"].sudo()
+
+        services = company.wmz_service_ids.sudo() if "wmz_service_ids" in company._fields else Service.browse()
+        ctypes = company.wmz_container_type_ids.sudo() if "wmz_container_type_ids" in company._fields else CType.browse()
+        wastes = company.wmz_waste_type_ids.sudo() if "wmz_waste_type_ids" in company._fields else WType.browse()
+
+        scope = []
+
+        # IMPORTANT: if company configured something, restrict; if empty config -> do NOT restrict that dimension
+        if services:
+            scope.append(("service_requested_id", "in", services.ids))
+        if ctypes and "container_type_id" in self._fields:
+            scope.append(("container_type_id", "in", ctypes.ids))
+        if wastes and "waste_type_id" in self._fields:
+            scope.append(("waste_type_id", "in", wastes.ids))
+
+        # Determine dashboard mode from allowed container types (name-based fallback)
+        names = " ".join((ctypes.mapped("name") or [])).lower()
+        show_bins = ("bin" in names) if ctypes else True
+        show_tanks = ("tank" in names) if ctypes else True
+
+        # if they configured container types but names don't include either keyword, allow both
+        if ctypes and (not show_bins and not show_tanks):
+            show_bins = True
+            show_tanks = True
+
+        return company, scope, show_bins, show_tanks
 
     # ---------------------------------------------------------
     # SINGLE SOURCE OF TRUTH: the domain used by dashboard + navigation
@@ -2280,6 +2818,14 @@ class WasteServiceRequest(models.Model):
     def get_dashboard_payload(self, filters=None):
         filters = filters or {}
 
+        company, scope_domain, show_bins, show_tanks = self._company_scope_from_filters(filters)
+
+        # ✅ Multi-company context (top-right company switcher)
+        allowed_company_ids = self.env.companies.ids  # comes from allowed_company_ids in context
+
+        domain, domain_common = self._build_dashboard_domain(filters)
+        recs = self.with_context(allowed_company_ids=self.env.context.get("allowed_company_ids")).sudo().search(domain)
+
         SO = self.env["sale.order"].sudo()
         INV = self.env["account.move"].sudo()
         REQ = self.env["waste.service.request"].sudo()
@@ -2330,6 +2876,9 @@ class WasteServiceRequest(models.Model):
             "tank_kl_month": 0.0,
             "billing_amount_month": 0.0,
         }
+
+        if not show_tanks:
+            kpis["tank_kl_month"] = 0.0
 
         if "billing_kl" in self._fields:
             kpis["tank_kl_month"] = float(sum(recs.mapped("billing_kl") or []) or 0.0)
@@ -2416,26 +2965,6 @@ class WasteServiceRequest(models.Model):
                 revenue[key] = revenue.get(key, 0.0) + float(r.get("billing_amount") or 0.0)
         revenue_analysis = [{"label": k, "amount": float(v)} for k, v in sorted(revenue.items())]
 
-        # # ---------------- Revenue by Customer (BAR: customer vs revenue) ----------------
-        # revenue_by_customer = []
-        # if "billing_amount" in self._fields and "partner_id" in self._fields:
-        #     # group by partner_id and sum billing_amount
-        #     rows = self.read_group(
-        #         domain,
-        #         ["billing_amount:sum"],
-        #         ["partner_id"],
-        #         lazy=False
-        #     )
-        #     for r in rows:
-        #         revenue_by_customer.append({
-        #             "customer": r["partner_id"][1] if r.get("partner_id") else "Unknown",
-        #             "amount": float(r.get("billing_amount_sum") or 0.0),
-        #         })
-        #
-        # # Top 12 customers by revenue (so chart stays readable)
-        # revenue_by_customer = sorted(revenue_by_customer, key=lambda x: x["amount"], reverse=True)[:12]
-
-        # ---------------- Revenue by Customer (SAFE: works even if billing_amount is not stored) ----------------
         revenue_by_customer = []
         if "partner_id" in self._fields and "billing_amount" in self._fields:
             totals = {}
@@ -2447,7 +2976,34 @@ class WasteServiceRequest(models.Model):
             revenue_by_customer.sort(key=lambda x: x["amount"], reverse=True)
             revenue_by_customer = revenue_by_customer[:12]  # top 12
 
-        # ---------------- Tank series ----------------
+        # ✅ Multi-company context (top-right company switcher)
+        allowed_company_ids = self.env.context.get("allowed_company_ids") or self.env.companies.ids or []
+
+        # ✅ Revenue by Company (SAFE even if billing_amount is computed/non-stored)
+        revenue_by_company = []
+        if "company_id" in self._fields and "billing_amount" in self._fields:
+            totals = {}  # key: company_id (or 0) -> {"company": name, "amount": float}
+
+            for m in recs:
+                c = m.company_id
+                cid = c.id if c else 0
+                cname = c.display_name if c else "No Company"
+
+                if cid not in totals:
+                    totals[cid] = {"company": cname, "amount": 0.0}
+
+                # IMPORTANT: read_group often returns 0 when field is computed.
+                # This uses record values directly.
+                totals[cid]["amount"] += float(m.billing_amount or 0.0)
+
+            revenue_by_company = sorted(totals.values(), key=lambda x: x["amount"], reverse=True)
+
+        _logger.info("Revenue by company result: %s", revenue_by_company)
+
+        # ✅ Companies dropdown (only allowed companies from switcher)
+        companies_rs = self.env["res.company"].sudo().browse(self.env.companies.ids).exists()
+        companies = [{"id": c.id, "name": c.name} for c in companies_rs]
+
         gran = filters.get("tank_granularity") or "day"
         now = fields.Datetime.now()
 
@@ -2745,60 +3301,6 @@ class WasteServiceRequest(models.Model):
         # ---------------------------------------------------------
         # Sales Order ↔ Invoice (Totals) — MUST follow current manifest domain
         # ---------------------------------------------------------
-        # get SOs linked to the manifests currently shown (recs)
-        # so_ids_linked = set()
-        # if "sale_order_id" in self._fields:
-        #     so_ids_linked |= set(recs.mapped("sale_order_id").ids)
-        #
-        # # limit invoices to those SOs (most reliable)
-        # inv_domain = [
-        #     ("move_type", "in", ["out_invoice", "out_refund"]),
-        #     ("state", "!=", "cancel"),
-        # ]
-        # if so_ids_linked:
-        #     inv_domain.append(("invoice_line_ids.sale_line_ids.order_id", "in", list(so_ids_linked)))
-        #
-        # if filters.get("invoice_number"):
-        #     inv_domain.append(("name", "ilike", filters["invoice_number"]))
-        #
-        # # customer tree filter for invoices
-        # partner_ids = []
-        # if filters.get("partner_id"):
-        #     pid = int(filters["partner_id"])
-        #     partner_ids = Partner.search([("id", "child_of", pid)]).ids
-        # if partner_ids:
-        #     inv_domain.append(("partner_id", "in", partner_ids))
-        #
-        # invoices = INV.search(inv_domain, limit=200)
-        #
-        # so_invoice_map = []
-        # for inv in invoices:
-        #     so_recs = inv.invoice_line_ids.mapped("sale_line_ids.order_id")
-        #     if not so_recs:
-        #         continue
-        #     for so in so_recs:
-        #         if so_ids_linked and so.id not in so_ids_linked:
-        #             continue
-        #         so_invoice_map.append({
-        #             "key": f"{so.name}|{inv.name}",
-        #             "sale_order": so.name,
-        #             "invoice": inv.name,
-        #             "total": float(inv.amount_total or 0.0),
-        #             "invoice_id": [inv.id, inv.name],
-        #         })
-        #
-        # so_invoice_totals = [{
-        #     "key": x["key"],
-        #     "sale_order": x["sale_order"],
-        #     "invoice": x["invoice"],
-        #     "total": x["total"],
-        #     "invoice_id": x.get("invoice_id"),
-        # } for x in so_invoice_map[:10]]
-
-        # ---------------------------------------------------------
-        # Sales Order ↔ Invoice (Totals) — MUST follow current manifest domain
-        # ---------------------------------------------------------
-
         # Manifests currently shown by current dashboard domain (may be 1 or many)
         manifest_ids_current = recs.ids
 
@@ -2927,8 +3429,20 @@ class WasteServiceRequest(models.Model):
 
         so_by_manifest = []
 
+        if not show_bins:
+            bin_report_table = []
+            bin_report = []
+            bin_report_chart = []
+            bin_revenue_table = []
+            bin_revenue_chart = []
+
+        if not show_tanks:
+            tank_series = []
+            tank_by_customer = []
+
         return {
             "customers": customers,
+            "companies": companies,  # ✅ NEW
             "kpis": kpis,
             "by_status": by_status,
             "by_service": by_service,
@@ -2956,9 +3470,20 @@ class WasteServiceRequest(models.Model):
             "revenue_analysis": revenue_analysis,
             "revenue_by_customer": revenue_by_customer,
             "tank_by_customer": tank_by_customer,
+            "revenue_by_company": revenue_by_company,
+
+
 
             "so_by_customer": so_by_customer,
             "so_by_manifest": so_by_manifest,
+
+            "mode": {
+                "show_bins": bool(show_bins),
+                "show_tanks": bool(show_tanks),
+                "company_id": company.id,
+                "company_name": company.name,
+            },
+
         }
     @api.model
     def get_dashboard_open_domain(self, filters=None):
@@ -2988,6 +3513,7 @@ class WasteServiceRequest(models.Model):
         }
 
 
+
 # ============================================================================
 # MODULE INHERITANCE
 # ============================================================================
@@ -3005,7 +3531,12 @@ class SaleOrder(models.Model):
         'res.partner',
         string="Customer",
         required=True,
-        domain = [("is_company", "=", True), ("customer_rank", ">", 0)],
+        # domain = [("is_company", "=", True), ("customer_rank", ">", 0),('id','!=', user.partner_id.id)],
+        domain=lambda self: [
+            ('is_company', '=', True),
+            ('customer_rank', '>', 0),
+            ('id', '!=', self.env.user.partner_id.id),
+        ]
     )
 
     planned_date = fields.Datetime(
@@ -3023,6 +3554,14 @@ class SaleOrder(models.Model):
     )
 
     container_ids = fields.One2many('waste.container', 'sale_order_id', string="Waste Containers")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            # Only set if not given
+            if not vals.get("company_id"):
+                vals["company_id"] = self.env.company.id
+        return super().create(vals_list)
 
 
 class HREmployee(models.Model):
@@ -3075,8 +3614,6 @@ class FleetVehicle(models.Model):
         string="Waste Tanker Truck",
         help="Tick if this vehicle has a fixed tank for liquid waste (e.g. 7000L, 9000L, etc.)."
     )
-
-
 
     tank_volume_id = fields.Many2one(
         'tank.volume',

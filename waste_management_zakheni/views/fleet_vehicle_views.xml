@@ -17,7 +17,6 @@
                            invisible="is_waste_tanker == False"/>
                     <field name="tank_capacity_liters"
                            invisible="is_waste_tanker == False"/>
-
                 </group>
             </xpath>
         </field>

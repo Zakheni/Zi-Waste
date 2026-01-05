@@ -13,58 +13,100 @@
         </field>
     </record>
 
-<!--    &lt;!&ndash; Admin Clerk &ndash;&gt;-->
-<!--    <record id="wmz_rule_manifest_admin_clerk" model="ir.rule">-->
-<!--        <field name="name">Manifest: Admin Clerk (by company)</field>-->
-<!--        <field name="model_id" ref="model_waste_service_request"/>-->
-<!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>-->
-<!--        <field name="domain_force">-->
-<!--            ['&amp;', '|',-->
-<!--            ('company_id', 'in', company_ids),-->
-<!--            ('create_uid', '=', user.id),-->
-<!--            ('from_portal', '=', True)-->
-<!--            ]-->
-<!--        </field>-->
-<!--    </record>-->
 
-      <!-- Admin Clerk -->
+    <!-- Admin Clerk -->
     <record id="wmz_rule_manifest_admin_clerk" model="ir.rule">
         <field name="name">Manifest: Admin Clerk (by company)</field>
         <field name="model_id" ref="model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>
+
         <field name="domain_force">
-            ['|',
-            ('create_uid', '=', user.id),
-            ('from_portal', '=', True)
+            [
+            ('from_portal', '=', True),
+            ('company_id', '=', user.company_id.id)
+            ]
+        </field>
+
+    </record>
+
+    <record id="wmz_rule_admin_clerk_own_records" model="ir.rule">
+        <field name="name">Manifest: Admin Clerk - Own records</field>
+        <field name="model_id" ref="model_waste_service_request"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin_clerk'))]"/>
+        <field name="global" eval="False"/>
+        <field name="domain_force">
+            [
+            ('create_uid', '=', user.id)
             ]
         </field>
     </record>
-
 
 
     <!-- Manager: own records OR from portal -->
+    <!-- Manager: own-company records in selected states (portal + internal) -->
     <record id="wmz_rule_manifest_manager" model="ir.rule">
-        <field name="name">Manifest: Manager</field>
+        <field name="name">Manifest: Manager (company + delivered/done/cancelled)</field>
         <field name="model_id" ref="model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>
+        <field name="global" eval="False"/>
         <field name="domain_force">
-            ['|',
-            ('create_uid', '=', user.id),
-            ('from_portal', '=', True)
+            [
+            ('company_id', '=', user.company_id.id),
+            ('state', 'in', ['service_delivered', 'done', 'cancelled'])
             ]
         </field>
     </record>
 
-    <!-- Finance: done OR own OR from portal -->
+
+    <!--    <record id="wmz_rule_manifest_manager" model="ir.rule">-->
+    <!--        <field name="name">Manifest: Manager</field>-->
+    <!--        <field name="model_id" ref="model_waste_service_request"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+    <!--        <field name="domain_force">-->
+    <!--            [-->
+    <!--            ('from_portal', '=', True),-->
+    <!--            ('company_id', '=', user.company_id.id)-->
+    <!--            ]-->
+    <!--        </field>-->
+
+    <!--    </record>-->
+    <!--    <record id="wmz_rule_manifest_manager_closed_states" model="ir.rule">-->
+    <!--        <field name="name">Manifest: Manager - Closed States Only</field>-->
+    <!--        <field name="model_id" ref="model_waste_service_request"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+    <!--        <field name="global" eval="False"/>-->
+    <!--        <field name="domain_force">-->
+    <!--            [-->
+    <!--            -->
+    <!--            ('state', 'in', ['service_delivered', 'done', 'cancelled'])-->
+    <!--            ]-->
+    <!--        </field>-->
+    <!--    </record>-->
+
+
+    <!--    &lt;!&ndash; Finance: done OR own OR from portal &ndash;&gt;-->
+    <!--    <record id="wmz_rule_manifest_finance" model="ir.rule">-->
+    <!--        <field name="name">Manifest: Finance</field>-->
+    <!--        <field name="model_id" ref="model_waste_service_request"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_finance'))]"/>-->
+    <!--        <field name="domain_force">-->
+    <!--            ['|', '|',-->
+    <!--            ('state', '=', 'done'),-->
+    <!--            ('create_uid', '=', user.id),-->
+    <!--            ('from_portal', '=', True)-->
+    <!--            ]-->
+    <!--        </field>-->
+    <!--    </record>-->
+
     <record id="wmz_rule_manifest_finance" model="ir.rule">
-        <field name="name">Manifest: Finance</field>
+        <field name="name">Manifest: Finance (Done - Own Company)</field>
         <field name="model_id" ref="model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_finance'))]"/>
+        <field name="global" eval="False"/>
         <field name="domain_force">
-            ['|', '|',
-            ('state', '=', 'done'),
-            ('create_uid', '=', user.id),
-            ('from_portal', '=', True)
+            [
+            ('company_id', '=', user.company_id.id),
+            ('state', '=', 'done')
             ]
         </field>
     </record>
@@ -75,10 +117,25 @@
         <field name="model_id" ref="model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_driver'))]"/>
         <field name="domain_force">
-            ['|',
+            [
             ('state', 'in', ['scheduled', 'dispatched', 'service_delivered']),
-            ('from_portal', '=', True)
+            ('company_id', '=', user.company_id.id),
             ]
         </field>
     </record>
+
+    <record id="rule_sale_order_wmz_manager_company" model="ir.rule">
+        <field name="name">Sale Order: WMZ Manager - Allowed Companies</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>
+        <field name="global" eval="False"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+        <field name="domain_force">
+            ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+        </field>
+    </record>
+
 </odoo>
