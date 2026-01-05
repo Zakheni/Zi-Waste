@@ -1,4 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
     <!-- Search view inheritance -->
     <record id="view_account_payment_search_inherit_batch" model="ir.ui.view">
         <field name="name">account.payment.search.inherit.batch</field>
@@ -33,19 +35,40 @@
                        decoration-info="batch_state == 'draft'"
                        decoration-warning="batch_state == 'validated'"/>
                 <field name="in_exported_batch" optional="hide" invisible="0"/>
+
+                <!-- NEW: show the invoice link on list -->
+                <field name="batch_invoice_id" optional="hide"/>
             </xpath>
         </field>
     </record>
+
+    <!-- NEW: Form view inheritance (so you can SEE Batch Invoice on a payment) -->
+    <record id="view_account_payment_form_inherit_batch_invoice" model="ir.ui.view">
+        <field name="name">account.payment.form.inherit.batch.invoice</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Place it near partner -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="batch_invoice_id"
+                       options="{'no_create': True, 'no_open': False}"
+                       string="Batch Invoice"/>
+            </xpath>
+
+        </field>
+    </record>
+
 </odoo>
 
+
 <!--<odoo>-->
+<!--    &lt;!&ndash; Search view inheritance &ndash;&gt;-->
 <!--    <record id="view_account_payment_search_inherit_batch" model="ir.ui.view">-->
 <!--        <field name="name">account.payment.search.inherit.batch</field>-->
 <!--        <field name="model">account.payment</field>-->
-<!--        &lt;!&ndash; correct parent from your screenshot &ndash;&gt;-->
 <!--        <field name="inherit_id" ref="account.view_account_payment_search"/>-->
 <!--        <field name="arch" type="xml">-->
-<!--            &lt;!&ndash; safe anchor: inject inside the <search> root &ndash;&gt;-->
 <!--            <xpath expr="//search" position="inside">-->
 <!--                <separator/>-->
 <!--                <filter name="available_for_batch"-->
@@ -55,21 +78,19 @@
 <!--                <filter name="batch_validated" string="Batch: Validated" domain="[('batch_state','=','validated')]"/>-->
 <!--                <filter name="batch_exported" string="Batch: Exported" domain="[('batch_state','=','exported')]"/>-->
 
-<!--                &lt;!&ndash; make fields available to the search view (they're computed+searchable in Python) &ndash;&gt;-->
+<!--                &lt;!&ndash; expose fields to search view &ndash;&gt;-->
 <!--                <field name="batch_state" invisible="1"/>-->
 <!--                <field name="in_exported_batch" invisible="1"/>-->
 <!--            </xpath>-->
 <!--        </field>-->
 <!--    </record>-->
 
-
-<!--    &lt;!&ndash; Inherit the Account Payments tree and append our column at the end &ndash;&gt;-->
+<!--    &lt;!&ndash; Tree view inheritance &ndash;&gt;-->
 <!--    <record id="view_account_payment_tree_inherit_batch_state" model="ir.ui.view">-->
 <!--        <field name="name">account.payment.tree.inherit.batch.state</field>-->
 <!--        <field name="model">account.payment</field>-->
 <!--        <field name="inherit_id" ref="account.view_account_payment_tree"/>-->
 <!--        <field name="arch" type="xml">-->
-<!--            &lt;!&ndash; Append inside the tree (no reliance on a specific field existing) &ndash;&gt;-->
 <!--            <xpath expr="//tree" position="inside">-->
 <!--                <field name="batch_state" optional="hide" widget="badge"-->
 <!--                       decoration-success="batch_state == 'exported'"-->
@@ -79,6 +100,4 @@
 <!--            </xpath>-->
 <!--        </field>-->
 <!--    </record>-->
-
 <!--</odoo>-->
-

@@ -7,6 +7,7 @@
     "data": [
         "security/ir.model.access.csv",
         "data/sequence.xml",
+        "views/account_move_views.xml",
         "views/account_payment_views.xml",
         "wizard/batch_payment_add_wizard_views.xml",
         "views/res_config_settings_views.xml",
