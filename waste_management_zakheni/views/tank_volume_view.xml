@@ -4,10 +4,30 @@
         <field name="name">tank.volume.tree</field>
         <field name="model">tank.volume</field>
         <field name="arch" type="xml">
-            <tree string="Tank Volume" editable="bottom">
+            <tree string="Tank Volume">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
             </tree>
+        </field>
+    </record>
+
+    <record id="view_tank_volume_form" model="ir.ui.view">
+        <field name="name">tank.volume.form</field>
+        <field name="model">tank.volume</field>
+        <field name="arch" type="xml">
+            <form string="Tank Volume">
+                <sheet>
+                    <group>
+                        <field name="sequence" widget="handle"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
         </field>
     </record>
 
@@ -15,7 +35,7 @@
     <record id="action_tank_volume" model="ir.actions.act_window">
         <field name="name">Tank Volume</field>
         <field name="res_model">tank.volume</field>
-        <field name="view_mode">tree</field>
+        <field name="view_mode">tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create New Tank Volume

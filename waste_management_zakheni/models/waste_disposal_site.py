@@ -44,4 +44,9 @@ class DisposalSite(models.Model):
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
             vals['name'] = self.env['ir.sequence'].next_by_code('waste.disposal.site') or 'New'
+
+        # create container for logged in company
+        if not vals.get('company_id'):
+            vals['company_id'] = self.env.company.id
+
         return super().create(vals)

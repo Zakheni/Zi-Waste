@@ -5,12 +5,7 @@
         <field name="name">Manifest: Admin</field>
         <field name="model_id" ref="model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_admin'))]"/>
-        <field name="domain_force">
-            ['|',
-            ('create_uid', '=', user.id),
-            ('from_portal', '=', True)
-            ]
-        </field>
+        <field name="domain_force">[('company_id', '=', user.company_id.id)]</field>
     </record>
 
 
@@ -52,51 +47,11 @@
         <field name="domain_force">
             [
             ('company_id', '=', user.company_id.id),
-            ('state', 'in', ['service_delivered', 'done', 'cancelled'])
+            ('state', 'in', ['generated', 'scheduled', 'dispatched', 'service_delivered', 'done', 'cancelled'])
             ]
         </field>
     </record>
 
-
-    <!--    <record id="wmz_rule_manifest_manager" model="ir.rule">-->
-    <!--        <field name="name">Manifest: Manager</field>-->
-    <!--        <field name="model_id" ref="model_waste_service_request"/>-->
-    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
-    <!--        <field name="domain_force">-->
-    <!--            [-->
-    <!--            ('from_portal', '=', True),-->
-    <!--            ('company_id', '=', user.company_id.id)-->
-    <!--            ]-->
-    <!--        </field>-->
-
-    <!--    </record>-->
-    <!--    <record id="wmz_rule_manifest_manager_closed_states" model="ir.rule">-->
-    <!--        <field name="name">Manifest: Manager - Closed States Only</field>-->
-    <!--        <field name="model_id" ref="model_waste_service_request"/>-->
-    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
-    <!--        <field name="global" eval="False"/>-->
-    <!--        <field name="domain_force">-->
-    <!--            [-->
-    <!--            -->
-    <!--            ('state', 'in', ['service_delivered', 'done', 'cancelled'])-->
-    <!--            ]-->
-    <!--        </field>-->
-    <!--    </record>-->
-
-
-    <!--    &lt;!&ndash; Finance: done OR own OR from portal &ndash;&gt;-->
-    <!--    <record id="wmz_rule_manifest_finance" model="ir.rule">-->
-    <!--        <field name="name">Manifest: Finance</field>-->
-    <!--        <field name="model_id" ref="model_waste_service_request"/>-->
-    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_finance'))]"/>-->
-    <!--        <field name="domain_force">-->
-    <!--            ['|', '|',-->
-    <!--            ('state', '=', 'done'),-->
-    <!--            ('create_uid', '=', user.id),-->
-    <!--            ('from_portal', '=', True)-->
-    <!--            ]-->
-    <!--        </field>-->
-    <!--    </record>-->
 
     <record id="wmz_rule_manifest_finance" model="ir.rule">
         <field name="name">Manifest: Finance (Done - Own Company)</field>
@@ -106,7 +61,7 @@
         <field name="domain_force">
             [
             ('company_id', '=', user.company_id.id),
-            ('state', '=', 'done')
+            ('state', 'in', ['generated', 'scheduled', 'dispatched', 'service_delivered', 'done', 'cancelled'])
             ]
         </field>
     </record>
@@ -137,5 +92,122 @@
             ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
         </field>
     </record>
+
+    <!-- Manager: Read / Write Fleet Vehicles WITHOUT Fleet app -->
+    <record id="access_fleet_vehicle_manager" model="ir.model.access">
+        <field name="name">fleet.vehicle manager access</field>
+        <field name="model_id" ref="fleet.model_fleet_vehicle"/>
+        <field name="group_id" ref="waste_management_zakheni.group_wmz_manager"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <record id="fleet_vehicle_manager_rule" model="ir.rule">
+        <field name="name">Fleet vehicle manager rule</field>
+        <field name="model_id" ref="fleet.model_fleet_vehicle"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>
+        <field name="domain_force">
+            [('company_id', '=', user.company_id.id)]
+        </field>
+    </record>
+
+
+    <!--    Waste Container-->
+    <record id="waste_container_company_rule" model="ir.rule">
+        <field name="name">Waste Container: company access</field>
+        <field name="model_id" ref="model_waste_container"/>
+        <field name="domain_force">
+            [('company_id', '=', user.company_id.id)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="waste_container_multi_company_rule" model="ir.rule">
+        <field name="name">Waste Container: multi-company access</field>
+        <field name="model_id" ref="model_waste_container"/>
+        <field name="domain_force">
+            [('company_id', 'in', user.company_ids.ids)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!--    Pickup Point-->
+    <record id="pickup_point_company_rule" model="ir.rule">
+        <field name="name">Pickup Point: Company access</field>
+        <field name="model_id" ref="model_pickup_point"/>
+        <field name="domain_force">
+            [('company_id', '=', user.company_id.id)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="pickup_point_multi_company_rule" model="ir.rule">
+        <field name="name">Pickup Point: multi-company access</field>
+        <field name="model_id" ref="model_pickup_point"/>
+        <field name="domain_force">
+            [('company_id', 'in', user.company_ids.ids)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!--Waste Disposal -->
+    <record id="waste_disposal_site_company_rule" model="ir.rule">
+        <field name="name">Waste Disposal Site: Company access</field>
+        <field name="model_id" ref="model_waste_disposal_site"/>
+        <field name="domain_force">
+            [('company_id', '=', user.company_id.id)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="waste_disposal_site_multi_company_rule" model="ir.rule">
+        <field name="name">Pickup Point: multi-company access</field>
+        <field name="model_id" ref="model_waste_disposal_site"/>
+        <field name="domain_force">
+            [('company_id', 'in', user.company_ids.ids)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!--    Waste Worksheet-->
+    <record id="waste_worksheet_company_rule" model="ir.rule">
+        <field name="name">Waste Worksheet: Company access</field>
+        <field name="model_id" ref="model_waste_worksheet"/>
+        <field name="domain_force">
+            [('company_id', '=', user.company_id.id)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="waste_worksheet_company_rule" model="ir.rule">
+        <field name="name">Waste Worksheet: multi-company access</field>
+        <field name="model_id" ref="model_waste_worksheet"/>
+        <field name="domain_force">
+            [('company_id', 'in', user.company_ids.ids)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!--    Service Provider-->
+    <record id="wms_service_provider_company_rule" model="ir.rule">
+        <field name="name">Service Provider: Company access</field>
+        <field name="model_id" ref="model_wms_service_provider"/>
+        <field name="domain_force">
+            [('company_id', '=', user.company_id.id)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="wms_service_provider_company_rule" model="ir.rule">
+        <field name="name">Service Provider: multi-company access</field>
+        <field name="model_id" ref="model_wms_service_provider"/>
+        <field name="domain_force">
+            [('company_id', 'in', user.company_ids.ids)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
 
 </odoo>

@@ -21,12 +21,18 @@ class WasteContainer(models.Model):
         required=True,
         # copy=False,
         readonly=True,
-        default='New')
+        default='New',
+        tracking=True)
 
     @api.model
     def create(self, vals):
         if vals.get('name', 'New') == 'New':
             vals['name'] = self.env['ir.sequence'].next_by_code('waste.container') or 'New'
+
+        # create container for logged in company
+        if not vals.get('company_id'):
+            vals['company_id'] = self.env.company.id
+
         return super().create(vals)
 
     company_id = fields.Many2one(
@@ -49,20 +55,20 @@ class WasteContainer(models.Model):
     serial_no = fields.Char(string='Serial Number')
 
     sale_order_id = fields.Many2one('sale.order', string="Sales Order")
-    image = fields.Image(string="Image")
+    image = fields.Image(string="Image",  tracking=True)
     status = fields.Selection([
         ('in_use', 'InUse'),
         ('broken', 'Broken'),
         ('intact', 'Intact'),
         ('missing', 'Missing'),
         ('un_use', 'UnUse'),
-    ], default='', string='Condition')
+    ], default='', string='Condition', tracking=True)
 
     # 🔹 NEW: reservation (prevents double booking across requests)
     reserved_request_id = fields.Many2one(
         'waste.service.request',
         string="Reserved For Request",
-        help="If set, this bin is reserved and should not be used on other requests."
+        help="If set, this bin is reserved and should not be used on other requests.", tracking=True
     )
 
     hide_tank = fields.Boolean(compute='_compute_hide_container')
@@ -70,7 +76,7 @@ class WasteContainer(models.Model):
 
     # hide_hazardous = fields.Boolean(compute='_compute_hide_waste_type')
 
-    @api.depends('container_type_id','container_type_id.name')
+    @api.depends('container_type_id', 'container_type_id.name')
     def _compute_hide_container(self):
         for rec in self:
             is_tank = (rec.container_type_id.name or '').strip().lower()
@@ -78,10 +84,10 @@ class WasteContainer(models.Model):
             rec.hide_tank = (is_tank == 'tank')
             rec.hide_bin = (is_bin == 'bin')
 
-    container_type_id = fields.Many2one('container.type', string="Container Type")
-    bin_type_id = fields.Many2one('bin.type', string="Bin Type")
-    tank_volume_id = fields.Many2one('tank.volume', string="Tank Volume")
-    display_info = fields.Char(string="Bin / Volume Info", compute="_compute_display_info", store=True)
+    container_type_id = fields.Many2one('container.type', string="Container Type",tracking=True)
+    bin_type_id = fields.Many2one('bin.type', string="Bin Type",tracking=True)
+    tank_volume_id = fields.Many2one('tank.volume', string="Tank Volume",tracking=True)
+    display_info = fields.Char(string="Bin / Volume Info", compute="_compute_display_info", store=True,tracking=True)
 
     @api.depends('container_type_id', 'bin_type_id', 'tank_volume_id')
     def _compute_display_info(self):
@@ -94,25 +100,10 @@ class WasteContainer(models.Model):
             else:
                 rec.display_info = ''
 
-    inUse = fields.Boolean(string='InUse')
+    inUse = fields.Boolean(string='InUse',tracking=True)
 
     # customer_id = fields.Many2one('res.partner', string='Customer')
     color = fields.Integer("Color Index")
-
-    lifted_service_id = fields.Many2one(
-        'request.waste.service',
-        string="Lifted In Service"
-    )
-
-    dropped_service_id = fields.Many2one(
-        'request.waste.service',
-        string="Dropped In Service"
-    )
-
-    shunt_service_id = fields.Many2one(
-        'request.waste.service',
-        string="Shunted In Service"
-    )
 
     #==================================
     #NEW
@@ -127,7 +118,10 @@ class WasteContainer(models.Model):
         'pickup.point',
         string="Pickup Point",
         domain="[('partner_id', '=', partner_id)]",
-        ondelete='cascade')
+        ondelete='cascade',
+        tracking=True
+    )
+
 
     dropoff_point_id = fields.Many2one(
         'pickup.point',
@@ -137,12 +131,14 @@ class WasteContainer(models.Model):
 
     bin_lifted_service_id = fields.Many2one(
         'request.waste.service',
-        string="Bin Lifted"
+        string="Bin Lifted",
+        tracking=True
     )
 
     bin_dropped_service_id = fields.Many2one(
         'request.waste.service',
-        string="Bin bin dropped"
+        string="Bin bin dropped",
+        tracking = True
     )
 
     @api.onchange('partner_id')
@@ -151,10 +147,8 @@ class WasteContainer(models.Model):
         self.pickup_point_id = False
         self.dropoff_point_id = False
 
-
-
-    liters_collected = fields.Float(string="Liters Collected")
-    liters_remaining = fields.Float(string="Liters Remaining", compute="_compute_liters_remaining", store=True)
+    liters_collected = fields.Float(string="Liters Collected",tracking=True)
+    liters_remaining = fields.Float(string="Liters Remaining", compute="_compute_liters_remaining", store=True,tracking=True)
 
     @api.depends('liters_collected', 'tank_volume_id')
     def _compute_liters_remaining(self):
@@ -181,8 +175,6 @@ class WasteContainer(models.Model):
                 raise UserError("Bin Number must be unique. Another bin with this number already exists.")
 
 
-
-
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
@@ -195,7 +187,13 @@ class ProductTemplate(models.Model):
 
     )
     partner_id = fields.Many2one('res.partner', string="Customer")
-    pickup_point_id = fields.Many2one('pickup.point', string="Drop-off/Pickup Point", domain="[('partner_id', '=', partner_id)]")
+    pickup_point_id = fields.Many2one('pickup.point', string="Drop-off/Pickup Point",
+                                      domain="[('partner_id', '=', partner_id)]")
+
+    list_price = fields.Float(tracking=True)
+    uom_id = fields.Many2one(tracking=True)
+    taxes_id = fields.Many2many(tracking=True)
+    company_id = fields.Many2one(tracking=True)
 
 
 class SaleOrderLine(models.Model):

@@ -4,12 +4,22 @@ from odoo.exceptions import UserError, AccessDenied, ValidationError
 
 class TankVolume(models.Model):
     _name = 'tank.volume'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Tank Volume'
 
     name = fields.Char(
         string='Name',
         required=True,
         tracking=True)
+
+    company_id = fields.Many2one(
+        "res.company",
+        string="Company",
+        index=True,
+        default=lambda self: self.env.company,
+        required=False,  # ✅ allow global/shared records
+    )
+
     sequence = fields.Integer("Sequence", default=10)
 
     pav_id = fields.Many2one(
@@ -33,3 +43,17 @@ class TankVolume(models.Model):
         string="Capacity (L)",
         help="Numeric capacity in liters, e.g. 7000, 9000, 12000, 15000."
     )
+
+    @api.constrains('name')
+    def _check_unique_name(self):
+        for rec in self:
+            if rec.name:
+                exists = self.search_count([
+                    ('id', '!=', rec.id),
+                    ('name', '=', rec.name),
+                ])
+                if exists:
+                    raise ValidationError(
+                        _("A Tank Volume with this name already exists.")
+                    )
+

@@ -25,15 +25,21 @@
                 <header>
                     <button name="action_set_to_draft" type="object" string="Set to Draft"
                             class="btn-secondary"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_driver,waste_management_zakheni.group_wmz_admin_clerk"
+
                     />
                     <button name="action_start"
                             type="object"
                             string="Start"
                             class="btn-primary"
                             invisible="state != 'draft'"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_driver,waste_management_zakheni.group_wmz_admin_clerk"
+
                     />
                     <button name="action_done" type="object" string="Mark as done"
                             class="btn-primary"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_driver,waste_management_zakheni.group_wmz_admin_clerk"
+
                     />
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
                 </header>
@@ -109,15 +115,16 @@
                     <group>
 
                         <group string="Worksheet information">
-                            <field name="arrival_time" required="state  == 'in_progress'"/>
-                            <field name="kilometers" required="state == 'in_progress'"/>
-                            <field name="unit_of_measure" required="state == 'in_progress'"/>
-                            <field name="return_date"/>
-                            <field name="quantity_collected" required="state == 'in_progress'"/>
+                            <field name="arrival_time" required="state  == 'in_progress'" readonly="state == 'done'"/>
+                            <field name="kilometers" required="state == 'in_progress'" readonly="state == 'done'"/>
+                            <field name="unit_of_measure" required="state == 'in_progress'" readonly="state == 'done'"/>
+                            <field name="return_date" readonly="state == 'done'"/>
+                            <!--                            <field name="quantity_collected" required="state == 'in_progress'"/>-->
                             <separator/>
-                            <field name="driver_signature" widget="signature" required="state == 'in_progress'"/>
+                            <field name="driver_signature" widget="signature" required="state == 'in_progress'"
+                                   readonly="state == 'done'"/>
                             <field name="service_provider_signature" string="Customer Signature" widget="signature"
-                                   required="state == 'in_progress'"/>
+                                   required="state == 'in_progress'" readonly="state == 'done'"/>
                         </group>
                         <group string="Manifest Details">
 
@@ -259,12 +266,13 @@
                             />
                             <field name="product_uom_qty" string="No. of Bins" readonly="1"
                                    invisible="not partner_id or hide_bin == False"/>
-                            <label for="product_uom_qty" string="Quantity (kL)"/>
+
+                            <label for="product_uom_qty" string="Quantity (kL)" invisible="not hide_tank_volume" />
 
                             <div class="o_row">
                                 <field name="product_uom_qty"
                                        readonly="state == 'done'"
-                                       class="oe_inline"/>
+                                       class="oe_inline" invisible="not hide_tank_volume"/>
                                 <div class="oe_inline text-success"
                                      invisible="qty_updated_from_worksheet == False">
                                     <span>Updated from worksheet</span>
@@ -298,98 +306,16 @@
                                               or hide_bin"
                             />
 
-                            <!--                            <field name="liters_remaining"-->
-                            <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
-                            <!--                                               or hide_bin"-->
-                            <!--                            />-->
-
-
-                            <!--                            <field name="planned_date" string="Planned Date"-->
-                            <!--                                   readonly="state != 'draft'-->
-                            <!--                                             and state != 'cancelled'-->
-                            <!--                                             and state != 'generated'"/>-->
-
-
-                            <!--                            <field name="hide_droppoff_container_ids_placement" invisible="1"/>-->
-                            <!--                            <field name="hide_droppoff_container_ids_removal" invisible="1"/>-->
-                            <!--                            <field name="hide_droppoff_container_ids_collection" invisible="1"/>-->
-                            <!--                            <field name="hide_droppoff_container_ids_is_bin" invisible="1"/>-->
-
-
-                            <!--                            &lt;!&ndash;                            <field name="pickup_point_id" readonly="state != 'draft'" invisible="0"/>&ndash;&gt;-->
-                            <!--                            &lt;!&ndash;                            <field name="pickup_point_ids" readonly="1" widget="many2many_tags" invisible="0"/>&ndash;&gt;-->
-
-                            <!--                            &lt;!&ndash;                            <field name="customer_id" />&ndash;&gt;-->
-                            <!--                            <field name="wizard_pickup_point_ids" widget="many2many_tags" readonly="1"/>-->
-                            <!--&lt;!&ndash;                            <field name="pickup_point_bins_summary" readonly="1" class="text-muted"&ndash;&gt;-->
-                            <!--&lt;!&ndash;                                   style="font-size:10px;"&ndash;&gt;-->
-                            <!--&lt;!&ndash;&lt;!&ndash;                                   placeholder="No bins assigned yet."/>&ndash;&gt;&ndash;&gt;-->
-                            <!--&lt;!&ndash;                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="1"&ndash;&gt;-->
-                            <!--&lt;!&ndash;                                   invisible="hide_droppoff_container_ids_placement == False or hide_tank == True"/>&ndash;&gt;-->
-
-
-                            <!--&lt;!&ndash;                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="0"&ndash;&gt;-->
-                            <!--&lt;!&ndash;                                   invisible="hide_droppoff_container_ids_removal == False"&ndash;&gt;-->
-                            <!--&lt;!&ndash;                                   required="1"/>&ndash;&gt;-->
-
-
-                            <!--&lt;!&ndash;                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="0"&ndash;&gt;-->
-                            <!--&lt;!&ndash;                                   invisible="hide_droppoff_container_ids_collection == False or hide_droppoff_container_ids_is_bin == False "/>&ndash;&gt;-->
-
-
-                            <!--                            <field name="hide_lifted_bin_ids_swap" invisible="1"/>-->
-                            <!--                            <field name="hide_dropped_bin_ids_swap" invisible="1"/>-->
-                            <!--                            <field name="hide_dropped_to_swap" invisible="1"/>-->
-                            <!--                            &lt;!&ndash;  Swap  &ndash;&gt;-->
-                            <!--                            <field name="lifted_bin_ids" widget="many2many_tags" readonly="1"-->
-                            <!--                                   invisible="hide_lifted_bin_ids_swap == False"/>-->
-
-                            <!--                            <field name="dropped_bin_ids" widget="many2many_tags" readonly="1"-->
-                            <!--                                   invisible="hide_dropped_to_swap == False"/>-->
-
-                            <!--                            <field name="pickup_point_id" invisible="hide_dropped_to_swap == False"-->
-                            <!--                                   readonly="1"/>-->
-
-                            <!--                            <field name="hide_shunt_container_ids" invisible="1"/>-->
-                            <!--                            <field name="hide_shunt_to_id" invisible="1"/>-->
-
-                            <!--                            <field name="shunt_container_ids" string="Bin Lifted" widget="many2many_tags"-->
-                            <!--                                   readonly="1"-->
-                            <!--                                   invisible="hide_shunt_container_ids == False"/>-->
-
-                            <!--                            <field name="shunt_to_id" string="Drop off Point" readonly="1"-->
-                            <!--                                   invisible="hide_shunt_to_id == False"/>-->
-
-                            <!--                            <field name="hide_tank_ids" invisible="1"/>-->
-                            <!--                            <field name="hide_tank_volume" invisible="1"/>-->
-                            <!--                            <field name="hide_liters_collected" invisible="1"/>-->
-                            <!--                            <field name="hide_liters_remaining" invisible="1"/>-->
-                            <!--                            <field name="hide_service_collection" invisible="1"/>-->
-
-
-                            <!--                            <field name="tank_ids" widget="many2many_tags"-->
-                            <!--                                   invisible="hide_tank_ids == False or hide_service_collection == False"-->
-                            <!--                                   readonly="1"-->
-
-                            <!--                            />-->
-                            <!--                            <field name="tank_volume_id" readonly="0"-->
-                            <!--                                   invisible="hide_tank_volume == False or hide_service_collection == False"/>-->
-                            <!--                            <field name="liters_collected" readonly="1"-->
-                            <!--                                   invisible="hide_liters_collected == False or hide_service_collection == False"/>-->
-                            <!--                            <field name="liters_remaining" readonly="1"-->
-                            <!--                                   invisible="hide_liters_remaining == False or hide_service_collection == False"/>-->
-                            <!--&lt;!&ndash;                            <field name="product_uom_qty" string="Bin no." readonly="1"/>&ndash;&gt;-->
-                            <!--                            <field name="planned_date" string="Planned Date" readonly="1"/>-->
-
 
                         </group>
                     </group>
                     <separator string="Upload information"/>
-                    <group>
+                    <div>
                         <separator/>
+
                         <group style="display:flex; align-items:center;">
                             <field name="manifest_document" filename="manifest_document_filename"
-                                   style="flex:1;"/>
+                                   style="flex:1;" readonly="state == 'done'"/>
                             <button name="action_open_manifest_document"
                                     type="object"
                                     icon="fa-file-pdf-o"
@@ -402,21 +328,20 @@
                         <group style="display:flex; align-items:center;">
                             <field name="weighbridge_slip" invisible="hide_waste_type == True"
                                    filename="weighbridge_slip_filename"
-                                   style="flex:1;"/>
+                                   style="flex:1;" readonly="state == 'done'"/>
                             <button name="action_open_weighbridge_slip"
                                     type="object"
                                     icon="fa-file-pdf-o"
                                     class="btn-sm"
-                                    string="Upload"
                                     invisible="weighbridge_slip == False"
                                     style="margin-left: -10px;"/>
 
                         </group>
 
 
-                        <group style="display:flex; align-items:center;" invisible="waste_type_id != 'hazardous'">
+                        <group style="display:flex; align-items:center;" invisible="not hide_hazardous_fields">
                             <field name="safety_certificate" filename="safety_certificate_filename"
-                                   style="flex:1;"/>
+                                   style="flex:1;" readonly="state == 'done'"/>
                             <button name="action_open_safety_certificate"
                                     type="object"
                                     class="btn-sm"
@@ -425,13 +350,14 @@
                                     style="margin-left: -10px;"/>
 
                         </group>
-                    </group>
+                    </div>
+
 
                     <separator/>
 
                     <notebook>
                         <page string="Photos">
-                            <field name="image_ids" mode="kanban">
+                            <field name="image_ids" mode="kanban"  readonly="state == 'done'" >
                                 <kanban create="true" quick_create="false" class="o_kanban_large_column">
                                     <field name="image"/>
                                     <field name="name"/>

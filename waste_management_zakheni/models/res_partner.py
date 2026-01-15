@@ -1,4 +1,8 @@
-from odoo import models, fields
+from odoo import models, fields, api, _
+from odoo.exceptions import (ValidationError)
+import re
+
+EMAIL_REGEX = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
@@ -40,3 +44,87 @@ class ResPartner(models.Model):
         help="Waste types this company collected."
     )
 
+    # company_id = fields.Many2one(
+    #     'res.company',
+    #     default=lambda self: self.env.company,
+    #     index=True
+    # )
+
+    phone = fields.Char(required=True)
+    email = fields.Char(required=True)
+    # mobile = fields.Char(required=True)
+
+
+    # ------------------------------------------------------------
+    # Helper: normalize phone numbers
+    # ------------------------------------------------------------
+    def _normalize_phone(self, value):
+        """
+        Normalize phone numbers by removing spaces, dashes, and brackets.
+
+        +27 12 345 6789  → +27123456789
+        (+27)12-345-6789 → +27123456789
+        """
+        if not value:
+            return value
+        return re.sub(r'[\s\-\(\)]+', '', value)
+
+    # ------------------------------------------------------------
+    # CREATE: normalize BEFORE constraint
+    # ------------------------------------------------------------
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('phone'):
+                vals['phone'] = self._normalize_phone(vals['phone'])
+            if vals.get('mobile'):
+                vals['mobile'] = self._normalize_phone(vals['mobile'])
+        return super().create(vals_list)
+
+    # ------------------------------------------------------------
+    # WRITE: normalize BEFORE constraint
+    # ------------------------------------------------------------
+    def write(self, vals):
+        if vals.get('phone'):
+            vals['phone'] = self._normalize_phone(vals['phone'])
+        if vals.get('mobile'):
+            vals['mobile'] = self._normalize_phone(vals['mobile'])
+        return super().write(vals)
+
+    # ------------------------------------------------------------
+    # CONSTRAINT: validate normalized value ONLY
+    # ------------------------------------------------------------
+    @api.constrains('phone', 'mobile')
+    def _check_phone_country_code(self):
+        for partner in self:
+            for field in ('phone', 'mobile'):
+                value = partner[field]
+                if not value:
+                    continue
+
+                if not re.match(r'^\+\d{7,15}$', value):
+                    raise ValidationError(
+                         _("Phone number must include country code, e.g. +27 12 345 6789, (+27)12-345-6789 and +27123456789 ✅ "
+                          "\n and it must not include Alpha numeric ❌ ")
+                    )
+
+    @api.constrains('email')
+    def _check_email_required(self):
+        for partner in self:
+            # Skip contacts that are not real business partners
+            if partner.is_company or partner.customer_rank > 0 or partner.supplier_rank > 0:
+                if not partner.email:
+                    raise ValidationError(
+                        _("Email address is required. ⚠️")
+                    )
+
+    @api.constrains('email')
+    def _check_email_format(self):
+        for partner in self:
+            if partner.email:
+                email = partner.email.strip()
+                if not re.match(EMAIL_REGEX, email):
+                    raise ValidationError(
+                        _("Invalid work email address format e.g email must take this format ✅'email@example.com' not this ❌ %s ") % email
+
+                    )

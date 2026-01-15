@@ -45,6 +45,20 @@
 <!--                    string="Remove"-->
 <!--                    class="btn btn-secondary btn-sm"/>-->
         </xpath>
+
+        <xpath expr="//sheet" position="inside">
+              <div name="button_box" class="oe_button_box">
+            <button
+                name="action_open_service_request"
+                type="object"
+                class="oe_stat_button"
+                icon="fa-recycle"
+                invisible="service_request_id ==  False"
+            >
+                <field name="service_request_count" widget="statinfo"/>
+            </button>
+              </div>
+        </xpath>
     </field>
 </record>
 

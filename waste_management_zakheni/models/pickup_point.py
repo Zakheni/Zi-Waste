@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 class PickupPoint(models.Model):
     _name = 'pickup.point'
@@ -13,3 +13,17 @@ class PickupPoint(models.Model):
     service_request_id = fields.Many2one('waste.service.request', string="Request")
     pickup_request_id = fields.Many2one('waste.service.request')
     dropoff_request_id = fields.Many2one('waste.service.request')
+
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True
+    )
+
+    @api.model
+    def create(self, vals):
+        if not vals.get('company_id'):
+            vals['company_id'] = self.env.company.id
+        return super().create(vals)

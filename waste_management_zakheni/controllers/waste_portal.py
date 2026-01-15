@@ -5,12 +5,46 @@ from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
 from odoo.addons.portal.controllers.portal import pager as portal_pager
 import base64
+import logging
+_logger = logging.getLogger(__name__)
+
+AGENT_ALLOWED_STATES = [
+    'scheduled',
+    'dispatched',
+    'service_delivered',
+    'cancelled',
+    'done',
+]
+
+CUSTOMER_ALLOWED_STATES = [
+    'draft',
+    'generated',
+    'scheduled',
+    'dispatched',
+    'service_delivered',
+    'cancelled',
+    'done',
+]
 
 
 class WasteClientPortal(CustomerPortal):
     """
     Portal controller for Waste Service Requests + Worksheets.
     """
+
+    def _base_request_domain(self, user):
+        commercial_id = user.partner_id.commercial_partner_id.id
+        if user.has_group(self.AGENT_GROUP):
+            return [
+                ('company_id', '=', user.company_id.id),
+                ('partner_id', 'child_of', commercial_id),
+                ('state', 'in', AGENT_ALLOWED_STATES),
+            ]
+        return [
+            ('company_id', '=', user.company_id.id),
+            ('partner_id', 'child_of', commercial_id),
+            ('state', 'in', CUSTOMER_ALLOWED_STATES),
+        ]
 
     AGENT_GROUP = 'waste_management_zakheni.group_wmz_client_agent'
 
@@ -22,28 +56,7 @@ class WasteClientPortal(CustomerPortal):
 
         WasteRequest = request.env['waste.service.request']
         user = request.env.user
-        commercial_id = user.partner_id.commercial_partner_id.id
-
-        if user.has_group(self.AGENT_GROUP):
-            # Agent: own company + specific states
-            domain = [
-                ('state', 'in', [
-                    'scheduled',
-                    'dispatched',
-                    'service_delivered',
-                    'cancelled',
-                    'done',
-                ]),
-                ('company_id', '=', user.company_id.id),
-                ('partner_id.commercial_partner_id', '=', commercial_id),
-            ]
-        else:
-            # Customer: all requests under their commercial company
-            domain = [
-                ('company_id', '=', user.company_id.id),
-                ('partner_id.commercial_partner_id', '=', commercial_id),
-            ]
-
+        domain = self._base_request_domain(user)
         request_count = WasteRequest.sudo().search_count(domain)
         values['waste_request_count'] = request_count or 0
 
@@ -56,37 +69,7 @@ class WasteClientPortal(CustomerPortal):
     def portal_my_waste_requests(self, **kw):
         user = request.env.user
         WasteRequest = request.env['waste.service.request'].sudo()
-        commercial_id = user.partner_id.commercial_partner_id.id
-
-        # # base domain
-        # if user.has_group(self.AGENT_GROUP):
-        #     domain = [
-        #         ('partner_id', 'child_of', commercial_id),
-        #         ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
-        #     ]
-        if user.has_group(self.AGENT_GROUP):
-            domain = [
-                ('company_id', '=', user.company_id.id),
-                ('partner_id', 'child_of', commercial_id),
-                ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
-                # ✅ only show records that use a service provider
-                ('is_service_provider', '=', True),
-                # (optional but recommended) ensure provider is selected
-                ('provider_id', '!=', False),
-
-            ]
-
-        else:
-            # domain = [
-            #     ('partner_id.commercial_partner_id', '=', commercial_id),
-            # ]
-            domain = [
-                ('company_id', '=', user.company_id.id),
-                ('partner_id.commercial_partner_id', '=', commercial_id),
-                ('is_service_provider', '=', True),
-                ('provider_id', '!=', False),
-            ]
-
+        domain = self._base_request_domain(user)
         # apply state filter BEFORE search
         state = kw.get('state')
         if state == 'open':
@@ -112,149 +95,40 @@ class WasteClientPortal(CustomerPortal):
         if user.has_group(self.AGENT_GROUP):
             return request.redirect('/my/waste/requests?msg=agent_cannot_log')
 
-        partner = user.partner_id
         env = request.env
-
-        # ------------------------------------------------------------
-        # ✅ Filter client companies:
-        # - Only customers (customer_rank > 0)
-        # - Only current company (plus shared company_id=False)
-        # - Only within user's commercial group (no "all customers" leak)
-        # ------------------------------------------------------------
-        company_id = env.company.id
-        commercial_id = partner.commercial_partner_id.id
-
-        client_companies = env['res.partner'].sudo().search(
-            [
-                ('is_company', '=', True),
-                ('active', '=', True),
-                ('customer_rank', '>', 0),
-                ('company_id', 'in', [False, company_id]),  # ✅ company + shared
-                ('id', '!=', commercial_id),  # ✅ exclude own company
-            ],
-            order="name"
-        )
-
-        # safe default
-        default_client_id = commercial_id
-        if client_companies:
-            default_client_id = client_companies[0].id
+        partner = user.partner_id
+        commercial_partner = partner.commercial_partner_id
+        company = user.company_id.sudo()
 
         values = {
             'page_name': 'waste_new_request',
             'csrf_token': request.csrf_token(),
 
-            # company list for dropdown
-            'client_companies': client_companies,
-            'default_client_id': default_client_id,
+            # ✅ THIS is what your template needs
+            'client_partner': commercial_partner,
 
-            # pickup points must follow selected client
+            # pickup points for THIS client only
             'pickup_points': env['pickup.point'].sudo().search(
-                [('partner_id', '=', default_client_id)],
+                [('partner_id', '=', commercial_partner.id)],
                 order="name asc"
             ),
 
-            # fallback lists (overridden below by company config when present)
-            'bin_types': env['bin.type'].sudo().search([]),
-            'tank_volumes': env['tank.volume'].sudo().search([]),
-            'waste_details': env['waste.details'].sudo().search([]),
-        }
-
-        company = request.env.user.company_id.sudo()
-
-        values.update({
-            "container_types": company.wmz_container_type_ids.sudo() if "wmz_container_type_ids" in company._fields else [],
-            "services": company.wmz_service_ids.sudo() if "wmz_service_ids" in company._fields else [],
-            "waste_types": company.wmz_waste_type_ids.sudo() if "wmz_waste_type_ids" in company._fields else [],
-            "bin_types": company.wmz_bin_type_ids.sudo() if "wmz_bin_type_ids" in company._fields else request.env[
+            # company configuration
+            "container_types": company.wmz_container_type_ids if "wmz_container_type_ids" in company._fields else [],
+            "services": company.wmz_service_ids if "wmz_service_ids" in company._fields else [],
+            "waste_types": company.wmz_waste_type_ids if "wmz_waste_type_ids" in company._fields else [],
+            "waste_details": company.wmz_waste_details_ids if "wmz_waste_details_ids" in company._fields else [],
+            "bin_types": company.wmz_bin_type_ids if "wmz_bin_type_ids" in company._fields else env[
                 "bin.type"].sudo().browse(),
-            "tank_volumes": company.wmz_tank_volume_ids.sudo() if "wmz_tank_volume_ids" in company._fields else
-            request.env["tank.volume"].sudo().browse(),
-        })
+            "tank_volumes": company.wmz_tank_volume_ids if "wmz_tank_volume_ids" in company._fields else env[
+                "tank.volume"].sudo().browse(),
+        }
 
         return request.render(
             'waste_management_zakheni.portal_new_waste_request_form',
             values
         )
 
-    # @http.route('/my/waste/request/new', type='http', auth='user', website=True)
-    # def portal_new_waste_request_form(self, **kwargs):
-    #     user = request.env.user
-    #
-    #     # 🚫 Agents are not allowed to log requests
-    #     if user.has_group(self.AGENT_GROUP):
-    #         return request.redirect('/my/waste/requests?msg=agent_cannot_log')
-    #
-    #     partner = user.partner_id
-    #     env = request.env
-    #     default_client_id = partner.commercial_partner_id.id
-    #
-    #     client_companies = env['res.partner'].sudo().search(
-    #         [
-    #             ('is_company', '=', True),
-    #             ('active', '=', True),
-    #         ],
-    #         order="name"
-    #     )
-    #
-    #     values = {
-    #         'page_name': 'waste_new_request',
-    #         'csrf_token': request.csrf_token(),
-    #
-    #         # company list for dropdown
-    #         'client_companies': client_companies,
-    #         # 'default_client_id': partner.commercial_partner_id.id,
-    #         'default_client_id': default_client_id,
-    #         'pickup_points': env['pickup.point'].sudo().search([('partner_id', '=', default_client_id)],
-    #                                                            order="name asc"),
-    #
-    #         # 'pickup_points': env['pickup.point'].sudo().search([('partner_id', '=', partner.id)]),
-    #         # 'container_types': env['container.type'].sudo().search([]),
-    #         'bin_types': env['bin.type'].sudo().search([]),
-    #         'tank_volumes': env['tank.volume'].sudo().search([]),
-    #
-    #         # 'services': env['service.request'].sudo().search([]),
-    #         # 'waste_types': env['waste.type'].sudo().search([]),
-    #         'waste_details': env['waste.details'].sudo().search([]),
-    #     }
-    #     company = request.env.user.company_id.sudo()
-    #
-    #     # values.update({
-    #     #     'container_types': company.wmz_container_type_ids.sudo(),
-    #     #     'services': company.wmz_service_ids.sudo(),
-    #     #     'waste_types': company.wmz_waste_type_ids.sudo(),
-    #     # })
-    #
-    #     # company = request.env.company.sudo()
-    #     #
-    #     # values.update({
-    #     #     'container_types': company.wmz_container_type_ids.sudo(),
-    #     #     'services': company.wmz_service_ids.sudo(),
-    #     #     'waste_types': company.wmz_waste_type_ids.sudo(),
-    #     #     'bin_types': company.wmz_bin_type_ids.sudo(),
-    #     #     'tank_volumes': company.wmz_tank_volume_ids.sudo(),
-    #     # })
-    #
-    #     company = request.env.user.company_id.sudo()
-    #
-    #     values.update({
-    #         "container_types": company.wmz_container_type_ids.sudo() if "wmz_container_type_ids" in company._fields else [],
-    #         "services": company.wmz_service_ids.sudo() if "wmz_service_ids" in company._fields else [],
-    #         "waste_types": company.wmz_waste_type_ids.sudo() if "wmz_waste_type_ids" in company._fields else [],
-    #         "bin_types": company.wmz_bin_type_ids.sudo() if "wmz_bin_type_ids" in company._fields else request.env[
-    #             "bin.type"].sudo().browse(),
-    #         "tank_volumes": company.wmz_tank_volume_ids.sudo() if "wmz_tank_volume_ids" in company._fields else
-    #         request.env["tank.volume"].sudo().browse(),
-    #     })
-    #
-    #     return request.render(
-    #         'waste_management_zakheni.portal_new_waste_request_form',
-    #         values
-    #     )
-
-    # ------------------------------------------------------------
-    # FORM: Log Service Request (POST)
-    # ------------------------------------------------------------
     @http.route(
         '/my/waste/request/create',
         type='http',
@@ -263,88 +137,148 @@ class WasteClientPortal(CustomerPortal):
         methods=['POST']
     )
     def portal_create_waste_request(self, **post):
-        user = request.env.user
+
+        env = request.env
+        user = env.user
+
+        # ------------------------------------------------------------
         # 🚫 Agents are not allowed to log requests
+        # ------------------------------------------------------------
         if user.has_group(self.AGENT_GROUP):
             return request.redirect('/my/waste/requests?msg=agent_cannot_log')
-        partner = user.partner_id
-        env = request.env
 
-        # 🔹 company/client from res.partner
+        partner = user.partner_id
+        company = user.company_id.sudo()
+
+        # ------------------------------------------------------------
+        # ✅ FORCE CLIENT (commercial partner)
+        # ------------------------------------------------------------
         client_partner_id = partner.commercial_partner_id.id
         if post.get('client_partner_id'):
             try:
                 client_partner_id = int(post.get('client_partner_id'))
             except Exception:
-                client_partner_id = partner.commercial_partner_id.id
+                pass
 
-        # pick-up point (single) mapped to m2m
+        # ------------------------------------------------------------
+        # ✅ PICKUP POINTS (single → m2m)
+        # ------------------------------------------------------------
         pickup_point_ids = []
         if post.get('pickup_point_id'):
-            pickup_point_ids = [int(post.get('pickup_point_id'))]
+            try:
+                pickup_point_ids = [int(post.get('pickup_point_id'))]
+            except Exception:
+                pickup_point_ids = []
 
-        # container type string -> container_type_id
-        container_type_id = False
-        ctype = post.get('container_type')  # 'bin' or 'tank'
-        if ctype == 'bin':
-            ct = env['container.type'].sudo().search([('name', '=', 'Bin')], limit=1)
-            container_type_id = ct.id
-        elif ctype == 'tank':
-            ct = env['container.type'].sudo().search([('name', '=', 'Tank')], limit=1)
-            container_type_id = ct.id
+        # ------------------------------------------------------------
+        # ✅ CONTAINER TYPE (ID from form)
+        # ------------------------------------------------------------
+        container_type_id = int(post.get('container_type_id') or 0)
+
+        _logger.info(
+            "PORTAL CREATE | container_type_id=%s | allowed=%s",
+            container_type_id,
+            company.wmz_container_type_ids.ids,
+        )
+
+        if container_type_id and container_type_id not in company.wmz_container_type_ids.ids:
+            return request.redirect('/my/waste/request/new?msg=invalid_container')
+
+        # ------------------------------------------------------------
+        # ✅ WASTE TYPE (ID from form)
+        # ------------------------------------------------------------
+        waste_type_id = int(post.get('waste_type_id') or 0)
+
+        _logger.info(
+            "PORTAL CREATE | waste_type_id=%s | allowed=%s",
+            waste_type_id,
+            company.wmz_waste_type_ids.ids,
+        )
+
+        if waste_type_id and waste_type_id not in company.wmz_waste_type_ids.ids:
+            return request.redirect('/my/waste/request/new?msg=invalid_waste_type')
+
+        # ------------------------------------------------------------
+        # ✅ SERVICE REQUESTED (ID from form)
+        # ------------------------------------------------------------
+        service_requested_id = int(post.get('service_requested_id') or 0)
+
+        _logger.info(
+            "PORTAL CREATE | service_requested_id=%s | allowed=%s",
+            service_requested_id,
+            company.wmz_service_ids.ids,
+        )
+
+        if service_requested_id and service_requested_id not in company.wmz_service_ids.ids:
+            return request.redirect('/my/waste/request/new?msg=invalid_service')
+
+        # ------------------------------------------------------------
+        # ✅ WASTE DETAILS (SAME PATTERN AS WASTE TYPE)
+        # ------------------------------------------------------------
+        waste_details_id = int(post.get('waste_details_id') or 0)
+
+        _logger.info(
+            "PORTAL CREATE | waste_details_id=%s | allowed=%s",
+            waste_details_id,
+            company.wmz_waste_details_ids.ids,
+        )
+
+        if waste_details_id and waste_details_id not in company.wmz_waste_details_ids.ids:
+            return request.redirect('/my/waste/request/new?msg=invalid_waste_details')
 
 
 
+        # ------------------------------------------------------------
+        # ✅ BASE VALUES (ALL CORE FIELDS)
+        # ------------------------------------------------------------
         vals = {
-            'partner_id': client_partner_id,  # ✅ correct company
+            'partner_id': client_partner_id,
+            'company_id': company.id,
             'ticket_type': post.get('ticket_type') or 'pickup',
             'service_description': post.get('service_description'),
             'pickup_point_ids': [(6, 0, pickup_point_ids)],
             'container_type_id': container_type_id or False,
+            'waste_type_id': waste_type_id or False,
+            'waste_details_id': waste_details_id or False,
+            'service_requested_id': service_requested_id or False,
             'from_portal': True,
-            'company_id': env.user.company_id.id,  # ✅ Internal company
         }
-        # wsr = env['waste.service.request'].sudo().create(vals)
 
-        # bin / tank size
-        if ctype == 'bin' and post.get('bin_type_id'):
-            vals['bin_type_id'] = int(post.get('bin_type_id'))
-            vals['tank_volume_id'] = False
-        elif ctype == 'tank' and post.get('tank_volume_id'):
-            vals['tank_volume_id'] = int(post.get('tank_volume_id'))
-            vals['bin_type_id'] = False
-
-        # service & waste relations
-        if post.get('service_requested_id'):
-            vals['service_requested_id'] = int(post.get('service_requested_id'))
-        if post.get('waste_type_id'):
-            vals['waste_type_id'] = int(post.get('waste_type_id'))
-        if post.get('waste_details_id'):
-            vals['waste_details_id'] = int(post.get('waste_details_id'))
-
-        company = request.env.user.company_id.sudo()
-
-        # validate service
-        if post.get('service_requested_id'):
-            sid = int(post.get('service_requested_id'))
-            if sid not in company.wmz_service_ids.ids:
-                return request.redirect('/my/waste/request/new?msg=invalid_service')
-
-        # validate container type
+        if waste_details_id:
+            vals['waste_details_id'] = waste_details_id
+        # ------------------------------------------------------------
+        # ✅ BIN / TANK SIZE (DERIVED FROM CONTAINER TYPE)
+        # ------------------------------------------------------------
         if container_type_id:
-            if container_type_id not in company.wmz_container_type_ids.ids:
-                return request.redirect('/my/waste/request/new?msg=invalid_container')
+            ct = env['container.type'].sudo().browse(container_type_id)
+            ct_name = (ct.name or '').lower()
 
-        # validate waste type
-        if post.get('waste_type_id'):
-            wid = int(post.get('waste_type_id'))
-            if wid not in company.wmz_waste_type_ids.ids:
-                return request.redirect('/my/waste/request/new?msg=invalid_waste_type')
+            if 'bin' in ct_name:
+                if post.get('bin_type_id'):
+                    vals['bin_type_id'] = int(post.get('bin_type_id'))
+                vals['tank_volume_id'] = False
 
+            elif 'tank' in ct_name:
+                if post.get('tank_volume_id'):
+                    vals['tank_volume_id'] = int(post.get('tank_volume_id'))
+                vals['bin_type_id'] = False
+
+
+        # ------------------------------------------------------------
+        # ✅ CREATE REQUEST
+        # ------------------------------------------------------------
         wsr = env['waste.service.request'].sudo().create(vals)
 
-        # SEND EMAIL TO CUSTOMER (AND/OR INTERNAL) WHEN REQUEST IS LOGGED
-        template = request.env.ref(
+        _logger.info(
+            "PORTAL CREATE SUCCESS | request_id=%s | company=%s",
+            wsr.id,
+            company.id,
+        )
+
+        # ------------------------------------------------------------
+        # ✅ SEND EMAIL CONFIRMATION
+        # ------------------------------------------------------------
+        template = env.ref(
             "waste_management_zakheni.mail_tmpl_service_request_portal_completion",
             raise_if_not_found=False
         )
@@ -353,9 +287,7 @@ class WasteClientPortal(CustomerPortal):
 
         return request.redirect('/my/waste/request/thankyou/%s' % wsr.id)
 
-    # ------------------------------------------------------------
-    # THANK YOU PAGE
-    # ------------------------------------------------------------
+
 
     @http.route(
         ['/my/waste/request/thankyou/<int:wsr_id>'],
@@ -388,30 +320,7 @@ class WasteClientPortal(CustomerPortal):
         WasteRequest = request.env['waste.service.request'].sudo()
         Worksheet = request.env['waste.worksheet'].sudo()
         user = request.env.user
-        commercial_id = user.partner_id.commercial_partner_id.id
-
-        if user.has_group(self.AGENT_GROUP):
-            # Agent: own company + allowed states
-            domain = [
-                ('id', '=', wsr_id),
-                ('company_id', '=', user.company_id.id),
-                ('partner_id.commercial_partner_id', '=', commercial_id),
-                ('state', 'in', [
-                    'scheduled',
-                    'dispatched',
-                    'service_delivered',
-                    'cancelled',
-                    'done',
-                ]),
-            ]
-        else:
-            # Customer: any request under their commercial company
-            domain = [
-                ('id', '=', wsr_id),
-                ('company_id', '=', user.company_id.id),
-                ('partner_id.commercial_partner_id', '=', commercial_id),
-            ]
-
+        domain = self._base_request_domain(user)
         wsr = WasteRequest.search(domain, limit=1)
         if not wsr:
             return request.not_found()
@@ -682,26 +591,6 @@ class WasteClientPortal(CustomerPortal):
             vals['safety_certificate'] = base64.b64encode(safety.read())
             vals['safety_certificate_filename'] = safety.filename
 
-        # SignaturePad data (driver & customer)
-        # driver_sig_data = post.get('driver_signature_data')
-        # if driver_sig_data and driver_sig_data.startswith('data:image'):
-        #     try:
-        #         vals['driver_signature'] = base64.b64decode(
-        #             driver_sig_data.split(',', 1)[1]
-        #         )
-        #     except Exception:
-        #         pass
-        #
-        # sp_sig_data = post.get('service_provider_signature_data')
-        # if sp_sig_data and sp_sig_data.startswith('data:image'):
-        #     try:
-        #         vals['service_provider_signature'] = base64.b64decode(
-        #             sp_sig_data.split(',', 1)[1]
-        #         )
-        #     except Exception:
-        #         pass
-
-        # SignaturePad data (driver & customer)
         driver_sig_data = post.get('driver_signature_data')
         if driver_sig_data and driver_sig_data.startswith('data:image'):
             # Odoo Binary fields expect base64-encoded data, NOT decoded bytes.
@@ -819,17 +708,18 @@ class WasteClientPortal(CustomerPortal):
         is_agent = user.has_group(self.AGENT_GROUP)
         commercial_id = user.partner_id.commercial_partner_id.id
 
-        # ---- base domain for requests ----
         if is_agent:
             base_domain = [
                 ('company_id', '=', user.company_id.id),
                 ('partner_id', 'child_of', commercial_id),
-                ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
+                ('state', 'in', AGENT_ALLOWED_STATES),
             ]
         else:
             base_domain = [
                 ('company_id', '=', user.company_id.id),
-                ('partner_id.commercial_partner_id', '=', commercial_id),
+                # ('partner_id.commercial_partner_id', '=', commercial_id),
+                ('partner_id', 'child_of', commercial_id),
+                ('state', 'in', CUSTOMER_ALLOWED_STATES),
             ]
 
         closed_states = ['cancelled', 'done']
@@ -1219,12 +1109,17 @@ class WasteClientPortal(CustomerPortal):
             base_domain = [
                 ('company_id', '=', user.company_id.id),
                 ('partner_id', 'child_of', commercial_id),
-                ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
+                ('state', 'in', AGENT_ALLOWED_STATES),
             ]
         else:
+            # base_domain = [
+            #     ('company_id', '=', user.company_id.id),
+            #     ('partner_id.commercial_partner_id', '=', commercial_id),
+            # ]
             base_domain = [
                 ('company_id', '=', user.company_id.id),
-                ('partner_id.commercial_partner_id', '=', commercial_id),
+                ('partner_id', 'child_of', commercial_id),
+                ('state', 'in', CUSTOMER_ALLOWED_STATES),
             ]
 
         # -------------------------
@@ -1414,7 +1309,11 @@ class WasteClientPortal(CustomerPortal):
         invoice_no = (kw.get('invoice_no') or kw.get('invoice') or '').strip()
 
         # ✅ SAME base domain as dashboard
-        manifest_domain = [('partner_id.commercial_partner_id', '=', commercial_id)]
+        # manifest_domain = [('partner_id.commercial_partner_id', '=', commercial_id)]
+        manifest_domain = [
+            ('partner_id', 'child_of', commercial_id),
+            ('state', 'in', CUSTOMER_ALLOWED_STATES),
+        ]
 
         if manifest_no:
             manifest_domain += [('name', 'ilike', manifest_no)]
@@ -1474,7 +1373,11 @@ class WasteClientPortal(CustomerPortal):
         AccountMove = env['account.move'].sudo()
 
         commercial_id = user.partner_id.commercial_partner_id.id
-        base_domain = [('partner_id.commercial_partner_id', '=', commercial_id)]
+        # base_domain = [('partner_id.commercial_partner_id', '=', commercial_id)]
+        base_domain = [
+            ('partner_id', 'child_of', commercial_id),
+            ('state', 'in', CUSTOMER_ALLOWED_STATES),
+        ]
 
         # Requests (for sheets 2/3)
         # requests = WasteRequest.search(base_domain)
@@ -1668,26 +1571,7 @@ class WasteClientPortal(CustomerPortal):
 
         return [{'id': pp.id, 'name': pp.display_name} for pp in points]
 
-    # @http.route('/my/waste/pickup_points', type='json', auth='user', website=True)
-    # def portal_pickup_points_by_customer(self, partner_id=None, **kw):
-    #     user = request.env.user
-    #     commercial_id = user.partner_id.commercial_partner_id.id
-    #
-    #     try:
-    #         partner_id = int(partner_id or 0)
-    #     except Exception:
-    #         partner_id = 0
-    #
-    #     # Security: only allow within same commercial group
-    #     Partner = request.env['res.partner'].sudo()
-    #     p = Partner.browse(partner_id)
-    #     if not p or not p.exists() or p.commercial_partner_id.id != commercial_id:
-    #         return []
-    #
-    #     PickupPoint = request.env['pickup.point'].sudo()
-    #     points = PickupPoint.search([('partner_id', '=', p.id)], order="name asc")
-    #
-    #     return [{'id': pp.id, 'name': pp.display_name} for pp in points]
+
     @http.route(
         '/my/waste/pickup_points/create',
         type='http',
@@ -1697,8 +1581,7 @@ class WasteClientPortal(CustomerPortal):
         csrf=False
     )
     def portal_pickup_points_create(self, **kw):
-        # ✅ Read JSON body (fetch sends raw JSON, not Odoo jsonrpc)
-        data = {}
+        # ✅ Read JSON body (fetch sends raw JSON)
         try:
             raw = request.httprequest.get_data(as_text=True)
             data = json.loads(raw) if raw else {}
@@ -1710,99 +1593,41 @@ class WasteClientPortal(CustomerPortal):
             data = dict(request.params or {})
 
         # -------- validate inputs --------
-        try:
-            partner_id = int(data.get('partner_id') or 0)
-        except Exception:
-            partner_id = 0
-
         name = (data.get('name') or '').strip()
-
-        if not partner_id or not name:
-            return request.make_json_response({'error': _('Client and Address Name are required.')})
+        if not name:
+            return request.make_json_response({
+                'error': _('Address Name is required.')
+            })
 
         user = request.env.user
         env = request.env
-        company_id = env.company.id
 
-        Partner = env['res.partner'].sudo()
-        p = Partner.browse(partner_id)
+        # 🔒 FORCE client to logged-in user's commercial partner
+        partner = user.partner_id.commercial_partner_id
 
-        if not p.exists():
-            return request.make_json_response({'error': _('Invalid client selected.')})
+        if not partner or not partner.exists():
+            return request.make_json_response({
+                'error': _('Invalid customer account.')
+            })
 
-        # ✅ NEW SECURITY (match your dropdown logic):
-        # - must be a company customer
-        # - must be visible in current company (company_id = current OR shared company_id=False)
-        # - do NOT require same commercial group (that caused your "Not allowed" error)
-        if (not p.is_company
-                or (p.customer_rank or 0) <= 0
-                or (p.company_id and p.company_id.id != company_id)):
-            return request.make_json_response({'error': _('Not allowed for this client.')})
+        # Extra safety (optional but recommended)
+        if not partner.is_company or (partner.customer_rank or 0) <= 0:
+            return request.make_json_response({
+                'error': _('You are not allowed to create pickup points.')
+            })
 
-        # ✅ Create pickup point
+        # ✅ Create pickup point (NO client switching possible)
         pp = env['pickup.point'].sudo().create({
             'name': name,
-            'partner_id': p.id,
-            # Optional (only if your model has it):
-            # 'company_id': company_id,
+            'partner_id': partner.id,
+            # 'company_id': env.company.id,  # only if your model has it
         })
 
-        return request.make_json_response({'id': pp.id, 'name': pp.name})
+        return request.make_json_response({
+            'id': pp.id,
+            'name': pp.display_name,
+        })
 
-    # @http.route(
-    #     '/my/waste/pickup_points/create',
-    #     type='http',
-    #     auth='user',
-    #     website=True,
-    #     methods=['POST'],
-    #     csrf=False
-    # )
-    # def portal_pickup_points_create(self, **kw):
-    #     # ✅ Read JSON body (fetch sends raw JSON, not Odoo jsonrpc)
-    #     data = {}
-    #     try:
-    #         raw = request.httprequest.get_data(as_text=True)  # or .data
-    #         data = json.loads(raw) if raw else {}
-    #     except Exception:
-    #         data = {}
-    #
-    #     # Fallback if someone posts form-data
-    #     if not data:
-    #         data = dict(request.params or {})
-    #
-    #     # -------- validate inputs --------
-    #     try:
-    #         partner_id = int(data.get('partner_id') or 0)
-    #     except Exception:
-    #         partner_id = 0
-    #
-    #     name = (data.get('name') or '').strip()
-    #
-    #     if not partner_id or not name:
-    #         return request.make_json_response({
-    #             'error': _('Client and Address Name are required.')
-    #         })
-    #
-    #     # optional: security check (only allow within current user commercial group)
-    #     user = request.env.user
-    #     commercial_id = user.partner_id.commercial_partner_id.id
-    #
-    #     Partner = request.env['res.partner'].sudo()
-    #     p = Partner.browse(partner_id)
-    #     if not p.exists():
-    #         return request.make_json_response({'error': _('Invalid client selected.')})
-    #
-    #     # ✅ IMPORTANT: allow only same commercial group
-    #     if p.commercial_partner_id.id != commercial_id:
-    #         return request.make_json_response({'error': _('Not allowed for this client.')})
-    #
-    #     pp = request.env['pickup.point'].sudo().create({
-    #         'name': name,
-    #         'partner_id': p.id,
-    #     })
-    #
-    #     return request.make_json_response({'id': pp.id, 'name': pp.name})
-    #
 
     @http.route('/wmz/ping', type='http', auth='public', website=True)
     def wmz_ping(self, **kw):

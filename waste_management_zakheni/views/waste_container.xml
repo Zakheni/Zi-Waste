@@ -6,21 +6,23 @@
         <field name="arch" type="xml">
             <tree default_order="create_date desc" string="Bin List">
                 <field name="name"/>
-                <field name="status"/>
-                <field name="image" widget="image" class="oe_avatar" options="{'size': [35, 35]}"/>
-                <field name="container_type_id"/>
-                <!--                <field name="bin_type"/>-->
-                <!--                <field name="tank_volume"/>-->
-                <field name="display_info" string="Type / Volume"/>
-                <field name="liters_collected" optional="hide"/>
-                <field name="liters_remaining" optional="hide"/>
+                <field name="image" widget="image" class="oe_avatar" options="{'size': [30, 30]}"/>
+                <!--                <field name="container_type_id"/>-->
+                <field name="bin_type_id"/>
+                <field name="company_id" widget="badge" optional="hide"/>
+
+
                 <field name="inUse"/>
                 <field name="partner_id"/>
                 <field name="pickup_point_id"/>
                 <field name="reserved_request_id"/>
-                <!--                 <field name="hide_tank" invisible="1"/>-->
-                <!--                 <field name="hide_bin" invisible="1"/>-->
-                <!--                <field name="pickup_point_id" widget="many2many_tags" options="{'color_field': 'color'}"/>-->
+                <field name="status" widget="badge"
+                       decoration-success="status == 'intact'"
+                       decoration-warning="status == 'un_use'"
+                       decoration-danger="status == 'in_use'"
+                       decoration-primary="status == 'missing'"
+                       decoration-info="status == 'broken'"/>
+
 
             </tree>
         </field>
@@ -49,18 +51,18 @@
                                    widget="res_partner_many2one"
                                    context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}"
                                    placeholder="Type to find a customer..."/>
-                            <!--                            <field name="sale_order_id"/>-->
+
 
                             <field name="pickup_point_id"/>
-                            <field name="dropoff_point_id"/>
-                            <!--                            <field name="available_pickup_point_ids" invisible="1"/>-->
+<!--                            <field name="dropoff_point_id"/>-->
+
                             <field name="liters_collected"
                                    invisible="1"/>
                             <field name="liters_remaining" readonly="1"
                                    invisible="1 "/>
 
-                            <field name="reserved_request_id"
-                                   invisible="reserved_request_id == False"/>
+                             <field name="reserved_request_id"/>
+
 
                         </group>
 
@@ -69,14 +71,14 @@
                             <field name="hide_tank" invisible="1"/>
                             <field name="hide_bin" invisible="1"/>
                             <field name="status" required="1"/>
-                            <field name="bin_type_id" required="1" />
+                            <field name="bin_type_id" required="1"/>
 
                             <!--                            <field name="container_type_id" required="1" widget="radio" options="{'horizontal': True}"/>-->
                             <!--                            &lt;!&ndash;                            <field name="container_type_id" required="1"/>&ndash;&gt;-->
                             <!--                            <field name="bin_type_id" required="1" invisible="hide_bin == False"/>-->
                             <!--                            <field name="tank_volume_id" required="1" invisible="hide_tank == False"/>-->
                             <field name="inUse"/>
-                             <field name="company_id"/>
+                            <field name="company_id"/>
 
                         </group>
                     </group>

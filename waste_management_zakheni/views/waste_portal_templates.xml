@@ -114,7 +114,10 @@
                                     <th>Service Requested</th>
                                     <th>Ticket Type</th>
                                     <th>Container Type</th>
-                                    <th>Date</th>
+                                    <th>Created By</th>
+                                    <th>Update By</th>
+                                    <th>Created on</th>
+                                    <th>Updated on</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -142,9 +145,29 @@
                                         <t t-esc="req.container_type_id.display_name or ''"/>
                                     </td>
 
+                                    <td>
+                                        <t t-esc="req.create_uid.partner_id.name"/>
+                                        <br/>
+                                        <small class="text-muted">
+                                            <t t-esc="req.create_uid.partner_id.commercial_partner_id.name"/>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <t t-esc="req.write_uid.partner_id.name"/>
+                                        <br/>
+                                        <small class="text-muted">
+                                            <t t-esc="req.write_uid.partner_id.commercial_partner_id.name"/>
+                                        </small>
+                                    </td>
+
+
                                     <!-- Date -->
                                     <td>
                                         <t t-esc="req.service_request_date"/>
+                                    </td>
+
+                                    <td>
+                                        <t t-esc="req.write_date"/>
                                     </td>
 
                                     <!-- Status -->
@@ -209,21 +232,36 @@
                             <!-- LEFT COLUMN -->
                             <div class="col-md-6">
 
-                                <!-- Client / Company (from res.partner) -->
-                                <div class="mb-3">
-                                    <label class="form-label">Client / Company</label>
-                                    <select name="client_partner_id" id="client_partner_id" class="form-select">
-                                        <t t-foreach="client_companies" t-as="cli">
-                                            <option t-att-value="cli.id"
-                                                    t-att-selected="str(cli.id) == str(default_client_id) and 'selected' or None">
-                                                <t t-esc="cli.display_name"/>
-                                            </option>
-                                        </t>
-                                    </select>
-                                    <div class="form-text">
-                                        Select the company you are requesting service for.
-                                    </div>
+                                <div class="form-group">
+                                    <label>Client / Company</label>
+
+                                    <input type="text"
+                                           class="form-control"
+                                           t-att-value="client_partner and client_partner.display_name or ''"
+                                           readonly="readonly"/>
+
+                                    <!-- hidden value (optional, backend forces anyway) -->
+                                    <input type="hidden"
+                                           id="client_partner_id"
+                                           name="client_partner_id"
+                                           t-att-value="client_partner and client_partner.id or ''"/>
                                 </div>
+
+                                <!-- Client / Company (from res.partner) -->
+                                <!--                                <div class="mb-3">-->
+                                <!--                                    <label class="form-label">Client / Company</label>-->
+                                <!--                                    <select name="client_partner_id" id="client_partner_id" class="form-select">-->
+                                <!--                                        <t t-foreach="client_companies" t-as="cli">-->
+                                <!--                                            <option t-att-value="cli.id"-->
+                                <!--                                                    t-att-selected="str(cli.id) == str(default_client_id) and 'selected' or None">-->
+                                <!--                                                <t t-esc="cli.display_name"/>-->
+                                <!--                                            </option>-->
+                                <!--                                        </t>-->
+                                <!--                                    </select>-->
+                                <!--                                    <div class="form-text">-->
+                                <!--                                        Select the company you are requesting service for.-->
+                                <!--                                    </div>-->
+                                <!--                                </div>-->
                             </div>
 
 
@@ -243,7 +281,7 @@
                                     <!-- Service Requested -->
                                     <div class="mb-3">
                                         <label class="form-label">Service Requested</label>
-                                        <select name="service_requested_id" class="form-select">
+                                        <select name="service_requested_id" class="form-select" required="required">
                                             <option value="">Select service</option>
                                             <t t-foreach="services" t-as="srv">
                                                 <option t-att-value="srv.id">
@@ -256,7 +294,7 @@
                                     <!-- Waste Type -->
                                     <div class="mb-3">
                                         <label class="form-label">Waste Type</label>
-                                        <select name="waste_type_id" class="form-select">
+                                        <select name="waste_type_id" class="form-select" required="required">
                                             <option value="">Select waste type</option>
                                             <t t-foreach="waste_types" t-as="wt">
                                                 <option t-att-value="wt.id">
@@ -318,7 +356,8 @@
                                     <!-- Container Type (from company config: container.type records) -->
                                     <div class="mb-3">
                                         <label class="form-label">Container Type</label>
-                                        <select id="container_type_id" name="container_type_id" class="form-select">
+                                        <select id="container_type_id" name="container_type_id" class="form-select"
+                                                required="required">
                                             <option value="">Select container type</option>
                                             <t t-foreach="container_types" t-as="ct">
                                                 <option t-att-value="ct.id"
@@ -573,10 +612,14 @@
                 return;
                 }
 
+                <!--                const resp = await jsonCall('/my/waste/pickup_points/create', {-->
+                <!--                partner_id: partnerId,-->
+                <!--                name: name-->
+                <!--                });-->
                 const resp = await jsonCall('/my/waste/pickup_points/create', {
-                partner_id: partnerId,
                 name: name
                 });
+
 
                 if (resp &amp;&amp; resp.error) {
                 if (errBox) { errBox.textContent = resp.error; errBox.classList.remove('d-none'); }

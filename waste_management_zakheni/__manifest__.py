@@ -4,13 +4,14 @@
     "author": "Lesiba",
     "depends": ['base', 'mail', 'sale', 'product', 'account', 'fleet', 'hr', 'stock', 'portal', 'website'],
     "data": [
-
+        "security/menu_security.xml",
         "security/waste_portal_groups.xml",
         "security/waste_portal_rules.xml",
         "security/waste_groups.xml",
         "security/waste_portal_access.xml",
         "security/ir.model.access.csv",
         "security/waste_rules.xml",
+        "security/res_partner_rules.xml",
         "data/sequence.xml",
         "data/mail_reject_manifest.xml",
         "data/mail_amend_manifest.xml",
@@ -26,10 +27,14 @@
         "views/report_manifest.xml",
         # "data/waste_config.xml",
         # "views/waste_dashboard_action.xml",
+
         "views/portal_waste_dashboard.xml",
         "views/portal_waste_report_html.xml",
+        # "views/portal_validation.xml",
+        "views/portal_validation_template.xml",
         "views/waste_portal_templates.xml",
-        # "views/hide_sale_menu.xml",
+
+        "views/res_user_view.xml",
         "views/pickup_point_views.xml",
         "views/waste_container.xml",
         "views/request_waste_service.xml",

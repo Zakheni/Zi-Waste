@@ -1,0 +1,6 @@
+<record id="seq_hr_department" model="ir.sequence">
+        <field name="name">HR Department Sequence</field>
+        <field name="code">hr.department</field>
+        <field name="prefix">DEP/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>

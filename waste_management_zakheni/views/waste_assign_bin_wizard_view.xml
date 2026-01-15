@@ -38,7 +38,9 @@
                             -->
                             <field name="pickup_point_id"
                                    optional="show"
-                                   invisible="svc_code == 'placement of bins'"/>
+                                   invisible="svc_code == 'placement of bins'"
+                                   required="1"
+                            />
 
                             <!-- Bin Lifted
                                  Show for:
@@ -52,7 +54,19 @@
                             <field name="bin_lifted_ids"
                                    widget="many2many_tags"
                                    optional="show"
-                                   invisible="svc_code == 'placement of bins'"/>
+                                   invisible="svc_code == 'placement of bins'"
+
+                                    domain="[
+                                            ('bin_type_id', '=', bin_type_id),
+                                            ('partner_id', '=', partner_id),
+                                            ('pickup_point_id', '=', pickup_point_id),
+                                            ('status', '=', 'in_use'),
+                                            ('inUse', '=', True),
+                                            ('reserved_request_id', '=', False)
+
+                                        ]
+                                         "
+                            />
 
                             <!-- Drop-off Point
                                  Show for:
@@ -62,7 +76,9 @@
                             <field name="dropoff_point_id"
                                    optional="show"
                                    invisible="svc_code not in ('placement of bins',
-                                           'shunting of bins')"/>
+                                           'shunting of bins')"
+                                   required="1"
+                            />
 
                             <!-- Bin Dropped – controlled entirely by show_bin_dropped -->
                             <field name="bin_dropped_ids"

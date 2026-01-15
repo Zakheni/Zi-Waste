@@ -89,27 +89,35 @@ class WasteWorksheet(models.Model):
     # =========================
     # Date consistency checks
     # =========================
-    @api.constrains('arrival_time', 'return_date', 'planned_date')
+    # @api.constrains('arrival_time', 'return_date', 'planned_date')
+    # def _check_dates(self):
+    #     for rec in self:
+    #         # 1) Arrival must not be before the planned date
+    #         if rec.planned_date and rec.arrival_time and rec.arrival_time > rec.planned_date:
+    #             raise ValidationError(_(
+    #                 "Arrival Date/Time (%s) cannot be greater than the Planned Date (%s)."
+    #             ) % (rec.arrival_time, rec.planned_date))
+    #
+    #         # 2) Return must not be before arrival
+    #         if rec.return_date and rec.arrival_time and rec.return_date < rec.arrival_time:
+    #             raise ValidationError(_(
+    #                 "Return Date/Time (%s) cannot be earlier than the Arrival Date/Time (%s)."
+    #             ) % (rec.return_date, rec.arrival_time))
+
+    @api.constrains('arrival_time', 'return_date')
     def _check_dates(self):
         for rec in self:
-            # 1) Arrival must not be before the planned date
-            if rec.planned_date and rec.arrival_time and rec.arrival_time > rec.planned_date:
+            # 1) Arrival must NOT be later than return date
+            if rec.arrival_time and rec.return_date and rec.arrival_time > rec.return_date:
                 raise ValidationError(_(
-                    "Arrival Date/Time (%s) cannot be greater than the Planned Date (%s)."
-                ) % (rec.arrival_time, rec.planned_date))
+                    "Arrival Date/Time (%s) cannot be later than the Return Date/Time (%s)."
+                ) % (rec.arrival_time, rec.return_date))
 
-            # 2) Return must not be before arrival
+            # 2) Return must NOT be earlier than arrival
             if rec.return_date and rec.arrival_time and rec.return_date < rec.arrival_time:
                 raise ValidationError(_(
                     "Return Date/Time (%s) cannot be earlier than the Arrival Date/Time (%s)."
                 ) % (rec.return_date, rec.arrival_time))
-
-            # (Optional but usually logical)
-            # # Return must also not be before the planned date
-            # if rec.return_date and rec.planned_date and rec.return_date > rec.planned_date:
-            #     raise ValidationError(_(
-            #         "Return Date/Time (%s) cannot be greater than the Planned Date (%s)."
-            #     ) % (rec.return_date, rec.planned_date))
 
     def action_open_manifest_document(self):
         self.ensure_one()
@@ -408,23 +416,6 @@ class WasteWorksheet(models.Model):
     # ----------------------
     def action_set_to_draft(self):
         self.state = "draft"
-        # for rec in self:
-        #     rec.state = "draft"
-        #     if rec.service_request_id:
-        #         rec.service_request_id.state = "draft"
-
-        # ---------- Button: start worksheet / dispatch truck ----------
-
-    # def action_start(self):
-    #     for rec in self:
-    #         # Update worksheet state
-    #         rec.state = 'in_progress'
-    #
-    #         # Update related service request to Dispatched
-    #         if rec.service_request_id and rec.service_request_id.state in ('scheduled', 'assigned', 'generated'):
-    #             rec.service_request_id.with_context(skip_auto_state=True).write({
-    #                 'state': 'dispatched'
-    #             })
 
     def action_start(self):
         for rec in self:
@@ -570,6 +561,9 @@ class WasteWorksheet(models.Model):
                     'waste.worksheet'
                 ) or 'New'
 
+            # create container for logged in company
+            if not vals.get('company_id'):
+                vals['company_id'] = self.env.company.id
 
         recs = super().create(vals_list)
 
@@ -604,19 +598,6 @@ class WasteWorksheet(models.Model):
 
         return res
 
-    # def write(self, vals):
-    #     res = super().write(vals)
-    #     #
-    #     # # if bins/service/qty changed, recompute -> sync to sale order
-    #     if any(k in vals for k in [
-    #         'product_uom_qty',
-    #         'service_requested_id',
-    #         'bin_lifted_ids',
-    #         'bin_dropped_ids',
-    #     ]):
-    #         self._sync_sale_order_qty()
-    #
-    #     return res
 
 
     def action_open_ws_bin_assignment_wizard(self):

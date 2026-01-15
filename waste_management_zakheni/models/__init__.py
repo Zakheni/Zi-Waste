@@ -20,6 +20,10 @@ from . import product_product
 from . import waste_request_assign_bin_wizard
 from . import waste_request_bin_line
 from . import res_company
+from . import res_user
+from . import hr_department
+from . import fleet_vehicle_model_brand
+from . import account_payment_register
 
 
 

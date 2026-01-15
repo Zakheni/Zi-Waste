@@ -304,7 +304,40 @@ class WasteAssignBinWizard(models.TransientModel):
                         'inUse': True,
                     })
 
+        # ----------------------------------------------------
+        # 🔴 REMOVE lifted bins from customer / pickup point
+        # ----------------------------------------------------
+        REMOVE_FROM_CUSTOMER_SERVICES = (
+            'shunting of bins',
+            'removal of bins',
+            'waste collection & disposal',
+            'waste collection and disposal',
+            'swapping of bins',
+        )
 
+        if svc in REMOVE_FROM_CUSTOMER_SERVICES and all_lifted:
+            all_lifted.write({
+                'partner_id': False,
+                'pickup_point_id': False,
+                'dropoff_point_id': False,
+                'inUse': False,
+                'status': 'un_use'
+            })
+
+        # # ----------------------------------------------------
+        # # 🔁 SWAPPING: place dropped bins at pickup point
+        # # ----------------------------------------------------
+        # if svc == 'swapping of bins':
+        #     for line in self.line_ids:
+        #         pp = line.pickup_point_id
+        #
+        #         if pp and line.bin_dropped_ids:
+        #             line.bin_dropped_ids.write({
+        #                 'pickup_point_id': pp.id,
+        #                 'partner_id': cust.id if cust else False,
+        #                 'status': 'in_use',
+        #                 'inUse': True,
+        #             })
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -422,16 +455,17 @@ class WasteAssignBinWizardLine(models.TransientModel):
         'line_id',
         'container_id',
         string="Bin Lifted",
-        domain="""
-            [
-                ('partner_id', '=', partner_id),
-                ('pickup_point_id', '=', pickup_point_id),
-                ('status', 'in', ['in_use', 'un_use']),
-                ('inUse', '=', True),
-                ('container_type_id', '=', 'Bin'),
-                ('reserved_request_id', 'in', [False, request_id])
-            ]
-        """,
+        # domain="""
+        #     [
+        #         ('partner_id', '=', partner_id),
+        #         ('pickup_point_id', '=', pickup_point_id),
+        #         ('status', '=', 'in_use'),
+        #         ('inUse', '=', True),
+        #         ('container_type_id', '=', 'Bin'),
+        #         ('reserved_request_id', '=', False),
+        #         ('bin_type_id', '=', bin_type_id)
+        #     ]
+        # """,
     )
 
     tank_ids = fields.Many2many(
@@ -482,10 +516,13 @@ class WasteAssignBinWizardLine(models.TransientModel):
                 ('status', '=', 'intact'),
                 ('inUse', '=', False),
                 ('dropoff_point_id', '=', False),
-                ('reserved_request_id', '=', False),   
+                ('reserved_request_id', '=', False),  
+                ('bin_type_id', '=', bin_type_id)
+ 
             ]
         """,
     )
+
 
     liters_collected = fields.Float(string="Liters Collected")
     liters_remaining = fields.Float(string="Liters Remaining")

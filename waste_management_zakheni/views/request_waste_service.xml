@@ -98,8 +98,8 @@
                             type="object"
                             string="Update Sales Order"
                             class="btn-primary"
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"
-                            invisible="sale_order_id == False or state not in ('scheduled','dispatched','cancelled','service_delivered') or extra_product_count == 0"/>
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"
+                            invisible="sale_order_id == False or state not in ('scheduled','dispatched','cancelled','service_delivered') or extra_product_count == 0 or hide_tank == True"/>
 
 
                     <field name="state" widget="statusbar"
@@ -134,8 +134,8 @@
                                 type="object"
                                 class="oe_stat_button"
                                 icon="fa-shopping-cart"
-                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"
-                                invisible="state not in ('scheduled','dispatched','cancelled','service_delivered')">
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"
+                                invisible="state not in ('scheduled','dispatched','cancelled','service_delivered') or hide_tank == True">
                             <field name="extra_product_count" widget="statinfo" string="Extra Products"/>
                         </button>
 
@@ -290,10 +290,10 @@
                                    readonly="state != 'draft'"
                                    invisible="hide_waste_details == True"/>
 
-                            <!--                            <field name="container_type_id" readonly="state != 'draft'" widget="radio"-->
-                            <!--                                   options="{'horizontal': True}"/>-->
-                            <field name="container_type_id" options="{'no_open': True}" readonly="state != 'draft'"
-                            />
+                            <field name="container_type_id" readonly="state != 'draft'" widget="radio"
+                                   options="{'horizontal': True}"/>
+                            <!--                            <field name="container_type_id" options="{'no_open': True}" readonly="state != 'draft'"-->
+                            <!--                            />-->
                             <field name="bin_type_id"
                                    options="{'no_open': True}"
 
@@ -301,17 +301,22 @@
                                    invisible="hide_tank == True and hide_bin == False"/>
 
 
+                            <!--                            <field name="tank_volume_id"-->
+                            <!--                                   options="{'no_open': True}"-->
+                            <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
+                            <!--                                                                           or hide_bin"-->
+                            <!--                            />-->
                             <field name="truck_tanker_id" readonly="1"
                                    options="{'no_open': True}" string="Tank Truck"
                                    invisible="(not hide_general and not hide_tank_volume)
                                                                            or hide_bin"
                             />
 
-                            <!--                            <separator string="DEBUG"/>-->
-                            <!--                            <field name="company_id" readonly="1"/>-->
-                            <!--                            <field name="allowed_service_count" readonly="1"/>-->
-                            <!--                            <field name="allowed_container_count" readonly="1"/>-->
-                            <!--                            <field name="allowed_waste_count" readonly="1"/>-->
+                            <separator string="DEBUG" invisible="1"/>
+                            <field name="company_id" readonly="1" invisible="1"/>
+                            <field name="allowed_service_count" readonly="1" invisible="1"/>
+                            <field name="allowed_container_count" readonly="1" invisible="1"/>
+                            <field name="allowed_waste_count" readonly="1" invisible="1"/>
 
 
                         </group>
@@ -320,6 +325,9 @@
                             <field name="allowed_service_ids" invisible="1" widget="many2many_tags"/>
                             <field name="allowed_container_type_ids" invisible="1"/>
                             <field name="allowed_waste_type_ids" invisible="1"/>
+                            <field name="allowed_waste_details_ids" invisible="1"/>
+                            <field name="allowed_bin_type_ids" invisible="1" widget="many2many_tags"/>
+                            <field name="allowed_tank_volume_ids" invisible="1" widget="many2many_tags"/>
                             <field name="pickup_id" invisible="1"/>
                             <!--                            <field name="customer_id" invisible="1"/>-->
                             <field name="hide_droppoff_container_ids_placement" invisible="1"/>
@@ -345,6 +353,7 @@
                             <field name="hide_service_placement" invisible="1"/>
                             <field name="hide_disposal_site" invisible="1"/>
                             <field name="qty_updated_from_worksheet" invisible="1"/>
+
 
                             <field name="pickup_point_bins_summary" readonly="1" class="text-muted"
                                    style="font-size:10px;"
@@ -384,16 +393,27 @@
                                                ('status', '=', 'intact'),
                                                ('inUse', '=', False),
                                                ('dropoff_point_id', '=', False),
+                                               ('bin_type_id', '=', bin_type_id)
+
 
                                            ]"
-                                   invisible="(not hide_droppoff_container_ids_placement
-                                               and not hide_droppoff_container_ids_collection
-                                               and not hide_lifted_bin_ids_swap)
-                                               or hide_general
-                                               or hide_tank_volume
-                                               or hide_lifted_bin_ids_swap
-                                              "
+
+                                   invisible="not (hide_droppoff_container_ids_placement
+                or hide_droppoff_container_ids_collection) or hide_tank_volume"
+
+
                             />
+                            <!--                                   invisible="(not hide_droppoff_container_ids_placement-->
+                            <!--                                               and not hide_droppoff_container_ids_collection-->
+                            <!--                                               and not hide_lifted_bin_ids_swap)-->
+                            <!--                                               or hide_general-->
+                            <!--                                               or hide_tank_volume-->
+                            <!--                                               or hide_lifted_bin_ids_swap-->
+                            <!--                                               -->
+                            <!--                                              "-->
+                            <!--                            />-->
+
+                            <!--                             <field name="bin_dropped_ids" widget="many2many_tags" readonly="1"/>-->
 
                             <!-- bin_dropped_ids for swap / shunt behaviour -->
                             <field name="bin_dropped_ids" widget="many2many_tags" readonly="1"
@@ -475,8 +495,11 @@
                                    readonly="state != 'draft' and state != 'cancelled'"/>
                             <field name="waste_profile_Data_sheet_No" invisible="not hide_hazardous_fields"
                                    readonly="state != 'draft' and state != 'cancelled'"/>
-                            <field name="DTNumber" invisible="not hide_hazardous_fields"
+                            <field name="DTNumber"
+                                   invisible="not hide_hazardous_fields"
+                                   required="hide_hazardous_fields == True"
                                    readonly="state != 'draft' and state != 'cancelled'"/>
+
 
                             <separator/>
                             <field name="is_service_provider" readonly="state != 'draft' and state != 'cancelled'"/>
@@ -501,12 +524,19 @@
                         <group>
                             <field name="vehicle_id" widget="many2one_avatar_user"
                                    options="{'no_open': True}"
-                                   readonly="state != 'draft' and state != 'scheduled' and state != 'generated' and state != 'cancelled'"
+                                   readonly="state != 'draft' and state != 'cancelled' and state != 'generated'
+                                             and state != 'cancelled'
+                                             and state != 'generated'"
                                    domain="[('id', 'not in', busy_track_ids or []), ('vehicle_type', '!=', 'trailer')]"/>
                             <field name="trailer_id" widget="many2one_avatar_user"
                                    options="{'no_open': True}"
-                                   readonly="state != 'draft' and state != 'scheduled'  and state != 'generated'  and state != 'cancelled'"
-                                   domain="[('id', 'not in', busy_trailler_ids or []), ('vehicle_type', '=', 'trailer')]"/>
+                                   readonly="state != 'draft' and state != 'cancelled' and state != 'generated'
+                                             and state != 'cancelled'
+                                             and state != 'generated'"
+                                   domain="[('id', 'not in', busy_trailler_ids or []), ('vehicle_type', '=', 'trailer')]"
+
+
+                            />
 
                         </group>
 
@@ -554,7 +584,7 @@
 
                             <field name="work_sheet_id" context="{'default_service_request_id': active_id}"
                                    invisible="1"/>
-                            <field name="notes_html" widget="html"/>
+                            <field name="notes_html" widget="html" readonly="1"/>
 
                         </page>
                     </notebook>

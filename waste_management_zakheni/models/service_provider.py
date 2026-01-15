@@ -1,6 +1,6 @@
-
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+import re
 
 SA_PROVINCES = [
     ("EC", "Eastern Cape"),
@@ -14,19 +14,22 @@ SA_PROVINCES = [
     ("WC", "Western Cape"),
 ]
 
+EMAIL_REGEX = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+
 class ServiceProvider(models.Model):
     _name = "wms.service.provider"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _mail_post_access = 'read'
     _description = "Waste Service Provider"
     _order = "name"
-    _company_auto = True
 
 
     # Basic info
-    name = fields.Char(string="Service Provider Name", required=True)
-    street = fields.Char(string="Address")
-    suburb = fields.Char(required=True)
-    city = fields.Char(string="City/Town", required=True)
-    province = fields.Selection(SA_PROVINCES, required=True)
+    name = fields.Char(string="Service Provider Name", required=True, tracking=True)
+    street = fields.Char(string="Address", tracking=True)
+    suburb = fields.Char(required=True, tracking=True)
+    city = fields.Char(string="City/Town", required=True, tracking=True)
+    province = fields.Selection(SA_PROVINCES, required=True, tracking=True)
 
     company_id = fields.Many2one(
         'res.company',
@@ -39,9 +42,9 @@ class ServiceProvider(models.Model):
 
 
     # Contacts
-    phone = fields.Char(required=True)
-    mobile = fields.Char(required=True)
-    email = fields.Char(required=True)
+    phone = fields.Char(required=True, tracking=True)
+    mobile = fields.Char(required=True, tracking=True)
+    email = fields.Char(required=True, tracking=True)
 
     # Fleet info (reuse Fleet's Vehicle Model Categories as 'types')
     fleet_category_ids = fields.Many2many(
@@ -140,112 +143,94 @@ class ServiceProvider(models.Model):
             },
         }
 
+    # @api.model
+    # def create(self, vals):
+    #     if not vals.get('company_id'):
+    #         vals['company_id'] = self.env.company.id
+    #     return super().create(vals)
 
+    def _normalize_phone(self, value):
+        """
+        Normalize phone numbers by removing spaces, dashes, and brackets.
 
+        +27 12 345 6789  → +27123456789
+        (+27)12-345-6789 → +27123456789
+        """
+        if not value:
+            return value
+        return re.sub(r'[\s\-\(\)]+', '', value)
 
-#
-# from odoo import api, fields, models, _
-# from odoo.exceptions import ValidationError
-#
-# SA_PROVINCES = [
-#     ("EC", "Eastern Cape"),
-#     ("FS", "Free State"),
-#     ("GP", "Gauteng"),
-#     ("KZN", "KwaZulu-Natal"),
-#     ("LP", "Limpopo"),
-#     ("MP", "Mpumalanga"),
-#     ("NC", "Northern Cape"),
-#     ("NW", "North West"),
-#     ("WC", "Western Cape"),
-# ]
-#
-# class FleetType(models.Model):
-#     _name = "wms.fleet.type"
-#     _description = "Fleet Type (Vehicle Category)"
-#     _order = "name"
-#
-#     name = fields.Char(required=True)
-#     description = fields.Text()
-#
-# class ServiceProvider(models.Model):
-#     _name = "wms.service.provider"
-#     _description = "Waste Service Provider"
-#     _order = "name"
-#
-#     # Basic info
-#     name = fields.Char(string="Service Provider Name", required=True)
-#     street = fields.Char(string="Address")
-#     suburb = fields.Char(required=True)
-#     city = fields.Char(string="City/Town", required=True)
-#     province = fields.Selection(SA_PROVINCES, required=True)
-#
-#     # Contacts
-#     phone = fields.Char(required=True)
-#     mobile = fields.Char()
-#     email = fields.Char()
-#
-#     # Fleet info
-#     number_of_fleet = fields.Integer(string="Number of Fleet", default=0)
-#     fleet_type_ids = fields.Many2many("wms.fleet.type", string="Fleet Type")
-#     fleet_type_list = fields.Char(
-#         string="Fleet Type (List)",
-#         compute="_compute_fleet_type_list",
-#         store=False,
-#         help="Convenience field to display selected fleet types as comma-separated list.",
-#     )
-#
-#     # Optional geo fields (for 'closest' selection if lat/long available)
-#     latitude = fields.Float()
-#     longitude = fields.Float()
-#
-#     _sql_constraints = [
-#         ("name_province_city_unique",
-#          "unique(name, province, city, suburb)",
-#          "This provider already exists for the same area."),
-#     ]
-#
-#     @api.constrains("email")
-#     def _check_email(self):
-#         for rec in self:
-#             if rec.email and "@" not in rec.email:
-#                 raise ValidationError(_("Please enter a valid email address."))
-#
-#     @api.depends("fleet_type_ids")
-#     def _compute_fleet_type_list(self):
-#         for rec in self:
-#             rec.fleet_type_list = ", ".join(rec.fleet_type_ids.mapped("name"))
-#
-#     # ---- Helper API ----
-#     @api.model
-#     def find_best_provider(self, province_code, city, suburb=None):
-#         """Find a provider for a request location.
-#         Priority:
-#           1) Exact match on province+city+suburb (if provided)
-#           2) Exact match on province+city
-#           3) Exact match on province only
-#         If multiple matches exist and lat/long are set, choose the closest to (0,0)
-#         or use the first by name as a deterministic fallback.
-#         """
-#         domain = [("province", "=", province_code)]
-#         providers = self.search(domain)
-#         if not providers:
-#             return False
-#         # Narrow by city
-#         city_matches = providers.filtered(lambda p: (p.city or "").strip().lower() == (city or "").strip().lower())
-#         if city_matches:
-#             providers = city_matches
-#         # Narrow by suburb
-#         if suburb:
-#             suburb_matches = providers.filtered(lambda p: (p.suburb or "").strip().lower() == (suburb or "").strip().lower())
-#             if suburb_matches:
-#                 providers = suburb_matches
-#
-#         # If multiple, try to use coordinates (optional). Fallback to name.
-#         if len(providers) > 1:
-#             def key_fn(p):
-#                 if p.latitude or p.longitude:
-#                     # distance to origin (placeholder unless you add request coords)
-#                     return (p.latitude or 0.0) ** 2 + (p.longitude or 0.0) ** 2
-#                 return p.name or ""
-#             providers = providers.sorted(key=key_fn)
-#         return providers[:1].id if providers else False
+        # ------------------------------------------------------------
+        # CREATE: normalize BEFORE constraint
+        # ------------------------------------------------------------
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('company_id'):
+                vals['company_id'] = self.env.company.id
+
+            if vals.get('phone'):
+                vals['phone'] = self._normalize_phone(vals['phone'])
+            if vals.get('mobile'):
+                vals['mobile'] = self._normalize_phone(vals['mobile'])
+
+        records = super().create(vals_list)
+        return records
+
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     for vals in vals_list:
+    #         if vals.get('phone'):
+    #             vals['phone'] = self._normalize_phone(vals['phone'])
+    #         if vals.get('mobile'):
+    #             vals['mobile'] = self._normalize_phone(vals['mobile'])
+    #     return super().create(vals_list)
+
+    # ------------------------------------------------------------
+    # WRITE: normalize BEFORE constraint
+    # ------------------------------------------------------------
+    def write(self, vals):
+        if vals.get('phone'):
+            vals['phone'] = self._normalize_phone(vals['phone'])
+        if vals.get('mobile'):
+            vals['mobile'] = self._normalize_phone(vals['mobile'])
+        return super().write(vals)
+
+    # ------------------------------------------------------------
+    # CONSTRAINT: validate normalized value ONLY
+    # ------------------------------------------------------------
+    @api.constrains('phone', 'mobile')
+    def _check_phone_country_code(self):
+        for partner in self:
+            for field in ('phone', 'mobile'):
+                value = partner[field]
+                if not value:
+                    continue
+
+                if not re.match(r'^\+\d{7,15}$', value):
+                    raise ValidationError(
+                        _("Phone number must include country code, e.g. +27 12 345 6789, (+27)12-345-6789 and +27123456789 ✅ "
+                          "\n and it must not include Alpha numeric ❌ ")
+                    )
+
+    @api.constrains('email')
+    def _check_email_required(self):
+        for partner in self:
+            # Skip contacts that are not real business partners
+            if partner.is_company or partner.customer_rank > 0 or partner.supplier_rank > 0:
+                if not partner.email:
+                    raise ValidationError(
+                        _("Email address is required. ⚠️")
+                    )
+
+    @api.constrains('email')
+    def _check_email_format(self):
+        for partner in self:
+            if partner.email:
+                email = partner.email.strip()
+                if not re.match(EMAIL_REGEX, email):
+                    raise ValidationError(
+                        _("Invalid work email address format e.g email must take this format ✅'email@example.com' not this ❌ %s ") % email
+
+                    )

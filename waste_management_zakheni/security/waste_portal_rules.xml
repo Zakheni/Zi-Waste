@@ -3,33 +3,57 @@
 
     <!-- Customer: can only see their own requests -->
     <record id="rule_wmz_customer_own_requests" model="ir.rule">
-        <field name="name">WMZ Customer - Own Requests</field>
+        <field name="name">WMZ Customer - Own Requests Only</field>
         <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_customer'))]"/>
         <field name="global" eval="False"/>
-        <!--        <field name="domain_force">-->
-        <!--            [('partner_id', '=', user.partner_id.id)]-->
-        <!--        </field>-->
         <field name="domain_force">
-            [
-            ('partner_id.commercial_partner_id', '=', user.partner_id.commercial_partner_id.id)
-            ]
+            [('create_uid', '=', user.id)]
         </field>
     </record>
 
-    <!-- Agent: sees ONLY own-company requests in specific states -->
+<!--    <record id="rule_wmz_customer_company_requests" model="ir.rule">-->
+<!--        <field name="name">WMZ Customer - Company Requests</field>-->
+<!--        <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>-->
+<!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_customer'))]"/>-->
+<!--        <field name="global" eval="False"/>-->
+<!--        &lt;!&ndash;        <field name="domain_force">&ndash;&gt;-->
+<!--        &lt;!&ndash;            [('partner_id', '=', user.partner_id.id)]&ndash;&gt;-->
+<!--        &lt;!&ndash;        </field>&ndash;&gt;-->
+<!--        <field name="domain_force">-->
+<!--            [-->
+<!--            ('partner_id.commercial_partner_id', '=', user.partner_id.commercial_partner_id.id)-->
+<!--            ]-->
+<!--        </field>-->
+<!--    </record>-->
+
+
+    <!--    &lt;!&ndash; Agent: sees ONLY own-company requests in specific states &ndash;&gt;-->
+    <!--    <record id="rule_wmz_agent_waste_request_company" model="ir.rule">-->
+    <!--        <field name="name">WMZ Agent - Own Company Requests (selected states)</field>-->
+    <!--        <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>-->
+    <!--        <field name="global" eval="False"/>-->
+    <!--        <field name="domain_force">-->
+    <!--            [-->
+    <!--            ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),-->
+    <!--            ('partner_id', 'child_of', user.partner_id.commercial_partner_id.id)-->
+    <!--            ]-->
+    <!--        </field>-->
+    <!--    </record>-->
     <record id="rule_wmz_agent_waste_request_company" model="ir.rule">
-        <field name="name">WMZ Agent - Own Company Requests (selected states)</field>
+        <field name="name">WMZ Agent - Own Company Requests</field>
         <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>
         <field name="global" eval="False"/>
         <field name="domain_force">
             [
             ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
-            ('partner_id', 'child_of', user.partner_id.commercial_partner_id.id)
+            ('partner_id.commercial_partner_id', '=', user.partner_id.commercial_partner_id.id)
             ]
         </field>
     </record>
+
 
     <!-- Agent: worksheets only for their company's customers -->
     <record id="rule_wmz_agent_worksheet_company" model="ir.rule">

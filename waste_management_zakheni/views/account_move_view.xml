@@ -20,6 +20,9 @@
                 <attribute name="groups">
                     waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance
                 </attribute>
+                 <attribute name="invisible">
+                    batch_payment_state == 'paid'
+                </attribute>
             </xpath>
 
         </field>
@@ -34,7 +37,26 @@
                 <attribute name="groups">
                     waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance
                 </attribute>
+                <attribute name="invisible">
+                    payment_state == 'paid' or state != 'posted' or batch_payment_state == 'paid'
+                </attribute>
             </xpath>
+
+        </field>
+    </record>
+
+     <record id="account_move_invoice_tree_hide_due_date_batch_paid" model="ir.ui.view">
+        <field name="name">account.move.invoice.tree.hide.due.date.batch.paid</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='invoice_date_due']" position="attributes">
+                <attribute name="invisible">
+                    batch_payment_state == 'paid'
+                </attribute>
+            </xpath>
+
         </field>
     </record>
 </odoo>
