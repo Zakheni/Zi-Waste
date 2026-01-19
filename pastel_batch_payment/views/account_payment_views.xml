@@ -37,7 +37,15 @@
                 <field name="in_exported_batch" optional="hide" invisible="0"/>
 
                 <!-- NEW: show the invoice link on list -->
-                <field name="batch_invoice_id" optional="hide"/>
+                <!--                <field name="batch_invoice_id" optional="hide"/>-->
+                <field name="batch_invoice_id"
+                       domain="[
+    ('move_type', 'in', ('out_invoice', 'in_invoice')),
+    ('state', '=', 'posted'),
+    ('partner_id', '=', partner_id)
+]"
+
+                       options="{'no_create': True}"/>
             </xpath>
         </field>
     </record>
@@ -61,43 +69,3 @@
 
 </odoo>
 
-
-<!--<odoo>-->
-<!--    &lt;!&ndash; Search view inheritance &ndash;&gt;-->
-<!--    <record id="view_account_payment_search_inherit_batch" model="ir.ui.view">-->
-<!--        <field name="name">account.payment.search.inherit.batch</field>-->
-<!--        <field name="model">account.payment</field>-->
-<!--        <field name="inherit_id" ref="account.view_account_payment_search"/>-->
-<!--        <field name="arch" type="xml">-->
-<!--            <xpath expr="//search" position="inside">-->
-<!--                <separator/>-->
-<!--                <filter name="available_for_batch"-->
-<!--                        string="Available for Batch"-->
-<!--                        domain="[('state','=','posted'), ('in_exported_batch','=', False)]"/>-->
-<!--                <filter name="batch_draft" string="Batch: Draft" domain="[('batch_state','=','draft')]"/>-->
-<!--                <filter name="batch_validated" string="Batch: Validated" domain="[('batch_state','=','validated')]"/>-->
-<!--                <filter name="batch_exported" string="Batch: Exported" domain="[('batch_state','=','exported')]"/>-->
-
-<!--                &lt;!&ndash; expose fields to search view &ndash;&gt;-->
-<!--                <field name="batch_state" invisible="1"/>-->
-<!--                <field name="in_exported_batch" invisible="1"/>-->
-<!--            </xpath>-->
-<!--        </field>-->
-<!--    </record>-->
-
-<!--    &lt;!&ndash; Tree view inheritance &ndash;&gt;-->
-<!--    <record id="view_account_payment_tree_inherit_batch_state" model="ir.ui.view">-->
-<!--        <field name="name">account.payment.tree.inherit.batch.state</field>-->
-<!--        <field name="model">account.payment</field>-->
-<!--        <field name="inherit_id" ref="account.view_account_payment_tree"/>-->
-<!--        <field name="arch" type="xml">-->
-<!--            <xpath expr="//tree" position="inside">-->
-<!--                <field name="batch_state" optional="hide" widget="badge"-->
-<!--                       decoration-success="batch_state == 'exported'"-->
-<!--                       decoration-info="batch_state == 'draft'"-->
-<!--                       decoration-warning="batch_state == 'validated'"/>-->
-<!--                <field name="in_exported_batch" optional="hide" invisible="0"/>-->
-<!--            </xpath>-->
-<!--        </field>-->
-<!--    </record>-->
-<!--</odoo>-->

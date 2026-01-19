@@ -8,10 +8,13 @@
         "security/ir.model.access.csv",
         "data/sequence.xml",
         "views/account_move_views.xml",
+        "views/batch_payment_export_history_view.xml",
+        "views/batch_export_form_view.xml",
         "views/account_payment_views.xml",
         "wizard/batch_payment_add_wizard_views.xml",
         "views/res_config_settings_views.xml",
         "views/batch_payment_views.xml",
+        "views/menu.xml",
 
     ],
     "application": False,
