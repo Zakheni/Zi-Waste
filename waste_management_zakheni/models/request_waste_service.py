@@ -115,6 +115,31 @@ class WasteServiceRequest(models.Model):
         help="Marked True when the service request is logged from the customer portal.",
     )
 
+    @api.model
+    def _get_busy_drivers_at_date(self, at_datetime):
+        """
+        Returns res.partner IDs of drivers that are busy
+        from at_datetime onwards.
+        """
+        if not at_datetime:
+            return []
+
+        return self.search([
+            ('planned_date', '>=', at_datetime),
+            ('driver_id', '!=', False),
+        ]).mapped('driver_id').ids
+
+    @api.model
+    def _get_busy_assistants_at_date(self, at_datetime):
+        if not at_datetime:
+            return []
+
+        return self.search([
+            ('planned_date', '>=', at_datetime),
+            ('assistance_id', '!=', False),
+        ]).mapped('assistance_id').ids
+
+
     busy_driver_ids = fields.Many2many(
         'res.partner',
         'waste_service_request_busy_driver_rel',
@@ -337,10 +362,10 @@ class WasteServiceRequest(models.Model):
                 if not rec.pickup_point_ids:
                     raise ValidationError(_("Please Enter Pickup Point/ Drop Off Point 📍."))
                     # ✅ External provider → provider required
-                if rec.is_service_provider and not rec.provider_id:
-                    raise ValidationError(
-                        _("Please Enter Service Provider by clicking on 'Find Service Provider' Button ⏩.")
-                    )
+                # if rec.is_service_provider and not rec.provider_id:
+                #     raise ValidationError(
+                #         _("Please Enter Service Provider by clicking on 'Find Service Provider' Button ⏩.")
+                #     )
 
             # Required when scheduled
             if rec.state == "scheduled":
@@ -565,31 +590,63 @@ class WasteServiceRequest(models.Model):
     # ---------------------------------------------------------
     # Tank rates
     # ---------------------------------------------------------
+    # def _get_rate_params(self):
+    #     """
+    #     Decide which rate table to use based on waste_type or service.
+    #     Default: Septic Tank rates.
+    #     Grease Trap: special base + extra.
+    #     """
+    #
+    #     # Normalize helper
+    #     def norm(txt):
+    #         return (txt or "").strip().lower()
+    #
+    #     # Defaults: Septic Tank
+    #     base_kl = 4.0  # first 4 kL
+    #     base_price = 2395.0  # R 2 395 for first 4 kL
+    #     extra_rate = 295.0  # R 295 per extra kL
+    #
+    #     wd_name = norm(self.waste_details_id.name)
+    #     # svc_name = norm(self.service_requested_id.name)
+    #
+    #     # 🔹 Grease Trap detection (adjust names to match your master data)
+    #     if "grease" in wd_name:  # or "grease" in svc_name:
+    #         base_price = 3606.75  # base for Grease Trap
+    #         extra_rate = 362.25  # extra per kL for Grease Trap
+    #
+    #     return base_kl, base_price, extra_rate
+
     def _get_rate_params(self):
         """
-        Decide which rate table to use based on waste_type or service.
-        Default: Septic Tank rates.
-        Grease Trap: special base + extra.
+        Decide which rate table to use based on waste details.
+        Tariffs are configured in waste.tank.tariff.
         """
 
-        # Normalize helper
         def norm(txt):
             return (txt or "").strip().lower()
 
-        # Defaults: Septic Tank
-        base_kl = 4.0  # first 4 kL
-        base_price = 2395.0  # R 2 395 for first 4 kL
-        extra_rate = 295.0  # R 295 per extra kL
-
         wd_name = norm(self.waste_details_id.name)
-        # svc_name = norm(self.service_requested_id.name)
 
-        # 🔹 Grease Trap detection (adjust names to match your master data)
-        if "grease" in wd_name:  # or "grease" in svc_name:
-            base_price = 3606.75  # base for Grease Trap
-            extra_rate = 362.25  # extra per kL for Grease Trap
+        Tariff = self.env["waste.tank.tariff"].sudo()
 
-        return base_kl, base_price, extra_rate
+        # Default: Septic
+        tariff = Tariff.search([
+            ("code", "=", "septic"),
+            ("active", "=", True)
+        ], limit=1)
+
+        # Grease detection
+        if "grease" in wd_name:
+            grease = Tariff.search([
+                ("code", "=", "grease"),
+                ("active", "=", True)
+            ], limit=1)
+            tariff = grease or tariff
+
+        if not tariff:
+            raise ValidationError(_("No tank tariff configured."))
+
+        return tariff.base_kl, tariff.base_price, tariff.extra_rate
 
     @api.depends('product_uom_qty', 'waste_type_id', 'container_type_id')
     def _compute_billing_amount(self):
@@ -3445,6 +3502,22 @@ class FleetVehicle(models.Model):
         store=True,
         readonly=False,  # keep editable if you want to override per truck
     )
+
+    busy_driver_ids = fields.Many2many(
+        'res.partner',
+        compute='_compute_busy_driver_ids',
+        store=False,
+    )
+
+    @api.depends('driver_id')
+    def _compute_busy_driver_ids(self):
+        WSR = self.env['waste.service.request']
+        now = fields.Datetime.now()
+
+        busy_ids = set(WSR._get_busy_drivers_at_date(now))
+
+        for vehicle in self:
+            vehicle.busy_driver_ids = [(6, 0, list(busy_ids))]
 
 
 class FleetVehicleModel(models.Model):

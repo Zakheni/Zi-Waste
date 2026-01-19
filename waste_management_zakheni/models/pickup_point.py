@@ -14,6 +14,9 @@ class PickupPoint(models.Model):
     pickup_request_id = fields.Many2one('waste.service.request')
     dropoff_request_id = fields.Many2one('waste.service.request')
 
+    created_from_portal = fields.Boolean(default=False, readonly=True)
+    active = fields.Boolean(default=True)
+
     company_id = fields.Many2one(
         'res.company',
         string='Company',
@@ -21,6 +24,15 @@ class PickupPoint(models.Model):
         default=lambda self: self.env.company,
         index=True
     )
+
+    def _log_audit(self, message):
+        self.env['mail.message'].sudo().create({
+            'model': self._name,
+            'res_id': self.id,
+            'message_type': 'notification',
+            'body': message,
+            'author_id': self.env.user.partner_id.id,
+        })
 
     @api.model
     def create(self, vals):

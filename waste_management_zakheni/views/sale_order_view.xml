@@ -22,8 +22,8 @@
         <field name="arch" type="xml">
             <!-- Place under Customer -->
             <xpath expr="//field[@name='sale_order_template_id']" position="after">
-                <field name="service_request_id" context="{'default_service_request_id': active_id}" readonly="1"/>
-                <field name="planned_date"/>
+                <field name="service_request_id" invisible="service_request_id == False" context="{'default_service_request_id': active_id}" readonly="1"/>
+<!--                <field name="planned_date"/>-->
 <!--                <field name="pickup_point_id"/>-->
 <!--                <field name="pickup_point_ids" widget="many2many_tags" invisible="partner_id == False"  required="0"/>-->
 <!--                <field name="container_ids" widget="many2many_tags" context="{'default_sale_order_id': active_id}"-->

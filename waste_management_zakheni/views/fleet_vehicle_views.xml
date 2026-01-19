@@ -8,9 +8,9 @@
 
             <xpath expr="//sheet//group" position="inside">
                 <group string="Tanks">
-<!--                    <field name="service_request_id" context="{'default_service_id': active_id}" readonly="1"/>-->
-<!--                    <field name="planned_date"/>-->
-<!--                    <field name="driver_id" domain="[('job_id.name', 'ilike', 'driver')]"/>-->
+                    <!--                    <field name="service_request_id" context="{'default_service_id': active_id}" readonly="1"/>-->
+                    <!--                    <field name="planned_date"/>-->
+                    <!--                    <field name="driver_id" domain="[('job_id.name', 'ilike', 'driver')]"/>-->
                     <field name="driver_email"/>
                     <field name="is_waste_tanker"/>
                     <field name="tank_volume_id"
@@ -19,6 +19,54 @@
                            invisible="is_waste_tanker == False"/>
                 </group>
             </xpath>
+            <!--            <xpath expr="//field[@name='driver_id']" position="attributes">-->
+            <!--                <attribute name="domain">-->
+            <!--                    [('user_ids.employee_id.job_id.name', '=', 'Driver')]-->
+            <!--                </attribute>-->
+            <!--            </xpath>-->
+            <!--            <xpath expr="//field[@name='driver_id']" position="attributes">-->
+            <!--                <attribute name="domain">-->
+            <!--                    [('id', 'not in', busy_driver_ids)]-->
+            <!--                </attribute>-->
+            <!--            </xpath>-->
+
+            <!--             <xpath expr="//field[@name='future_driver_id']" position="attributes">-->
+            <!--                <attribute name="domain">-->
+            <!--                    [('user_ids.employee_id.job_id.name', '=', 'Driver')]-->
+            <!--                </attribute>-->
+            <!--            </xpath>-->
+            <!--            <xpath expr="//field[@name='future_driver_id']" position="attributes">-->
+            <!--                <attribute name="domain">-->
+            <!--                    [('id', 'not in', busy_driver_ids)]-->
+            <!--                </attribute>-->
+            <!--            </xpath>-->
+
+             <!-- REQUIRED: domain helper field -->
+        <xpath expr="//form" position="inside">
+            <field name="busy_driver_ids" invisible="1"/>
+        </xpath>
+
+
+            <xpath expr="//field[@name='driver_id']" position="attributes">
+                <attribute name="domain">
+                    [
+                    ('user_ids.employee_id.job_id.name', '=', 'Driver'),
+                    ('id', 'not in', busy_driver_ids)
+                    ]
+                </attribute>
+            </xpath>
+            <xpath expr="//field[@name='future_driver_id']" position="attributes">
+                <attribute name="domain">
+                    [
+                    ('user_ids.employee_id.job_id.name', '=', 'Driver'),
+                    ('id', 'not in', busy_driver_ids)
+                    ]
+                </attribute>
+            </xpath>
+
+
+
+
         </field>
     </record>
 

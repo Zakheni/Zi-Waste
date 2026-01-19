@@ -43,7 +43,7 @@
                             type="object"
                             name="action_set_scheduled"
                             class="btn-info"
-                            invisible="state != 'generated'"
+                            invisible="state != 'generated' or is_service_provider and provider_name == False"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
 
                     <!--                    &lt;!&ndash; NEW: Assign &ndash;&gt;-->
@@ -56,7 +56,7 @@
 
 
                     <button string="Generate" type="object" name="action_generated" class="btn-info"
-                            invisible="state != 'draft'"/>
+                            invisible="state != 'draft' or bin_line_count == 0 and not hide_tank_volume "/>
                     <!--                            invisible="state != 'scheduled' or is_service_provider == True"/>-->
                     <button string="Authorise" type="object" name="action_mark_done" class="btn-success"
                             invisible="state != 'service_delivered' or worksheet_count == 0"
@@ -70,7 +70,7 @@
                     <button name="action_open_related_sales" type="object"
                             string="Create Invoice" class="btn-primary"
                             invisible="state != 'done'"
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance"/>
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"/>
                     <button name="action_print_manifest_pdf"
                             type="object"
                             string="Print"
@@ -82,7 +82,7 @@
                             type="object"
                             string="Find Service Provider"
                             class="oe_highlight"
-                            invisible="is_service_provider == False or state != 'draft'"
+                            invisible="is_service_provider == False or state != 'generated'"
 
                     />
 
@@ -162,32 +162,6 @@
                         </button>
 
 
-                        <!--                        <button name="action_open_bin_assignment_wizard"-->
-                        <!--                                type="object"-->
-                        <!--                                class="oe_stat_button"-->
-                        <!--                                icon="fa-truck"-->
-                        <!--                                invisible="sale_order_id == False or hide_bin == False"-->
-                        <!--                                string="Assign Bins"-->
-                        <!--                                groups="waste_management_zakheni.group_wmz_admin,aste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"-->
-
-
-                        <!--                        >-->
-
-                        <!--                            &lt;!&ndash; Pickup Points &ndash;&gt;-->
-                        <!--                            <field name="wizard_pickup_point_count"-->
-                        <!--                                   widget="statinfo"-->
-                        <!--                                   string="Pickup Point(s)"-->
-                        <!--                            />-->
-
-                        <!--                            &lt;!&ndash; Slash separator &ndash;&gt;-->
-                        <!--                            <span style="font-size:14px; padding:0 4px;">|</span>-->
-
-                        <!--                            &lt;!&ndash; Bins &ndash;&gt;-->
-                        <!--                            <field name="bin_line_count"-->
-                        <!--                                   widget="statinfo"-->
-                        <!--                                   string="Bin(s)"-->
-                        <!--                            />-->
-                        <!--                        </button>-->
                         <button name="action_open_sale_order"
                                 type="object"
                                 class="oe_stat_button"
@@ -357,7 +331,7 @@
 
                             <field name="pickup_point_bins_summary" readonly="1" class="text-muted"
                                    style="font-size:10px;"
-                                   placeholder="No bins assigned yet."/>
+                                   placeholder="No bins assigned yet." decoration-info="1" decoration-bf="1"/>
                             <field name="pickup_point_ids" widget="many2many_tags"
                                    readonly="state != 'draft' and state != 'scheduled'  and state != 'generated'  and state != 'cancelled'"
                                    domain="[('partner_id', '=', partner_id)]"
@@ -403,17 +377,6 @@
 
 
                             />
-                            <!--                                   invisible="(not hide_droppoff_container_ids_placement-->
-                            <!--                                               and not hide_droppoff_container_ids_collection-->
-                            <!--                                               and not hide_lifted_bin_ids_swap)-->
-                            <!--                                               or hide_general-->
-                            <!--                                               or hide_tank_volume-->
-                            <!--                                               or hide_lifted_bin_ids_swap-->
-                            <!--                                               -->
-                            <!--                                              "-->
-                            <!--                            />-->
-
-                            <!--                             <field name="bin_dropped_ids" widget="many2many_tags" readonly="1"/>-->
 
                             <!-- bin_dropped_ids for swap / shunt behaviour -->
                             <field name="bin_dropped_ids" widget="many2many_tags" readonly="1"
@@ -435,19 +398,6 @@
                             />
 
 
-                            <!--                            <label for="product_uom_qty" string="Quantity (kL)"/>-->
-                            <!--                            <div class="o_row">-->
-                            <!--                                <field name="product_uom_qty"-->
-                            <!--                                       class="oe_inline"-->
-                            <!--                                       readonly="state != 'draft' and state != 'scheduled' and state != 'generated' and state != 'cancelled'"-->
-                            <!--                                />-->
-
-                            <!--                                <field name="qty_update_label"-->
-                            <!--                                       class="oe_inline text-success"-->
-                            <!--                                       readonly="1"-->
-                            <!--                                       invisible="qty_updated_from_worksheet == False"-->
-                            <!--                                />-->
-                            <!--                            </div>-->
 
                             <field name="product_uom_qty"
                                    invisible="(not hide_general and not hide_tank_volume)
@@ -502,7 +452,7 @@
 
 
                             <separator/>
-                            <field name="is_service_provider" readonly="state != 'draft' and state != 'cancelled'"/>
+                            <field name="is_service_provider"  invisible="vehicle_id" readonly="state != 'draft' and state != 'cancelled' and state != 'generated'"/>
 
                         </group>
                     </group>
@@ -561,20 +511,19 @@
 
                         </page>
                         <page string="Service Provider" invisible="is_service_provider == False">
-                            <group string="Service Provider (Result)"
-                                   invisible="provider_id == False">
+                            <group invisible="provider_id == False">
                                 <group>
                                     <field name="provider_id" invisible="1" required="is_service_provider == True"/>
-                                    <field name="provider_name" readonly="1"/>
-                                    <field name="provider_province" readonly="1"/>
-                                    <field name="provider_email" readonly="1" widget="email"/>
-                                    <field name="provider_phone" readonly="1" widget="phone"/>
+                                    <field name="provider_name" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_province" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_email" readonly="1" widget="email" decoration-bf="1"/>
+                                    <field name="provider_phone" readonly="1" widget="phone" decoration-bf="1"/>
                                 </group>
                                 <group>
-                                    <field name="provider_city" readonly="1"/>
-                                    <field name="provider_suburb" readonly="1"/>
-                                    <field name="provider_phone" readonly="1"/>
-                                    <field name="provider_mobile" readonly="1" widget="phone"/>
+                                    <field name="provider_city" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_suburb" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_phone" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_mobile" readonly="1" widget="phone" decoration-bf="1"/>
 
                                 </group>
 

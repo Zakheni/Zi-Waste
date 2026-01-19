@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree view -->
+    <record id="view_tank_tariff_tree" model="ir.ui.view">
+        <field name="name">waste.tank.tariff.tree</field>
+        <field name="model">waste.tank.tariff</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="code"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="base_kl"/>
+                <field name="base_price"/>
+                <field name="extra_rate"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form view -->
+    <record id="view_tank_tariff_form" model="ir.ui.view">
+        <field name="name">waste.tank.tariff.form</field>
+        <field name="model">waste.tank.tariff</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="company_id"/>
+                            <field name="code"/>
+                            <field name="active"/>
+                            <field name="date_to"/>
+
+                        </group>
+
+                        <group>
+                            <field name="date_from"/>
+                            <field name="base_kl"/>
+                            <field name="base_price"/>
+                            <field name="extra_rate"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_tank_tariff" model="ir.actions.act_window">
+        <field name="name">Tank Tariffs</field>
+        <field name="res_model">waste.tank.tariff</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+
+</odoo>

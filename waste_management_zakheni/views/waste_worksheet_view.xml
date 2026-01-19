@@ -202,7 +202,7 @@
 
                             <field name="pickup_point_bins_summary" readonly="1" class="text-muted"
                                    style="font-size:10px;"
-                                   placeholder="No bins assigned yet."/>
+                                   placeholder="No bins assigned yet." decoration-info="1" decoration-bf="1"/>
                             <field name="pickup_point_ids" widget="many2many_tags" readonly="1"
                                    domain="[('partner_id', '=', partner_id)]"
                                    invisible="hide_droppoff_container_ids_placement

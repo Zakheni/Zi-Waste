@@ -209,5 +209,44 @@
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
+    <!--    Tank Tariff-->
+    <record id="wms_waste_tank_tariff_rule" model="ir.rule">
+        <field name="name">Tank Tariff: Company access</field>
+        <field name="model_id" ref="model_waste_tank_tariff"/>
+        <field name="domain_force">
+            [('company_id', '=', user.company_id.id)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="wms_waste_tank_tariff_rule" model="ir.rule">
+        <field name="name">Tank Tariff: multi-company access</field>
+        <field name="model_id" ref="model_waste_tank_tariff"/>
+        <field name="domain_force">
+            [('company_id', 'in', user.company_ids.ids)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+ <!--    Users: own company only-->
+    <record id="res_users_company_rule" model="ir.rule">
+        <field name="name">Users: own company only</field>
+        <field name="model_id" ref="base.model_res_users"/>
+        <field name="domain_force">
+            [('company_id', 'in', user.company_ids.ids)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+<!--   Companies: user allowed companies only-->
+    <record id="res_company_user_rule" model="ir.rule">
+        <field name="name">Companies: user allowed companies only</field>
+        <field name="model_id" ref="base.model_res_company"/>
+        <field name="domain_force">
+            [('id', 'in', user.company_ids.ids)]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
 
 </odoo>

@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
     <record id="view_batch_payment_tree" model="ir.ui.view">
         <field name="name">batch.payment.tree</field>
         <field name="model">batch.payment</field>
@@ -33,10 +33,10 @@
                     <button name="action_export_sage" type="object" string="Export to Sage"
                             invisible="state != 'validated'" class="oe_highlight"/>
                     <button name="action_pay_batch" type="object" string="Pay Batch"
-                            invisible="state not in ('validated','exported')" class="btn-primary"/>
+                            invisible="state not in ('validated',)" class="btn-primary"/>
 
 
-<!--                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid"/>-->
+                    <!--                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid"/>-->
                     <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid"/>
 
                 </header>
@@ -79,22 +79,22 @@
                                     class="oe_highlight"
                                     invisible="state != 'draft'"
                                     context="{
-          'default_batch_id': active_id,
-          'bp_company_id': company_id,
-          'bp_journal_id': journal_id,
-          'bp_pml_id': payment_method_line_id,
-          'bp_partner_id': partner_id
-        }"/>
+                                              'default_batch_id': active_id,
+                                              'bp_company_id': company_id,
+                                              'bp_journal_id': journal_id,
+                                              'bp_pml_id': payment_method_line_id,
+                                              'bp_partner_id': partner_id
+                                            }"/>
 
                             <!-- IMPORTANT: pass header fields into the context of the x2many itself -->
                             <field name="line_ids"
                                    context="{
-         'default_batch_id': active_id,
-         'bp_company_id': company_id,
-         'bp_journal_id': journal_id,
-         'bp_pml_id': payment_method_line_id,
-         'bp_partner_id': partner_id
-       }"
+                                             'default_batch_id': active_id,
+                                             'bp_company_id': company_id,
+                                             'bp_journal_id': journal_id,
+                                             'bp_pml_id': payment_method_line_id,
+                                             'bp_partner_id': partner_id
+                                           }"
                                    readonly="state != 'draft'">
                                 <tree editable="bottom" multi_edit="True">
 
@@ -102,26 +102,28 @@
                                     <field name="payment_id"
                                            options="{'no_create': True, 'no_create_edit': True, 'no_open': False}"
                                            domain="[
-                                         ('state', '=', 'posted'),
-                                         ('company_id', '=', context.get('bp_company_id')),
-                                         ('in_exported_batch', '=', False),
+                                                     ('state', '=', 'posted'),
+                                                     ('company_id', '=', context.get('bp_company_id')),
+                                                     ('in_exported_batch', '=', False),
 
+                                                     ('batch_invoice_id', '!=', False),
 
-                                         '|',
-                                           ('journal_id', '=', context.get('bp_journal_id')),
-                                           ('journal_id', '!=', False),
+                                                     ('batch_invoice_id.batch_payment_state', '=', 'not_paid'),
 
+                                                     '|',
+                                                       ('journal_id', '=', context.get('bp_journal_id')),
+                                                       ('journal_id', '!=', False),
 
-                                         '|',
-                                           ('payment_method_line_id', '=', context.get('bp_pml_id')),
-                                           ('payment_method_line_id', '!=', False),
+                                                     '|',
+                                                       ('payment_method_line_id', '=', context.get('bp_pml_id')),
+                                                       ('payment_method_line_id', '!=', False),
 
+                                                     '|', '&amp;',
+                                                       ('partner_id', '=', context.get('bp_partner_id')),
+                                                       ('partner_id', '!=', False),
+                                                       ('partner_id', '=', False)
+                                                   ]"/>
 
-                                         '|', '&amp;',
-                                           ('partner_id', '=', context.get('bp_partner_id')),
-                                           ('partner_id', '!=', False),
-                                           ('partner_id', '=', False)
-                                       ]"/>
 
                                     <!-- Columns -->
                                     <field name="date"/>
@@ -143,6 +145,39 @@
 
 
                         </page>
+<!--                        <page string="Invoices">-->
+<!--                            <group>-->
+<!--                                <field name="invoice_ids"-->
+<!--                                       domain="[('state','=','posted'),-->
+<!--                                                    ('move_type','in',('out_invoice','in_invoice')),-->
+<!--                                                    ('batch_payment_state','=','not_paid')]"-->
+
+<!--                                       widget="many2many_tags"-->
+<!--                                       options="{'no_create': True}"/>-->
+<!--                            </group>-->
+
+<!--                        </page>-->
+<!--                        <page string="Invoices">-->
+<!--                            <group>-->
+<!--                                <field name="invoice_ids"-->
+<!--                                       widget="many2many_tags"-->
+<!--                                       readonly="1"/>-->
+<!--                            </group>-->
+<!--                        </page>-->
+                        <page string="Export History">
+                            <field name="export_history_ids" readonly="1">
+                                <tree>
+                                    <field name="export_date"/>
+                                    <field name="user_id"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'success'"
+                                           decoration-danger="state == 'failed'"/>
+                                    <field name="sage_reference"/>
+                                </tree>
+                            </field>
+                        </page>
+
+
                         <page string="Notes">
                             <group>
                                 <field name="note" widget="html"/>
@@ -165,6 +200,4 @@
         <field name="view_mode">tree,form</field>
     </record>
 
-    <menuitem id="menu_batch_payment_root" name="Batch Payments" parent="account.menu_finance" sequence="80"/>
-    <menuitem id="menu_batch_payment" name="Batches" parent="menu_batch_payment_root" action="action_batch_payment"/>
 </odoo>

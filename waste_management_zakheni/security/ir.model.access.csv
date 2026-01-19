@@ -115,5 +115,7 @@ access_wsr_portal_agent,waste.service.request portal agent,model_waste_service_r
 access_sale_order_wmz_manager,sale.order wmz manager,model_sale_order,waste_management_zakheni.group_wmz_manager,1,0,0,0
 access_sale_order_line_wmz_manager,sale.order.line wmz manager,model_sale_order_line,waste_management_zakheni.group_wmz_manager,1,0,0,0
 
+access_waste_tank_tariff,waste.tank.tariff wmz manager,model_waste_tank_tariff,base.group_user,1,1,1,1
+
 
 

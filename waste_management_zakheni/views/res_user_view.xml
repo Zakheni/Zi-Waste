@@ -23,14 +23,6 @@
                 </page>
             </xpath>
 
-<!--             <xpath expr="//form/sheet/notebook" position="inside">-->
-<!--                <page string="Audit Trail">-->
-<!--                    <field name="audit_message_ids"-->
-<!--                           widget="mail_thread"-->
-<!--                           readonly="1"-->
-<!--                           nolabel="1"/>-->
-<!--                </page>-->
-<!--            </xpath>-->
 
         </field>
 

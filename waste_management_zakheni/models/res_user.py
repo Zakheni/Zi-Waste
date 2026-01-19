@@ -70,33 +70,15 @@ class ResUsers(models.Model):
                     'body': "<ul>%s</ul>" % "".join(changes),
                     'author_id': self.env.user.partner_id.id,
                 })
-                # self.env['mail.message'].create({
-                #     'model': 'res.users',
-                #     'res_id': user.id,
-                #     'message_type': 'notification',
-                #     'subtype_id': self.env.ref('mail.mt_note').id,
-                #     'body': "<ul>%s</ul>" % "".join(changes),
-                # })
-                # system_partner = self.env.ref('base.partner_root')
-                #
-                # self.env['mail.message'].create({
-                #     'model': 'res.users',
-                #     'res_id': user.id,
-                #     'message_type': 'notification',
-                #     'subtype_id': self.env.ref('mail.mt_note').id,
-                #     'author_id': system_partner.id,
-                #     'body': "<ul>%s</ul>" % "".join(changes),
-                # })
-                # if changes:
-                #     self.env['mail.message'].create({
-                #         'model': 'res.users',
-                #         'res_id': user.id,
-                #         'message_type': 'notification',
-                #         'subtype_id': self.env.ref('mail.mt_note').id,
-                #         'body': "<ul>%s</ul>" % "".join(changes),
-                #     })
 
-        return res
+            return res
+
+    @classmethod
+    def _get_signup_fields(cls):
+        fields = super()._get_signup_fields()
+        if 'wmz_portal_group' not in fields:
+            fields.append('wmz_portal_group')
+        return fields
 
     audit_message_ids = fields.Many2many(
         'mail.message',

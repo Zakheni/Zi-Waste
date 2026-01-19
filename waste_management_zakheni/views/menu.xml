@@ -35,14 +35,14 @@
     <menuitem id="menu_waste_configuration_site"
               name="Configuration"
               parent="menu_pickup_root"
-              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"/>
+              groups="waste_management_zakheni.group_wmz_admin"/>
 
     <!--    section configuration-->
     <menuitem id="menu_waste_configuration"
               name="Configuration"
               parent="menu_waste_configuration_site"
               sequence="10"
-              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"/>
+              groups="waste_management_zakheni.group_wmz_admin"/>
 
     <menuitem id="menu_pickup_point"
               name="Pickup Points"
@@ -65,11 +65,11 @@
               sequence="13"
               groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"/>
 
-<!--    <menuitem id="menu_wms_providers"-->
-<!--              name="Service Provider"-->
-<!--              parent="menu_waste_configuration"-->
-<!--              sequence="14"-->
-<!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>-->
+    <!--    <menuitem id="menu_wms_providers"-->
+    <!--              name="Service Provider"-->
+    <!--              parent="menu_waste_configuration"-->
+    <!--              sequence="14"-->
+    <!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>-->
 
 
     <menuitem id="menu_wms_tool_pro"
@@ -80,19 +80,19 @@
               groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>
 
 
-<!--    <menuitem id="menu_wms_tools"-->
-<!--              name="Tools"-->
-<!--              parent="menu_waste_configuration"-->
-<!--              sequence="16"-->
-<!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>-->
+    <!--    <menuitem id="menu_wms_tools"-->
+    <!--              name="Tools"-->
+    <!--              parent="menu_waste_configuration"-->
+    <!--              sequence="16"-->
+    <!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>-->
 
 
-<!--    <menuitem id="menu_wms_find_provider"-->
-<!--              name="Find Provider"-->
-<!--              parent="menu_wms_tools"-->
-<!--              action="action_open_provider_wizard"-->
-<!--              sequence="17"-->
-<!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>-->
+    <!--    <menuitem id="menu_wms_find_provider"-->
+    <!--              name="Find Provider"-->
+    <!--              parent="menu_wms_tools"-->
+    <!--              action="action_open_provider_wizard"-->
+    <!--              sequence="17"-->
+    <!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>-->
 
 
     <!-- section loop-up-->
@@ -145,5 +145,17 @@
               sequence="26"
               groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
 
+    <menuitem id="menu_waste_tank_tariff_conf"
+              name="Tariff"
+              parent="menu_waste_configuration_site"
+              sequence="27"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_waste_tank_tariff"
+              name="Tank Tariff"
+              parent="menu_waste_tank_tariff_conf"
+              action="action_tank_tariff"
+              sequence="27"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"/>
 
 </odoo>

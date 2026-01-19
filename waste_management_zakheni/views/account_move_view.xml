@@ -21,9 +21,11 @@
                     waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance
                 </attribute>
                  <attribute name="invisible">
-                    batch_payment_state == 'paid'
+                      payment_state == 'paid' or state != 'posted' or batch_payment_state == 'paid'
                 </attribute>
             </xpath>
+
+
 
         </field>
     </record>
@@ -53,7 +55,7 @@
 
             <xpath expr="//field[@name='invoice_date_due']" position="attributes">
                 <attribute name="invisible">
-                    batch_payment_state == 'paid'
+                    batch_payment_state == 'paid' or payment_state == 'paid'
                 </attribute>
             </xpath>
 

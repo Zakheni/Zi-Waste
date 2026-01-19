@@ -14,9 +14,64 @@
                         string="Register Payment (Batch)"
                         class="btn-secondary"
                         invisible="move_type not in ('out_invoice','in_invoice') or state != 'posted'"/>
+
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <field name="is_paid_via_batch" invisible="1"/>
+            </xpath>
+
+
+            <xpath expr="//sheet" position="inside">
+
+                <div class="batch-paid-ribbon"
+                     invisible="is_paid_via_batch == False">
+                    <span>PAID</span>
+                </div>
+
+            </xpath>
+
+
+            <xpath expr="//field[@name='payment_state']" position="after">
+                <field name="batch_payment_state"
+                       widget="badge"
+                       invisible="payment_state != 'paid'"
+                       decoration-success="batch_payment_state == 'paid'"
+                       decoration-danger="batch_payment_state == 'not_paid'"/>
+            </xpath>
+
+
+        </field>
+    </record>
+
+
+    <record id="view_invoice_tree_inherit_batch_payment_state" model="ir.ui.view">
+        <field name="name">account.move.invoice.tree.inherit.batch.payment</field>
+        <field name="model">account.move</field>
+
+        <!-- IMPORTANT: inherit the INVOICE tree, not move tree -->
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+
+        <field name="arch" type="xml">
+
+            <!-- Insert Batch Payment State BEFORE payment_state -->
+            <xpath expr="//field[@name='payment_state']" position="before">
+                <field name="batch_payment_state"
+                       string="Batch State"
+                       widget="badge"
+                       invisible="payment_state != 'paid'"
+                       decoration-success="batch_payment_state == 'paid'"
+                       decoration-danger="batch_payment_state == 'not_paid'"/>
+
+            </xpath>
+
+            <xpath expr="//field[@name='invoice_date_due']" position="attributes">
+                <attribute name="invisible">
+                    batch_payment_state == 'paid' or payment_state == 'paid'
+                </attribute>
             </xpath>
 
         </field>
     </record>
+
 
 </odoo>

@@ -713,6 +713,7 @@ class WasteWorksheetImage(models.Model):
     _name = 'waste.worksheet.image'
     _description = 'Waste Worksheet Image'
 
+
     worksheet_id = fields.Many2one(
         'waste.worksheet',
         string='Worksheet',

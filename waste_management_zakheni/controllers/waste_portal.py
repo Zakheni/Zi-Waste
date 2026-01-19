@@ -321,10 +321,22 @@ class WasteClientPortal(CustomerPortal):
         Worksheet = request.env['waste.worksheet'].sudo()
         user = request.env.user
         domain = self._base_request_domain(user)
-        wsr = WasteRequest.search(domain, limit=1)
-        if not wsr:
+
+        # wsr = WasteRequest.search(domain, limit=1)
+        # if not wsr:
+        #     return request.not_found()
+
+        # 1️⃣ Load the requested record
+        wsr = WasteRequest.browse(wsr_id)
+
+        # 2️⃣ Check it exists
+        if not wsr.exists():
             return request.not_found()
 
+        # 3️⃣ Security: ensure user is allowed to see it
+        allowed_domain = self._base_request_domain(user) + [('id', '=', wsr_id)]
+        if not WasteRequest.search_count(allowed_domain):
+            return request.not_found()
 
         wsr_sudo = wsr.sudo()
 
@@ -1540,37 +1552,44 @@ class WasteClientPortal(CustomerPortal):
         ]
         return request.make_response(xlsx_data, headers)
 
-    @http.route('/my/waste/pickup_points', type='json', auth='user', website=True)
-    def portal_pickup_points_by_customer(self, partner_id=None, **kw):
-        user = request.env.user
-        env = request.env
 
-        # ✅ Use current company scope (same as your client dropdown)
-        company_id = env.company.id
-
-        try:
-            partner_id = int(partner_id or 0)
-        except Exception:
-            partner_id = 0
+    @http.route(
+        '/my/waste/pickup_points',
+        type='http',  # ✅ MUST be http
+        auth='user',
+        website=True,
+        methods=['POST'],
+        csrf=False
+    )
+    def portal_pickup_points_by_customer(self, **kw):
+        data = request.get_json_data() or {}
+        partner_id = int(data.get('partner_id') or 0)
 
         if not partner_id:
-            return []
+            return request.make_json_response([])
 
-        Partner = env['res.partner'].sudo()
-        p = Partner.browse(partner_id)
+        env = request.env
+        user = env.user
+        company_id = env.company.id
 
-        # ✅ Security: partner must be a customer-company visible in this company
+        p = env['res.partner'].sudo().browse(partner_id)
+
+        # 🔒 security
         if (not p.exists()
                 or not p.is_company
                 or (p.customer_rank or 0) <= 0
                 or (p.company_id and p.company_id.id != company_id)):
-            return []
+            return request.make_json_response([])
 
-        PickupPoint = env['pickup.point'].sudo()
-        points = PickupPoint.search([('partner_id', '=', p.id)], order="name asc")
+        points = env['pickup.point'].sudo().search(
+            [('partner_id', '=', p.id), ('active', '=', True)],
+            order="name asc"
+        )
 
-        return [{'id': pp.id, 'name': pp.display_name} for pp in points]
-
+        return request.make_json_response([
+            {'id': pp.id, 'name': pp.display_name}
+            for pp in points
+        ])
 
     @http.route(
         '/my/waste/pickup_points/create',
@@ -1610,24 +1629,83 @@ class WasteClientPortal(CustomerPortal):
                 'error': _('Invalid customer account.')
             })
 
-        # Extra safety (optional but recommended)
-        if not partner.is_company or (partner.customer_rank or 0) <= 0:
+        user = request.env.user
+
+        # 🚫 Agents are NOT allowed
+        if user.has_group('waste_management_zakheni.group_wmz_client_agent'):
             return request.make_json_response({
                 'error': _('You are not allowed to create pickup points.')
             })
 
-        # ✅ Create pickup point (NO client switching possible)
+
         pp = env['pickup.point'].sudo().create({
             'name': name,
             'partner_id': partner.id,
-            # 'company_id': env.company.id,  # only if your model has it
+            'created_from_portal': True,
         })
+
+        pp._log_audit(f"🧾 Pickup point created from portal by {user.name}")
 
         return request.make_json_response({
             'id': pp.id,
             'name': pp.display_name,
         })
 
+    @http.route(
+        '/my/waste/pickup_points/<int:pp_id>/edit',
+        type='http',
+        auth='user',
+        methods=['POST'],
+        csrf=False,
+    )
+    def portal_pickup_point_edit(self, pp_id, **kw):
+        user = request.env.user
+
+        if user.has_group('waste_management_zakheni.group_wmz_client_agent'):
+            return request.make_json_response({'error': 'Not allowed'})
+
+        data = json.loads(request.httprequest.data or '{}')
+        name = (data.get('name') or '').strip()
+
+        if not name:
+            return request.make_json_response({'error': 'Name is required'})
+
+        pp = request.env['pickup.point'].sudo().browse(pp_id)
+        if not pp.exists():
+            return request.make_json_response({'error': 'Not found'})
+
+        if pp.partner_id != user.partner_id.commercial_partner_id:
+            return request.make_json_response({'error': 'Access denied'})
+
+        pp.write({'name': name})
+        pp._log_audit(f"✏️ Pickup point edited by {user.name}")
+
+        return request.make_json_response({'success': True})
+
+    @http.route(
+        '/my/waste/pickup_points/<int:pp_id>/archive',
+        type='http',
+        auth='user',
+        methods=['POST'],
+        csrf=False,
+    )
+    def portal_pickup_point_archive(self, pp_id):
+        user = request.env.user
+
+        if user.has_group('waste_management_zakheni.group_wmz_client_agent'):
+            return request.make_json_response({'error': 'Not allowed'})
+
+        pp = request.env['pickup.point'].sudo().browse(pp_id)
+        if not pp.exists():
+            return request.make_json_response({'error': 'Not found'})
+
+        if pp.partner_id != user.partner_id.commercial_partner_id:
+            return request.make_json_response({'error': 'Access denied'})
+
+        pp.write({'active': False})
+        pp._log_audit(f"🗑 Pickup point archived by {user.name}")
+
+        return request.make_json_response({'success': True})
 
     @http.route('/wmz/ping', type='http', auth='public', website=True)
     def wmz_ping(self, **kw):

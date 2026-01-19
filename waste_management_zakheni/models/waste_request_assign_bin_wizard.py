@@ -131,8 +131,51 @@ class WasteAssignBinWizard(models.TransientModel):
     def action_confirm(self):
         self.ensure_one()
         req = self.request_id
-        svc = (self.svc_code or '').strip().lower()
+        # svc = (self.svc_code or '').strip().lower()
         cust = self.partner_id or req.partner_id or req.partner_id
+
+        # ============================================================
+        # 🔴 SERVICE-BASED BIN REQUIREMENTS (HARD VALIDATION)
+        # ============================================================
+
+        svc = (self.svc_code or '').strip().lower()
+
+        has_lifted = any(self.line_ids.mapped('bin_lifted_ids'))
+        has_dropped = any(self.line_ids.mapped('bin_dropped_ids'))
+
+        # ------------------------------
+        # Placement of bins → DROPPED
+        # ------------------------------
+        if svc == 'placement of bins':
+            if not has_dropped:
+                raise ValidationError(_(
+                    "Bin Dropped is required for Placement of Bins. 🗑️🚮"
+                ))
+
+        # ------------------------------
+        # Shunting / Removal → LIFTED
+        # ------------------------------
+        elif svc in (
+                'shunting of bins',
+                'removal of bins',
+        ):
+            if not has_lifted:
+                raise ValidationError(_(
+                    "Bin Lifted is required for %s. 🗑️🚮"
+                ) % self.request_id.service_requested_id.display_name)
+
+        # ------------------------------
+        # Collection / Swapping → BOTH
+        # ------------------------------
+        elif svc in (
+                'waste collection & disposal',
+                'waste collection and disposal',
+                'swapping of bins',
+        ):
+            if not has_lifted or not has_dropped:
+                raise ValidationError(_(
+                    "Both Bin Lifted and Bin Dropped are required for %s. 🗑️🚮"
+                ) % self.request_id.service_requested_id.display_name)
 
         # clear old persistent bin lines
         req.bin_line_ids.unlink()

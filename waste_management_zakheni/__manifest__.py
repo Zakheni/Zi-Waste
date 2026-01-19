@@ -2,7 +2,8 @@
     "name": "Waste Management",
     "version": "1.0",
     "author": "Lesiba",
-    "depends": ['base', 'mail', 'sale', 'product', 'account', 'fleet', 'hr', 'stock', 'portal', 'website'],
+    "depends": ['base', 'mail', 'sale', 'product', 'account', 'fleet', 'hr', 'stock', 'portal', 'website',
+                'auth_signup'],
     "data": [
         "security/menu_security.xml",
         "security/waste_portal_groups.xml",
@@ -13,6 +14,7 @@
         "security/waste_rules.xml",
         "security/res_partner_rules.xml",
         "data/sequence.xml",
+        "data/tank_tariff_data.xml",
         "data/mail_reject_manifest.xml",
         "data/mail_amend_manifest.xml",
         "data/mail_authorise_manifest.xml",
@@ -28,6 +30,7 @@
         # "data/waste_config.xml",
         # "views/waste_dashboard_action.xml",
 
+        "views/auth_signup_templates.xml",
         "views/portal_waste_dashboard.xml",
         "views/portal_waste_report_html.xml",
         # "views/portal_validation.xml",
@@ -54,6 +57,7 @@
         "views/waste_details_view.xml",
         "views/bin_type_view.xml",
         "views/tank_volume_view.xml",
+        "views/tank_tariff_views.xml",
         "views/wizard_views.xml",
         "views/service_provider_views.xml",
         "views/request_provider_wizard_views.xml",

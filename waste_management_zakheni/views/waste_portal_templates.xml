@@ -342,6 +342,7 @@
                                                 </option>
                                             </t>
                                         </select>
+
                                     </div>
 
                                     <!-- Container Type (bin / tank) -->
@@ -410,29 +411,76 @@
                                 Submit Request
                             </button>
                         </form>
+
+
                         <div class="modal fade" id="addPickupPointModal" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
+
                                     <div class="modal-header">
-                                        <h5 class="modal-title">Add Collection Address</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        <h5 class="modal-title">Manage Collection Addresses</h5>
+                                        <button type="button" class="btn-close"
+                                                data-bs-dismiss="modal"
                                                 aria-label="Close"/>
                                     </div>
 
                                     <div class="modal-body">
+
+                                        <!-- Existing pickup points -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Existing Addresses</label>
+
+                                            <div id="pp_list" class="list-group small">
+                                                <t t-foreach="pickup_points" t-as="pp">
+                                                    <div class="list-group-item d-flex justify-content-between align-items-center"
+                                                         t-att-data-id="pp.id"
+                                                         t-att-data-name="pp.name">
+
+                                                        <span t-esc="pp.name"/>
+
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button type="button"
+                                                                    class="btn btn-outline-primary"
+                                                                    t-att-data-id="pp.id"
+                                                                    t-att-data-name="pp.name"
+                                                                    onclick="wmzEditPickupPoint(this)">
+                                                                ✏️
+                                                            </button>
+
+                                                            <button type="button"
+                                                                    class="btn btn-outline-danger"
+                                                                    t-att-data-id="pp.id"
+                                                                    onclick="wmzDeletePickupPoint(this)">
+                                                                🗑
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </t>
+                                            </div>
+                                        </div>
+
+                                        <!-- Add new -->
                                         <div class="mb-2">
-                                            <label class="form-label">Address Name</label>
-                                            <input id="pp_name" class="form-control" placeholder="e.g. Main Office"/>
+                                            <label class="form-label">New Address Name</label>
+                                            <input id="pp_name" class="form-control"
+                                                   placeholder="e.g. Main Office"/>
                                         </div>
 
                                         <div id="pp_error" class="alert alert-danger d-none mt-2"></div>
+
                                     </div>
 
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel
+                                        <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">
+                                            Close
                                         </button>
-                                        <button type="button" id="pp_save_btn" class="btn btn-primary">Save</button>
+                                        <button type="button" class="btn btn-primary"
+                                                id="pp_save_btn">
+                                            Save
+                                        </button>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -445,44 +493,38 @@
             <!-- JS to toggle Bin / Tank size -->
             <!-- JS: Toggle Bin/Tank size + Load Pickup Points by selected customer -->
             <script src="/web/static/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+
             <script type="text/javascript">
                 (function () {
-                function jsonRpc(url, params) {
-                return fetch(url, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                jsonrpc: "2.0",
-                method: "call",
-                params: params || {},
-                id: Date.now()
-                })
-                })
-                .then(r => r.json())
-                .then(data => (data &amp;&amp; data.result) ? data.result : (data.error ? {error: data.error} : []))
-                .catch(err => {
-                console.error("RPC failed:", err);
-                return [];
-                });
-                }
 
-                function loadPickupPoints(partnerId) {
+                async function loadPickupPoints(partnerId) {
                 const sel = document.getElementById('pickup_point_id');
                 if (!sel) return;
 
+                // reset dropdown
                 sel.innerHTML = '<option value="">Select recognised address</option>';
                 if (!partnerId) return;
 
-                jsonRpc('/my/waste/pickup_points', { partner_id: partnerId })
-                .then(function (rows) {
-                (rows || []).forEach(function (pp) {
+                try {
+                const res = await fetch('/my/waste/pickup_points', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ partner_id: partnerId })
+                });
+
+                const rows = await res.json();
+
+                (rows || []).forEach(pp => {
                 const opt = document.createElement('option');
                 opt.value = pp.id;
                 opt.textContent = pp.name;
                 sel.appendChild(opt);
                 });
-                });
+
+                } catch (err) {
+                console.error('Failed to load pickup points:', err);
+                }
                 }
 
                 document.addEventListener('DOMContentLoaded', function () {
@@ -493,72 +535,63 @@
                 loadPickupPoints(this.value);
                 });
 
-                loadPickupPoints(clientSel.value);
+                // initial load
                 });
+
                 })();
             </script>
 
 
-            <!--            <script type="text/javascript">-->
-            <!--                (function () {-->
-            <!--                // Minimal JSON-RPC caller for Odoo "type='json'" routes-->
-            <!--                function jsonRpc(url, params) {-->
-            <!--                return fetch(url, {-->
-            <!--                method: 'POST',-->
-            <!--                credentials: 'same-origin', // send session cookie-->
-            <!--                headers: { 'Content-Type': 'application/json' },-->
-            <!--                body: JSON.stringify({-->
-            <!--                jsonrpc: "2.0",-->
-            <!--                method: "call",-->
-            <!--                params: params || {},-->
-            <!--                id: Date.now()-->
-            <!--                })-->
-            <!--                })-->
-            <!--                .then(function (r) { return r.json(); })-->
-            <!--                .then(function (data) {-->
-            <!--                if (data &amp;&amp; data.error) {-->
-            <!--                console.error("JSON-RPC error:", data.error);-->
-            <!--                return [];-->
-            <!--                }-->
-            <!--                return (data &amp;&amp; data.result) ? data.result : [];-->
-            <!--                })-->
-            <!--                .catch(function (err) {-->
-            <!--                console.error("Fetch RPC failed:", err);-->
-            <!--                return [];-->
-            <!--                });-->
-            <!--                }-->
+            <script type="text/javascript">
+                function wmzEditPickupPoint(btn) {
+                const ppId = btn.dataset.id;
+                const currentName = btn.dataset.name;
 
-            <!--                function loadPickupPoints(partnerId) {-->
-            <!--                var ppSel = document.getElementById('pickup_point_id');-->
-            <!--                if (!ppSel) return;-->
+                const newName = prompt("Edit address name:", currentName);
+                if (!newName || newName.trim() === currentName) return;
 
-            <!--                ppSel.innerHTML = '<option value="">Select recognised address</option>';-->
-            <!--                if (!partnerId) return;-->
+                fetch(`/my/waste/pickup_points/${ppId}/edit`, {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ name: newName.trim() })
+                })
+                .then(r => r.json())
+                .then(resp => {
+                if (resp.error) {
+                alert(resp.error);
+                } else {
+                location.reload();
+                }
+                });
+                }
+            </script>
+            <script type="text/javascript">
+                function wmzDeletePickupPoint(btn) {
+                const ppId = btn.dataset.id;
 
-            <!--                jsonRpc('/my/waste/pickup_points', { partner_id: partnerId })-->
-            <!--                .then(function (res) {-->
-            <!--                (res || []).forEach(function (item) {-->
-            <!--                var opt = document.createElement('option');-->
-            <!--                opt.value = item.id;-->
-            <!--                opt.textContent = item.name;-->
-            <!--                ppSel.appendChild(opt);-->
-            <!--                });-->
-            <!--                });-->
-            <!--                }-->
+                if (!confirm("Remove this collection address?")) return;
 
-            <!--                document.addEventListener('DOMContentLoaded', function () {-->
-            <!--                var custSel = document.getElementById('client_partner_id');-->
-            <!--                if (!custSel) return;-->
+                fetch(`/my/waste/pickup_points/${ppId}/archive`, {
+                method: 'POST',
+                headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+                }
+                })
+                .then(r => r.json())
+                .then(resp => {
+                if (resp.error) {
+                alert(resp.error);
+                } else {
+                location.reload();
+                }
+                });
+                }
+            </script>
 
-            <!--                custSel.addEventListener('change', function () {-->
-            <!--                loadPickupPoints(this.value);-->
-            <!--                });-->
 
-            <!--                // initial load-->
-            <!--                loadPickupPoints(custSel.value);-->
-            <!--                });-->
-            <!--                })();-->
-            <!--            </script>-->
             <script type="text/javascript">
                 (function () {
 

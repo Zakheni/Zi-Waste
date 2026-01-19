@@ -23,7 +23,7 @@ from . import res_company
 from . import res_user
 from . import hr_department
 from . import fleet_vehicle_model_brand
-from . import account_payment_register
+from . import tank_tariff
 
 
 
