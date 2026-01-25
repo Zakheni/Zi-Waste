@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_vehicle_inspection_root"
+              name="Vehicle Inspections"
+              sequence="50"/>
+
+    <menuitem id="menu_vehicle_inspection"
+              name="Inspections"
+              parent="menu_vehicle_inspection_root"
+              action="vehicle_inspection.action_vehicle_inspection"/>
+
+    <menuitem id="menu_inspection_category"
+              name="Inspection Categories"
+              parent="menu_vehicle_inspection_root"
+              action="vehicle_inspection.action_inspection_category"/>
+
+    <menuitem id="menu_inspection_item"
+              name="Inspection Items"
+              parent="menu_vehicle_inspection_root"
+              action="vehicle_inspection.action_inspection_item"/>
+
+<!--    <menuitem id="menu_vehicle_inspection_dashboard"-->
+<!--              name="Dashboard"-->
+<!--              parent="menu_vehicle_inspection_root"-->
+<!--              action="action_vehicle_inspection_dashboard"-->
+<!--              sequence="1"/>-->
+
+
+</odoo>

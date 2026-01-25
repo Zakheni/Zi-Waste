@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_inspection,vehicle_inspection,model_vehicle_inspection,,1,1,1,1
+access_inspection_line,vehicle_inspection_line,model_vehicle_inspection_line,,1,1,1,1
+access_inspection_category,vehicle_inspection_category,model_vehicle_inspection_category,,1,1,1,1
+access_inspection_item,vehicle_inspection_item,model_vehicle_inspection_item,,1,1,1,1
+access_vehicle_inspection_image,vehicle_inspection_image,model_vehicle_inspection_image,,1,1,1,1

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_vehicle_inspection_tree" model="ir.ui.view">
+        <field name="name">vehicle.inspection.tree</field>
+        <field name="model">vehicle.inspection</field>
+        <field name="arch" type="xml">
+            <tree>
+
+                <field name="name"/>
+                <field name="inspection_type" optional="hide"/>
+                <field name="vehicle_id"/>
+                <field name="inspector_id" widget="many2one_avatar_user"/>
+                <field name="partner_id" optional="hide"/>
+                <field name="driver_id" widget="many2one_avatar_user"/>
+                <field name="comment"/>
+                <field name="km_open"/>
+                <field name="vehicle_description"/>
+                <field name="km_close"/>
+                <field name="inspection_date" optional="hide"/>
+                <field name="next_inspection_date" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-warning="state == 'draft'"/>
+
+
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_vehicle_inspection_form" model="ir.ui.view">
+        <field name="name">vehicle.inspection.form</field>
+        <field name="model">vehicle.inspection</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_done"
+                            type="object"
+                            string="Mark Done"
+                            invisible="state != 'draft'"
+                    />
+                    <button name="action_draft"
+                            type="object"
+                            string="Mark Draft"
+                            invisible="state != 'done'"
+                    />
+
+                    <button name="action_print_inspection_report"
+                            type="object"
+                            string="Print Inspection Report"
+                            class="btn-primary"
+                            invisible="state != 'done'"
+                    />
+
+
+                    <field name="state" widget="statusbar"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+                    <group string="Vehicle information">
+                        <group>
+                            <!--                            <field name="inspection_type" readonly="state != 'draft'"/>-->
+                            <field name="vehicle_id" widget="many2one_avatar_user" readonly="state != 'draft'"/>
+                            <!--                            <field name="partner_id" readonly="state != 'draft'"/>-->
+                            <field name="driver_id" string="Driver" widget="many2one_avatar_user"
+                                   readonly="state != 'draft'"/>
+                            <field name="inspection_date" readonly="state != 'draft'"/>
+
+
+                            <field name="comment" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="km_open" readonly="state != 'draft'"/>
+                            <field name="km_close" readonly="state != 'draft'"/>
+
+
+                            <!--                            <field name="inspector_id" widget="many2one_avatar_user" readonly="state != 'draft'"/>-->
+                            <!--                            <field name="next_inspection_date" readonly="state != 'draft'"/>-->
+                            <field name="vehicle_description" readonly="state != 'draft'"/>
+
+
+                        </group>
+                    </group>
+
+                    <field name="require_photo" invisible="1"/>
+                    <field name="used_item_ids" invisible="1"/>
+
+                    <notebook>
+                        <page string="Checklist">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <tree editable="bottom">
+                                    <field name="category_id"/>
+                                    <field name="item_id"
+                                           domain="[('id', 'not in', parent.used_item_ids)]"/>
+                                    <field name="result" widget="radio"
+                                           options="{'horizontal': True}" string="Check"/>
+                                    <field name="note"/>
+                                    <field name="require_photo"/>
+
+                                    <!-- 📷 PHOTO BUTTON -->
+                                    <button name="open_line_form"
+                                            type="object"
+                                            icon="fa-camera"
+                                            string="Photos"
+                                            invisible="require_photo == False"/>
+
+                                </tree>
+
+                                <!--                                 <form ref="vehicle_inspection.view_inspection_line_photo_form"/>-->
+                                <form ref="vehicle_inspection.view_inspection_line_form"/>
+
+                            </field>
+                        </page>
+
+                        <page string="Photos">
+                            <field name="image_ids" mode="kanban">
+                                <kanban>
+                                    <field name="image"/>
+                                    <field name="name"/>
+
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_kanban_card oe_kanban_global_click">
+                                                <img t-att-src="kanban_image(
+                            'vehicle.inspection.image',
+                            'image',
+                            record.id.value
+                        )"
+                                                     style="width:100%; height:220px; object-fit:cover;"/>
+                                                <div class="oe_kanban_details">
+                                                    <strong>
+                                                        <field name="name"/>
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </page>
+
+
+                        <!--                        <page string="Photos">-->
+                        <!--                            <field name="image_ids" mode="kanban" readonly="state == 'done'">-->
+                        <!--                                <kanban create="true" quick_create="false" class="o_kanban_large_column">-->
+                        <!--                                    <field name="image"/>-->
+                        <!--                                    <field name="name"/>-->
+
+                        <!--                                    <templates>-->
+                        <!--                                        <t t-name="kanban-box">-->
+                        <!--                                            <div class="oe_kanban_global_click o_kanban_card" style="padding: 6px;">-->
+                        <!--                                                &lt;!&ndash; Image block with fixed height &ndash;&gt;-->
+                        <!--                                                <div style="-->
+                        <!--                            height: 220px;-->
+                        <!--                            overflow: hidden;-->
+                        <!--                            display: flex;-->
+                        <!--                            align-items: center;-->
+                        <!--                            justify-content: center;-->
+                        <!--                        ">-->
+                        <!--                                                    <img t-att-src="kanban_image('vehicle.inspection.image', 'image', record.id.value)"-->
+                        <!--                                                         style="-->
+                        <!--                                     width: 100%;-->
+                        <!--                                     height: 100%;-->
+                        <!--                                     object-fit: cover;-->
+                        <!--                                 "/>-->
+                        <!--                                                </div>-->
+
+                        <!--                                                &lt;!&ndash; Caption / description &ndash;&gt;-->
+                        <!--                                                <div class="oe_kanban_details o_kanban_record_title"-->
+                        <!--                                                     style="margin-top: 4px;">-->
+                        <!--                                                    <strong>-->
+                        <!--                                                        <field name="name"/>-->
+                        <!--                                                    </strong>-->
+                        <!--                                                </div>-->
+                        <!--                                            </div>-->
+                        <!--                                        </t>-->
+                        <!--                                    </templates>-->
+                        <!--                                </kanban>-->
+                        <!--                            </field>-->
+                        <!--                        </page>-->
+
+                        <page string="Signature">
+                            <field name="signature" widget="signature" readonly="state != 'draft'"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vehicle_inspection" model="ir.actions.act_window">
+        <field name="name">Vehicle Inspections</field>
+        <field name="res_model">vehicle.inspection</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
