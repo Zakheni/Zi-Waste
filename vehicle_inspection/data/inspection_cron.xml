@@ -1,0 +1,15 @@
+<odoo>
+    <record id="inspection_reminder_cron" model="ir.cron">
+        <field name="name">Inspection Reminder</field>
+        <field name="model_id" ref="model_vehicle_inspection"/>
+        <field name="state">code</field>
+        <field name="code">
+            model.search([('next_inspection_date','!=',False)]).activity_schedule(
+            'mail.mail_activity_data_todo',
+            summary='Upcoming Vehicle Inspection'
+            )
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+</odoo>

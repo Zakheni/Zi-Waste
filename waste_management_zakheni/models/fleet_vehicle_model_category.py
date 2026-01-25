@@ -1,9 +1,15 @@
 import psycopg2
 from odoo import models, api, _
 from odoo.exceptions import (ValidationError)
+from odoo.exceptions import UserError, AccessDenied, ValidationError
 
 class FleetVehicleModelCategory(models.Model):
     _inherit = 'fleet.vehicle.model.category'
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to Vehicle Category."))
+        return super().unlink()
 
     def init(self):
         super().init()

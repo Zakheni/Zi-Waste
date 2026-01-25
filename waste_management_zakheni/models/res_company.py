@@ -10,7 +10,17 @@ from odoo import models, fields
 class ResCompany(models.Model):
     _inherit = "res.company"
 
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     companies = super().create(vals_list)
+    #     for company in companies:
+    #         if not company.create_uid:
+    #             company.create_uid = self.env.user.id
+    #     return companies
+
     # Services (service_requested_id on waste.service.request)
+
+
     wmz_service_ids = fields.Many2many(
         "service.request",
         "wmz_company_service_rel",

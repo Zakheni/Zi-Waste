@@ -1,103 +1,300 @@
 # -*- coding: utf-8 -*-
 import json
 import re
-import time
-from urllib.parse import quote
-import requests
-from odoo import models, fields, api, _
-from odoo.exceptions import UserError
 import logging
+import time
+from typing import Any, Dict, List, Optional, Union
+from urllib.parse import quote
+# -*- coding: utf-8 -*-
+import re
+import logging
+from typing import Any, Dict, List, Optional, Union
+
+import requests
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
+from psycopg2.extensions import JSON
 
 _logger = logging.getLogger(__name__)
-JSON = "application/json"
+_JSON = "application/json"
 
+# ===== Aliases (extend freely) =====
+_KEY_ALIASES: Dict[str, List[str]] = {
+    "phone": [
+        "phone","telephone","telephone1","telephone2","tel","cell","mobile","mobile1","mobile2",
+        "phone_number","contact_no","contact_number","workphone","work_phone","homephone","home_phone",
+        "phoneno","phone_no","phonenumber","phone1","phone2",
+        "contact.phone","contact.phone1","contact.telephone","contact.telephone1","contact.mobile",
+        "primarycontact.phone","primarycontact.telephone","primarycontact.mobile",
+        "contacts[0].phone","contacts[0].mobile","contacts[0].telephone",
+        "Phone","Telephone","Telephone1","Telephone2","Cell","Mobile","PhoneNumber","Phone1","Phone2",
+        "Contact.Phone","Contact.Telephone","Contact.Telephone1","Contact.Mobile",
+        "PrimaryContact.Phone","PrimaryContact.Telephone","PrimaryContact.Mobile",
+    ],
+    "email": [
+        "email","e_mail","e-mail","mail","email_address","email1","email2",
+        "contact.email","primarycontact.email","contacts[0].email",
+        "Email","E_Mail","E-mail","Mail","EmailAddress","Email1","Email2",
+        "Contact.Email","PrimaryContact.Email",
+    ],
+    "addr1": ["address1","Address1","addr1","Addr1","AddressLine1","Street","Street1"],
+    "addr2": ["address2","Address2","addr2","Addr2","AddressLine2","Street2"],
+    "addr3": ["address3","Address3","addr3","Addr3","City","Town","Suburb"],
+    "addr4": ["address4","Address4","addr4","Addr4","State","Province","Region"],
+    "postal": ["postal_code","PostalCode","zip","Zip","ZipCode","Postal"],
+    "country_code": ["country_code","CountryCode","Country","CountryISO","ISO2","ISO3"],
+    "name": ["name","Name","customer_name","CustomerName","display_name","DisplayName"],
+    "code": ["code","Code","customer_code","CustomerCode","AccountCode","Account","AccCode"],
+    "tax_code": ["tax_code","TaxCode","VAT","Vat","vat"],
+    "currency_code": ["currency_code","CurrencyCode","Currency"],
+    "credit_limit": ["credit_limit","CreditLimit"],
+    "balance": ["balance","Balance","Outstanding"],
+}
 
+# ===== Deep utilities =====
+def _iter_items(obj: Any):
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            yield k, v
+    elif isinstance(obj, (list, tuple)):
+        for i, v in enumerate(obj):
+            yield str(i), v
+
+def _ci_eq(a: str, b: str) -> bool:
+    return isinstance(a, str) and isinstance(b, str) and a.lower() == b.lower()
+
+def _normalize_alias(alias: str) -> List[str]:
+    # keep segments including [0] as part of the segment
+    return alias.split(".")
+
+def _deep_find_parts(obj: Any, parts: List[str]) -> Any:
+    if not parts:
+        return obj
+    head, *tail = parts
+
+    # segment like 'contacts[0]'
+    m = re.match(r"^(?P<name>[^\[]+)\[(?P<idx>\d+)\]$", head)
+    if m:
+        name = m.group("name"); idx = int(m.group("idx"))
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if _ci_eq(k, name):
+                    if isinstance(v, (list, tuple)) and 0 <= idx < len(v):
+                        return _deep_find_parts(v[idx], tail)
+                    if isinstance(v, dict) and idx == 0:
+                        return _deep_find_parts(v, tail)
+        if isinstance(obj, (list, tuple)):
+            for _, child in _iter_items(obj):
+                res = _deep_find_parts(child, [head] + tail)
+                if res is not None:
+                    return res
+        return None
+
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if _ci_eq(k, head):
+                return _deep_find_parts(v, tail)
+        # DFS search into children
+        for _, v in obj.items():
+            res = _deep_find_parts(v, [head] + tail)
+            if res is not None:
+                return res
+
+    if isinstance(obj, (list, tuple)):
+        for _, v in _iter_items(obj):
+            res = _deep_find_parts(v, [head] + tail)
+            if res is not None:
+                return res
+
+    return None
+
+def _deep_pick(d: Any, keys: List[str]) -> Any:
+    for k in keys:
+        val = _deep_find_parts(d, _normalize_alias(k))
+        if val is not None:
+            return val
+    return None
+
+# ===== Regex fallbacks (scan any string in the record) =====
+_EMAIL_RE = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.I)
+# keep +country and digits; SA numbers typically 10 digits (0xx… or +27…)
+_PHONE_RE = re.compile(r"(\+?\d[\d\s\-().]{6,}\d)")
+
+def _flatten_strings(obj: Any, out: List[str]):
+    """Collect *all* strings from any depth for regex scanning."""
+    if obj is None:
+        return
+    if isinstance(obj, str):
+        s = obj.strip()
+        if s:
+            out.append(s)
+        return
+    if isinstance(obj, dict):
+        for v in obj.values():
+            _flatten_strings(v, out)
+        return
+    if isinstance(obj, (list, tuple)):
+        for v in obj:
+            _flatten_strings(v, out)
+        return
+    # other scalars
+    try:
+        s = str(obj).strip()
+        if s:
+            out.append(s)
+    except Exception:
+        pass
+
+def _scan_any_email(obj: Any) -> Optional[str]:
+    buf: List[str] = []
+    _flatten_strings(obj, buf)
+    for s in buf:
+        m = _EMAIL_RE.search(s)
+        if m:
+            return m.group(0)
+    return None
+
+def _scan_any_phone(obj: Any) -> Optional[str]:
+    buf: List[str] = []
+    _flatten_strings(obj, buf)
+    for s in buf:
+        m = _PHONE_RE.search(s)
+        if m:
+            raw = m.group(1)
+            # normalize: keep digits + leading +
+            cleaned = re.sub(r"[^\d+]", "", raw)
+            # basic sanity
+            if len(re.sub(r"\D", "", cleaned)) >= 7:
+                return cleaned
+    return None
+
+# ===== Odoo model =====
 class PastelSync(models.Model):
     _name = "pastel.sync"
     _description = "Pastel Sync Helper"
 
-    # ---------------------
-    # Small clean helpers
-    # ---------------------
-    def _clean(self, v):
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True
+    )
+
+    # --- cleaners ---
+    def _clean(self, v: Any) -> Any:
         if v is None:
             return False
-        s = str(v).strip()
+        s = str(v).replace("\u00A0", " ").strip()
         return s or False
 
-    def _clean_phone(self, v):
-        s = self._clean(v)
-        if not s:
+    def _clean_phone(self, v: Any) -> Any:
+        if not v:
             return False
-        return re.sub(r"\s+", " ", s)
+        s = str(v).strip()
+        s = re.sub(r"[^\d+]", "", s)
+        return s or False
 
-    def _clean_email(self, v):
-        s = self._clean(v)
-        if not s:
+    def _clean_email(self, v: Any) -> Any:
+        if not v:
             return False
-        s = s.replace("\u00A0", " ").strip()
-        return s if "@" in s and "." in s else False
+        s = str(v).strip()
+        return s if _EMAIL_RE.fullmatch(s) or _EMAIL_RE.search(s) else False
 
-    def _prune_empty(self, vals: dict) -> dict:
-        """Drop keys with False/None,'' so we don't overwrite good data with blanks."""
+    def _prune_empty(self, vals: Dict[str, Any]) -> Dict[str, Any]:
         return {k: v for k, v in vals.items() if v not in (False, None, "")}
 
-    # ---------------------
-    # Config & HTTP
-    # ---------------------
-    def _conf(self):
+    # --- config/http ---
+    def _conf(self) -> (str, str):
         S = self.env["pastel.connector.setting"].sudo().search([], limit=1)
         if not S or not S.pastel_api_base or not S.pastel_api_key:
             raise UserError(_("Configure Bridge URL/API Key in Pastel Connector > Configuration"))
         return S.pastel_api_base.rstrip("/"), S.pastel_api_key
 
-    def _req(self, method, path, key, base, **kw):
+    def _req(self, method: str, path: str, key: str, base: str, **kw) -> Any:
         url = f"{base}{path}"
         headers = kw.pop("headers", {})
         headers["x-api-key"] = key
-        r = requests.request(method, url, headers=headers, timeout=120, **kw)
-        r.raise_for_status()
-        if r.headers.get("Content-Type", "").startswith(JSON):
+        try:
+            r = requests.request(method, url, headers=headers, timeout=120, **kw)
+            r.raise_for_status()
+        except requests.RequestException as e:
+            raise UserError(_("Bridge request failed: %s") % e)
+        ctype = (r.headers.get("Content-Type") or "").lower()
+        if ctype.startswith(_JSON):
             return r.json()
         return r.text
 
     @api.model
-    def pastel_test_connection(self):
+    def pastel_test_connection(self) -> bool:
         base, key = self._conf()
         self._req("GET", "/health", key, base)
         return True
 
-    # ---------------------
-    # IMPORTS: CUSTOMERS
-    # ---------------------
-    def import_customers(self):
+    def _log(self, kind: str, created: int, updated: int) -> None:
+        msg = f"Pastel {kind} import: created={created}, updated={updated}"
+        _logger.info(msg)
+        S = self.env["pastel.connector.setting"].sudo().search([], limit=1)
+        if S and hasattr(S, "message_post"):
+            S.message_post(body=msg)
+
+    # --- unwrap list from dicts like {"data":[...]}, {"items":[...]}, etc ---
+    def _unwrap_list(self, payload: Any) -> List[Any]:
+        if isinstance(payload, list):
+            return payload
+        if isinstance(payload, dict):
+            for key in ("data", "items", "results", "customers", "Records", "records"):
+                if key in payload and isinstance(payload[key], list):
+                    return payload[key]
+        raise UserError(_("Bridge /customers did not return a list. Got: %s") % type(payload).__name__)
+
+    # --- main import ---
+    def import_customers(self) -> Dict[str, int]:
         base, key = self._conf()
-        data = self._req("GET", "/customers", key, base)
+        raw = self._req("GET", "/customers", key, base)
+        data = self._unwrap_list(raw)
+
         Partner = self.env["res.partner"].sudo()
         Country = self.env["res.country"].sudo()
 
         ci = cu = 0
         for c in data:
-            code = (c.get("code") or "").strip()
-            if not code:
+            if not isinstance(c, (dict, list)):
                 continue
 
-            street = self._clean(c.get("address1"))
-            street2 = self._clean(c.get("address2"))
-            city = self._clean(c.get("address3"))
-            state = self._clean(c.get("address4"))
-            zip_code = self._clean(c.get("postal_code"))
+            code = self._clean(_deep_pick(c, _KEY_ALIASES["code"]))
+            if not code:
+                _logger.debug("Skipped record without code. Keys: %s", list(c.keys()) if isinstance(c, dict) else type(c).__name__)
+                continue
+
+            street   = self._clean(_deep_pick(c, _KEY_ALIASES["addr1"]))
+            street2  = self._clean(_deep_pick(c, _KEY_ALIASES["addr2"]))
+            city     = self._clean(_deep_pick(c, _KEY_ALIASES["addr3"]))
+            state_tx = self._clean(_deep_pick(c, _KEY_ALIASES["addr4"]))
+            zip_code = self._clean(_deep_pick(c, _KEY_ALIASES["postal"]))
 
             country_id = False
-            cc = self._clean(c.get("country_code"))
+            cc = self._clean(_deep_pick(c, _KEY_ALIASES["country_code"]))
             if cc:
                 country = Country.search([("code", "=", cc)], limit=1)
                 country_id = country.id if country else False
 
+            # 1) try alias deep-pick
+            phone_in = _deep_pick(c, _KEY_ALIASES["phone"])
+            email_in = _deep_pick(c, _KEY_ALIASES["email"])
+            # 2) regex scan anywhere if missing
+            if not phone_in:
+                phone_in = _scan_any_phone(c)
+            if not email_in:
+                email_in = _scan_any_email(c)
+
+            phone = self._clean_phone(phone_in)
+            email = self._clean_email(email_in)
+
             vals = {
-                "name": self._clean(c.get("name")) or code,
-                "phone": self._clean_phone(c.get("phone")),
-                "email": self._clean_email(c.get("email")),
+                "name": self._clean(_deep_pick(c, _KEY_ALIASES["name"])) or code,
+                "phone": phone,
+                "email": email,
                 "customer_rank": 1,
                 "street": street,
                 "street2": street2,
@@ -106,12 +303,19 @@ class PastelSync(models.Model):
                 "zip": zip_code,
                 "country_id": country_id,
                 "x_pastel_code": code,
-                "x_pastel_tax_code": self._clean(c.get("tax_code")),
-                "x_pastel_currency_code": self._clean(c.get("currency_code")),
-                "x_pastel_credit_limit": float(c.get("credit_limit") or 0.0),
-                "x_pastel_balance": float(c.get("balance") or 0.0),
+                "x_pastel_tax_code": self._clean(_deep_pick(c, _KEY_ALIASES["tax_code"])),
+                "x_pastel_currency_code": self._clean(_deep_pick(c, _KEY_ALIASES["currency_code"])),
+                "x_pastel_credit_limit": float(_deep_pick(c, _KEY_ALIASES["credit_limit"]) or 0.0),
+                "x_pastel_balance": float(_deep_pick(c, _KEY_ALIASES["balance"]) or 0.0),
             }
             vals = self._prune_empty(vals)
+
+            if not vals.get("phone") or not vals.get("email"):
+                _logger.debug(
+                    "Partner %s: phone_in=%r email_in=%r -> phone=%r email=%r  (top keys: %s)",
+                    code, phone_in, email_in, vals.get("phone"), vals.get("email"),
+                    (list(c.keys()) if isinstance(c, dict) else type(c).__name__),
+                )
 
             p = Partner.search([("x_pastel_code", "=", code)], limit=1)
             if p:
@@ -123,6 +327,60 @@ class PastelSync(models.Model):
 
         self._log("customer", ci, cu)
         return {"ci": ci, "cu": cu}
+
+    # def import_customers(self):
+    #     base, key = self._conf()
+    #     data = self._req("GET", "/customers", key, base)
+    #     Partner = self.env["res.partner"].sudo()
+    #     Country = self.env["res.country"].sudo()
+    #
+    #     ci = cu = 0
+    #     for c in data:
+    #         code = (c.get("code") or "").strip()
+    #         if not code:
+    #             continue
+    #
+    #         street = self._clean(c.get("address1"))
+    #         street2 = self._clean(c.get("address2"))
+    #         city = self._clean(c.get("address3"))
+    #         state = self._clean(c.get("address4"))
+    #         zip_code = self._clean(c.get("postal_code"))
+    #
+    #         country_id = False
+    #         cc = self._clean(c.get("country_code"))
+    #         if cc:
+    #             country = Country.search([("code", "=", cc)], limit=1)
+    #             country_id = country.id if country else False
+    #
+    #         vals = {
+    #             "name": self._clean(c.get("name")) or code,
+    #             "phone": self._clean_phone(c.get("phone")),
+    #             "email": self._clean_email(c.get("email")),
+    #             "customer_rank": 1,
+    #             "street": street,
+    #             "street2": street2,
+    #             "city": city,
+    #             "state_id": False,
+    #             "zip": zip_code,
+    #             "country_id": country_id,
+    #             "x_pastel_code": code,
+    #             "x_pastel_tax_code": self._clean(c.get("tax_code")),
+    #             "x_pastel_currency_code": self._clean(c.get("currency_code")),
+    #             "x_pastel_credit_limit": float(c.get("credit_limit") or 0.0),
+    #             "x_pastel_balance": float(c.get("balance") or 0.0),
+    #         }
+    #         vals = self._prune_empty(vals)
+    #
+    #         p = Partner.search([("x_pastel_code", "=", code)], limit=1)
+    #         if p:
+    #             if not p.customer_rank:
+    #                 vals["customer_rank"] = 1
+    #             p.write(vals); cu += 1
+    #         else:
+    #             Partner.create(vals); ci += 1
+    #
+    #     self._log("customer", ci, cu)
+    #     return {"ci": ci, "cu": cu}
 
     # ---------------------
     # IMPORTS: SUPPLIERS

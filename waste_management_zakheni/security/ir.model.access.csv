@@ -7,7 +7,7 @@ access_res_partner_pickup_point_driver,access_res_partner_pickup_point_driver,mo
 access_res_partner_pickup_point_finance,access_res_partner_pickup_point_finance,model_pickup_point,waste_management_zakheni.group_wmz_finance,1,1,0,0
 
 access_waste_container_admin,access_waste_container_admin,model_waste_container,waste_management_zakheni.group_wmz_admin,1,1,1,1
-access_waste_container_clerk,access_waste_container_clerk,model_waste_container,waste_management_zakheni.group_wmz_admin_clerk,1,1,1,1
+access_waste_container_clerk,access_waste_container_clerk,model_waste_container,waste_management_zakheni.group_wmz_admin_clerk,1,1,1,0
 access_waste_container_manger,access_waste_container_manager,model_waste_container,waste_management_zakheni.group_wmz_manager,1,1,0,0
 access_waste_container_driver,access_waste_container_driver,model_waste_container,waste_management_zakheni.group_wmz_driver,1,1,0,0
 access_waste_container_finance,access_waste_container_finance,model_waste_container,waste_management_zakheni.group_wmz_finance,1,1,0,0
@@ -104,8 +104,8 @@ access_amend_service_request_wizard_driver,amend.service.request.wizard driver,m
 access_amend_service_request_wizard_finance,amend.service.request.wizard finance,model_amend_service_request_wizard,waste_management_zakheni.group_wmz_finance,1,1,0,0
 
 access_waste_service_request_extra_line,waste.service.request.extra.line user,model_waste_service_request_extra_line,,1,1,1,1
-access_waste_request_assign_bin_wizard,waste.request.assign.bin.wizard user,model_waste_request_assign_bin_wizard,,1,1,1,1
-access_waste_request_assign_bin_line_wizard,waste.request.assign.bin.line.wizard user,model_waste_request_assign_bin_line_wizard,,1,1,1,1
+access_waste_request_assign_bin_wizard,waste.request.assign.bin.wizard user,model_waste_request_assign_bin_wizard,waste_management_zakheni.group_wmz_driver,1,1,1,0
+access_waste_request_assign_bin_line_wizard,waste.request.assign.bin.line.wizard user,model_waste_request_assign_bin_line_wizard,waste_management_zakheni.group_wmz_driver,1,1,1,0
 access_waste_request_bin_line,waste.request.bin.line user,model_waste_request_bin_line,,1,1,1,1
 
 
@@ -116,6 +116,25 @@ access_sale_order_wmz_manager,sale.order wmz manager,model_sale_order,waste_mana
 access_sale_order_line_wmz_manager,sale.order.line wmz manager,model_sale_order_line,waste_management_zakheni.group_wmz_manager,1,0,0,0
 
 access_waste_tank_tariff,waste.tank.tariff wmz manager,model_waste_tank_tariff,base.group_user,1,1,1,1
+
+access_res_company_manager,res.company wmz manager,model_res_company,waste_management_zakheni.group_wmz_manager,1,1,1,0
+
+access_hr_employee_admin,hr.employee wmz admin,model_hr_employee,waste_management_zakheni.group_wmz_admin,1,1,1,0
+access_hr_department_admin,hr.department wmz admin,model_hr_department,waste_management_zakheni.group_wmz_admin,1,1,1,0
+
+
+access_res_partner_admin,res.partner wmz admin,model_res_partner,waste_management_zakheni.group_wmz_admin,1,1,1,0
+
+access_link_tracker_system,link.tracker system,link_tracker.model_link_tracker,base.group_system,1,1,1,1
+
+access_ir_actions_act_window_user,ir.actions.act_window user,base.model_ir_actions_act_window,base.group_user,1,0,0,0
+
+
+
+
+
+
+
 
 
 

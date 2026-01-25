@@ -1,11 +1,15 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import (ValidationError)
+from odoo.exceptions import UserError, AccessDenied, ValidationError
 import re
 
 EMAIL_REGEX = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
 
+
 class ResPartner(models.Model):
     _inherit = 'res.partner'
+
+
 
     pickup_point_ids = fields.One2many(
         'pickup.point', 'partner_id', string='Pickup Points'
@@ -46,9 +50,30 @@ class ResPartner(models.Model):
 
     # company_id = fields.Many2one(
     #     'res.company',
+    #     string='Company',
+    #     required=False,
     #     default=lambda self: self.env.company,
     #     index=True
     # )
+    # company_id = fields.Many2one(
+    #     'res.company',
+    #     string='Company',
+    #     required=False,
+    #     default=lambda self: self.env.company,
+    #     index=True
+    # )
+
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        index=True
+    )
+
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete Contacts."))
+        return super().unlink()
 
     phone = fields.Char(required=True)
     email = fields.Char(required=True)
@@ -128,3 +153,77 @@ class ResPartner(models.Model):
                         _("Invalid work email address format e.g email must take this format ✅'email@example.com' not this ❌ %s ") % email
 
                     )
+
+
+
+
+class ResPartnerCategory(models.Model):
+    _inherit = "res.partner.category"
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete partner category."))
+        return super().unlink()
+
+
+class ResPartnerTitleCategory(models.Model):
+    _inherit = "res.partner.title"
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete partner tittle."))
+        return super().unlink()
+
+
+class ResPartnerTitleIndustry(models.Model):
+    _inherit = "res.partner.industry"
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete partner industry."))
+        return super().unlink()
+
+
+class ResCountry(models.Model):
+    _inherit = "res.country"
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete partner country."))
+        return super().unlink()
+
+
+class ResCountryState(models.Model):
+    _inherit = "res.country.state"
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete partner state."))
+        return super().unlink()
+
+
+class ResCountryGroup(models.Model):
+    _inherit = "res.country.group"
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete partner group."))
+        return super().unlink()
+
+
+class ResBank(models.Model):
+    _inherit = "res.bank"
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete bank."))
+        return super().unlink()
+
+
+class ResPartnerBank(models.Model):
+    _inherit = "res.partner.bank"
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete partner bank."))
+        return super().unlink()

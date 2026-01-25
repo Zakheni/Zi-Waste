@@ -4,6 +4,8 @@
     "summary": "Standalone app: Import Customers, Products, Sales Invoices + History + Two-way sync queue",
     "depends": ["base", "contacts", "product", "account"],
     "data": [
+        "security/pastel_connector_group.xml",
+        "security/pastel_connector_rules.xml",
         "security/ir.model.access.csv",
         "data/ir_cron.xml",
         "views/pastel_config_views.xml",

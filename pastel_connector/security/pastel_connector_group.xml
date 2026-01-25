@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- CATEGORY -->
+    <record id="module_category_pastel_connector" model="ir.module.category">
+        <field name="name">Pastel Connector</field>
+        <field name="description">Manage Pastel Connector</field>
+<!--        <field name="sequence">26</field>-->
+    </record>
+
+    <!-- USER -->
+    <record id="group_pastel_connector_user" model="res.groups">
+        <field name="name">Pastel User</field>
+        <field name="category_id" ref="pastel_connector.module_category_pastel_connector"/>
+    </record>
+
+    <!-- MANAGER -->
+    <record id="group_pastel_connector_manager" model="res.groups">
+        <field name="name">Pastel Manager</field>
+        <field name="category_id" ref="pastel_connector.module_category_pastel_connector"/>
+        <field name="implied_ids" eval="[(4, ref('pastel_connector.group_pastel_connector_user'))]"/>
+    </record>
+
+</odoo>

@@ -4,6 +4,11 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
+            <field name="category_id" position="after">
+                <field name="company_id"
+                       options="{'no_create': True}"
+                       groups="base.group_multi_company"/>
+            </field>
             <xpath expr="//notebook" position="inside">
                 <page string="Pickup Points">
                     <field name="pickup_point_ids" widget="many2many_tags" readonly="1"/>
@@ -40,6 +45,13 @@
                     </group>
 
                 </page>
+            </xpath>
+             <!-- Example: put it near the name -->
+            <xpath expr="//field[@name='vat']" position="after">
+<!--                <group>-->
+<!--                    <field name="company_id"/>-->
+<!--                </group>-->
+
             </xpath>
         </field>
     </record>

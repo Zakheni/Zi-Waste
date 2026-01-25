@@ -35,32 +35,47 @@ class WasteWorksheet(models.Model):
         string="Service Request",
         ondelete="set null"
     )
+
+    waste_container_id = fields.Many2one('waste.container', string="Container Name")
     # Delivery information
     arrival_time = fields.Datetime(string='Arrival Date', tracking=True)
     return_date = fields.Datetime(string='Return Date', tracking=True)
     unit_of_measure = fields.Many2one('uom.uom', string='Units of Measure', tracking=True)
     kilometers = fields.Integer(string='Kilometers', tracking=True)
     quantity_collected = fields.Float(string='Quantity Collected')
-    driver_signature = fields.Binary(string="Driver Signature" )
-    service_provider_signature = fields.Binary(string="Service Provider Signature" )
+    driver_signature = fields.Binary(string="Driver Signature",store=True )
+    service_provider_signature = fields.Binary(string="Service Provider Signature",store=True )
     planned_date = fields.Datetime(string='Planned Date', related='service_request_id.planned_date', store=True)
 
-    partner_id = fields.Many2one('res.partner', string="Customer", related='service_request_id.partner_id')
+    partner_id = fields.Many2one('res.partner', string="Customer", related='service_request_id.partner_id',store=True)
     pickup_point_id = fields.Many2one('pickup.point', string="Drop-off/Pickup Point",
                                       related='service_request_id.pickup_point_id')
 
     # driver_id = fields.Many2one('hr.employee')
     # driver_email = fields.Char(string="Driver Email", related="driver_id.work_email")
-    driver_id = fields.Many2one("hr.employee", string="Driver", )
-    driver_work_email = fields.Char(string="Driver Work email", related="driver_id.work_email", store=True)
+    # driver_id = fields.Many2one(related="service_request_id.driver_id", string="Driver", store=True )
+    driver_id = fields.Many2one(
+        "res.partner",
+        string="Driver",
+        compute="_compute_driver_id",
+        store=True,
+        readonly=True,
+    )
 
-    manifest_document = fields.Binary("Manifests Document", attachment=True)
+    driver_work_email = fields.Char(string="Driver Work email",  store=True)
+
+    @api.depends('service_request_id', 'service_request_id.driver_id')
+    def _compute_driver_id(self):
+        for ws in self:
+            ws.driver_id = ws.service_request_id.driver_id
+
+    manifest_document = fields.Binary("Manifests Document", attachment=True, store=True)
     manifest_document_filename = fields.Char()
 
-    weighbridge_slip = fields.Binary("Weighbridge Slip", attachment=True)
+    weighbridge_slip = fields.Binary("Weighbridge Slip", attachment=True, store=True)
     weighbridge_slip_filename = fields.Char()
 
-    safety_certificate = fields.Binary("Safety Certificate", attachment=True)
+    safety_certificate = fields.Binary("Safety Certificate", attachment=True, store=True)
     safety_certificate_filename = fields.Char()
 
     # Prevent duplicate of service_request_id
@@ -89,20 +104,6 @@ class WasteWorksheet(models.Model):
     # =========================
     # Date consistency checks
     # =========================
-    # @api.constrains('arrival_time', 'return_date', 'planned_date')
-    # def _check_dates(self):
-    #     for rec in self:
-    #         # 1) Arrival must not be before the planned date
-    #         if rec.planned_date and rec.arrival_time and rec.arrival_time > rec.planned_date:
-    #             raise ValidationError(_(
-    #                 "Arrival Date/Time (%s) cannot be greater than the Planned Date (%s)."
-    #             ) % (rec.arrival_time, rec.planned_date))
-    #
-    #         # 2) Return must not be before arrival
-    #         if rec.return_date and rec.arrival_time and rec.return_date < rec.arrival_time:
-    #             raise ValidationError(_(
-    #                 "Return Date/Time (%s) cannot be earlier than the Arrival Date/Time (%s)."
-    #             ) % (rec.return_date, rec.arrival_time))
 
     @api.constrains('arrival_time', 'return_date')
     def _check_dates(self):
@@ -178,27 +179,7 @@ class WasteWorksheet(models.Model):
         readonly=True,
     )
 
-    # # ✅ Allowed lists come from the manifest's customer config
-    # allowed_service_ids = fields.Many2many(
-    #     "service.request",
-    #     related="service_request_id.partner_id.commercial_partner_id.wmz_service_ids",
-    #     string="Allowed Services",
-    #     readonly=True,
-    # )
-    #
-    # allowed_container_type_ids = fields.Many2many(
-    #     "container.type",
-    #     related="service_request_id.partner_id.commercial_partner_id.wmz_container_type_ids",
-    #     string="Allowed Container Types",
-    #     readonly=True,
-    # )
-    #
-    # allowed_waste_type_ids = fields.Many2many(
-    #     "waste.type",
-    #     related="service_request_id.partner_id.commercial_partner_id.wmz_waste_type_ids",
-    #     string="Allowed Waste Types",
-    #     readonly=True,
-    # )
+
 
     allowed_service_ids = fields.Many2many(
         "service.request",
@@ -221,44 +202,29 @@ class WasteWorksheet(models.Model):
         readonly=True,
     )
 
-    truck_tanker_id = fields.Many2one('tank.volume', string="Track Tanker", related="service_request_id.tank_volume_id", store=False)
+    truck_tanker_id = fields.Many2one('tank.volume', string="Track Tanker", related="service_request_id.tank_volume_id", store=True)
 
     service_requested_id = fields.Many2one(
         'service.request',
         related='service_request_id.service_requested_id',
-        string="Service Requested",
+        string="Service Requested", store=True
         # domain="[('id', 'in', allowed_service_ids)]",
     )
-    waste_type_id = fields.Many2one('waste.type',related='service_request_id.waste_type_id', string="Waste Type")
-    waste_details_id = fields.Many2one('waste.details',related='service_request_id.waste_details_id', string="Waste Details")
-    bin_type_id = fields.Many2one('bin.type',related='service_request_id.bin_type_id', string="Bin Type")
-    tank_volume_id = fields.Many2one('tank.volume',related='service_request_id.tank_volume_id', string="Tank Volume")
+    waste_type_id = fields.Many2one('waste.type',related='service_request_id.waste_type_id', string="Waste Type", store=True)
+    waste_details_id = fields.Many2one('waste.details',related='service_request_id.waste_details_id', string="Waste Details", store=True)
+    bin_type_id = fields.Many2one('bin.type',related='service_request_id.bin_type_id', string="Bin Type", store=True)
+    tank_volume_id = fields.Many2one('tank.volume',related='service_request_id.tank_volume_id', string="Tank Volume", store=True)
     container_type_id = fields.Many2one(
         'container.type',
         related='service_request_id.container_type_id',
-        string="Container type",
+        string="Container type", store=True
         # domain="[('id', 'in', allowed_container_type_ids)]",
     )
 
-    liters_collected = fields.Float(string="Liters Collected", related='service_request_id.liters_collected', )
-    sale_order_id = fields.Many2one('sale.order', string="Sales Order")
+    liters_collected = fields.Float(string="Liters Collected", related='service_request_id.liters_collected', store=True)
+    sale_order_id = fields.Many2one('sale.order', string="Sales Order", store=True)
 
-    # @api.onchange("company_id")
-    # def _onchange_company_id_wmz(self):
-    #     for rec in self:
-    #         company = rec.company_id or rec.env.company
-    #         service_ids = company.wmz_service_ids.ids if company.wmz_service_ids else []
-    #         container_ids = company.wmz_container_type_ids.ids if company.wmz_container_type_ids else []
-    #
-    #         domain = {}
-    #         if service_ids:
-    #             domain["service_requested_id"] = [("id", "in", service_ids)]
-    #         if container_ids:
-    #             domain["container_type_id"] = [("id", "in", container_ids)]
-    #
-    #         if domain:
-    #             return {"domain": domain}
-    #         return {}
+
 
     @api.onchange("company_id")
     def _onchange_company_id_wmz(self):
@@ -358,40 +324,38 @@ class WasteWorksheet(models.Model):
     tank_ids = fields.Many2many('waste.container', 'waste_service_request_tanks_rel', string="Tanks",
                                 related='service_request_id.tank_ids')
 
-    #NEW
+
+
     pickup_point_ids = fields.Many2many(
         'pickup.point',
-        'waste_request_pickup_point_rel',
-        'request_id',
-        'pickup_point_id',
+        'waste_worksheet_pickup_point_rel',  # ✅ unique table
+        'worksheet_id',  # ✅ FK to waste.worksheet
+        'pickup_point_id',  # ✅ FK to pickup.point
         string="Pickup Points",
-        related='service_request_id.pickup_point_ids'
     )
 
     dropoff_point_ids = fields.Many2many(
         'pickup.point',
-        'waste_request_dropoff_point_rel',
-        'request_id',
-        'pickup_point_id',
+        'waste_worksheet_dropoff_point_rel',  # ✅ unique table
+        'worksheet_id',  # ✅ FK to waste.worksheet
+        'pickup_point_id',  # ✅ FK to pickup.point
         string="Drop-off Points",
-        related='service_request_id.dropoff_point_ids'
     )
+
     bin_lifted_ids = fields.Many2many(
         'waste.container',
-        'waste_service_request_bin_lifted_rel',  # relation table
-        'request_id',  # FK to waste.service.request
-        'waste_container_id',  # FK to waste.container (existing column)
+        'waste_worksheet_bin_lifted_rel',  # ✅ worksheet-owned table
+        'worksheet_id',  # ✅ FK to waste.worksheet
+        'waste_container_id',  # ✅ FK to waste.container
         string="Bin Lifted",
-        related='service_request_id.bin_lifted_ids'
     )
 
     bin_dropped_ids = fields.Many2many(
         'waste.container',
-        'waste_service_request_bin_dropped_rel',  # relation table
-        'request_drop_id',  # FK to waste.service.request
-        'waste_container_id',  # FK to waste.container (existing column)
+        'waste_worksheet_bin_dropped_rel',  # ✅ worksheet-owned table
+        'worksheet_id',  # ✅ FK to waste.worksheet
+        'waste_container_id',  # ✅ FK to waste.container
         string="Bin Dropped",
-        related='service_request_id.bin_dropped_ids'
     )
 
     state = fields.Selection([
@@ -402,7 +366,7 @@ class WasteWorksheet(models.Model):
 
     state_label = fields.Char(
         compute="_compute_state_label",
-        store=False,
+        store=True,
     )
 
     @api.depends('state')
@@ -417,12 +381,31 @@ class WasteWorksheet(models.Model):
     def action_set_to_draft(self):
         self.state = "draft"
 
-    def action_start(self):
-        for rec in self:
-            rec.state = 'in_progress'
 
-            if rec.service_request_id and rec.service_request_id.state in ('scheduled', 'assigned', 'generated'):
-                rec.service_request_id.sudo().with_context(skip_auto_state=True).write({
+    def action_start(self):
+        for ws in self:
+            sr = ws.service_request_id
+
+            # --------------------------------------------------
+            # Snapshot data from Service Request → Worksheet
+            # --------------------------------------------------
+            if sr:
+                ws.pickup_point_ids = sr.pickup_point_ids
+                ws.dropoff_point_ids = sr.dropoff_point_ids
+                ws.bin_lifted_ids = sr.bin_lifted_ids
+                ws.bin_dropped_ids = sr.bin_dropped_ids
+                ws.driver_id = sr.driver_id
+
+            # --------------------------------------------------
+            # Update worksheet state
+            # --------------------------------------------------
+            ws.state = 'in_progress'
+
+            # --------------------------------------------------
+            # Update Service Request state
+            # --------------------------------------------------
+            if sr and sr.state in ('scheduled', 'assigned', 'generated'):
+                sr.sudo().with_context(skip_auto_state=True).write({
                     'state': 'dispatched'
                 })
 
@@ -447,12 +430,12 @@ class WasteWorksheet(models.Model):
     image_ids = fields.One2many(
         'waste.worksheet.image',
         'worksheet_id',
-        string='Photos',
+        string='Photos'
     )
 
     notes_html = fields.Html(
         string="Worksheet Notes",
-        help="Add notes and embed pictures directly in the content.",
+        help="Add notes and embed pictures directly in the content.",store=True
     )
 
     pickup_point_bins_summary = fields.Text(
@@ -464,23 +447,23 @@ class WasteWorksheet(models.Model):
 
     wizard_pickup_point_count = fields.Integer(
         related="service_request_id.wizard_pickup_point_count",
-        store=False,
+        store=True
     )
 
     bin_line_ids = fields.One2many(
         "waste.request.bin.line",
         "request_id",
         string="Pickup/Bins Lines",
-        related="service_request_id.bin_line_ids",
+        store=True
     )
     bin_line_count = fields.Integer(
         related="service_request_id.bin_line_count",
-        store=False,
+        store=True
     )
 
     sale_order_count = fields.Integer(
         string="Sale Order Count",
-        related="service_request_id.sale_order_count",
+        related="service_request_id.sale_order_count",store=True
     )
 
 
@@ -508,7 +491,7 @@ class WasteWorksheet(models.Model):
         'sale.order.line',
         string="Sale Order Line",
         ondelete='set null',
-        help="The sale order line that this service request should update."
+        help="The sale order line that this service request should update.",store=True
     )
 
     # ------------------------------------------------------------
@@ -552,30 +535,51 @@ class WasteWorksheet(models.Model):
                 })
                 rec.order_line_id = line
 
+
+
     @api.model_create_multi
     def create(self, vals_list):
-        # Handle sequence for name (multi-create safe)
+        # --------------------------------------------------
+        # Pre-create: sequence + company
+        # --------------------------------------------------
         for vals in vals_list:
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'waste.worksheet'
                 ) or 'New'
 
-            # create container for logged in company
             if not vals.get('company_id'):
                 vals['company_id'] = self.env.company.id
 
+        # --------------------------------------------------
+        # Create records
+        # --------------------------------------------------
         recs = super().create(vals_list)
 
+        # --------------------------------------------------
+        # Post-create logic
+        # --------------------------------------------------
         for ws in recs:
-            if ws.service_request_id and not ws.service_request_id.work_sheet_id:
-                ws.service_request_id.work_sheet_id = ws.id
-            elif ws.service_request_id:
-                # If you always want the *latest* worksheet, uncomment this:
-                # ws.service_request_id.work_sheet_id = ws.id
-                pass
+            sr = ws.service_request_id
+            if not sr:
+                continue
 
-        # Sync quantities to sale order after create
+            # Link worksheet to service request
+            if not sr.work_sheet_id:
+                sr.work_sheet_id = ws.id
+            # else:
+            #     sr.work_sheet_id = ws.id  # enable if latest should win
+
+            # Snapshot Many2many data into worksheet
+            ws.pickup_point_ids = sr.pickup_point_ids
+            ws.dropoff_point_ids = sr.dropoff_point_ids
+            ws.bin_lifted_ids = sr.bin_lifted_ids
+            ws.bin_dropped_ids = sr.bin_dropped_ids
+            ws.driver_id = sr.driver_id
+
+        # --------------------------------------------------
+        # Sync quantities to sale order
+        # --------------------------------------------------
         recs._sync_sale_order_qty()
 
         return recs
@@ -600,19 +604,35 @@ class WasteWorksheet(models.Model):
 
 
 
+    # def action_open_ws_bin_assignment_wizard(self):
+    #     self.ensure_one()
+    #     # ✅ Reuse the existing wizard action
+    #     action = self.env.ref("waste_management_zakheni.action_waste_assign_bin_wizard").read()[0]
+    #
+    #     ctx = dict(self.env.context)
+    #     ctx.update({
+    #         "default_request_id": self.service_request_id.id,
+    #         "active_id": self.service_request_id.id,
+    #         "active_model": "waste.service.request",
+    #     })
+    #     action["context"] = ctx
+    #     return action
+
     def action_open_ws_bin_assignment_wizard(self):
         self.ensure_one()
-        # ✅ Reuse the existing wizard action
-        action = self.env.ref("waste_management_zakheni.action_waste_assign_bin_wizard").read()[0]
 
-        ctx = dict(self.env.context)
-        ctx.update({
-            "default_request_id": self.service_request_id.id,
-            "active_id": self.service_request_id.id,
-            "active_model": "waste.service.request",
-        })
-        action["context"] = ctx
-        return action
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Assign Bins",
+            "res_model": "waste.request.assign.bin.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_request_id": self.service_request_id.id,
+                "active_id": self.service_request_id.id,
+                "active_model": "waste.service.request",
+            },
+        }
 
     def action_open_waste_request(self):
         self.ensure_one()
@@ -651,7 +671,7 @@ class WasteWorksheetBinLine(models.Model):
     worksheet_id = fields.Many2one(
         "waste.worksheet",
         required=True,
-        ondelete="cascade",
+        ondelete="cascade",store=True
     )
 
     waste_request_bin_id = fields.Many2one(
@@ -659,7 +679,7 @@ class WasteWorksheetBinLine(models.Model):
         string="Service Request",
         required=True,
         ondelete="cascade",
-        index=True,
+        index=True, store=True
     )
 
     request_id = fields.Many2one(

@@ -7,9 +7,9 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='uom_po_id']" position="after">
 
-                    <field name="partner_id"/>
-                    <field name="pickup_point_id" />
-                    <field name="waste_container_ids" widget="many2many_tags"/>
+<!--                    <field name="partner_id"/>-->
+<!--                    <field name="pickup_point_id" />-->
+<!--                    <field name="waste_container_ids" widget="many2many_tags"/>-->
 
             </xpath>
         </field>

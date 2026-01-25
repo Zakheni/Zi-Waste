@@ -86,7 +86,7 @@
                                 class="oe_stat_button"
                                 icon="fa-external-link"
                                 string="Sale Order"
-                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"
                                 invisible="request_sale_order_id == False">
                             <field name="request_sale_order_id" widget="statinfo" string="Sales"/>
                         </button>

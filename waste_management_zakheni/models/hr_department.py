@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, AccessDenied, ValidationError
 import psycopg2
 
 class HrDepartment(models.Model):
@@ -10,6 +10,11 @@ class HrDepartment(models.Model):
         readonly=True,
         copy=False
     )
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete Department."))
+        return super().unlink()
 
     # 🔒 DATABASE CONSTRAINT (name + company)
     def init(self):

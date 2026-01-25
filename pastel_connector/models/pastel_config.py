@@ -189,6 +189,14 @@ class PastelConnectorSetting(models.Model):
     enable_push_to_sage = fields.Boolean(string="Enable push (Odoo → Sage)", default=True,
                                          help="If enabled, Odoo edits/deletes will be pushed to Sage via the bridge")
 
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True
+    )
+
     def action_test_connection(self):
         self.ensure_one()
         ok = self.env["pastel.sync"].pastel_test_connection()

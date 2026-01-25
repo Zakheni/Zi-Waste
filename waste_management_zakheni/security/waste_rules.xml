@@ -89,8 +89,11 @@
         <field name="perm_create" eval="0"/>
         <field name="perm_unlink" eval="0"/>
         <field name="domain_force">
-            ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+            [('company_id', 'in', company_ids)]
         </field>
+        <!--        <field name="domain_force">-->
+        <!--            ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]-->
+        <!--        </field>-->
     </record>
 
     <!-- Manager: Read / Write Fleet Vehicles WITHOUT Fleet app -->
@@ -104,25 +107,25 @@
         <field name="perm_unlink" eval="0"/>
     </record>
 
-    <record id="fleet_vehicle_manager_rule" model="ir.rule">
-        <field name="name">Fleet vehicle manager rule</field>
-        <field name="model_id" ref="fleet.model_fleet_vehicle"/>
-        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>
-        <field name="domain_force">
-            [('company_id', '=', user.company_id.id)]
-        </field>
-    </record>
+    <!--    <record id="fleet_vehicle_manager_rule" model="ir.rule">-->
+    <!--        <field name="name">Fleet vehicle manager rule</field>-->
+    <!--        <field name="model_id" ref="fleet.model_fleet_vehicle"/>-->
+    <!--        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_manager'))]"/>-->
+    <!--        <field name="domain_force">-->
+    <!--            [('company_id', '=', user.company_id.id)]-->
+    <!--        </field>-->
+    <!--    </record>-->
 
 
     <!--    Waste Container-->
-    <record id="waste_container_company_rule" model="ir.rule">
-        <field name="name">Waste Container: company access</field>
-        <field name="model_id" ref="model_waste_container"/>
-        <field name="domain_force">
-            [('company_id', '=', user.company_id.id)]
-        </field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-    </record>
+    <!--    <record id="waste_container_company_rule" model="ir.rule">-->
+    <!--        <field name="name">Waste Container: company access</field>-->
+    <!--        <field name="model_id" ref="model_waste_container"/>-->
+    <!--        <field name="domain_force">-->
+    <!--            [('company_id', '=', user.company_id.id)]-->
+    <!--        </field>-->
+    <!--        <field name="groups" eval="[(4, ref('base.group_user'))]"/>-->
+    <!--    </record>-->
 
     <record id="waste_container_multi_company_rule" model="ir.rule">
         <field name="name">Waste Container: multi-company access</field>
@@ -134,14 +137,14 @@
     </record>
 
     <!--    Pickup Point-->
-    <record id="pickup_point_company_rule" model="ir.rule">
-        <field name="name">Pickup Point: Company access</field>
-        <field name="model_id" ref="model_pickup_point"/>
-        <field name="domain_force">
-            [('company_id', '=', user.company_id.id)]
-        </field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-    </record>
+    <!--    <record id="pickup_point_company_rule" model="ir.rule">-->
+    <!--        <field name="name">Pickup Point: Company access</field>-->
+    <!--        <field name="model_id" ref="model_pickup_point"/>-->
+    <!--        <field name="domain_force">-->
+    <!--            [('company_id', '=', user.company_id.id)]-->
+    <!--        </field>-->
+    <!--        <field name="groups" eval="[(4, ref('base.group_user'))]"/>-->
+    <!--    </record>-->
 
     <record id="pickup_point_multi_company_rule" model="ir.rule">
         <field name="name">Pickup Point: multi-company access</field>
@@ -181,7 +184,7 @@
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
-    <record id="waste_worksheet_company_rule" model="ir.rule">
+    <record id="waste_worksheet_multi_company_rule" model="ir.rule">
         <field name="name">Waste Worksheet: multi-company access</field>
         <field name="model_id" ref="model_waste_worksheet"/>
         <field name="domain_force">
@@ -228,7 +231,28 @@
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
- <!--    Users: own company only-->
+    <record id="wmz_res_partner_multi_company_rule" model="ir.rule">
+        <field name="name">WMZ Contacts - Multi Company Safe</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="global" eval="False"/>
+        <field name="domain_force">
+            ['|',
+            ('company_id', '=', False),
+            ('company_id', 'in', user.company_ids.ids)
+            ]
+        </field>
+    </record>
+
+    <record id="wmz_res_partner_internal_full_access" model="ir.rule">
+        <field name="name">WMZ Contacts - Internal Full Access</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+
+    <!--        Users: own company only-->
     <record id="res_users_company_rule" model="ir.rule">
         <field name="name">Users: own company only</field>
         <field name="model_id" ref="base.model_res_users"/>
@@ -238,15 +262,34 @@
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
-<!--   Companies: user allowed companies only-->
-    <record id="res_company_user_rule" model="ir.rule">
-        <field name="name">Companies: user allowed companies only</field>
+    <!--    <record id="base.menu_action_res_company_form"-->
+    <!--            model="ir.ui.menu">-->
+    <!--        <field name="groups_id"-->
+    <!--               eval="[-->
+    <!--               Command.set([-->
+    <!--                   ref('base.group_system'),-->
+    <!--                   ref('waste_management_zakheni.group_central_admin')-->
+    <!--               ])-->
+    <!--           ]"/>-->
+    <!--    </record>-->
+
+
+    <!--NOT WORKING-->
+    <record id="central_admin_company_rule" model="ir.rule">
+        <field name="name">Central Admin - Allowed Companies Only</field>
         <field name="model_id" ref="base.model_res_company"/>
+        <field name="groups" eval="[(4, ref('waste_management_zakheni.group_central_admin'))]"/>
+        <field name="global" eval="False"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
         <field name="domain_force">
             [('id', 'in', user.company_ids.ids)]
         </field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
+
+
 
 
 </odoo>

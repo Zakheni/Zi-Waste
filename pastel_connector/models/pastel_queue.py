@@ -45,6 +45,14 @@ class PastelSyncQueue(models.Model):
     state = fields.Selection([("pending", "Pending"), ("done", "Done"), ("error", "Error")], default="pending")
     error = fields.Text()
 
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True
+    )
+
     def _push_enabled(self):
         S = self.env["pastel.connector.setting"].sudo().search([], limit=1)
         return bool(S and S.enable_push_to_sage)

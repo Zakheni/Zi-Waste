@@ -38,7 +38,7 @@ class WasteContainer(models.Model):
     company_id = fields.Many2one(
         'res.company',
         string='Company',
-        required=True,
+        required=False,
         default=lambda self: self.env.company,
         index=True
     )
@@ -100,7 +100,7 @@ class WasteContainer(models.Model):
             else:
                 rec.display_info = ''
 
-    inUse = fields.Boolean(string='InUse',tracking=True)
+    inUse = fields.Boolean(string='InUse',tracking=True, store=True)
 
     # customer_id = fields.Many2one('res.partner', string='Customer')
     color = fields.Integer("Color Index")
@@ -112,6 +112,7 @@ class WasteContainer(models.Model):
         'res.partner',
         string="Customer",
         tracking=True,
+        store=True
     )
 
     pickup_point_id = fields.Many2one(

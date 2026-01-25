@@ -23,6 +23,14 @@
                 </page>
             </xpath>
 
+             <xpath expr="//notebook" position="inside">
+
+
+            </xpath>
+
+
+
+
 
         </field>
 

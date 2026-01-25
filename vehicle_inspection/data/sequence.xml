@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_vehicle_inspection" model="ir.sequence">
+            <field name="name">Vehicle Inspection</field>
+            <field name="code">vehicle.inspection</field>
+            <field name="prefix">VEHICLE/INSPECTION/</field>
+            <field name="padding">4</field>
+        </record>
+
+
+    </data>
+</odoo>

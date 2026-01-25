@@ -22,8 +22,14 @@ from . import waste_request_bin_line
 from . import res_company
 from . import res_user
 from . import hr_department
+from . import hr_employee
+from . import hr_job
+from . import fleet_vehicle
 from . import fleet_vehicle_model_brand
 from . import tank_tariff
+from . import sales_order
+from . import account_move
+from . import ir_ui_menu
 
 
 

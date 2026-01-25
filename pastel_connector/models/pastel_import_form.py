@@ -17,6 +17,14 @@ class PastelImportForm(models.Model):
     import_invoices  = fields.Boolean(string="Import Sales Invoices", default=True)
     import_suppliers = fields.Boolean(string="Import Suppliers", default=True)
 
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=True,
+        default=lambda self: self.env.company,
+        index=True
+    )
+
     last_result = fields.Char(string="Last Result", readonly=True)
 
     # ---- helpers ----

@@ -4,10 +4,6 @@ import json
 import urllib.parse
 from datetime import datetime, timedelta, time
 
-import psycopg2
-from babel.dates import format_date
-from dateutil.relativedelta import relativedelta
-import pytz
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessDenied, ValidationError
 from .service_provider import SA_PROVINCES
@@ -37,7 +33,7 @@ class WasteServiceRequest(models.Model):
     # )
     company_id = fields.Many2one(
         "res.company",
-        required=True,
+        required=False,
         default=lambda self: self.env.company,
         index=True,
     )
@@ -67,7 +63,7 @@ class WasteServiceRequest(models.Model):
     partner_id = fields.Many2one(
         'res.partner',
         string='Customer',
-        domain="[('is_company','=',True)]",
+        # domain="[('is_company','=',True)]",
         # domain=[("is_company", "=", True), ("customer_rank", ">", 0)],
 
         # domain=lambda self: [
@@ -77,6 +73,19 @@ class WasteServiceRequest(models.Model):
         # ]
 
     )
+
+    # partner_id = fields.Many2one(
+    #     'res.partner',
+    #     string='Customer',
+    #     domain="""
+    #             [
+    #                 ('customer_rank', '>', 0),
+    #                 '|',
+    #                     ('company_id', '=', False),
+    #                     ('company_id', '=', company_id)
+    #             ]
+    #         """
+    # )
 
     pickup_id = fields.Char(string="Pickup Point Name", related='pickup_point_id.name', )
     planned_date = fields.Datetime(string='Planned Date', tracking=True)
@@ -89,7 +98,7 @@ class WasteServiceRequest(models.Model):
     disposal_site_id = fields.Many2one('waste.disposal.site', string="Disposal Side")
 
     vehicle_id = fields.Many2one("fleet.vehicle", string="Vehicle Registration Number")
-    driver_id = fields.Many2one(string="Driver", related="vehicle_id.driver_id")
+    driver_id = fields.Many2one(string="Driver", related="vehicle_id.driver_id", store=True)
     assistance_id = fields.Many2one(string="Driver Assistance", related="vehicle_id.future_driver_id")
     trailer_id = fields.Many2one("fleet.vehicle", string="Trailer Registration Number")
     work_sheet_id = fields.Many2one(
@@ -590,32 +599,6 @@ class WasteServiceRequest(models.Model):
     # ---------------------------------------------------------
     # Tank rates
     # ---------------------------------------------------------
-    # def _get_rate_params(self):
-    #     """
-    #     Decide which rate table to use based on waste_type or service.
-    #     Default: Septic Tank rates.
-    #     Grease Trap: special base + extra.
-    #     """
-    #
-    #     # Normalize helper
-    #     def norm(txt):
-    #         return (txt or "").strip().lower()
-    #
-    #     # Defaults: Septic Tank
-    #     base_kl = 4.0  # first 4 kL
-    #     base_price = 2395.0  # R 2 395 for first 4 kL
-    #     extra_rate = 295.0  # R 295 per extra kL
-    #
-    #     wd_name = norm(self.waste_details_id.name)
-    #     # svc_name = norm(self.service_requested_id.name)
-    #
-    #     # 🔹 Grease Trap detection (adjust names to match your master data)
-    #     if "grease" in wd_name:  # or "grease" in svc_name:
-    #         base_price = 3606.75  # base for Grease Trap
-    #         extra_rate = 362.25  # extra per kL for Grease Trap
-    #
-    #     return base_kl, base_price, extra_rate
-
     def _get_rate_params(self):
         """
         Decide which rate table to use based on waste details.
@@ -3257,347 +3240,6 @@ class WasteServiceRequest(models.Model):
         }
 
 
-# ============================================================================
-# MODULE INHERITANCE
-# ============================================================================
-
-class SaleOrder(models.Model):
-    _inherit = 'sale.order'
-
-    service_request_id = fields.Many2one(
-        'waste.service.request',
-        string="Manifest",
-        ondelete="set null"
-
-    )
-    partner_id = fields.Many2one(
-        'res.partner',
-        string="Customer",
-        required=True,
-        domain=[("is_company", "=", True)],
-        # domain=lambda self: [
-        #     ('is_company', '=', True),
-        #     ('customer_rank', '>', 0),
-        #     ('id', '!=', self.env.user.partner_id.id),
-        # ]
-    )
-
-    planned_date = fields.Datetime(
-        string="Planned Date",
-        related="service_request_id.planned_date",
-        store=True,
-        readonly=True
-    )
-
-    pickup_point_id = fields.Many2one(
-        'pickup.point',
-        string="Drop-off/Pickup Point",
-        domain="[('partner_id', '=', partner_id)]",
-
-    )
-
-    container_ids = fields.One2many('waste.container', 'sale_order_id', string="Waste Containers")
-
-    service_request_count = fields.Integer(
-        compute='_compute_service_request_count'
-    )
-
-    def _compute_service_request_count(self):
-        for order in self:
-            order.service_request_count = 1 if order.service_request_id else 0
-
-    def action_open_service_request(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Service Request',
-            'res_model': 'waste.service.request',
-            'view_mode': 'form',
-            'res_id': self.service_request_id.id,
-            'target': 'current',
-        }
 
 
 
-class HREmployee(models.Model):
-    _inherit = 'hr.employee'
-
-    service_request_id = fields.Many2one(
-        'waste.service.request',
-        string="Manifest",
-        ondelete="set null"
-    )
-    planned_date = fields.Datetime(
-        string="Planned Date",
-        related="service_request_id.planned_date",
-        store=True,
-        readonly=True
-    )
-
-    work_email = fields.Char(required=True, tracking=True)
-    work_phone = fields.Char(required=True, tracking=True)
-    mobile_phone = fields.Char(tracking=True)
-    job_id = fields.Many2one(required=True, tracking=True)
-    deparment_id = fields.Many2one(required=True, tracking=True)
-    parent_id = fields.Many2one(tracking=True)
-    coach_id = fields.Many2one(tracking=True)
-    company_id = fields.Many2one(tracking=True)
-
-    # ------------------------------------------------------------
-    # Helper: normalize phone numbers
-    # ------------------------------------------------------------
-    def _normalize_phone(self, value):
-        """
-        Normalize phone numbers by removing spaces, dashes, and brackets.
-
-        +27 12 345 6789  → +27123456789
-        (+27)12-345-6789 → +27123456789
-        """
-        if not value:
-            return value
-        return re.sub(r'[\s\-\(\)]+', '', value)
-
-    # ------------------------------------------------------------
-    # CREATE: normalize BEFORE constraint
-    # ------------------------------------------------------------
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('work_phone'):
-                vals['work_phone'] = self._normalize_phone(vals['work_phone'])
-            if vals.get('mobile_phone'):
-                vals['mobile_phone'] = self._normalize_phone(vals['mobile_phone'])
-        return super().create(vals_list)
-
-    # ------------------------------------------------------------
-    # WRITE: normalize BEFORE constraint
-    # ------------------------------------------------------------
-    def write(self, vals):
-        if vals.get('work_phone'):
-            vals['work_phone'] = self._normalize_phone(vals['work_phone'])
-        if vals.get('mobile_phone'):
-            vals['mobile_phone'] = self._normalize_phone(vals['mobile_phone'])
-        return super().write(vals)
-
-    # ------------------------------------------------------------
-    # CONSTRAINT: validate normalized value ONLY
-    # ------------------------------------------------------------
-    @api.constrains('work_phone', 'mobile_phone')
-    def _check_phone_country_code(self):
-        for partner in self:
-            for field in ('work_phone', 'mobile_phone'):
-                value = partner[field]
-                if not value:
-                    continue
-
-                if not re.match(r'^\+\d{7,15}$', value):
-                    raise ValidationError(
-                        _("Phone number must include country code, e.g. +27 12 345 6789, (+27)12-345-6789 and +27123456789 ✅ "
-                          "\n and it must not include Alpha numeric ❌ ")
-                    )
-
-    @api.constrains('work_email')
-    def _check_email_required(self):
-        for partner in self:
-            # Skip contacts that are not real business partners
-            # if partner.is_company or partner.customer_rank > 0 or partner.supplier_rank > 0:
-            if not partner.work_email:
-                raise ValidationError(
-                    _("Work Email address is required. ⚠️")
-                )
-
-    @api.constrains('work_email')
-    def _check_email_format(self):
-        for partner in self:
-            if partner.work_email:
-                work_email = partner.work_email.strip()
-                if not re.match(EMAIL_REGEX, work_email):
-                    raise ValidationError(
-                        _("Invalid work email address format e.g email must take this format ✅'email@example.com' not this ❌: %s ") % work_email
-                    )
-
-
-class FleetVehicle(models.Model):
-    _inherit = 'fleet.vehicle'
-
-
-    def init(self):
-        super().init()
-        self._cr.execute("""
-            CREATE UNIQUE INDEX IF NOT EXISTS
-            fleet_vehicle_unique_plate_company
-            ON fleet_vehicle (license_plate, company_id)
-            WHERE license_plate IS NOT NULL
-        """)
-        self._cr.execute("""
-            CREATE UNIQUE INDEX IF NOT EXISTS
-            fleet_vehicle_unique_vin_company
-            ON fleet_vehicle (vin_sn, company_id)
-            WHERE vin_sn IS NOT NULL
-        """)
-
-    def create(self, vals_list):
-        try:
-            return super().create(vals_list)
-        except psycopg2.errors.UniqueViolation as e:
-            self._cr.rollback()
-            self._raise_duplicate_error(e)
-
-    def write(self, vals):
-        try:
-            return super().write(vals)
-        except psycopg2.errors.UniqueViolation as e:
-            self._cr.rollback()
-            self._raise_duplicate_error(e)
-
-    def _raise_duplicate_error(self, error):
-        msg = str(error)
-
-        if 'fleet_vehicle_unique_plate_company' in msg:
-            raise ValidationError(_(
-                'A vehicle with this License Plate already exists for this company.'
-            ))
-        elif 'fleet_vehicle_unique_vin_company' in msg:
-            raise ValidationError(_(
-                'A vehicle with this VIN already exists for this company.'
-            ))
-        else:
-            raise ValidationError(_(
-                'Duplicate vehicle detected. Please check your data.'
-            ))
-
-    service_request_id = fields.Many2one(
-        'waste.service.request',
-        string="Manifest",
-        ondelete="set null"
-    )
-    planned_date = fields.Datetime(
-        string="Planned Date",
-        related="service_request_id.planned_date",
-        store=True,
-        readonly=True
-    )
-    driver_email = fields.Char(
-        string="Driver Email",
-        related='driver_id.email',
-        store=True,  # optional but useful for searching / filtering
-        readonly=True,
-    )
-
-    is_waste_tanker = fields.Boolean(
-        string="Waste Tanker Truck",
-        help="Tick if this vehicle has a fixed tank for liquid waste (e.g. 7000L, 9000L, etc.)."
-    )
-
-    tank_volume_id = fields.Many2one(
-        'tank.volume',
-        string="Tank Volume",
-        help="Select the tank volume (e.g. 7000L, 9000L, etc.) for this truck."
-    )
-
-    # capacity_liters is now derived from tank.volume
-    tank_capacity_liters = fields.Float(
-        string="Tank Capacity (L)",
-        related="tank_volume_id.capacity_liters",
-        store=True,
-        readonly=False,  # keep editable if you want to override per truck
-    )
-
-    busy_driver_ids = fields.Many2many(
-        'res.partner',
-        compute='_compute_busy_driver_ids',
-        store=False,
-    )
-
-    @api.depends('driver_id')
-    def _compute_busy_driver_ids(self):
-        WSR = self.env['waste.service.request']
-        now = fields.Datetime.now()
-
-        busy_ids = set(WSR._get_busy_drivers_at_date(now))
-
-        for vehicle in self:
-            vehicle.busy_driver_ids = [(6, 0, list(busy_ids))]
-
-
-class FleetVehicleModel(models.Model):
-    _inherit = 'fleet.vehicle.model'
-
-    def init(self):
-        super().init()
-        self._cr.execute("""
-            CREATE UNIQUE INDEX IF NOT EXISTS
-            fleet_vehicle_model_unique_name_brand
-            ON fleet_vehicle_model (name, brand_id)
-            WHERE name IS NOT NULL
-        """)
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        try:
-            return super().create(vals_list)
-        except psycopg2.errors.UniqueViolation as e:
-            self._cr.rollback()
-            if 'fleet_vehicle_model_unique_name_brand' in str(e):
-                raise ValidationError(_(
-                    'This vehicle model already exists for the selected brand.'
-                ))
-            raise
-
-    def write(self, vals):
-        try:
-            return super().write(vals)
-        except psycopg2.errors.UniqueViolation as e:
-            self._cr.rollback()
-            if 'fleet_vehicle_model_unique_name_brand' in str(e):
-                raise ValidationError(_(
-                    'This vehicle model already exists for the selected brand.'
-                ))
-            raise
-
-    vehicle_type = fields.Selection(
-        selection_add=[
-            ('truck', 'Truck'),
-            ('compactor', 'Compactor'),
-            ('trailer', 'Trailer'),
-            ('tank_truck', 'Tank Truck'),
-        ],
-        ondelete={
-            'truck': 'set default',
-            'compactor': 'set default',
-            'trailer': 'set default',
-            'tank_truck': 'set default',
-        },
-    )
-
-
-class AccountMove(models.Model):
-    _inherit = "account.move"
-
-    sale_order_id = fields.Many2one(
-        "sale.order",
-        string="Sales Order",
-        compute="_compute_sale_order_id",
-        store=True,
-        readonly=True,
-    )
-
-    service_request_id = fields.Many2one(
-        "waste.service.request",
-        string="Manifest",
-        compute="_compute_service_request_id",
-        store=True,
-        readonly=True,
-        index=True,
-    )
-
-    @api.depends("invoice_line_ids.sale_line_ids.order_id")
-    def _compute_sale_order_id(self):
-        for move in self:
-            orders = move.invoice_line_ids.sale_line_ids.order_id
-            move.sale_order_id = orders[:1].id if orders else False
-
-    @api.depends("sale_order_id.service_request_id")
-    def _compute_service_request_id(self):
-        for move in self:
-            move.service_request_id = move.sale_order_id.service_request_id if move.sale_order_id else False

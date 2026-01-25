@@ -5,14 +5,14 @@
         <field name="model">waste.service.request</field>
         <field name="arch" type="xml">
             <tree default_order="create_date desc" string="Waste Service Request">
-                <field name="name"/>
+                <field name="name" decoration-bf="1"/>
                 <field name="partner_id"/>
                 <field name="from_portal" optional="hide"/>
                 <field name="create_uid" optional="hide"/>
                 <field name="write_uid" optional="hide"/>
                 <field name="create_date" widget="badge" optional="hide"/>
                 <field name="write_date" widget="badge" optional="hide"/>
-                <field name="company_id" widget="badge" optional="hide"/>
+                <field name="company_id" optional="hide"/>
                 <field name="service_requested_id"/>
                 <field name="container_type_id"/>
                 <field name="bin_dropped_ids" widget="many2many_tags" optional="hide"/>

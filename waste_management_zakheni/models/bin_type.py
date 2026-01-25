@@ -16,7 +16,7 @@ class BinType(models.Model):
         string="Company",
         index=True,
         default=lambda self: self.env.company,
-        required=False,  # ✅ allow global/shared records
+        required=True,  # ✅ allow global/shared records
     )
 
     sequence = fields.Integer("Sequence", default=10)

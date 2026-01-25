@@ -8,10 +8,18 @@ class DisposalSite(models.Model):
 
     name = fields.Char(
         string='Request ID',
-        required=True,
+        required=False,
         # copy=False,
         readonly=True,
         default='New')
+
+    company_id = fields.Many2one(
+        "res.company",
+        string="Company",
+        index=True,
+        default=lambda self: self.env.company,
+        required=False,  # ✅ allow global/shared records
+    )
     site_code = fields.Char()
     location = fields.Char()
     waste_type = fields.Selection([
