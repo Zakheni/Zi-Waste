@@ -1,0 +1,162 @@
+<odoo>
+    <menuitem id="menu_pickup_root"
+              name="Waste Management"
+              sequence="2"
+              web_icon="waste_management_zakheni.group_wmz_admin,waste_management_zakheni/static/description/icon.png"/>
+
+    <menuitem id="menu_waste_container"
+              name="Waste Container"
+              parent="menu_pickup_root"
+              sequence="2"
+              action="action_waste_container"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_waste_service"
+              name="Waste Service"
+              parent="menu_pickup_root"
+              sequence="1"
+              action="action_waste_service_request"
+    />
+
+    <record id="action_res_company_custom" model="ir.actions.act_window">
+        <field name="name">Customers</field>
+        <field name="res_model">res.company</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" eval="False"/>
+    </record>
+
+    <!-- Submenu linking to action -->
+    <menuitem id="menu_custom_company"
+              name="Customers"
+              parent="menu_pickup_root"
+              action="action_res_company_custom"/>
+<!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>-->
+
+
+    <menuitem id="menu_waste_configuration_site"
+              name="Configuration"
+              parent="menu_pickup_root"
+              groups="waste_management_zakheni.group_wmz_admin"/>
+
+    <!--    section configuration-->
+    <menuitem id="menu_waste_configuration"
+              name="Configuration"
+              parent="menu_waste_configuration_site"
+              sequence="10"
+              groups="waste_management_zakheni.group_wmz_admin"/>
+
+    <menuitem id="menu_pickup_point"
+              name="Pickup Points"
+              parent="menu_waste_configuration"
+              action="action_pickup_points"
+              sequence="11"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_disposal_site"
+              name="Disposal Site"
+              parent="menu_waste_configuration"
+              action="action_disposal_site"
+              sequence="12"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_waste_worksheet"
+              name="Worksheet"
+              parent="menu_waste_configuration"
+              action="action_waste_worksheet"
+              sequence="13"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"/>
+
+    <!--    <menuitem id="menu_wms_providers"-->
+    <!--              name="Service Provider"-->
+    <!--              parent="menu_waste_configuration"-->
+    <!--              sequence="14"-->
+    <!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>-->
+
+
+    <menuitem id="menu_wms_tool_pro"
+              name="Service Providers"
+              parent="menu_waste_configuration"
+              action="action_wms_service_provider"
+              sequence="15"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>
+
+
+    <!--    <menuitem id="menu_wms_tools"-->
+    <!--              name="Tools"-->
+    <!--              parent="menu_waste_configuration"-->
+    <!--              sequence="16"-->
+    <!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>-->
+
+
+    <!--    <menuitem id="menu_wms_find_provider"-->
+    <!--              name="Find Provider"-->
+    <!--              parent="menu_wms_tools"-->
+    <!--              action="action_open_provider_wizard"-->
+    <!--              sequence="17"-->
+    <!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager"/>-->
+
+
+    <!-- section loop-up-->
+
+    <menuitem id="menu_waste_look_up"
+              name="Waste Look-Up"
+              parent="menu_waste_configuration_site"
+              sequence="20"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_service_request"
+              name="Service Request"
+              parent="menu_waste_look_up"
+              action="action_service_request"
+              sequence="21"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_waste_type"
+              name="Waste Type"
+              parent="menu_waste_look_up"
+              action="action_waste_type"
+              sequence="22"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_waste_details"
+              name="Waste Details"
+              parent="menu_waste_look_up"
+              action="action_waste_details"
+              sequence="23"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_bin_type"
+              name="Bin Type"
+              parent="menu_waste_look_up"
+              action="action_bin_type"
+              sequence="24"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_tank_volume"
+              name="Tank Volume"
+              parent="menu_waste_look_up"
+              action="action_tank_volume"
+              sequence="25"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_container_type"
+              name="Container Type"
+              parent="menu_waste_look_up"
+              action="action_container_type"
+              sequence="26"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_waste_tank_tariff_conf"
+              name="Tariff"
+              parent="menu_waste_configuration_site"
+              sequence="27"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+
+    <menuitem id="menu_waste_tank_tariff"
+              name="Tank Tariff"
+              parent="menu_waste_tank_tariff_conf"
+              action="action_tank_tariff"
+              sequence="27"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"/>
+
+</odoo>
