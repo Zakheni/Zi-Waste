@@ -26,6 +26,7 @@
                 <t t-set="count" t-value="waste_request_count"/>
             </t>
 
+
             <!-- ================================================= -->
             <!-- Log New Service Request (Customers only) -->
             <!-- ================================================= -->
@@ -56,20 +57,20 @@
                 </t>
             </t>
 
-            <!--            &lt;!&ndash; Agent Dashboard &ndash;&gt;-->
-            <!--            <t t-if="request.env.user.has_group('waste_management_zakheni.group_wmz_client_agent')">-->
-            <!--                <t t-call="portal.portal_docs_entry">-->
-            <!--                    <t t-set="icon" t-value="'/portal/static/src/img/portal-addresses.svg'"/>-->
-            <!--                    <t t-set="title">Operations Dashboard</t>-->
-            <!--                    <t t-set="url" t-value="'/my/waste'"/>-->
-            <!--                    <t t-set="text">View assigned trips, worksheets, and performance</t>-->
-            <!--                    <t t-set="config_card" t-value="True"/>-->
-            <!--                </t>-->
-            <!--            </t>-->
-
 
         </xpath>
     </template>
+
+
+    <template id="hide_default_security_card"
+              inherit_id="portal.portal_my_home"
+              priority="40">
+
+        <xpath expr="//div[@id='portal_common_category']/t[.//t[@t-set='title' and contains(., 'Connection')]]"
+               position="replace"/>
+
+    </template>
+
 
     <!-- -
          LIST PAGE: /my/waste/requests
@@ -105,14 +106,35 @@
                                         aria-label="Close"/>
                             </div>
                         </t>
+                        <link rel="stylesheet"
+                              href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
 
+                        <form method="get" action="/my/waste/requests" class="mb-3">
+                            <div class="input-group col-md-8">
 
-                        <table class="table table-hover mt-3">
+                                <input type="text"
+                                       name="search"
+                                       class="form-control"
+                                       placeholder="Search requests..."
+                                       t-att-value="search or ''"/>
+
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa fa-search"/>
+                                    Search
+                                </button>
+
+                            </div>
+                        </form>
+
+                        <!--                        <table id="wasteRequestsTable"-->
+                        <!--                               class="table table-sm table-hover table-compact mt-2">-->
+                        <table id="wasteRequestsTable"
+                               class="table table-sm table-striped table-hover align-middle">
                             <thead class="thead-light">
                                 <tr>
                                     <th>Request</th>
                                     <th>Service Requested</th>
-                                    <th>Ticket Type</th>
+                                    <th>Customer</th>
                                     <th>Container Type</th>
                                     <th>Created By</th>
                                     <th>Update By</th>
@@ -121,30 +143,34 @@
                                     <th>Status</th>
                                 </tr>
                             </thead>
+
                             <tbody>
+
                                 <tr t-foreach="wsr_records or []" t-as="req">
-                                    <!-- Name / Request -->
+
+                                    <!-- Request -->
                                     <td>
                                         <a t-att-href="'/my/waste/request/%s' % req.id">
                                             <t t-esc="req.name"/>
                                         </a>
                                     </td>
 
-                                    <!-- Service Requested -->
+                                    <!-- Service -->
                                     <td>
                                         <t t-esc="req.service_requested_id.display_name or ''"/>
                                     </td>
 
-                                    <!-- Ticket Type -->
+                                    <!-- Customer -->
                                     <td>
-                                        <t t-esc="req.ticket_type or ''"/>
+                                        <t t-esc="req.partner_id.name or ''"/>
                                     </td>
 
-                                    <!-- Container Type -->
+                                    <!-- Container -->
                                     <td>
                                         <t t-esc="req.container_type_id.display_name or ''"/>
                                     </td>
 
+                                    <!-- Created By -->
                                     <td>
                                         <t t-esc="req.create_uid.partner_id.name"/>
                                         <br/>
@@ -152,6 +178,8 @@
                                             <t t-esc="req.create_uid.partner_id.commercial_partner_id.name"/>
                                         </small>
                                     </td>
+
+                                    <!-- Updated By -->
                                     <td>
                                         <t t-esc="req.write_uid.partner_id.name"/>
                                         <br/>
@@ -160,33 +188,38 @@
                                         </small>
                                     </td>
 
-
-                                    <!-- Date -->
+                                    <!-- Created Date -->
                                     <td>
-                                        <t t-esc="req.service_request_date"/>
+                                        <span t-field="req.service_request_date" t-options="{'widget': 'datetime'}"/>
                                     </td>
 
+                                    <!-- Updated Date -->
                                     <td>
-                                        <t t-esc="req.write_date"/>
+                                        <span t-field="req.write_date" t-options="{'widget': 'datetime'}"/>
                                     </td>
 
                                     <!-- Status -->
                                     <td>
                                         <span class="badge bg-primary">
-                                            <!--                                            <t t-esc="req.state"/>-->
                                             <t t-esc="req.state_label or ''"/>
                                         </span>
                                     </td>
+
                                 </tr>
 
                                 <!-- Empty state -->
                                 <tr t-if="not (wsr_records and len(wsr_records))">
-                                    <td colspan="6" class="text-center text-muted py-4">
+                                    <td colspan="9" class="text-center text-muted py-4">
                                         No service requests logged yet.
                                     </td>
                                 </tr>
+
                             </tbody>
                         </table>
+                        <div class="mt-3">
+                            <!--                            <t t-call="portal.portal_pager"/>-->
+                            <t t-call="portal.pager"/>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -230,38 +263,24 @@
                             <input type="hidden" name="csrf_token" t-att-value="csrf_token"/>
 
                             <!-- LEFT COLUMN -->
-                            <div class="col-md-6">
+                            <div class="col-md-12 mb-2">
 
                                 <div class="form-group">
-                                    <label>Client / Company</label>
+                                    <label>Customer</label>
+                                    <select name="partner_id" id="partner_id" class="form-select"
+                                            required="required">
+                                        <option value="">Select Customer</option>
 
-                                    <input type="text"
-                                           class="form-control"
-                                           t-att-value="client_partner and client_partner.display_name or ''"
-                                           readonly="readonly"/>
+                                        <t t-foreach="customers" t-as="cust">
+                                            <option t-att-value="cust.id">
+                                                <t t-esc="cust.display_name"/>
+                                            </option>
+                                        </t>
 
-                                    <!-- hidden value (optional, backend forces anyway) -->
-                                    <input type="hidden"
-                                           id="client_partner_id"
-                                           name="client_partner_id"
-                                           t-att-value="client_partner and client_partner.id or ''"/>
+                                    </select>
                                 </div>
 
-                                <!-- Client / Company (from res.partner) -->
-                                <!--                                <div class="mb-3">-->
-                                <!--                                    <label class="form-label">Client / Company</label>-->
-                                <!--                                    <select name="client_partner_id" id="client_partner_id" class="form-select">-->
-                                <!--                                        <t t-foreach="client_companies" t-as="cli">-->
-                                <!--                                            <option t-att-value="cli.id"-->
-                                <!--                                                    t-att-selected="str(cli.id) == str(default_client_id) and 'selected' or None">-->
-                                <!--                                                <t t-esc="cli.display_name"/>-->
-                                <!--                                            </option>-->
-                                <!--                                        </t>-->
-                                <!--                                    </select>-->
-                                <!--                                    <div class="form-text">-->
-                                <!--                                        Select the company you are requesting service for.-->
-                                <!--                                    </div>-->
-                                <!--                                </div>-->
+
                             </div>
 
 
@@ -334,13 +353,17 @@
                                             </button>
                                         </label>
 
+                                        <!--                                        <select id="pickup_point_id" name="pickup_point_id" class="form-select">-->
+                                        <!--                                            <option value="">Select recognised address</option>-->
+                                        <!--                                            <t t-foreach="pickup_points" t-as="pp">-->
+                                        <!--                                                <option t-att-value="pp.id">-->
+                                        <!--                                                    <t t-esc="pp.name"/>-->
+                                        <!--                                                </option>-->
+                                        <!--                                            </t>-->
+                                        <!--                                        </select>-->
+
                                         <select id="pickup_point_id" name="pickup_point_id" class="form-select">
                                             <option value="">Select recognised address</option>
-                                            <t t-foreach="pickup_points" t-as="pp">
-                                                <option t-att-value="pp.id">
-                                                    <t t-esc="pp.name"/>
-                                                </option>
-                                            </t>
                                         </select>
 
                                     </div>
@@ -430,33 +453,10 @@
                                         <div class="mb-3">
                                             <label class="form-label">Existing Addresses</label>
 
+
                                             <div id="pp_list" class="list-group small">
-                                                <t t-foreach="pickup_points" t-as="pp">
-                                                    <div class="list-group-item d-flex justify-content-between align-items-center"
-                                                         t-att-data-id="pp.id"
-                                                         t-att-data-name="pp.name">
-
-                                                        <span t-esc="pp.name"/>
-
-                                                        <div class="btn-group btn-group-sm">
-                                                            <button type="button"
-                                                                    class="btn btn-outline-primary"
-                                                                    t-att-data-id="pp.id"
-                                                                    t-att-data-name="pp.name"
-                                                                    onclick="wmzEditPickupPoint(this)">
-                                                                ✏️
-                                                            </button>
-
-                                                            <button type="button"
-                                                                    class="btn btn-outline-danger"
-                                                                    t-att-data-id="pp.id"
-                                                                    onclick="wmzDeletePickupPoint(this)">
-                                                                🗑
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </t>
                                             </div>
+
                                         </div>
 
                                         <!-- Add new -->
@@ -494,48 +494,183 @@
             <!-- JS: Toggle Bin/Tank size + Load Pickup Points by selected customer -->
             <script src="/web/static/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
 
+
+            <script type="text/javascript">
+                odoo.define('waste_portal.datatable', function (require) {
+
+                $(document).ready(function () {
+
+                const table = $('#wasteRequestsTable');
+
+                if (table.length) {
+
+                table.DataTable({
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50],
+                searching: true,
+                ordering: true,
+                responsive: true,
+                order: [[6, "desc"]],
+                columnDefs: [
+                { orderable: false, targets: [8] }
+                ]
+                });
+
+                }
+
+                });
+
+                });
+            </script>
+
             <script type="text/javascript">
                 (function () {
 
-                async function loadPickupPoints(partnerId) {
-                const sel = document.getElementById('pickup_point_id');
-                if (!sel) return;
 
-                // reset dropdown
-                sel.innerHTML = '<option value="">Select recognised address</option>';
-                if (!partnerId) return;
+                async function loadPickupPoints(partnerId) {
+
+                const dropdown = document.getElementById('pickup_point_id');
+                if (!dropdown) return;
+
+                // Clear dropdown
+                dropdown.innerHTML = '<option value="">Select recognised address</option>';
+
+                if (!partnerId) {
+                return; // nothing selected
+                }
 
                 try {
+
                 const res = await fetch('/my/waste/pickup_points', {
                 method: 'POST',
                 credentials: 'same-origin',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                partner_id: partnerId
+                })
+                });
+
+                const data = await res.json();
+
+                if (!data || !data.length) {
+                return;
+                }
+
+                data.forEach(function (pp) {
+
+                const option = document.createElement('option');
+                option.value = pp.id;
+                option.textContent = pp.name;
+
+                dropdown.appendChild(option);
+
+                });
+
+                } catch (err) {
+                console.error("Pickup points load failed:", err);
+                }
+
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+
+                const customerSelect = document.getElementById('partner_id');
+
+                if (!customerSelect) return;
+
+                // Load when customer changes
+                customerSelect.addEventListener('change', function () {
+
+                const partnerId = this.value || null;
+
+                loadPickupPoints(partnerId);
+
+                });
+
+                });
+
+                })();
+
+
+                (function () {
+
+                async function loadPickupPointsModal(partnerId) {
+
+                const list = document.getElementById('pp_list');
+                if (!list) return;
+
+                list.innerHTML = '';
+
+                if (!partnerId) return;
+
+                try {
+
+                const res = await fetch('/my/waste/pickup_points', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify({ partner_id: partnerId })
                 });
 
                 const rows = await res.json();
 
-                (rows || []).forEach(pp => {
-                const opt = document.createElement('option');
-                opt.value = pp.id;
-                opt.textContent = pp.name;
-                sel.appendChild(opt);
+                rows.forEach(pp => {
+
+                const item = document.createElement('div');
+                item.className = "list-group-item d-flex justify-content-between align-items-center";
+                item.dataset.id = pp.id;
+                item.dataset.name = pp.name;
+
+                item.innerHTML = `
+                <span>${pp.name}</span>
+
+                <div class="btn-group btn-group-sm">
+
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            data-id="${pp.id}"
+                            data-name="${pp.name}"
+                            onclick="wmzEditPickupPoint(this)">
+                        ✏️
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            data-id="${pp.id}"
+                            onclick="wmzDeletePickupPoint(this)">
+                        🗑
+                    </button>
+
+                </div>
+                `;
+
+                list.appendChild(item);
+
                 });
 
                 } catch (err) {
-                console.error('Failed to load pickup points:', err);
+                console.error("Pickup point modal load failed:", err);
                 }
+
                 }
 
                 document.addEventListener('DOMContentLoaded', function () {
-                const clientSel = document.getElementById('client_partner_id');
-                if (!clientSel) return;
 
-                clientSel.addEventListener('change', function () {
-                loadPickupPoints(this.value);
+                const modal = document.getElementById('addPickupPointModal');
+                const partnerSelect = document.getElementById('partner_id');
+
+                if (!modal || !partnerSelect) return;
+
+                modal.addEventListener('show.bs.modal', function () {
+
+                const partnerId = partnerSelect.value;
+
+                loadPickupPointsModal(partnerId);
+
                 });
 
-                // initial load
                 });
 
                 })();
@@ -595,94 +730,101 @@
             <script type="text/javascript">
                 (function () {
 
-                async function jsonCall(url, payload) {
-                const res = await fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload || {})
-                });
-                return await res.json();
-                }
-
-                function hideModalSafe(modalId) {
-                const modalEl = document.getElementById(modalId);
-                if (!modalEl) return;
-
-                // ✅ If bootstrap is available, use it
-                if (window.bootstrap &amp;&amp; window.bootstrap.Modal) {
-                const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.hide();
-                return;
-                }
-
-                // ✅ Fallback (no bootstrap global)
-                modalEl.classList.remove('show');
-                modalEl.style.display = 'none';
-                modalEl.setAttribute('aria-hidden', 'true');
-                document.body.classList.remove('modal-open');
-                document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-                }
-
                 async function addPickupPoint(ev) {
+
                 if (ev) ev.preventDefault();
 
-                const partnerId = document.getElementById('client_partner_id')?.value;
+                const partnerId = document.getElementById('partner_id')?.value;
                 const name = document.getElementById('pp_name')?.value?.trim();
 
                 const errBox = document.getElementById('pp_error');
+
                 if (errBox) {
                 errBox.classList.add('d-none');
                 errBox.textContent = '';
                 }
 
                 if (!partnerId) {
-                if (errBox) { errBox.textContent = "Please select a client/company first.";
-                errBox.classList.remove('d-none'); }
-                return;
+                if (errBox) {
+                errBox.textContent = "Please select a customer first.";
+                errBox.classList.remove('d-none');
                 }
-                if (!name) {
-                if (errBox) { errBox.textContent = "Address Name is required."; errBox.classList.remove('d-none'); }
                 return;
                 }
 
-                <!--                const resp = await jsonCall('/my/waste/pickup_points/create', {-->
-                <!--                partner_id: partnerId,-->
-                <!--                name: name-->
-                <!--                });-->
-                const resp = await jsonCall('/my/waste/pickup_points/create', {
+                if (!name) {
+                if (errBox) {
+                errBox.textContent = "Address name is required.";
+                errBox.classList.remove('d-none');
+                }
+                return;
+                }
+
+                try {
+
+                const res = await fetch('/my/waste/pickup_points/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                partner_id: partnerId,
                 name: name
+                })
                 });
 
+                const resp = await res.json();
 
                 if (resp &amp;&amp; resp.error) {
-                if (errBox) { errBox.textContent = resp.error; errBox.classList.remove('d-none'); }
+                if (errBox) {
+                errBox.textContent = resp.error;
+                errBox.classList.remove('d-none');
+                }
                 return;
                 }
 
-                // ✅ Add to dropdown + select it
+                // Add new pickup point to dropdown
                 const sel = document.getElementById('pickup_point_id');
+
                 if (sel) {
                 const opt = document.createElement('option');
                 opt.value = resp.id;
-                opt.textContent = resp.name || name; // ✅ never blank
+                opt.textContent = resp.name || name;
                 sel.appendChild(opt);
-                sel.value = String(resp.id);
+                sel.value = resp.id;
                 }
 
-                // reset input
+                // Clear input
                 const inp = document.getElementById('pp_name');
                 if (inp) inp.value = '';
 
-                hideModalSafe('addPickupPointModal');
+                // Close popup automatically
+                const modalEl = document.getElementById('addPickupPointModal');
+
+                if (window.bootstrap &amp;&amp; modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.hide();
+                }
+
+                } catch (err) {
+                console.error("Pickup point creation failed:", err);
+                }
+
                 }
 
                 document.addEventListener('DOMContentLoaded', function () {
+
                 const btn = document.getElementById('pp_save_btn');
-                if (btn) btn.addEventListener('click', addPickupPoint);
+
+                if (btn) {
+                btn.addEventListener('click', addPickupPoint);
+                }
+
                 });
 
                 })();
             </script>
+
+
             <script type="text/javascript">
                 (function () {
 
@@ -720,41 +862,6 @@
 
                 })();
             </script>
-
-            <!--            <script type="text/javascript">-->
-            <!--                (function () {-->
-
-            <!--                function toggleSize() {-->
-            <!--                const ct = document.getElementById('container_type')?.value;-->
-            <!--                const binGroup = document.getElementById('bin_type_group');-->
-            <!--                const tankGroup = document.getElementById('tank_volume_group');-->
-
-            <!--                if (!binGroup || !tankGroup) return;-->
-
-            <!--                if (ct === 'bin') {-->
-            <!--                binGroup.classList.remove('d-none');-->
-            <!--                tankGroup.classList.add('d-none');-->
-            <!--                } else if (ct === 'tank') {-->
-            <!--                tankGroup.classList.remove('d-none');-->
-            <!--                binGroup.classList.add('d-none');-->
-            <!--                } else {-->
-            <!--                binGroup.classList.add('d-none');-->
-            <!--                tankGroup.classList.add('d-none');-->
-            <!--                }-->
-            <!--                }-->
-
-            <!--                document.addEventListener('DOMContentLoaded', function () {-->
-            <!--                const sel = document.getElementById('container_type');-->
-            <!--                if (!sel) return;-->
-
-            <!--                sel.addEventListener('change', toggleSize);-->
-
-            <!--                // 🔥 important: run once on load-->
-            <!--                toggleSize();-->
-            <!--                });-->
-
-            <!--                })();-->
-            <!--            </script>-->
 
 
         </t>
@@ -1440,8 +1547,13 @@
                                                         data-bs-target="#manifestPreviewModal">
                                                     Preview
                                                 </button>
-                                                <a t-if="worksheet.manifest_document"
-                                                   t-att-href="'/web/content/waste.worksheet/%s/manifest_document?download=1' % worksheet.id"
+                                                <!--                                                <a t-if="worksheet.manifest_document"-->
+                                                <!--                                                   t-att-href="'/my/waste/worksheet/%s/file/manifest_document' % worksheet.id"-->
+                                                <!--                                                   class="btn btn-sm btn-outline-secondary"-->
+                                                <!--                                                   target="_blank">-->
+                                                <!--                                                    Download-->
+                                                <!--                                                </a>-->
+                                                <a t-att-href="'/my/waste/worksheet/%s/file/manifest_document?download=1' % worksheet.id"
                                                    class="btn btn-sm btn-outline-secondary"
                                                    target="_blank">
                                                     Download
@@ -1501,7 +1613,7 @@
                                                     Preview
                                                 </button>
                                                 <a t-if="worksheet.weighbridge_slip"
-                                                   t-att-href="'/web/content/waste.worksheet/%s/weighbridge_slip?download=1' % worksheet.id"
+                                                   t-att-href="'/my/waste/worksheet/%s/file/weighbridge_slip?download=1' % worksheet.id"
                                                    class="btn btn-sm btn-outline-secondary"
                                                    target="_blank">
                                                     Download
@@ -1560,7 +1672,7 @@
                                                     Preview
                                                 </button>
                                                 <a t-if="worksheet.safety_certificate"
-                                                   t-att-href="'/web/content/waste.worksheet/%s/safety_certificate?download=1' % worksheet.id"
+                                                   t-att-href="'/my/waste/worksheet/%s/file/safety_certificate?download=1' % worksheet.id"
                                                    class="btn btn-sm btn-outline-secondary"
                                                    target="_blank">
                                                     Download
@@ -1618,7 +1730,7 @@
                                             <!-- Existing signature preview -->
                                             <div class="mb-2" t-if="worksheet.driver_signature">
                                                 <div class="small text-muted">Current signature</div>
-                                                <img t-att-src="'/web/image/waste.worksheet/%s/driver_signature' % worksheet.id"
+                                                <img t-att-src="'/my/waste/worksheet/%s/file/driver_signature' % worksheet.id"
                                                      class="img-thumbnail mb-2"
                                                      style="max-height:120px;object-fit:contain;"/>
                                             </div>
@@ -1669,7 +1781,7 @@
                                             <!-- Existing signature preview -->
                                             <div class="mb-2" t-if="worksheet.service_provider_signature">
                                                 <div class="small text-muted">Current signature</div>
-                                                <img t-att-src="'/web/image/waste.worksheet/%s/service_provider_signature' % worksheet.id"
+                                                <img t-att-src="'/my/waste/worksheet/%s/file/service_provider_signature' % worksheet.id"
                                                      class="img-thumbnail mb-2"
                                                      style="max-height:120px;object-fit:contain;"/>
                                             </div>
@@ -1823,49 +1935,110 @@
             </div>
 
             <!-- Manifest Preview Modal -->
-            <div class="modal fade" id="manifestPreviewModal" tabindex="-1" aria-hidden="true">
+            <!--            <div class="modal fade" id="manifestPreviewModal" tabindex="-1" aria-hidden="true">-->
+            <!--                <div class="modal-dialog modal-xl modal-dialog-centered">-->
+            <!--                    <div class="modal-content">-->
+            <!--                        <div class="modal-header">-->
+            <!--                            <h5 class="modal-title">Manifest Document Preview</h5>-->
+            <!--                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>-->
+            <!--                        </div>-->
+            <!--                        <div class="modal-body" style="height:70vh;">-->
+            <!--                            <iframe t-att-src="'/my/waste/worksheet/%s/file/manifest_document' % worksheet.id"-->
+            <!--                                    style="width:100%;height:100%;border:none;">-->
+            <!--                            </iframe>-->
+            <!--                        </div>-->
+            <!--                    </div>-->
+            <!--                </div>-->
+            <!--            </div>-->
+
+            <div class="modal fade" id="manifestPreviewModal" tabindex="-1">
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content">
+
                         <div class="modal-header">
                             <h5 class="modal-title">Manifest Document Preview</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"/>
                         </div>
+
                         <div class="modal-body" style="height:70vh;">
-                            <iframe t-att-src="'/web/content/waste.worksheet/%s/manifest_document' % worksheet.id"
-                                    style="width:100%;height:100%;border:none;"></iframe>
+                            <iframe id="manifestPreviewFrame"
+                                    t-att-data-src="'/my/waste/worksheet/%s/file/manifest_document' % worksheet.id"
+                                    style="width:100%;height:100%;border:none;">
+                            </iframe>
                         </div>
+
                     </div>
                 </div>
             </div>
 
             <!-- Weighbridge Slip Preview Modal -->
-            <div class="modal fade" id="weighbridgePreviewModal" tabindex="-1" aria-hidden="true">
+            <!--            <div class="modal fade" id="weighbridgePreviewModal" tabindex="-1" aria-hidden="true">-->
+            <!--                <div class="modal-dialog modal-xl modal-dialog-centered">-->
+            <!--                    <div class="modal-content">-->
+            <!--                        <div class="modal-header">-->
+            <!--                            <h5 class="modal-title">Weighbridge Slip Preview</h5>-->
+            <!--                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>-->
+            <!--                        </div>-->
+            <!--                        <div class="modal-body" style="height:70vh;">-->
+            <!--                            <iframe t-att-src="'/my/waste/worksheet/%s/file/weighbridge_slip' % worksheet.id"-->
+            <!--                                    style="width:100%;height:100%;border:none;">-->
+            <!--                            </iframe>-->
+            <!--                        </div>-->
+            <!--                    </div>-->
+            <!--                </div>-->
+            <!--            </div>-->
+            <div class="modal fade" id="weighbridgePreviewModal" tabindex="-1">
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content">
+
                         <div class="modal-header">
                             <h5 class="modal-title">Weighbridge Slip Preview</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"/>
                         </div>
+
                         <div class="modal-body" style="height:70vh;">
-                            <iframe t-att-src="'/web/content/waste.worksheet/%s/weighbridge_slip' % worksheet.id"
-                                    style="width:100%;height:100%;border:none;"></iframe>
+                            <iframe id="weighbridgePreviewFrame"
+                                    t-att-data-src="'/my/waste/worksheet/%s/file/weighbridge_slip' % worksheet.id"
+                                    style="width:100%;height:100%;border:none;">
+                            </iframe>
                         </div>
+
                     </div>
                 </div>
             </div>
-
             <!-- Safety Certificate Preview Modal -->
-            <div class="modal fade" id="safetyPreviewModal" tabindex="-1" aria-hidden="true">
+            <!--            <div class="modal fade" id="safetyPreviewModal" tabindex="-1" aria-hidden="true">-->
+            <!--                <div class="modal-dialog modal-xl modal-dialog-centered">-->
+            <!--                    <div class="modal-content">-->
+            <!--                        <div class="modal-header">-->
+            <!--                            <h5 class="modal-title">Safety Certificate Preview</h5>-->
+            <!--                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>-->
+            <!--                        </div>-->
+            <!--                        <div class="modal-body" style="height:70vh;">-->
+            <!--                            <iframe t-att-src="'/my/waste/worksheet/%s/file/safety_certificate' % worksheet.id"-->
+            <!--                                    style="width:100%;height:100%;border:none;">-->
+            <!--                            </iframe>-->
+            <!--                        </div>-->
+            <!--                    </div>-->
+            <!--                </div>-->
+            <!--            </div>-->
+
+            <div class="modal fade" id="weighbridgePreviewModal" tabindex="-1">
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content">
+
                         <div class="modal-header">
-                            <h5 class="modal-title">Safety Certificate Preview</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                            <h5 class="modal-title">Weighbridge Slip Preview</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"/>
                         </div>
+
                         <div class="modal-body" style="height:70vh;">
-                            <iframe t-att-src="'/web/content/waste.worksheet/%s/safety_certificate' % worksheet.id"
-                                    style="width:100%;height:100%;border:none;"></iframe>
+                            <iframe id="weighbridgePreviewFrame"
+                                    t-att-data-src="'/my/waste/worksheet/%s/file/weighbridge_slip' % worksheet.id"
+                                    style="width:100%;height:100%;border:none;">
+                            </iframe>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -2073,6 +2246,34 @@
                 });
                 })();
             </script>
+
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+
+                function loadPreview(modalId, frameId) {
+                const modal = document.getElementById(modalId);
+                const frame = document.getElementById(frameId);
+
+                if (!modal || !frame) return;
+
+                modal.addEventListener("show.bs.modal", function () {
+                if (!frame.src) {
+                frame.src = frame.dataset.src;
+                }
+                });
+
+                modal.addEventListener("hidden.bs.modal", function () {
+                frame.src = "";
+                });
+                }
+
+                loadPreview("manifestPreviewModal", "manifestPreviewFrame");
+                loadPreview("weighbridgePreviewModal", "weighbridgePreviewFrame");
+                loadPreview("safetyPreviewModal", "safetyPreviewFrame");
+
+                });
+            </script>
+
 
         </t>
     </template>

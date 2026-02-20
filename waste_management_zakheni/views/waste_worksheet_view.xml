@@ -326,7 +326,7 @@
                         </group>
 
                         <group style="display:flex; align-items:center;">
-                            <field name="weighbridge_slip" invisible="hide_waste_type == True"
+                            <field name="weighbridge_slip" invisible="hide_waste_type == True or hide_shunt_container_ids == True"
                                    filename="weighbridge_slip_filename"
                                    style="flex:1;" readonly="state == 'done'"/>
                             <button name="action_open_weighbridge_slip"

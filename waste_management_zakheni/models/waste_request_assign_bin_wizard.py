@@ -170,12 +170,29 @@ class WasteAssignBinWizard(models.TransientModel):
         elif svc in (
                 'waste collection & disposal',
                 'waste collection and disposal',
-                'swapping of bins',
+
         ):
+            # if not has_lifted or not has_dropped:
+            #     raise ValidationError(_(
+            #         "Both Bin Lifted and Bin Dropped are required for %s. 🗑️🚮"
+            #     ) % self.request_id.service_requested_id.display_name)
+
+            if not has_lifted:
+                raise ValidationError(_(
+                    "Both Bin Lifted is required for %s.🚮"
+                ) % self.request_id.service_requested_id.display_name)
+
+        elif svc in ('swapping of bins'):
             if not has_lifted or not has_dropped:
                 raise ValidationError(_(
                     "Both Bin Lifted and Bin Dropped are required for %s. 🗑️🚮"
                 ) % self.request_id.service_requested_id.display_name)
+
+            # if not has_lifted:
+            #     raise ValidationError(_(
+            #         "Both Bin Lifted is required for %s.🚮"
+            #     ) % self.request_id.service_requested_id.display_name)
+
 
         # clear old persistent bin lines
         req.bin_line_ids.unlink()
@@ -294,13 +311,26 @@ class WasteAssignBinWizard(models.TransientModel):
                 # happens later in action_mark_done.
             })
 
-        if svc == 'shunting of bins' and all_lifted:
-            all_lifted.write({
-                'reserved_request_id': req.id,
-                # NOTE:
-                # We only reserve here. Physical placement (status/inUse)
-                # happens later in action_mark_done.
-            })
+        # if svc == 'shunting of bins' and all_lifted:
+        #     all_lifted.write({
+        #         'reserved_request_id': req.id,
+        #         # NOTE:
+        #         # We only reserve here. Physical placement (status/inUse)
+        #         # happens later in action_mark_done.
+        #     })
+        if svc == 'shunting of bins':
+            for line in self.line_ids:
+                new_pp = line.dropoff_point_id
+                if not new_pp:
+                    continue
+
+                line.bin_lifted_ids.write({
+                    'pickup_point_id': new_pp.id,
+                    'dropoff_point_id': False,
+                    'partner_id': cust.id if cust else False,
+                    'status': 'in_use',
+                    'inUse': True,
+                })
 
         if svc == 'removal of bins' and all_lifted:
             all_lifted.write({
@@ -310,13 +340,27 @@ class WasteAssignBinWizard(models.TransientModel):
                 # happens later in action_mark_done.
             })
 
-        if svc == 'waste collection & disposal' and all_lifted:
-            all_lifted.write({
-                'reserved_request_id': req.id,
-                # NOTE:
-                # We only reserve here. Physical placement (status/inUse)
-                # happens later in action_mark_done.
-            })
+        # if svc == 'waste collection & disposal' and all_lifted:
+        #     all_lifted.write({
+        #         'reserved_request_id': req.id,
+        #         # NOTE:
+        #         # We only reserve here. Physical placement (status/inUse)
+        #         # happens later in action_mark_done.
+        #     })
+
+        if svc in (
+                'waste collection & disposal',
+                'waste collection and disposal',
+        ):
+            if all_lifted:
+                all_lifted.write({
+                    'reserved_request_id': req.id,
+                })
+
+            if all_dropped:
+                all_dropped.write({
+                    'reserved_request_id': req.id,
+                })
 
         # optional: behaviour for swapping of bins
         if svc == 'swapping of bins' and all_lifted:
@@ -351,7 +395,6 @@ class WasteAssignBinWizard(models.TransientModel):
         # 🔴 REMOVE lifted bins from customer / pickup point
         # ----------------------------------------------------
         REMOVE_FROM_CUSTOMER_SERVICES = (
-            'shunting of bins',
             'removal of bins',
             'waste collection & disposal',
             'waste collection and disposal',

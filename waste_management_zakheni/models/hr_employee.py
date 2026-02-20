@@ -9,6 +9,12 @@ EMAIL_REGEX = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
 class HREmployee(models.Model):
     _inherit = 'hr.employee'
 
+    _sql_constraints = [
+        ('unique_user_employee',
+         'unique(user_id)',
+         'This user already has an employee profile!')
+    ]
+
     service_request_id = fields.Many2one(
         'waste.service.request',
         string="Manifest",
@@ -28,7 +34,12 @@ class HREmployee(models.Model):
     deparment_id = fields.Many2one(required=True, tracking=True)
     parent_id = fields.Many2one(tracking=True)
     coach_id = fields.Many2one(tracking=True)
-    company_id = fields.Many2one(tracking=True)
+
+
+
+
+
+    # company_id = fields.Many2one(tracking=True)
 
 
 

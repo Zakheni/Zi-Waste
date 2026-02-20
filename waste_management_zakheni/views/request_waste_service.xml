@@ -45,6 +45,7 @@
                             class="btn-info"
                             invisible="state != 'generated' or is_service_provider and provider_name == False"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+                            />
 
                     <!--                    &lt;!&ndash; NEW: Assign &ndash;&gt;-->
                     <!--                    <button string="Assign"-->
@@ -56,7 +57,9 @@
 
 
                     <button string="Generate" type="object" name="action_generated" class="btn-info"
-                            invisible="state != 'draft' or bin_line_count == 0 and not hide_tank_volume "/>
+                            invisible="state != 'draft' or bin_line_count == 0 and not hide_tank_volume "
+
+                    />
                     <!--                            invisible="state != 'scheduled' or is_service_provider == True"/>-->
                     <button string="Authorise" type="object" name="action_mark_done" class="btn-success"
                             invisible="state != 'service_delivered' or worksheet_count == 0"

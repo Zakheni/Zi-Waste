@@ -3,7 +3,7 @@
     "version": "1.0",
     "author": "Lesiba",
     "depends": ['base', 'mail', 'sale', 'product', 'account', 'fleet', 'hr', 'stock', 'portal', 'website',
-                'auth_signup','link_tracker'],
+                'auth_signup','link_tracker','portal'],
     "data": [
         "security/menu_security.xml",
         "security/waste_portal_groups.xml",
@@ -35,6 +35,7 @@
         # "views/portal_validation.xml",
         "views/portal_validation_template.xml",
         "views/waste_portal_templates.xml",
+        # "views/hide_cards_for_agent_group_temp.xml",
 
         "views/res_user_view.xml",
         # "views/hide_sale_menu.xml",

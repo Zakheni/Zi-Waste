@@ -6,6 +6,14 @@ from odoo.exceptions import UserError
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=False,
+        default=lambda self: self.env.company,
+        index=True
+    )
+
     waste_qty = fields.Float(
         string="Waste Request Qty",
         compute="_compute_waste_request_info",

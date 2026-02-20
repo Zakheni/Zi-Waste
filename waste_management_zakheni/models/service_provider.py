@@ -214,15 +214,23 @@ class ServiceProvider(models.Model):
                           "\n and it must not include Alpha numeric ❌ ")
                     )
 
+    # @api.constrains('email')
+    # def _check_email_required(self):
+    #     for partner in self:
+    #         # Skip contacts that are not real business partners
+    #         if partner.is_company or partner.customer_rank > 0 or partner.supplier_rank > 0:
+    #             if not partner.email:
+    #                 raise ValidationError(
+    #                     _("Email address is required. ⚠️")
+    #                 )
+
     @api.constrains('email')
     def _check_email_required(self):
-        for partner in self:
-            # Skip contacts that are not real business partners
-            if partner.is_company or partner.customer_rank > 0 or partner.supplier_rank > 0:
-                if not partner.email:
-                    raise ValidationError(
-                        _("Email address is required. ⚠️")
-                    )
+        for rec in self:
+            if not rec.email:
+                raise ValidationError(
+                    _("Email address is required.")
+                )
 
     @api.constrains('email')
     def _check_email_format(self):

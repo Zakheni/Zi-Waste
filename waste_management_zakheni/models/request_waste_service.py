@@ -38,6 +38,7 @@ class WasteServiceRequest(models.Model):
         index=True,
     )
 
+
     invoice_ids = fields.One2many(
         "account.move",
         "service_request_id",
@@ -66,11 +67,11 @@ class WasteServiceRequest(models.Model):
         # domain="[('is_company','=',True)]",
         # domain=[("is_company", "=", True), ("customer_rank", ">", 0)],
 
-        # domain=lambda self: [
-        #     ('is_company', '=', True),
+        domain=lambda self: [
+            ('is_company', '=', True),
         #     ('customer_rank', '>', 0),
         #     ('id', '!=', self.env.user.partner_id.id),
-        # ]
+        ]
 
     )
 
@@ -86,6 +87,12 @@ class WasteServiceRequest(models.Model):
     #             ]
     #         """
     # )
+
+    portal_user_id = fields.Many2one(
+        'res.users',
+        string="Portal User",
+        help="Portal user who logged the request"
+    )
 
     pickup_id = fields.Char(string="Pickup Point Name", related='pickup_point_id.name', )
     planned_date = fields.Datetime(string='Planned Date', tracking=True)
@@ -1409,7 +1416,7 @@ class WasteServiceRequest(models.Model):
                     if 'partner_id' in container._fields:
                         container.partner_id = False
                     if 'status' in container._fields:
-                        container.status = 'un_use'
+                        container.status = 'intact'
                     if 'inUse' in container._fields:
                         container.inUse = False
                     # 🔹 clear reservation once the removal is completed
@@ -1434,7 +1441,7 @@ class WasteServiceRequest(models.Model):
                     if 'partner_id' in lifted_bin._fields:
                         lifted_bin.partner_id = False
                     if 'status' in lifted_bin._fields:
-                        lifted_bin.status = 'un_use'
+                        lifted_bin.status = 'intact'
                     if 'inUse' in lifted_bin._fields:
                         lifted_bin.inUse = False
                     # 🔹 clear reservation for lifted bins as well
@@ -1475,38 +1482,95 @@ class WasteServiceRequest(models.Model):
                         body=f"Dropped bin '{dropped_bin.display_name}' at '{label}'"
                     )
 
-            # -------------------------------------------------
-            # SHUNTING OF BINS  (still uses shunt_* fields)
-            # -------------------------------------------------
-            elif svc_code == 'shunting of bins':
-                from_label = rec.shunt_from_id.display_name if rec.shunt_from_id else "Unknown"
-                to_label = rec.shunt_to_id.display_name if rec.shunt_to_id else "Unknown"
+            # # -------------------------------------------------
+            # # SHUNTING OF BINS  (still uses shunt_* fields)
+            # # -------------------------------------------------
+            # elif svc_code == 'shunting of bins':
+            #
+            #     # Safely get shunt fields
+            #     shunt_from = rec.shunt_from_id if 'shunt_from_id' in rec._fields else False
+            #     shunt_to = rec.shunt_to_id if 'shunt_to_id' in rec._fields else False
+            #     shunt_bins = rec.shunt_container_ids if 'shunt_container_ids' in rec._fields else rec.env[
+            #         'waste.container']
+            #
+            #     from_label = shunt_from.display_name if shunt_from else "Unknown"
+            #     to_label = shunt_to.display_name if shunt_to else "Unknown"
+            #
+            #     for bin_rec in shunt_bins:
+            #         bin_rec = bin_rec.sudo()
+            # # elif svc_code == 'shunting of bins':
+            # #     from_label = rec.shunt_from_id.display_name if rec.shunt_from_id else "Unknown"
+            # #     to_label = rec.shunt_to_id.display_name if rec.shunt_to_id else "Unknown"
+            # #
+            # #     for bin_rec in rec.shunt_container_ids:
+            # #         bin_rec = bin_rec.sudo()
+            #         if 'pickup_point_id' in bin_rec._fields:
+            #             bin_rec.pickup_point_id = rec.shunt_to_id
+            #         if 'pickup_point_ids' in bin_rec._fields and rec.shunt_to_id:
+            #             bin_rec.pickup_point_ids = [(4, rec.shunt_to_id.id)]
+            #         if 'dropoff_point_id' in bin_rec._fields and rec.shunt_to_id:
+            #             bin_rec.dropoff_point_id = rec.shunt_to_id
+            #         if 'partner_id' in bin_rec._fields and cust:
+            #             bin_rec.partner_id = cust
+            #         if 'status' in bin_rec._fields:
+            #             bin_rec.status = 'in_use'
+            #         if 'inUse' in bin_rec._fields:
+            #             bin_rec.inUse = True
+            #         # 🔹 clear reservation after shunt is done
+            #         if 'reserved_request_id' in bin_rec._fields and bin_rec.reserved_request_id == rec:
+            #             bin_rec.reserved_request_id = False
+            #
+            #         rec.message_post(
+            #             body=f"Shunted bin '{bin_rec.display_name}' from '{from_label}' to '{to_label}'"
+            #         )
 
-                for bin_rec in rec.shunt_container_ids:
+            elif svc_code == 'shunting of bins':
+
+                # Safely get shunt fields
+                shunt_from = rec.shunt_from_id if 'shunt_from_id' in rec._fields else False
+                shunt_to = rec.shunt_to_id if 'shunt_to_id' in rec._fields else False
+                shunt_bins = rec.shunt_container_ids if 'shunt_container_ids' in rec._fields else rec.env[
+                    'waste.container']
+
+                from_label = shunt_from.display_name if shunt_from else "Unknown"
+                to_label = shunt_to.display_name if shunt_to else "Unknown"
+
+                for bin_rec in shunt_bins:
                     bin_rec = bin_rec.sudo()
-                    if 'pickup_point_id' in bin_rec._fields:
-                        bin_rec.pickup_point_id = rec.shunt_to_id
-                    if 'pickup_point_ids' in bin_rec._fields and rec.shunt_to_id:
-                        bin_rec.pickup_point_ids = [(4, rec.shunt_to_id.id)]
-                    if 'dropoff_point_id' in bin_rec._fields and rec.shunt_to_id:
-                        bin_rec.dropoff_point_id = rec.shunt_to_id
+
+                    # 🔹 Set the new pickup point
+                    if 'pickup_point_id' in bin_rec._fields and shunt_to:
+                        bin_rec.pickup_point_id = shunt_to
+
+                    # 🔹 Track pickup history
+                    if 'pickup_point_ids' in bin_rec._fields and shunt_to:
+                        bin_rec.pickup_point_ids = [(4, shunt_to.id)]
+
+                    # 🔹 Clear received/dropoff location
+                    if 'dropoff_point_id' in bin_rec._fields:
+                        bin_rec.dropoff_point_id = False
+
+                    # 🔹 Set customer
                     if 'partner_id' in bin_rec._fields and cust:
                         bin_rec.partner_id = cust
+
+                    # 🔹 Set status
                     if 'status' in bin_rec._fields:
                         bin_rec.status = 'in_use'
+
                     if 'inUse' in bin_rec._fields:
                         bin_rec.inUse = True
-                    # 🔹 clear reservation after shunt is done
+
+                    # 🔹 Clear reservation
                     if 'reserved_request_id' in bin_rec._fields and bin_rec.reserved_request_id == rec:
                         bin_rec.reserved_request_id = False
 
+                    # 🔹 Log the movement
                     rec.message_post(
                         body=f"Shunted bin '{bin_rec.display_name}' from '{from_label}' to '{to_label}'"
                     )
 
-            # -------------------------------------------------
-            # ✅ PLACEMENT OF BINS – driven by bin_line_ids
-            # -------------------------------------------------
+
             elif svc_code == 'placement of bins':
                 # Use each line’s pickup/dropoff to place its bins
                 for line in rec.bin_line_ids:
@@ -1536,36 +1600,109 @@ class WasteServiceRequest(models.Model):
                             body=f"Placed bin: {container.display_name} at {label}"
                         )
 
-            # -------------------------------------------------
-            # WASTE COLLECTION & DISPOSAL
-            # -------------------------------------------------
+            # # -------------------------------------------------
+            # # WASTE COLLECTION & DISPOSAL
+            # # -------------------------------------------------
+            # elif svc_code in (
+            #         'waste collection & disposal',
+            #         'waste collection and disposal',
+            #         'general collection & desposal',
+            # ):
+            #     containers = (rec.bin_lifted_ids | rec.bin_dropped_ids)
+            #     for container in containers:
+            #         container = container.sudo()
+            #         if 'pickup_point_ids' in container._fields:
+            #             container.pickup_point_ids = [(5, 0, 0)]
+            #         if 'pickup_point_id' in container._fields:
+            #             container.pickup_point_id = False
+            #         if 'dropoff_point_id' in container._fields:
+            #             container.dropoff_point_id = False
+            #         if 'partner_id' in container._fields:
+            #             container.partner_id = False
+            #         if 'status' in container._fields:
+            #             container.status = 'un_use'
+            #         if 'inUse' in container._fields:
+            #             container.inUse = False
+            #         # 🔹 clear reservation once collected/disposed
+            #         if 'reserved_request_id' in container._fields and container.reserved_request_id == rec:
+            #             container.reserved_request_id = False
+            #
+            #         rec.message_post(
+            #             body=f"Collected & Disposed bin: {container.display_name}"
+            #         )
+
             elif svc_code in (
                     'waste collection & disposal',
                     'waste collection and disposal',
                     'general collection & desposal',
             ):
-                containers = (rec.bin_lifted_ids | rec.bin_dropped_ids)
-                for container in containers:
-                    container = container.sudo()
-                    if 'pickup_point_ids' in container._fields:
-                        container.pickup_point_ids = [(5, 0, 0)]
-                    if 'pickup_point_id' in container._fields:
-                        container.pickup_point_id = False
-                    if 'dropoff_point_id' in container._fields:
-                        container.dropoff_point_id = False
-                    if 'partner_id' in container._fields:
-                        container.partner_id = False
-                    if 'status' in container._fields:
-                        container.status = 'un_use'
-                    if 'inUse' in container._fields:
-                        container.inUse = False
-                    # 🔹 clear reservation once collected/disposed
-                    if 'reserved_request_id' in container._fields and container.reserved_request_id == rec:
-                        container.reserved_request_id = False
 
-                    rec.message_post(
-                        body=f"Collected & Disposed bin: {container.display_name}"
-                    )
+                for line in rec.bin_line_ids:
+
+                    dest_pp = line.pickup_point_id
+                    label = dest_pp.display_name if dest_pp else "Unknown"
+
+                    # -------------------------------------------------
+                    # 1️⃣ COLLECTED BINS (go to yard after disposal)
+                    # -------------------------------------------------
+                    for container in line.bin_lifted_ids:
+                        container = container.sudo()
+
+                        if 'pickup_point_ids' in container._fields:
+                            container.pickup_point_ids = [(5, 0, 0)]
+
+                        if 'pickup_point_id' in container._fields:
+                            container.pickup_point_id = False
+
+                        if 'dropoff_point_id' in container._fields:
+                            container.dropoff_point_id = False
+
+                        if 'partner_id' in container._fields:
+                            container.partner_id = False
+
+                        if 'status' in container._fields:
+                            container.status = 'intact'
+
+                        if 'inUse' in container._fields:
+                            container.inUse = False
+
+                        if 'reserved_request_id' in container._fields and container.reserved_request_id == rec:
+                            container.reserved_request_id = False
+
+                        rec.message_post(
+                            body=f"Collected bin for disposal: {container.display_name}"
+                        )
+
+                    # -------------------------------------------------
+                    # 2️⃣ PLACE NEW EMPTY BIN (placement logic)
+                    # -------------------------------------------------
+                    for container in line.bin_dropped_ids:
+                        container = container.sudo()
+
+                        if 'pickup_point_id' in container._fields and dest_pp:
+                            container.pickup_point_id = dest_pp
+
+                        if 'pickup_point_ids' in container._fields and dest_pp:
+                            container.pickup_point_ids = [(4, dest_pp.id)]
+
+                        if 'dropoff_point_id' in container._fields and dest_pp:
+                            container.dropoff_point_id = dest_pp
+
+                        if 'partner_id' in container._fields and cust:
+                            container.partner_id = cust
+
+                        if 'status' in container._fields:
+                            container.status = 'in_use'
+
+                        if 'inUse' in container._fields:
+                            container.inUse = True
+
+                        if 'reserved_request_id' in container._fields and container.reserved_request_id == rec:
+                            container.reserved_request_id = False
+
+                        rec.message_post(
+                            body=f"Placed empty bin {container.display_name} at {label}"
+                        )
 
             all_tanks = rec.env['waste.container']
 
