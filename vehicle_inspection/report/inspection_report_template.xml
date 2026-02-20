@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="vehicle_inspection_report_template">
+        <t t-call="web.external_layout">
+            <main>
+
+                <t t-foreach="docs" t-as="o">
+                    <div class="page">
+
+                        <!-- ================= HEADER ================= -->
+                        <div style="border-bottom:3px solid #2c3e50; padding-bottom:10px; margin-bottom:20px;">
+                            <h2 style="margin:0; text-align:center; color:#2c3e50;">
+                                Vehicle Inspection Report
+                            </h2>
+                            <p style="text-align:center; font-size:12px; color:#777;">
+                                Inspection Reference:
+                                <strong t-esc="o.name"/>
+                            </p>
+                        </div>
+
+                        <!-- ================= SUMMARY INFO ================= -->
+                        <table style="width:100%; font-size:12px; margin-bottom:25px;">
+                            <tr>
+                                <td width="25%">
+                                    <strong>Inspection Date</strong>
+                                </td>
+                                <td width="25%" t-esc="o.inspection_date"/>
+                                <td width="25%">
+                                    <strong>Next Inspection</strong>
+                                </td>
+                                <td width="25%" t-esc="o.next_inspection_date"/>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Vehicle</strong>
+                                </td>
+                                <td t-esc="o.vehicle_id.display_name"/>
+                                <td>
+                                    <strong>Inspector</strong>
+                                </td>
+                                <td t-esc="o.inspector_id.name"/>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Driver</strong>
+                                </td>
+                                <td t-esc="o.driver_id.display_name"/>
+                                <td>
+                                    <strong>Vehicle Description</strong>
+                                </td>
+                                <td t-esc="o.vehicle_description"/>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>KM Opening</strong>
+                                </td>
+                                <td t-esc="o.km_open"/>
+                                <td>
+                                    <strong>KM Closing</strong>
+                                </td>
+                                <td t-esc="o.km_close"/>
+                            </tr>
+                        </table>
+
+                        <!-- ================= CHECKLIST ================= -->
+                        <h3 style="color:#2c3e50; border-bottom:2px solid #ddd; padding-bottom:5px;">
+                            Inspection Checklist
+                        </h3>
+
+                        <table style="width:100%; font-size:11px; border-collapse:collapse; margin-top:10px;">
+                            <thead>
+                                <tr style="background:#f2f2f2;">
+                                    <th style="border:1px solid #ccc; padding:6px;">Category</th>
+                                    <th style="border:1px solid #ccc; padding:6px;">Item</th>
+                                    <th style="border:1px solid #ccc; padding:6px;">Result</th>
+                                    <th style="border:1px solid #ccc; padding:6px;">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.line_ids" t-as="line">
+                                    <tr>
+                                        <td style="border:1px solid #ccc; padding:5px;" t-esc="line.category_id.name"/>
+                                        <td style="border:1px solid #ccc; padding:5px;" t-esc="line.item_id.name"/>
+                                        <td style="border:1px solid #ccc; padding:5px; text-align:center;">
+                                            <span t-if="line.result == 'clear'" style="color:green; font-weight:bold;">
+                                                CLEAR
+                                            </span>
+                                            <span t-if="line.result == 'fault'" style="color:red; font-weight:bold;">
+                                                FAULT
+                                            </span>
+                                            <span t-if="line.result not in ['clear','fault']" t-esc="line.result"/>
+                                        </td>
+                                        <td style="border:1px solid #ccc; padding:5px;" t-esc="line.note or ''"/>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- ================= PHOTOS ================= -->
+                        <t t-if="o.line_ids.mapped('photo_ids')">
+                            <h3 style="margin-top:30px; color:#2c3e50; border-bottom:2px solid #ddd;">
+                                Inspection Photos
+                            </h3>
+
+                            <t t-foreach="o.line_ids.mapped('category_id')" t-as="cat">
+                                <t t-if="o.line_ids.filtered(lambda l: l.category_id == cat and l.photo_ids)">
+                                    <h4 style="margin-top:20px; color:#34495e;" t-esc="cat.name"/>
+
+                                    <table style="width:100%;">
+                                        <tr>
+                                            <t t-foreach="
+                                                o.line_ids
+                                                .filtered(lambda l: l.category_id == cat)
+                                                .mapped('photo_ids')
+                                            " t-as="photo">
+                                                <td style="padding:8px; text-align:center; width:25%;">
+                                                    <img
+                                                            t-att-src="'/web/image/%s/%s/image' % (photo._name, photo.id)"
+                                                            style="max-width:160px; max-height:160px; border:1px solid #ccc; padding:4px;"/>
+                                                    <div style="font-size:10px; margin-top:4px; color:#555;">
+                                                        <span t-esc="photo.name or photo.item_id.name"/>
+                                                    </div>
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </table>
+                                </t>
+                            </t>
+                        </t>
+
+                        <!-- ================= SIGNATURE ================= -->
+
+
+                        <t t-if="o.signature">
+                            <div style="margin-top:40px;">
+                                <strong>Inspector Signature</strong>
+                                <br/>
+                                <img
+                                        t-att-src="'/web/image/%s/%s/signature' % (o._name, o.id)"
+                                        style="
+                                            max-height:120px;
+                                            margin-top:10px;
+                                            border:1px solid #bbb;
+                                            padding:6px;
+                                            background:#fff;
+                                        "/>
+                            </div>
+                        </t>
+
+
+                    </div>
+                </t>
+
+            </main>
+        </t>
+    </template>
+</odoo>
+
+

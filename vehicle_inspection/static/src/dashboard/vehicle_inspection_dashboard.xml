@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="vehicle_inspection.VehicleInspectionDashboard">
+        <div class="o_dashboard container-fluid p-4">
+
+            <h2 class="mb-4">🚗 Vehicle Inspection Dashboard</h2>
+
+            <!-- KPI CARDS -->
+            <div class="row g-3">
+                <t t-foreach="[
+                    ['Total', state.total, 'primary'],
+                    ['Draft', state.draft, 'warning'],
+                    ['Done', state.done, 'success'],
+                    ['With Faults', state.with_faults, 'danger']
+                ]" t-as="kpi">
+                    <div class="col-md-3">
+                        <div class="card text-center shadow-sm">
+                            <div class="card-body">
+                                <h3 t-esc="kpi[1]"/>
+                                <span class="text-muted" t-esc="kpi[0]"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="mt-4">
+                <button class="btn btn-primary me-2" t-on-click="newInspection">
+                    ➕ New Inspection
+                </button>
+                <button class="btn btn-outline-danger"
+                        t-on-click="openMissingPhotos">
+                    📸 Missing Photos
+                </button>
+            </div>
+
+            <!-- CHARTS -->
+            <div class="row mt-5">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5>Inspection Status</h5>
+                            <canvas t-ref="barChart"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5>Fault Distribution</h5>
+                            <canvas t-ref="pieChart"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </t>
+</templates>
+
