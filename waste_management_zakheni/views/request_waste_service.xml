@@ -78,7 +78,7 @@
                             type="object"
                             string="Print"
                             class="btn btn-primary"
-                            invisible="state != 'done'"/>
+                            invisible="state != 'done' and state != 'scheduled' "/>
 
 
                     <button name="action_open_simple_provider_wizard"

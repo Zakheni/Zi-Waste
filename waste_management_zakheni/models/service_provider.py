@@ -30,6 +30,14 @@ class ServiceProvider(models.Model):
     suburb = fields.Char(required=True, tracking=True)
     city = fields.Char(string="City/Town", required=True, tracking=True)
     province = fields.Selection(SA_PROVINCES, required=True, tracking=True)
+    agent = fields.Many2one(
+        'res.users',
+        string="Agent",
+        domain=lambda self: [
+            ('groups_id', 'in',
+             self.env.ref('waste_management_zakheni.group_wmz_client_agent').id)
+        ]
+    )
 
     company_id = fields.Many2one(
         'res.company',

@@ -14,11 +14,6 @@ class ResUsers(models.Model):
     active = fields.Boolean(tracking=True)
     company_id = fields.Many2one('res.company', tracking=True)
 
-    api_token = fields.Char(copy=False)
-
-    def generate_api_token(self):
-        for user in self:
-            user.api_token = secrets.token_hex(32)
 
 
     def write(self, vals):
@@ -183,77 +178,4 @@ class ResUsers(models.Model):
                         "Only Central Admins can assign users to multiple companies."
                     )
 
-    # # ----------------------------------------------------
-    # # CREATE
-    # # ----------------------------------------------------
-    # @api.model_create_multi
-    # def create(self, vals_list):
-    #     current_user = self.env.user
-    #     is_central_admin = current_user.has_group(
-    #         "waste_management_zakheni.group_central_admin"
-    #     )
-    #     is_company_admin = current_user.has_group(
-    #         "waste_management_zakheni.group_company_admin"
-    #     )
-    #
-    #     for vals in vals_list:
-    #
-    #         # 🔹 Company Admin: force single company
-    #         if is_company_admin and not is_central_admin:
-    #             vals["company_id"] = current_user.company_id.id
-    #             vals["company_ids"] = [(6, 0, [current_user.company_id.id])]
-    #
-    #         # 🔹 Non-central users cannot assign multiple companies
-    #         if not is_central_admin:
-    #             if vals.get("company_ids") and len(vals["company_ids"][0][2]) > 1:
-    #                 raise ValidationError(
-    #                     "Only Central Admins can assign users to multiple companies."
-    #                 )
-    #
-    #     return super().create(vals_list)
-    #
-    # # ----------------------------------------------------
-    # # WRITE
-    # # ----------------------------------------------------
-    # def write(self, vals):
-    #     current_user = self.env.user
-    #     is_central_admin = current_user.has_group(
-    #         "waste_management_zakheni.group_central_admin"
-    #     )
-    #     is_company_admin = current_user.has_group(
-    #         "waste_management_zakheni.group_company_admin"
-    #     )
-    #
-    #     if is_company_admin and not is_central_admin:
-    #
-    #         if "company_id" in vals and vals["company_id"] != current_user.company_id.id:
-    #             raise ValidationError(
-    #                 "Company Admins cannot assign users to another company."
-    #             )
-    #
-    #         if "company_ids" in vals:
-    #             company_ids = vals["company_ids"][0][2]
-    #             if len(company_ids) != 1 or company_ids[0] != current_user.company_id.id:
-    #                 raise ValidationError(
-    #                     "Company Admins cannot assign multiple companies."
-    #                 )
-    #
-    #     if not is_central_admin and "company_ids" in vals:
-    #         company_ids = vals["company_ids"][0][2]
-    #         if len(company_ids) > 1:
-    #             raise ValidationError(
-    #                 "Only Central Admins can assign users to multiple companies."
-    #             )
-    #
-    #     return super().write(vals)
-    #
-    # # ----------------------------------------------------
-    # # Internal Safety Constraint
-    # # ----------------------------------------------------
-    # @api.constrains("company_id", "company_ids")
-    # def _check_company_consistency(self):
-    #     for user in self:
-    #         if user.company_id not in user.company_ids:
-    #             raise ValidationError(
-    #                 "The main company must be one of the allowed companies."
-    #             )
+
