@@ -32,20 +32,6 @@ class WasteClientPortal(CustomerPortal):
     Portal controller for Waste Service Requests + Worksheets.
     """
 
-    # def _base_request_domain(self, user):
-    #     commercial_id = user.partner_id.commercial_partner_id.id
-    #     if user.has_group(self.AGENT_GROUP):
-    #         return [
-    #             ('company_id', '=', user.company_id.id),
-    #             ('partner_id', 'child_of', commercial_id),
-    #             ('state', 'in', AGENT_ALLOWED_STATES),
-    #         ]
-    #     return [
-    #         ('company_id', '=', user.company_id.id),
-    #         ('partner_id', 'child_of', commercial_id),
-    #         ('state', 'in', CUSTOMER_ALLOWED_STATES),
-    #     ]
-
     AGENT_GROUP = 'waste_management_zakheni.group_wmz_client_agent'
 
     def _base_request_domain(self, user):
@@ -88,89 +74,6 @@ class WasteClientPortal(CustomerPortal):
 
 
         return values
-
-
-
-    # @http.route(['/my/waste/requests'], type='http', auth='user', website=True)
-    # def portal_my_waste_requests(self, **kw):
-    #
-    #     user = request.env.user
-    #     WasteRequest = request.env['waste.service.request'].sudo()
-    #
-    #     # ✅ Use base domain logic
-    #     domain = self._base_request_domain(user)
-    #
-    #     # Apply state filter BEFORE search
-    #     state = kw.get('state')
-    #
-    #     if state == 'open':
-    #         domain += [('state', 'not in', ['cancelled', 'done'])]
-    #     elif state:
-    #         domain += [('state', '=', state)]
-    #
-    #     wsr = WasteRequest.search(domain, order="create_date desc")
-    #
-    #     values = {
-    #         'page_name': 'waste_requests',
-    #         'wsr_records': wsr,
-    #         'portal_msg': kw.get('msg'),
-    #         'active_state': state,
-    #     }
-    #
-    #     return request.render(
-    #         'waste_management_zakheni.portal_my_waste_requests',
-    #         values
-    #     )
-
-    # @http.route(['/my/waste/requests', '/my/waste/requests/page/<int:page>'], type='http', auth='user', website=True)
-    # def portal_my_waste_requests(self, page=1, **kw):
-    #
-    #     user = request.env.user
-    #     WasteRequest = request.env['waste.service.request'].sudo()
-    #
-    #     # Base domain
-    #     domain = self._base_request_domain(user)
-    #
-    #     # Apply state filter
-    #     state = kw.get('state')
-    #
-    #     if state == 'open':
-    #         domain += [('state', 'not in', ['cancelled', 'done'])]
-    #     elif state:
-    #         domain += [('state', '=', state)]
-    #
-    #     # Total records
-    #     request_count = WasteRequest.search_count(domain)
-    #
-    #     # Pagination (10 per page)
-    #     pager = portal_pager(
-    #         url="/my/waste/requests",
-    #         total=request_count,
-    #         page=page,
-    #         step=10
-    #     )
-    #
-    #     # Records for current page
-    #     wsr = WasteRequest.search(
-    #         domain,
-    #         order="create_date desc",
-    #         limit=10,
-    #         offset=pager['offset']
-    #     )
-    #
-    #     values = {
-    #         'page_name': 'waste_requests',
-    #         'wsr_records': wsr,
-    #         'portal_msg': kw.get('msg'),
-    #         'active_state': state,
-    #         'pager': pager,
-    #     }
-    #
-    #     return request.render(
-    #         'waste_management_zakheni.portal_my_waste_requests',
-    #         values
-    #     )
-
 
 
     @http.route(['/my/waste/requests', '/my/waste/requests/page/<int:page>'], type='http', auth='user', website=True)
@@ -243,7 +146,8 @@ class WasteClientPortal(CustomerPortal):
         # ✅ Show ALL companies as possible customers
         customers = env['res.partner'].sudo().search([
             ('is_company', '=', True),
-            ('id', '!=', user.partner_id.commercial_partner_id.id)
+            # ('id', '!=', user.partner_id.commercial_partner_id.id)
+            ('id', '=', user.company_id.partner_id.id)
 
         ], order="name asc")
 
@@ -403,145 +307,6 @@ class WasteClientPortal(CustomerPortal):
         }
         return request.render('waste_management_zakheni.portal_waste_request_thankyou', values)
 
-
-    # # ------------------------------------------------------------
-    # # DETAIL VIEW: Service Request + Worksheets list
-    # # ------------------------------------------------------------
-    # @http.route(
-    #     ['/my/waste/request/<int:wsr_id>'],
-    #     type='http',
-    #     auth='user',
-    #     website=True,
-    # )
-    # def portal_waste_request_detail(self, wsr_id, **kw):
-    #     # WasteRequest = request.env['waste.service.request'].sudo()
-    #     # Worksheet = request.env['waste.worksheet'].sudo()
-    #     # user = request.env.user
-    #     # domain = self._base_request_domain(user)
-    #     #
-    #     # # wsr = WasteRequest.search(domain, limit=1)
-    #     # # if not wsr:
-    #     # #     return request.not_found()
-    #     #
-    #     # # 1️⃣ Load the requested record
-    #     # wsr = WasteRequest.browse(wsr_id)
-    #     #
-    #     # # 2️⃣ Check it exists
-    #     # if not wsr.exists():
-    #     #     return request.not_found()
-    #     #
-    #     # # 3️⃣ Security: ensure user is allowed to see it
-    #     # allowed_domain = self._base_request_domain(user) + [('id', '=', wsr_id)]
-    #     # if not WasteRequest.search_count(allowed_domain):
-    #     #     return request.not_found()
-    #     #
-    #     # wsr_sudo = wsr.sudo()
-    #
-    #     WasteRequest = request.env['waste.service.request'].sudo()
-    #     Worksheet = request.env['waste.worksheet'].sudo()
-    #     user = request.env.user
-    #
-    #     # Load record
-    #     wsr = WasteRequest.browse(wsr_id)
-    #
-    #     if not wsr.exists():
-    #         return request.not_found()
-    #
-    #     # Permission check
-    #     if user.has_group(self.AGENT_GROUP):
-    #         allowed = True
-    #     else:
-    #         allowed = WasteRequest.search_count(
-    #             self._base_request_domain(user) + [('id', '=', wsr_id)]
-    #         )
-    #
-    #     if not allowed:
-    #         return request.not_found()
-    #
-    #     wsr_sudo = wsr.sudo()
-    #
-    #     # -------- Customer & Service (display strings) ----------
-    #     customer_name = wsr_sudo.partner_id.display_name or '-'
-    #     service_requested_name = (
-    #         wsr_sudo.service_requested_id.display_name
-    #         if wsr_sudo.service_requested_id
-    #         else '-'
-    #     )
-    #     waste_type_name = (
-    #         wsr_sudo.waste_type_id.display_name
-    #         if wsr_sudo.waste_type_id
-    #         else '-'
-    #     )
-    #     waste_details_name = (
-    #         wsr_sudo.waste_details_id.display_name
-    #         if wsr_sudo.waste_details_id
-    #         else '-'
-    #     )
-    #
-    #     container_type_name = (
-    #         wsr_sudo.container_type_id.display_name
-    #         if wsr_sudo.container_type_id
-    #         else '-'
-    #     )
-    #     bin_type_name = (
-    #         wsr_sudo.bin_type_id.display_name
-    #         if wsr_sudo.bin_type_id
-    #         else ''
-    #     )
-    #     tank_volume_name = (
-    #         wsr_sudo.tank_volume_id.display_name
-    #         if wsr_sudo.tank_volume_id
-    #         else ''
-    #     )
-    #
-    #     # -------- Locations & Containers (display strings) ----------
-    #     pickup_points_list = [
-    #         (pp.display_name or '').strip()
-    #         for pp in wsr_sudo.pickup_point_ids
-    #     ]
-    #     pickup_points_list = [p for p in pickup_points_list if p]
-    #
-    #     dropoff_points_list = [
-    #         (dp.display_name or '').strip()
-    #         for dp in wsr_sudo.dropoff_point_ids
-    #     ]
-    #     dropoff_points_list = [d for d in dropoff_points_list if d]
-    #
-    #     bins_summary_text = wsr_sudo.pickup_point_bins_summary or ''
-    #     bin_line_count = wsr_sudo.bin_line_count or 0
-    #
-    #     is_agent = user.has_group(self.AGENT_GROUP)
-    #     worksheets = False
-    #     if is_agent:
-    #         worksheets = Worksheet.search(
-    #             [('service_request_id', '=', wsr.id)],
-    #             order='create_date desc'
-    #         )
-    #
-    #     values = {
-    #         'page_name': 'waste_request_detail',
-    #         'wsr': wsr,
-    #         'worksheets': worksheets,
-    #         'is_agent': is_agent,
-    #         'portal_msg': kw.get('msg'),
-    #
-    #         'customer_name': customer_name,
-    #         'service_requested_name': service_requested_name,
-    #         'waste_type_name': waste_type_name,
-    #         'waste_details_name': waste_details_name,
-    #         'container_type_name': container_type_name,
-    #         'bin_type_name': bin_type_name,
-    #         'tank_volume_name': tank_volume_name,
-    #         'pickup_points_list': pickup_points_list,
-    #         'dropoff_points_list': dropoff_points_list,
-    #         'bins_summary_text': bins_summary_text,
-    #         'bin_line_count': bin_line_count,
-    #     }
-    #     return request.render('waste_management_zakheni.portal_waste_request_detail', values)
-
-    # ------------------------------------------------------------
-    # DETAIL VIEW: Service Request + Worksheets list
-    # ------------------------------------------------------------
     @http.route(
         ['/my/waste/request/<int:wsr_id>'],
         type='http',
@@ -1972,50 +1737,6 @@ class WasteClientPortal(CustomerPortal):
 
         return request.make_json_response({'success': True})
 
-    # @http.route(
-    #     ['/my/waste/worksheet/<int:ws_id>/file/<string:field>'],
-    #     type='http',
-    #     auth='user',
-    #     website=True,
-    # )
-    # def portal_worksheet_file(self, ws_id, field, download=None, **kw):
-    #
-    #     user = request.env.user
-    #
-    #     if not user.has_group(self.AGENT_GROUP):
-    #         return request.not_found()
-    #
-    #     ws = request.env['waste.worksheet'].sudo().browse(ws_id)
-    #
-    #     if not ws.exists():
-    #         return request.not_found()
-    #
-    #     allowed_fields = [
-    #         'manifest_document',
-    #         'weighbridge_slip',
-    #         'safety_certificate',
-    #         'driver_signature',
-    #         'service_provider_signature'
-    #     ]
-    #
-    #     if field not in allowed_fields:
-    #         return request.not_found()
-    #
-    #     file_data = getattr(ws, field)
-    #     if not file_data:
-    #         return request.not_found()
-    #
-    #     filename = getattr(ws, field + "_filename", field)
-    #
-    #     disposition = 'attachment' if download else 'inline'
-    #
-    #     return request.make_response(
-    #         base64.b64decode(file_data),
-    #         headers=[
-    #             ('Content-Type', 'application/octet-stream'),
-    #             ('Content-Disposition', f'{disposition}; filename="{filename}"')
-    #         ]
-    #     )
 
     @http.route(
         ['/my/waste/worksheet/<int:ws_id>/file/<string:field>'],

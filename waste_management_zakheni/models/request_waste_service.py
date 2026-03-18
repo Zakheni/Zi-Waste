@@ -2392,11 +2392,22 @@ class WasteServiceRequest(models.Model):
     # ---------------------------------------------------------
     # Print Manifest PDF
     # ---------------------------------------------------------
+    # def action_print_manifest_pdf(self):
+    #     self.ensure_one()
+    #     if self.state != "done":
+    #         raise UserError(_("Only Authorised (Done) manifests can be printed."))
+    #     return self.env.ref("waste_management_zakheni.action_manifest_report_pdf").report_action(self)
+
+
     def action_print_manifest_pdf(self):
         self.ensure_one()
-        if self.state != "done":
-            raise UserError(_("Only Authorised (Done) manifests can be printed."))
-        return self.env.ref("waste_management_zakheni.action_manifest_report_pdf").report_action(self)
+
+        if self.state not in ["done", "scheduled"]:
+            raise UserError(_("Only Authorised or Scheduled manifests can be printed."))
+
+        return self.env.ref(
+            "waste_management_zakheni.action_manifest_report_pdf"
+        ).report_action(self)
 
     def _build_dashboard_domain(self, filters=None):
         filters = filters or {}
