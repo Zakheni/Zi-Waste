@@ -166,29 +166,6 @@ class WasteClientPortal(CustomerPortal):
     # ------------------------------------------------------------
     # LIST: View Logged Requests
     # ------------------------------------------------------------
-    # @http.route(['/my/waste/requests'], type='http', auth='user', website=True)
-    # def portal_my_waste_requests(self, **kw):
-    #     user = request.env.user
-    #     WasteRequest = request.env['waste.service.request'].sudo()
-    #     domain = self._base_request_domain(user)
-    #     # apply state filter BEFORE search
-    #     state = kw.get('state')
-    #     if state == 'open':
-    #         domain += [('state', 'not in', ['cancelled', 'done'])]
-    #     elif state:
-    #         domain += [('state', '=', state)]
-    #
-    #     wsr = WasteRequest.search(domain, order="create_date desc")
-    #
-    #     values = {
-    #         'page_name': 'waste_requests',
-    #         'wsr_records': wsr,
-    #         'portal_msg': kw.get('msg'),
-    #         'active_state': state,  # optional: to highlight active card/filter
-    #     }
-    #     return request.render('waste_management_zakheni.portal_my_waste_requests', values)
-
-
 
     @http.route('/my/waste/request/new', type='http', auth='user', website=True)
     def portal_new_waste_request_form(self, **kwargs):

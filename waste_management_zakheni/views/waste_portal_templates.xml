@@ -131,218 +131,317 @@
 
                             </div>
                         </form>
-                        <!--                        <table class="table table-hover mt-3">-->
 
-                        <!--                            <thead class="thead-light">-->
-                        <!--                                <tr>-->
-                        <!--                                    <th>Request</th>-->
-                        <!--                                    <th>Service Requested</th>-->
-                        <!--                                    <th>Ticket Type</th>-->
-                        <!--                                    <th>Container Type</th>-->
-                        <!--                                    <th>Created By</th>-->
-                        <!--                                    <th>Update By</th>-->
-                        <!--                                    <th>Created on</th>-->
-                        <!--                                    <th>Updated on</th>-->
-                        <!--                                    <th>Status</th>-->
-                        <!--                                </tr>-->
-                        <!--                            </thead>-->
-                        <!--                            <tbody>-->
-                        <!--                                <tr t-foreach="wsr_records or []" t-as="req">-->
-                        <!--                                    &lt;!&ndash; Name / Request &ndash;&gt;-->
-                        <!--                                    <td>-->
-                        <!--                                        <a t-att-href="'/my/waste/request/%s' % req.id">-->
-                        <!--                                            <t t-esc="req.name"/>-->
-                        <!--                                        </a>-->
-                        <!--                                    </td>-->
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
 
-                        <!--                                    &lt;!&ndash; Service Requested &ndash;&gt;-->
-                        <!--                                    <td>-->
-                        <!--                                        <t t-esc="req.service_requested_id.display_name or ''"/>-->
-                        <!--                                    </td>-->
+                            <!-- LEFT: TITLE -->
+                                 <!-- ✅ CREATE BUTTON -->
+                                <a href="/my/waste/request/new"
+                                   class="btn btn-success shadow-sm">
+                                    <i class="fa fa-plus me-1"/>
+                                    Log Service Request
+                                </a>
 
-                        <!--                                    &lt;!&ndash; Ticket Type &ndash;&gt;-->
-                        <!--                                    <td>-->
-                        <!--                                        <t t-esc="req.ticket_type or ''"/>-->
-                        <!--                                    </td>-->
-
-                        <!--                                    &lt;!&ndash; Container Type &ndash;&gt;-->
-                        <!--                                    <td>-->
-                        <!--                                        <t t-esc="req.container_type_id.display_name or ''"/>-->
-                        <!--                                    </td>-->
-
-                        <!--                                    <td>-->
-                        <!--                                        <t t-esc="req.create_uid.partner_id.name"/>-->
-                        <!--                                        <br/>-->
-                        <!--                                        <small class="text-muted">-->
-                        <!--                                            <t t-esc="req.create_uid.partner_id.commercial_partner_id.name"/>-->
-                        <!--                                        </small>-->
-                        <!--                                    </td>-->
-                        <!--                                    <td>-->
-                        <!--                                        <t t-esc="req.write_uid.partner_id.name"/>-->
-                        <!--                                        <br/>-->
-                        <!--                                        <small class="text-muted">-->
-                        <!--                                            <t t-esc="req.write_uid.partner_id.commercial_partner_id.name"/>-->
-                        <!--                                        </small>-->
-                        <!--                                    </td>-->
+                            <!-- RIGHT: ACTIONS -->
+                            <div class="d-flex gap-2">
 
 
-                        <!--                                    &lt;!&ndash; Date &ndash;&gt;-->
-                        <!--                                    <td>-->
-                        <!--                                        <t t-esc="req.service_request_date" t-options="{'widget': 'datetime'}"/>-->
-                        <!--                                    </td>-->
 
-                        <!--                                    <td>-->
-                        <!--                                        <t t-esc="req.write_date" t-options="{'widget': 'datetime'}"/>-->
-                        <!--                                    </td>-->
+                                <!-- VIEW TOGGLE -->
+                                <div class="btn-group">
+                                    <button type="button"
+                                            class="btn btn-outline-primary active"
+                                            id="btnCardView">
+                                        <i class="fa fa-th-large"/>
+                                    </button>
 
-                        <!--                                    &lt;!&ndash; Status &ndash;&gt;-->
-                        <!--                                    <td>-->
-                        <!--                                        <span class="badge bg-primary">-->
-                        <!--                                            &lt;!&ndash;                                            <t t-esc="req.state"/>&ndash;&gt;-->
-                        <!--                                            <t t-esc="req.state_label or ''"/>-->
-                        <!--                                        </span>-->
-                        <!--                                    </td>-->
-                        <!--                                </tr>-->
+                                    <button type="button"
+                                            class="btn btn-outline-primary"
+                                            id="btnTableView">
+                                        <i class="fa fa-list"/>
+                                    </button>
+                                </div>
 
-                        <!--                                &lt;!&ndash; Empty state &ndash;&gt;-->
-                        <!--                                <tr t-if="not (wsr_records and len(wsr_records))">-->
-                        <!--                                    <td colspan="6" class="text-center text-muted py-4">-->
-                        <!--                                        No service requests logged yet.-->
-                        <!--                                    </td>-->
-                        <!--                                </tr>-->
-                        <!--                            </tbody>-->
-                        <!--                        </table>-->
-                        <style>
-                            /* Row hover effect */
-                            .wsr-row {
-                            transition: all 0.2s ease;
-                            }
-                            .wsr-row:hover {
-                            transform: scale(1.01);
-                            }
+                            </div>
 
-                            /* Card style */
-                            .wsr-card {
-                            border-radius: 10px;
-                            background: #fff;
-                            border: 1px solid #e9ecef;
-                            }
+                        </div>
 
-                            /* Sub text */
-                            .wsr-muted {
-                            font-size: 0.85rem;
-                            color: #6c757d;
-                            }
-                        </style>
 
-                        <table class="table table-borderless mt-4">
-                            <tbody>
+                        <div id="cardView">
 
-                                <tr t-foreach="wsr_records or []" t-as="req" class="wsr-row">
-                                    <td colspan="9">
+                            <!-- 👉 YOUR CARD CODE (keep exactly as is) -->
+                            <style>
+                                /* Row hover effect */
+                                .wsr-row {
+                                transition: all 0.2s ease;
+                                }
+                                .wsr-row:hover {
+                                transform: scale(1.01);
+                                }
 
-                                        <div class="wsr-card shadow-sm p-3 mb-3">
+                                /* Card style */
+                                .wsr-card {
+                                border-radius: 10px;
+                                background: #fff;
+                                border: 1px solid #e9ecef;
+                                }
 
-                                            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                                /* Sub text */
+                                .wsr-muted {
+                                font-size: 0.85rem;
+                                color: #6c757d;
+                                }
+                            </style>
 
-                                                <!-- LEFT SIDE -->
-                                                <div>
+                            <table class="table table-borderless mt-4">
+                                <tbody>
 
-                                                    <!-- Request Name -->
-                                                    <div class="fw-bold text-success fs-5">
-                                                        <a t-att-href="'/my/waste/request/%s' % req.id"
-                                                           class="text-decoration-none text-success">
-                                                            <t t-esc="req.name"/>
-                                                        </a>
+                                    <tr t-foreach="wsr_records or []" t-as="req" class="wsr-row">
+                                        <td colspan="9">
+
+                                            <div class="wsr-card shadow-sm p-3 mb-3">
+
+                                                <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+                                                    <!-- LEFT SIDE -->
+                                                    <div>
+
+                                                        <!-- Request Name -->
+                                                        <div class="fw-bold text-success fs-5">
+                                                            <a t-att-href="'/my/waste/request/%s' % req.id"
+                                                               class="text-decoration-none text-success">
+                                                                <t t-esc="req.name"/>
+                                                            </a>
+                                                        </div>
+
+                                                        <!-- Service + Container -->
+                                                        <div class="wsr-muted mt-1">
+                                                            <i class="fa fa-cogs me-1"/>
+                                                            <t t-esc="req.service_requested_id.display_name or ''"/>
+                                                            &#160;•&#160;
+                                                            <t t-esc="req.container_type_id.display_name or ''"/>
+                                                        </div>
+                                                        <!-- Ticket Type -->
+                                                        <div class="wsr-muted mt-1">
+                                                            <i class="fa fa-tag me-1"/>
+                                                            <t t-esc="req.ticket_type or ''"/>
+                                                        </div>
+
                                                     </div>
 
-                                                    <!-- Service + Container -->
-                                                    <div class="wsr-muted mt-1">
-                                                        <i class="fa fa-cogs me-1"/>
-                                                        <t t-esc="req.service_requested_id.display_name or ''"/>
-                                                        &#160;•&#160;
-                                                        <t t-esc="req.container_type_id.display_name or ''"/>
-                                                    </div>
-                                                    <!-- Ticket Type -->
-                                                    <div class="wsr-muted mt-1">
-                                                        <i class="fa fa-tag me-1"/>
-                                                        <t t-esc="req.ticket_type or ''"/>
-                                                    </div>
+                                                    <!-- RIGHT SIDE -->
+                                                    <div class="text-end">
 
-                                                </div>
-
-                                                <!-- RIGHT SIDE -->
-                                                <div class="text-end">
-
-                                                    <!-- STATUS -->
-                                                    <span t-att-class="'badge px-3 py-2 ' + (
+                                                        <!-- STATUS -->
+                                                        <span t-att-class="'badge px-3 py-2 ' + (
                                 'bg-success' if req.state == 'done'
                                 else 'bg-warning text-dark' if req.state == 'draft'
                                 else 'bg-danger' if req.state == 'cancelled'
                                 else 'bg-secondary'
                             )">
-                                                        <t t-esc="req.state_label or ''"/>
-                                                    </span>
+                                                            <t t-esc="req.state_label or ''"/>
+                                                        </span>
 
-                                                    <!-- DATE -->
-                                                    <div class="wsr-muted mt-2">
-                                                        <strong>Created at:</strong>
-                                                        <i class="fa fa-calendar me-1"/>
+                                                        <!-- DATE -->
+                                                        <div class="wsr-muted mt-2">
+                                                            <strong>Created at:</strong>
+                                                            <i class="fa fa-calendar me-1"/>
 
-                                                        <span t-field="req.service_request_date"
-                                                              t-options="{'widget': 'datetime'}"/>
+                                                            <span t-field="req.service_request_date"
+                                                                  t-options="{'widget': 'datetime'}"/>
+                                                        </div>
+
+                                                        <div class="wsr-muted mt-2">
+                                                            <strong>Updated at:</strong>
+                                                            <i class="fa fa-calendar me-1"/>
+
+                                                            <span t-field="req.write_date"
+                                                                  t-options="{'widget': 'datetime'}"/>
+                                                        </div>
+
                                                     </div>
 
-                                                    <div class="wsr-muted mt-2">
-                                                        <strong>Updated at:</strong>
-                                                        <i class="fa fa-calendar me-1"/>
+                                                </div>
 
-                                                        <span t-field="req.write_date"
-                                                              t-options="{'widget': 'datetime'}"/>
+                                                <!-- BOTTOM META -->
+                                                <div class="d-flex justify-content-between mt-3 flex-wrap">
+
+                                                    <!-- Created -->
+                                                    <div class="wsr-muted">
+                                                        <i class="fa fa-user me-1"/>
+                                                        <strong>Created:</strong>
+                                                        <t t-esc="req.create_uid.partner_id.name"/>
+                                                    </div>
+
+                                                    <!-- Updated -->
+                                                    <div class="wsr-muted">
+                                                        <i class="fa fa-refresh me-1"/>
+                                                        <strong>Updated:</strong>
+                                                        <t t-esc="req.write_uid.partner_id.name"/>
                                                     </div>
 
                                                 </div>
 
                                             </div>
 
-                                            <!-- BOTTOM META -->
-                                            <div class="d-flex justify-content-between mt-3 flex-wrap">
+                                        </td>
+                                    </tr>
 
-                                                <!-- Created -->
-                                                <div class="wsr-muted">
-                                                    <i class="fa fa-user me-1"/>
-                                                    <strong>Created:</strong>
-                                                    <t t-esc="req.create_uid.partner_id.name"/>
-                                                </div>
+                                    <!-- EMPTY STATE -->
+                                    <tr t-if="not (wsr_records and len(wsr_records))">
+                                        <td colspan="9" class="text-center text-muted py-5">
+                                            <i class="fa fa-inbox fa-2x mb-2 d-block"/>
+                                            No service requests logged yet.
+                                        </td>
+                                    </tr>
 
-                                                <!-- Updated -->
-                                                <div class="wsr-muted">
-                                                    <i class="fa fa-refresh me-1"/>
-                                                    <strong>Updated:</strong>
-                                                    <t t-esc="req.write_uid.partner_id.name"/>
-                                                </div>
+                                </tbody>
+                            </table>
 
-                                            </div>
 
-                                        </div>
+                        </div>
+                        <div id="tableView" style="display:none;">
 
-                                    </td>
-                                </tr>
+                            <!-- 👉 YOUR NORMAL TABLE CODE -->
+                            <table class="table table-hover mt-3">
 
-                                <!-- EMPTY STATE -->
-                                <tr t-if="not (wsr_records and len(wsr_records))">
-                                    <td colspan="9" class="text-center text-muted py-5">
-                                        <i class="fa fa-inbox fa-2x mb-2 d-block"/>
-                                        No service requests logged yet.
-                                    </td>
-                                </tr>
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Request</th>
+                                        <th>Service Requested</th>
+                                        <th>Ticket Type</th>
+                                        <th>Container Type</th>
+                                        <th>Created By</th>
+                                        <th>Update By</th>
+                                        <th>Created on</th>
+                                        <th>Updated on</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="wsr_records or []" t-as="req">
+                                        <!-- Name / Request -->
+                                        <td>
+                                            <a t-att-href="'/my/waste/request/%s' % req.id">
+                                                <t t-esc="req.name"/>
+                                            </a>
+                                        </td>
 
-                            </tbody>
-                        </table>
+                                        <!-- Service Requested -->
+                                        <td>
+                                            <t t-esc="req.service_requested_id.display_name or ''"/>
+                                        </td>
+
+                                        <!-- Ticket Type -->
+                                        <td>
+                                            <t t-esc="req.ticket_type or ''"/>
+                                        </td>
+
+                                        <!-- Container Type -->
+                                        <td>
+                                            <t t-esc="req.container_type_id.display_name or ''"/>
+                                        </td>
+
+                                        <td>
+                                            <t t-esc="req.create_uid.partner_id.name"/>
+                                            <br/>
+                                            <!--                                            <small class="text-muted">-->
+                                            <!--                                                <t t-esc="req.create_uid.partner_id.commercial_partner_id.name"/>-->
+                                            <!--                                            </small>-->
+                                        </td>
+                                        <td>
+                                            <t t-esc="req.write_uid.partner_id.name"/>
+                                            <br/>
+                                            <!--                                            <small class="text-muted">-->
+                                            <!--                                                <t t-esc="req.write_uid.partner_id.commercial_partner_id.name"/>-->
+                                            <!--                                            </small>-->
+                                        </td>
+
+
+                                        <!-- Date -->
+                                        <td>
+                                            <t t-esc="req.service_request_date" t-options="{'widget': 'datetime'}"/>
+                                        </td>
+
+                                        <td>
+                                            <t t-esc="req.write_date" t-options="{'widget': 'datetime'}"/>
+                                        </td>
+
+                                        <!-- Status -->
+                                        <td>
+                                            <span class="badge bg-primary">
+                                                <!--                                            <t t-esc="req.state"/>-->
+                                                <t t-esc="req.state_label or ''"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Empty state -->
+                                    <tr t-if="not (wsr_records and len(wsr_records))">
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            No service requests logged yet.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                        </div>
+
 
                         <div class="mt-3" t-if="pager">
                             <t t-call="portal.pager"/>
                         </div>
+
+                        <style>
+                            .btn-group .btn.active {
+                            background-color: #008000;
+                            color: #fff;
+                            }
+                        </style>
+
+                        <script type="text/javascript">
+                            document.addEventListener('DOMContentLoaded', function () {
+
+                            const cardView = document.getElementById('cardView');
+                            const tableView = document.getElementById('tableView');
+
+                            const btnCard = document.getElementById('btnCardView');
+                            const btnTable = document.getElementById('btnTableView');
+
+                            function showCard() {
+                            cardView.style.display = 'block';
+                            tableView.style.display = 'none';
+
+                            btnCard.classList.add('active');
+                            btnTable.classList.remove('active');
+
+                            localStorage.setItem('wsr_view', 'card');
+                            }
+
+                            function showTable() {
+                            cardView.style.display = 'none';
+                            tableView.style.display = 'block';
+
+                            btnTable.classList.add('active');
+                            btnCard.classList.remove('active');
+
+                            localStorage.setItem('wsr_view', 'table');
+                            }
+
+                            btnCard.addEventListener('click', showCard);
+                            btnTable.addEventListener('click', showTable);
+
+                            // 🔥 remember user preference
+                            const saved = localStorage.getItem('wsr_view');
+
+                            if (saved === 'table') {
+                            showTable();
+                            } else {
+                            showCard();
+                            }
+
+                            });
+                        </script>
 
 
                     </div>
@@ -861,8 +960,6 @@
 
         </t>
     </template>
-
-
 
 
     <!-- -
