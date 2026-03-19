@@ -1,0 +1,42 @@
+/* Hide the odoo link */
+/* 1) Always hide the Odoo link itself */
+footer a[href*="odoo.com"],
+footer a[href*="www.odoo.com"] {
+  display: none !important;
+}
+
+/* 2) Hide the remaining “Powered by …” text WITHOUT removing the footer container */
+footer .o_footer_copyright,
+footer .js_footer_copyright {
+  font-size: 0 !important;      /* makes the leftover text disappear */
+  line-height: 0 !important;
+}
+
+/* 3) OPTIONAL: show your own text instead (keeps the footer bar visible)
+footer .o_footer_copyright::before,
+footer .js_footer_copyright::before {
+  content: "Copyright © Company name" !important;
+
+  display: inline-block;
+  padding: 7px 20px!important;
+  margin: 12px 0!important;
+
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+}
+*/
+footer .o_footer_copyright::before,
+footer .js_footer_copyright::before {
+  content: "Copyright © ZakheniICT" !important;
+
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+
+  padding: 20px 0 !important;   /* top/bottom */
+  margin: 0 !important;
+
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+}
+

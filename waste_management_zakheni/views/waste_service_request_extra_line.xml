@@ -1,0 +1,35 @@
+<odoo>
+    <record id="view_waste_extra_product_tree" model="ir.ui.view">
+        <field name="name">waste.service.request.extra.line.tree</field>
+        <field name="model">waste.service.request.extra.line</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="product_id"/>
+                <field name="quantity"/>
+                <field name="price_unit"/>
+                <field name="price_subtotal" readonly="1"/>
+                <field name="sale_order_line_id" readonly="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_waste_extra_product_form" model="ir.ui.view">
+        <field name="name">waste.service.request.extra.line.form</field>
+        <field name="model">waste.service.request.extra.line</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="request_id" readonly="1"/>
+                        <field name="product_id"/>
+                        <field name="quantity"/>
+                        <field name="price_unit"/>
+                        <field name="price_subtotal" readonly="1"/>
+                        <field name="sale_order_line_id" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

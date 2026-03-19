@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Report Action -->
+    <record id="action_portal_waste_pdf" model="ir.actions.report">
+        <field name="name">Waste Service Report</field>
+        <field name="model">waste.service.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">waste_management_zakheni.portal_waste_report_pdf</field>
+        <field name="report_file">waste_management_zakheni.portal_waste_report_pdf</field>
+        <field name="print_report_name">'Waste_Service_Report_%s' % (object.name or '')</field>
+    </record>
+
+    <!-- QWeb PDF Template -->
+    <template id="portal_waste_report_pdf" name="Waste Portal PDF Report">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <main class="o_report_layout">
+                    <div class="page">
+
+                        <h2>Waste Service Report</h2>
+                        <p>
+                            Generated for: <t t-esc="user.name"/>
+                        </p>
+
+                        <t t-if="client_filters">
+                            <p class="mb-1"><strong>Applied filters:</strong></p>
+                            <ul class="mb-3">
+                                <li t-if="client_filters.get('date_from')">Date From:
+                                    <t t-esc="client_filters.get('date_from')"/>
+                                </li>
+                                <li t-if="client_filters.get('date_to')">Date To:
+                                    <t t-esc="client_filters.get('date_to')"/>
+                                </li>
+                                <li t-if="client_filters.get('manifest_no')">Manifest:
+                                    <t t-esc="client_filters.get('manifest_no')"/>
+                                </li>
+                                <li t-if="client_filters.get('sale_order_no')">Sales Order:
+                                    <t t-esc="client_filters.get('sale_order_no')"/>
+                                </li>
+                                <li t-if="client_filters.get('invoice_no')">Invoice:
+                                    <t t-esc="client_filters.get('invoice_no')"/>
+                                </li>
+                            </ul>
+                        </t>
+
+                        <hr/>
+
+                        <!-- ================================================= -->
+                        <!-- Client Report -->
+                        <!-- ================================================= -->
+                        <div class="mt-3">
+                            <h4>Client Report</h4>
+
+                            <table class="table table-sm table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Planned Date</th>
+                                        <th>Manifest</th>
+                                        <th>Sales Order</th>
+                                        <th>Invoice Number</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="not client_rows">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-3">
+                                                No data found for the selected filters.
+                                            </td>
+                                        </tr>
+                                    </t>
+
+                                    <t t-foreach="client_rows" t-as="r">
+                                        <tr>
+                                            <td><t t-esc="r.get('planned_date')"/></td>
+                                            <td><t t-esc="r.get('manifest')"/></td>
+                                            <td><t t-esc="r.get('sale_order')"/></td>
+                                            <td><t t-esc="r.get('invoice')"/></td>
+                                            <td class="text-end"><t t-esc="r.get('total')"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <br/>
+
+                        <!-- ================================================= -->
+                        <!-- ✅ Recent Driver Trips (NEW) -->
+                        <!-- ================================================= -->
+                        <div class="mt-3">
+                            <h4>Recent Driver Trips</h4>
+
+                            <table class="table table-sm table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Arrival</th>
+                                        <th>Return</th>
+                                        <th>Planned</th>
+                                        <th>Manifest</th>
+                                        <th>Driver</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="not recent_trips">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-3">
+                                                No recent trips found.
+                                            </td>
+                                        </tr>
+                                    </t>
+
+                                    <t t-foreach="recent_trips" t-as="t">
+                                        <tr>
+                                            <td><t t-esc="t.get('arrival')"/></td>
+                                            <td><t t-esc="t.get('return')"/></td>
+                                            <td><t t-esc="t.get('planned')"/></td>
+                                            <td><t t-esc="t.get('manifest')"/></td>
+                                            <td><t t-esc="t.get('driver')"/></td>
+                                            <td class="text-end"><t t-esc="t.get('qty')"/></td>
+                                            <td class="text-end"><t t-esc="t.get('revenue')"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <br/>
+
+                        <!-- Requests Summary -->
+                        <h4>Service Requests Summary</h4>
+                        <table class="table table-sm o_main_table" style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="border-bottom:1px solid #ccc; padding:4px;">Name</th>
+                                    <th style="border-bottom:1px solid #ccc; padding:4px;">Date</th>
+                                    <th style="border-bottom:1px solid #ccc; padding:4px;">Status</th>
+                                    <th style="border-bottom:1px solid #ccc; padding:4px;">Customer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="not docs">
+                                    <tr>
+                                        <td colspan="4" style="padding:6px; text-align:center; color:#888;">
+                                            No requests found for this account.
+                                        </td>
+                                    </tr>
+                                </t>
+                                <t t-foreach="docs" t-as="req">
+                                    <tr>
+                                        <td style="padding:4px;"><t t-esc="req.name"/></td>
+                                        <td style="padding:4px;"><t t-esc="req.create_date"/></td>
+                                        <td style="padding:4px;"><t t-esc="req.state"/></td>
+                                        <td style="padding:4px;"><t t-esc="req.partner_id.display_name"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </main>
+            </t>
+        </t>
+    </template>
+
+</odoo>
+

@@ -1,0 +1,870 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+         1) REPORT ACTION (Manifest PDF)
+    -->
+    <record id="action_manifest_report_pdf" model="ir.actions.report">
+        <field name="name">Waste Manifest</field>
+        <field name="model">waste.service.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">waste_management_zakheni.report_manifest_pdf</field>
+        <field name="report_file">waste_management_zakheni.report_manifest_pdf</field>
+        <field name="print_report_name">'Manifest - %s' % (object.name or '')</field>
+
+        <!-- Adds it to form Print menu -->
+        <field name="binding_model_id" ref="model_waste_service_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!--
+         2) REPORT TEMPLATE (Advanced Styling + Equal Cells)
+    -->
+    <template id="report_manifest_pdf">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+
+                <!-- Advanced PDF-safe styling (wkhtmltopdf friendly) -->
+                <style type="text/css">
+                    /* ===== Theme Colors ===== */
+                    :root{
+                    --wmz-primary:#0F766E; /* header teal */
+                    --wmz-primary-2:#115E59; /* darker teal */
+                    --wmz-header-text:#ffffff;
+                    --wmz-border:#d8dde3;
+                    --wmz-row:#ffffff;
+                    --wmz-row-alt:#f3fbfa; /* zebra */
+                    --wmz-k:#f7fafc; /* key cell bg */
+                    --wmz-muted:#6b7280;
+                    }
+
+                    .wmz{ font-family: Arial, sans-serif; font-size:12px; color:#111827; }
+                    .wmz-title{ font-size:20px; font-weight:700; margin:0; padding:0; }
+                    .wmz-sub{ font-size:11px; color:var(--wmz-muted); margin-top:2px; }
+                    .wmz-hr{ border-top:1px solid var(--wmz-border); margin:10px 0 12px; }
+
+                    /* Header layout */
+                    .wmz-row{ width:100%; }
+                    .wmz-left{ float:left; width:62%; }
+                    .wmz-right{ float:right; width:38%; text-align:right; }
+                    .wmz-clear{ clear:both; }
+
+                    .wmz-badge{
+                    display:inline-block; padding:3px 10px;
+                    border-radius:999px;
+                    font-size:10px; font-weight:700;
+                    color:var(--wmz-header-text);
+                    background:var(--wmz-primary);
+                    border:1px solid var(--wmz-primary-2);
+                    margin-left:6px;
+                    }
+
+                    .wmz-section{ margin-top:12px; }
+                    .wmz-section-title{
+                    font-size:13px; font-weight:700;
+                    margin:0 0 8px;
+                    padding:6px 10px;
+                    border-left:4px solid var(--wmz-primary);
+                    background:#f6fffe;
+                    border-radius:6px;
+                    }
+
+                    /* ===== Tables: fixed layout + equal columns ===== */
+                    table.wmz-table{
+                    width:100%;
+                    border-collapse:collapse;
+                    table-layout:fixed;
+                    border:1px solid var(--wmz-border);
+                    margin-bottom:10px;
+                    }
+                    table.wmz-table th, table.wmz-table td{
+                    border:1px solid var(--wmz-border);
+                    padding:8px 10px;
+                    vertical-align:middle;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                    word-wrap:break-word;
+                    }
+
+                    /* Header color */
+                    table.wmz-table thead th{
+                    background:var(--wmz-primary);
+                    color:var(--wmz-header-text);
+                    font-size:11px;
+                    font-weight:700;
+                    }
+
+                    /* Zebra rows */
+                    table.wmz-table tbody tr:nth-child(odd) td{ background:var(--wmz-row); }
+                    table.wmz-table tbody tr:nth-child(even) td{ background:var(--wmz-row-alt); }
+
+                    /* Key cells */
+                    .wmz-k{
+                    font-weight:700;
+                    background:var(--wmz-k) !important;
+                    color:#111827;
+                    }
+
+                    .wmz-muted{ color:var(--wmz-muted); }
+                    .wmz-righttxt{ text-align:right; white-space:nowrap; }
+                    .wmz-nowrap{ white-space:nowrap; }
+
+                    /* Summary card */
+                    .wmz-card{
+                    border:1px solid var(--wmz-border);
+                    border-radius:10px;
+                    padding:12px;
+                    background:#f8fffe;
+                    }
+
+                    /* Billing columns */
+                    .wmz-cols{ width:100%; }
+                    .wmz-col{ width:49%; display:inline-block; vertical-align:top; }
+                    .wmz-col + .wmz-col{ margin-left:2%; }
+
+                    .wmz-footer{ font-size:10px; color:var(--wmz-muted); margin-top:10px; }
+
+                    .wmz-cols{ width:100%; }
+                    .wmz-col{ width:49%; display:inline-block; vertical-align:top; }
+                    .wmz-col + .wmz-col{ margin-left:2%; }
+
+                </style>
+
+                <t t-if="not docs">
+                    <div class="page wmz">
+                        <p class="wmz-title">Waste Manifest</p>
+                        <p class="wmz-muted">No manifest record selected.</p>
+                    </div>
+                </t>
+
+                <t t-foreach="docs" t-as="doc">
+                    <div class="page wmz">
+
+                        <!-- Header -->
+                        <div class="wmz-row">
+                            <div class="wmz-left">
+                                <p class="wmz-title">Waste Manifest</p>
+                                <div class="wmz-sub">
+                                    Status:
+                                    <span class="wmz-badge">
+                                        <t t-esc="dict(doc._fields['state'].selection).get(doc.state, doc.state or '')"/>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="wmz-right wmz-sub" style="font-size:12px;">
+                                <div class="wmz-nowrap">
+                                    <strong>Manifest No:</strong>
+                                    <span t-esc="doc.name or ''"/>
+                                </div>
+                                <div class="wmz-nowrap">
+                                    <strong>Planned Date:</strong>
+                                    <span t-esc="doc.planned_date or ''"/>
+                                </div>
+                                <div class="wmz-nowrap">
+                                    <strong>Request Date:</strong>
+                                    <span t-esc="doc.service_request_date or ''"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wmz-clear"></div>
+
+                        <div class="wmz-hr"/>
+
+                        <!-- Customer / SO -->
+                        <div class="wmz-section">
+                            <div class="wmz-section-title">Customer &amp; Order</div>
+                            <table class="wmz-table">
+                                <colgroup>
+                                    <col style="width:25%"/>
+                                    <col style="width:25%"/>
+                                    <col style="width:25%"/>
+                                    <col style="width:25%"/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td class="wmz-k">Customer</td>
+                                        <td t-esc="doc.partner_id.display_name or ''"/>
+                                        <td class="wmz-k">Ticket Type</td>
+                                        <td t-esc="doc.ticket_type or ''"/>
+                                    </tr>
+                                    <tr>
+                                        <td class="wmz-k">Quote No</td>
+                                        <td t-esc="doc.quote_no or ''"/>
+                                        <td class="wmz-k">Sales Order</td>
+                                        <td t-esc="doc.sale_order_id.name or ''"/>
+                                    </tr>
+                                    <tr>
+                                        <td class="wmz-k">Service Description</td>
+                                        <td colspan="3" style="white-space:pre-wrap;"
+                                            t-esc="doc.service_description or ''"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Service / Waste -->
+                        <div class="wmz-section">
+                            <div class="wmz-section-title">Service &amp; Waste Details</div>
+                            <table class="wmz-table">
+                                <colgroup>
+                                    <col style="width:25%"/>
+                                    <col style="width:25%"/>
+                                    <col style="width:25%"/>
+                                    <col style="width:25%"/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td class="wmz-k">Service Requested</td>
+                                        <td t-esc="doc.service_requested_id.display_name or ''"/>
+                                        <td class="wmz-k">Container Type</td>
+                                        <td t-esc="doc.container_type_id.display_name or ''"/>
+                                    </tr>
+                                    <tr>
+                                        <td class="wmz-k">Waste Type</td>
+                                        <td t-esc="doc.waste_type_id.display_name or ''"/>
+                                        <td class="wmz-k">Waste Details</td>
+                                        <td t-esc="doc.waste_details_id.display_name or ''"/>
+                                    </tr>
+                                    <tr>
+                                        <td class="wmz-k">UN No / SIN No</td>
+                                        <td t-esc="doc.UN_No_SIN_No or ''"/>
+                                        <td class="wmz-k">Waste Profile / Data Sheet No</td>
+                                        <td t-esc="doc.waste_profile_Data_sheet_No or ''"/>
+                                    </tr>
+                                    <tr>
+                                        <td class="wmz-k">DTNumber</td>
+                                        <td t-esc="doc.DTNumber or ''"/>
+                                        <td class="wmz-k">Disposal Site</td>
+                                        <td t-esc="doc.disposal_site_id.display_name or ''"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Logistics -->
+                        <div class="wmz-section">
+                            <div class="wmz-section-title">Logistics</div>
+                            <table class="wmz-table">
+                                <colgroup>
+                                    <col style="width:25%"/>
+                                    <col style="width:25%"/>
+                                    <col style="width:25%"/>
+                                    <col style="width:25%"/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td class="wmz-k">Pickup Points</td>
+                                        <td>
+                                            <t t-esc="', '.join(doc.pickup_point_ids.mapped('display_name')) if doc.pickup_point_ids else ''"/>
+                                        </td>
+                                        <td class="wmz-k">Drop-off Points</td>
+                                        <td>
+                                            <t t-esc="', '.join(doc.dropoff_point_ids.mapped('display_name')) if doc.dropoff_point_ids else ''"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="wmz-k">Vehicle</td>
+                                        <td t-esc="doc.vehicle_id.display_name or ''"/>
+                                        <td class="wmz-k">Trailer</td>
+                                        <td t-esc="doc.trailer_id.display_name or ''"/>
+                                    </tr>
+                                    <tr>
+                                        <td class="wmz-k">Driver</td>
+                                        <td t-esc="doc.driver_id.display_name or ''"/>
+                                        <td class="wmz-k">Assistance</td>
+                                        <td t-esc="doc.assistance_id.display_name or ''"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="wmz-section">
+                            <div class="wmz-section-title">Pickup / Drop-off and Containers Summary</div>
+                            <div class="wmz-card">
+                                <div style="white-space:pre-wrap;">
+                                    <t t-esc="doc.pickup_point_bins_summary or ''"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Decide if this manifest is BIN container type -->
+                        <t t-set="is_bin_container"
+                           t-value="(doc.container_type_id and (doc.container_type_id.display_name or '').strip().lower() == 'bin')
+            or (doc.container_type_id and (doc.container_type_id.name or '').strip().lower() == 'bin')"/>
+
+
+                        <!-- =========================
+                             Bins (ONLY when Container Type = Bin)
+                        ========================= -->
+
+
+                        <t t-if="is_bin_container">
+    <div class="wmz-section">
+        <div class="wmz-section-title">Bins Movement</div>
+
+        <table class="wmz-table">
+            <colgroup>
+                <col style="width:50%"/>
+                <col style="width:50%"/>
+
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Lifted</th>
+                    <th>Dropped</th>
+
+                </tr>
+            </thead>
+            <tbody>
+
+                <!-- Prepare variables -->
+                <t t-set="lifted" t-value="doc.bin_lifted_ids"/>
+                <t t-set="dropped" t-value="doc.bin_dropped_ids"/>
+                <t t-set="max_len" t-value="max(len(lifted), len(dropped))"/>
+
+                <!-- Loop through ALL cases -->
+                <t t-foreach="range(max_len)" t-as="i">
+                    <tr>
+
+                        <!-- Lifted -->
+                        <td>
+                            <t t-if="i &lt; len(lifted)">
+                                <span t-esc="lifted[i].display_name"/>
+                            </t>
+                            <t t-else="">-</t>
+                        </td>
+
+                        <!-- Dropped -->
+                        <td>
+                            <t t-if="i &lt; len(dropped)">
+                                <span t-esc="dropped[i].display_name"/>
+                            </t>
+
+                            <!-- SHUNTING fallback -->
+                            <t t-elif="i &lt; len(lifted)">
+                                <span t-esc="lifted[i].display_name"/>
+                            </t>
+
+                            <t t-else="">-</t>
+                        </td>
+
+
+
+
+                    </tr>
+                </t>
+
+                <!-- No bins -->
+                <t t-if="max_len == 0">
+                    <tr>
+                        <td colspan="3" class="wmz-muted">No bins recorded</td>
+                    </tr>
+                </t>
+
+            </tbody>
+        </table>
+    </div>
+</t>
+
+<!--                        <t t-if="is_bin_container">-->
+<!--    <div class="wmz-section">-->
+<!--        <div class="wmz-section-title">Bins Movement</div>-->
+
+<!--        <table class="wmz-table">-->
+<!--            <colgroup>-->
+<!--                <col style="width:33%"/>-->
+<!--                <col style="width:33%"/>-->
+<!--                <col style="width:34%"/>-->
+<!--            </colgroup>-->
+<!--            <thead>-->
+<!--                <tr>-->
+<!--                    <th>Lifted</th>-->
+<!--                    <th>Dropped</th>-->
+<!--                    <th>Type</th>-->
+<!--                </tr>-->
+<!--            </thead>-->
+<!--            <tbody>-->
+
+<!--                &lt;!&ndash; Prepare variables &ndash;&gt;-->
+<!--                <t t-set="lifted" t-value="doc.bin_lifted_ids"/>-->
+<!--                <t t-set="dropped" t-value="doc.bin_dropped_ids"/>-->
+
+<!--                &lt;!&ndash; Loop through lifted bins &ndash;&gt;-->
+<!--                <t t-foreach="range(len(lifted))" t-as="i">-->
+<!--                    <tr>-->
+
+<!--                        &lt;!&ndash; Lifted &ndash;&gt;-->
+<!--                        <td>-->
+<!--                            <span t-esc="lifted[i].display_name"/>-->
+<!--                        </td>-->
+
+<!--                        &lt;!&ndash; Dropped &ndash;&gt;-->
+<!--                        <td>-->
+<!--                            &lt;!&ndash; Normal case &ndash;&gt;-->
+<!--                            <t t-if="i &lt; len(dropped)">-->
+<!--                                <span t-esc="dropped[i].display_name"/>-->
+<!--                            </t>-->
+
+<!--                            &lt;!&ndash; SHUNTING: no dropped → mirror lifted &ndash;&gt;-->
+<!--                            <t t-else="">-->
+<!--                                <span t-esc="lifted[i].display_name"/>-->
+<!--                            </t>-->
+<!--                        </td>-->
+
+<!--                        &lt;!&ndash; Type &ndash;&gt;-->
+<!--                        <td>-->
+<!--                            &lt;!&ndash; Same bin OR no dropped = SHUNTING &ndash;&gt;-->
+<!--                            <t t-if="(i &lt; len(dropped) and lifted[i].id == dropped[i].id) or i &gt;= len(dropped)">-->
+<!--                                <span class="wmz-badge">SHUNTING</span>-->
+<!--                            </t>-->
+
+<!--                            &lt;!&ndash; Normal &ndash;&gt;-->
+<!--                            <t t-else="">-->
+<!--                                Normal-->
+<!--                            </t>-->
+<!--                        </td>-->
+
+<!--                    </tr>-->
+<!--                </t>-->
+
+<!--                &lt;!&ndash; If no bins at all &ndash;&gt;-->
+<!--                <t t-if="not lifted">-->
+<!--                    <tr>-->
+<!--                        <td colspan="3" class="wmz-muted">No bins recorded</td>-->
+<!--                    </tr>-->
+<!--                </t>-->
+
+<!--            </tbody>-->
+<!--        </table>-->
+<!--    </div>-->
+<!--</t>-->
+
+<!--                        <t t-if="is_bin_container">-->
+<!--                            <div class="wmz-section">-->
+<!--                                <div class="wmz-section-title">Bins Lifted &amp; Dropped</div>-->
+<!--                                <table class="wmz-table">-->
+<!--                                    <colgroup>-->
+<!--                                        <col style="width:50%"/>-->
+<!--                                        <col style="width:50%"/>-->
+<!--                                    </colgroup>-->
+<!--                                    <thead>-->
+<!--                                        <tr>-->
+<!--                                            <th>Lifted</th>-->
+<!--                                            <th>Dropped</th>-->
+<!--                                        </tr>-->
+<!--                                    </thead>-->
+<!--                                    <tbody>-->
+<!--                                        <tr>-->
+<!--                                            <td>-->
+<!--                                                <t t-if="doc.bin_lifted_ids">-->
+<!--                                                    <t t-foreach="doc.bin_lifted_ids" t-as="b">-->
+<!--                                                        <div class="wmz-nowrap" t-esc="b.display_name"/>-->
+<!--                                                    </t>-->
+<!--                                                </t>-->
+<!--                                                <t t-else="">-->
+<!--                                                    <span class="wmz-muted">-</span>-->
+<!--                                                </t>-->
+<!--                                            </td>-->
+<!--                                            <td>-->
+<!--                                                <t t-if="doc.bin_dropped_ids">-->
+<!--                                                    <t t-foreach="doc.bin_dropped_ids" t-as="b">-->
+<!--                                                        <div class="wmz-nowrap" t-esc="b.display_name"/>-->
+<!--                                                    </t>-->
+<!--                                                </t>-->
+<!--                                                <t t-else="">-->
+<!--                                                    <span class="wmz-muted">-</span>-->
+<!--                                                </t>-->
+<!--                                            </td>-->
+<!--                                        </tr>-->
+<!--                                    </tbody>-->
+<!--                                </table>-->
+<!--                            </div>-->
+<!--                        </t>-->
+
+                        <!-- =========================
+                             Billing (ONLY when Container Type != Bin)
+                        ========================= -->
+                        <t t-if="not is_bin_container">
+                            <div class="wmz-section">
+                                <div class="wmz-section-title">Billing</div>
+
+                                <!-- Wrapper table = perfect PDF alignment -->
+                                <table class="wmz-table" style="border:none; margin-bottom:0;">
+                                    <colgroup>
+                                        <col style="width:50%"/>
+                                        <col style="width:50%"/>
+                                    </colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <!-- LEFT -->
+                                            <td style="border:none; padding:0 6px 0 0; background:transparent;">
+                                                <table class="wmz-table" style="margin-bottom:0;">
+                                                    <colgroup>
+                                                        <col style="width:50%"/>
+                                                        <col style="width:50%"/>
+                                                    </colgroup>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td class="wmz-k">Quantity</td>
+                                                            <td class="wmz-righttxt"
+                                                                t-esc="doc.product_uom_qty or 0.0"/>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="wmz-k">Liters Collected</td>
+                                                            <td class="wmz-righttxt"
+                                                                t-esc="doc.liters_collected or 0.0"/>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="wmz-k">Billing kL</td>
+                                                            <td class="wmz-righttxt" t-esc="doc.billing_kl or 0.0"/>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+
+                                            <!-- RIGHT -->
+                                            <td style="border:none; padding:0 0 0 6px; background:transparent;">
+                                                <table class="wmz-table" style="margin-bottom:0;">
+                                                    <colgroup>
+                                                        <col style="width:50%"/>
+                                                        <col style="width:50%"/>
+                                                    </colgroup>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td class="wmz-k">Billing Amount (Excl. VAT)</td>
+                                                            <td class="wmz-righttxt" t-esc="doc.billing_amount or 0.0"/>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="wmz-k">Unit Price</td>
+                                                            <td class="wmz-righttxt" t-esc="doc.price_unit or 0.0"/>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="wmz-k">Product</td>
+                                                            <td t-esc="doc.product_id.display_name or ''"/>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+
+
+                        <!-- Footer -->
+                        <div class="wmz-footer">
+                            Printed by
+                            <t t-esc="doc.env.user.name"/>
+                            —
+                            Last updated:
+                            <t t-esc="doc.write_date or doc.create_date or ''"/>
+                        </div>
+
+                    </div>
+                </t>
+
+            </t>
+        </t>
+    </template>
+
+</odoo>
+
+
+        <!--<?xml version="1.0" encoding="utf-8"?>-->
+        <!--<odoo>-->
+
+        <!--    &lt;!&ndash; =========================-->
+        <!--         1) REPORT ACTION (Manifest PDF)-->
+        <!--    ========================== &ndash;&gt;-->
+        <!--    <record id="action_manifest_report_pdf" model="ir.actions.report">-->
+        <!--        <field name="name">Waste Manifest</field>-->
+        <!--        <field name="model">waste.service.request</field>-->
+        <!--        <field name="report_type">qweb-pdf</field>-->
+        <!--        <field name="report_name">waste_management_zakheni.report_manifest_pdf</field>-->
+        <!--        <field name="report_file">waste_management_zakheni.report_manifest_pdf</field>-->
+        <!--        <field name="print_report_name">'Manifest - %s' % (object.name or '')</field>-->
+
+        <!--        &lt;!&ndash; Adds it to form Print menu &ndash;&gt;-->
+        <!--        <field name="binding_model_id" ref="model_waste_service_request"/>-->
+        <!--        <field name="binding_type">report</field>-->
+        <!--    </record>-->
+
+        <!--    &lt;!&ndash; =========================-->
+        <!--         2) REPORT TEMPLATE (Advanced)-->
+        <!--    ========================== &ndash;&gt;-->
+
+        <!--<template id="report_manifest_pdf">-->
+        <!--    <t t-call="web.html_container">-->
+        <!--        <t t-call="web.external_layout">-->
+
+        <!--            &lt;!&ndash; Advanced PDF-safe styling (wkhtmltopdf friendly) &ndash;&gt;-->
+        <!--            <style type="text/css">-->
+        <!--                .wmz { font-family: Arial, sans-serif; font-size: 12px; color: #222; }-->
+        <!--                .wmz-title { font-size: 20px; font-weight: 700; margin: 0; padding: 0; }-->
+        <!--                .wmz-sub { font-size: 11px; color: #666; margin-top: 2px; }-->
+
+        <!--                .wmz-hr { border-top: 1px solid #ddd; margin: 10px 0 12px; }-->
+
+        <!--                /* Header layout without relying on bootstrap grid */-->
+        <!--                .wmz-row { width: 100%; }-->
+        <!--                .wmz-left { float: left; width: 62%; }-->
+        <!--                .wmz-right { float: right; width: 38%; text-align: right; }-->
+        <!--                .wmz-clear { clear: both; }-->
+
+        <!--                .wmz-badge {-->
+        <!--                    display: inline-block;-->
+        <!--                    padding: 3px 8px;-->
+        <!--                    border: 1px solid #ddd;-->
+        <!--                    border-radius: 10px;-->
+        <!--                    font-size: 10px;-->
+        <!--                    color: #333;-->
+        <!--                    background: #f7f7f7;-->
+        <!--                    margin-left: 6px;-->
+        <!--                }-->
+
+        <!--                .wmz-section { margin-top: 12px; }-->
+        <!--                .wmz-section-title { font-size: 13px; font-weight: 700; margin: 0 0 8px; }-->
+
+        <!--                /* Tables */-->
+        <!--                table.wmz-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }-->
+        <!--                table.wmz-table th {-->
+        <!--                    text-align: left;-->
+        <!--                    font-weight: 700;-->
+        <!--                    font-size: 11px;-->
+        <!--                    color: #333;-->
+        <!--                    background: #f5f5f5;-->
+        <!--                    border: 1px solid #e1e1e1;-->
+        <!--                    padding: 7px;-->
+        <!--                }-->
+        <!--                table.wmz-table td { border: 1px solid #e1e1e1; padding: 7px; vertical-align: top; }-->
+        <!--                table.wmz-table tr:nth-child(even) td { background: #fcfcfc; }-->
+
+        <!--                .wmz-k { width: 25%; color: #333; font-weight: 700; background: #fafafa; }-->
+        <!--                .wmz-muted { color: #777; }-->
+        <!--                .wmz-righttxt { text-align: right; white-space: nowrap; }-->
+        <!--                .wmz-nowrap { white-space: nowrap; }-->
+
+        <!--                /* Summary card */-->
+        <!--                .wmz-card {-->
+        <!--                    border: 1px solid #e5e5e5;-->
+        <!--                    border-radius: 8px;-->
+        <!--                    padding: 10px;-->
+        <!--                    background: #fbfbfb;-->
+        <!--                }-->
+
+        <!--                /* Two-column block without bootstrap */-->
+        <!--                .wmz-cols { width: 100%; }-->
+        <!--                .wmz-col { width: 49%; display: inline-block; vertical-align: top; }-->
+        <!--                .wmz-col + .wmz-col { margin-left: 2%; }-->
+
+        <!--                .wmz-footer { font-size: 10px; color: #777; margin-top: 10px; }-->
+        <!--            </style>-->
+
+        <!--            <t t-if="not docs">-->
+        <!--                <div class="page wmz">-->
+        <!--                    <p class="wmz-title">Waste Manifest</p>-->
+        <!--                    <p class="wmz-muted">No manifest record selected.</p>-->
+        <!--                </div>-->
+        <!--            </t>-->
+
+        <!--            <t t-foreach="docs" t-as="doc">-->
+        <!--                <div class="page wmz">-->
+
+        <!--                    &lt;!&ndash; Header (same data, better styling) &ndash;&gt;-->
+        <!--                    <div class="wmz-row">-->
+        <!--                        <div class="wmz-left">-->
+        <!--                            <p class="wmz-title">Waste Manifest</p>-->
+        <!--                            <div class="wmz-sub">-->
+        <!--                                Status:-->
+        <!--                                <span class="wmz-badge">-->
+        <!--                                    <t t-esc="dict(doc._fields['state'].selection).get(doc.state, doc.state or '')"/>-->
+        <!--                                </span>-->
+        <!--                            </div>-->
+        <!--                        </div>-->
+
+        <!--                        <div class="wmz-right">-->
+        <!--                            <div class="wmz-nowrap"><b>Manifest No:</b> <span t-esc="doc.name or ''"/></div>-->
+        <!--                            <div class="wmz-nowrap"><b>Planned Date:</b> <span t-esc="doc.planned_date or ''"/></div>-->
+        <!--                            <div class="wmz-nowrap"><b>Request Date:</b> <span t-esc="doc.service_request_date or ''"/></div>-->
+        <!--                        </div>-->
+        <!--                    </div>-->
+        <!--                    <div class="wmz-clear"></div>-->
+
+        <!--                    <div class="wmz-hr"/>-->
+
+        <!--                    &lt;!&ndash; Customer / SO (same fields, upgraded table style) &ndash;&gt;-->
+        <!--                    <div class="wmz-section">-->
+        <!--                        <div class="wmz-section-title">Customer &amp; Order</div>-->
+        <!--                        <table class="wmz-table">-->
+        <!--                            <tbody>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">Customer</td>-->
+        <!--                                    <td t-esc="doc.partner_id.display_name or ''"/>-->
+        <!--                                    <td class="wmz-k">Ticket Type</td>-->
+        <!--                                    <td t-esc="doc.ticket_type or ''"/>-->
+        <!--                                </tr>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">Quote No</td>-->
+        <!--                                    <td t-esc="doc.quote_no or ''"/>-->
+        <!--                                    <td class="wmz-k">Sales Order</td>-->
+        <!--                                    <td t-esc="doc.sale_order_id.name or ''"/>-->
+        <!--                                </tr>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">Service Description</td>-->
+        <!--                                    <td colspan="3" style="white-space: pre-wrap;" t-esc="doc.service_description or ''"/>-->
+        <!--                                </tr>-->
+        <!--                            </tbody>-->
+        <!--                        </table>-->
+        <!--                    </div>-->
+
+        <!--                    &lt;!&ndash; Service / Waste &ndash;&gt;-->
+        <!--                    <div class="wmz-section">-->
+        <!--                        <div class="wmz-section-title">Service &amp; Waste Details</div>-->
+        <!--                        <table class="wmz-table">-->
+        <!--                            <tbody>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">Service Requested</td>-->
+        <!--                                    <td t-esc="doc.service_requested_id.display_name or ''"/>-->
+        <!--                                    <td class="wmz-k">Container Type</td>-->
+        <!--                                    <td t-esc="doc.container_type_id.display_name or ''"/>-->
+        <!--                                </tr>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">Waste Type</td>-->
+        <!--                                    <td t-esc="doc.waste_type_id.display_name or ''"/>-->
+        <!--                                    <td class="wmz-k">Waste Details</td>-->
+        <!--                                    <td t-esc="doc.waste_details_id.display_name or ''"/>-->
+        <!--                                </tr>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">UN No / SIN No</td>-->
+        <!--                                    <td t-esc="doc.UN_No_SIN_No or ''"/>-->
+        <!--                                    <td class="wmz-k">Waste Profile / Data Sheet No</td>-->
+        <!--                                    <td t-esc="doc.waste_profile_Data_sheet_No or ''"/>-->
+        <!--                                </tr>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">DTNumber</td>-->
+        <!--                                    <td t-esc="doc.DTNumber or ''"/>-->
+        <!--                                    <td class="wmz-k">Disposal Site</td>-->
+        <!--                                    <td t-esc="doc.disposal_site_id.display_name or ''"/>-->
+        <!--                                </tr>-->
+        <!--                            </tbody>-->
+        <!--                        </table>-->
+        <!--                    </div>-->
+
+        <!--                    &lt;!&ndash; Points / Vehicle &ndash;&gt;-->
+        <!--                    <div class="wmz-section">-->
+        <!--                        <div class="wmz-section-title">Logistics</div>-->
+        <!--                        <table class="wmz-table">-->
+        <!--                            <tbody>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">Pickup Points</td>-->
+        <!--                                    <td>-->
+        <!--                                        <t t-esc="', '.join(doc.pickup_point_ids.mapped('display_name')) if doc.pickup_point_ids else ''"/>-->
+        <!--                                    </td>-->
+        <!--                                    <td class="wmz-k">Drop-off Points</td>-->
+        <!--                                    <td>-->
+        <!--                                        <t t-esc="', '.join(doc.dropoff_point_ids.mapped('display_name')) if doc.dropoff_point_ids else ''"/>-->
+        <!--                                    </td>-->
+        <!--                                </tr>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">Vehicle</td>-->
+        <!--                                    <td t-esc="doc.vehicle_id.display_name or ''"/>-->
+        <!--                                    <td class="wmz-k">Trailer</td>-->
+        <!--                                    <td t-esc="doc.trailer_id.display_name or ''"/>-->
+        <!--                                </tr>-->
+        <!--                                <tr>-->
+        <!--                                    <td class="wmz-k">Driver</td>-->
+        <!--                                    <td t-esc="doc.driver_id.display_name or ''"/>-->
+        <!--                                    <td class="wmz-k">Assistance</td>-->
+        <!--                                    <td t-esc="doc.assistance_id.display_name or ''"/>-->
+        <!--                                </tr>-->
+        <!--                            </tbody>-->
+        <!--                        </table>-->
+        <!--                    </div>-->
+
+        <!--                    &lt;!&ndash; Summary (same content, now card style) &ndash;&gt;-->
+        <!--                    <div class="wmz-section">-->
+        <!--                        <div class="wmz-section-title">Pickup / Drop-off and Containers Summary</div>-->
+        <!--                        <div class="wmz-card">-->
+        <!--                            <div style="white-space: pre-wrap;">-->
+        <!--                                <t t-esc="doc.pickup_point_bins_summary or ''"/>-->
+        <!--                            </div>-->
+        <!--                        </div>-->
+        <!--                    </div>-->
+
+        <!--                    &lt;!&ndash; Bins &ndash;&gt;-->
+        <!--                    <div class="wmz-section">-->
+        <!--                        <div class="wmz-section-title">Bins Lifted &amp; Dropped</div>-->
+        <!--                        <table class="wmz-table">-->
+        <!--                            <thead>-->
+        <!--                                <tr>-->
+        <!--                                    <th style="width:50%;">Lifted</th>-->
+        <!--                                    <th style="width:50%;">Dropped</th>-->
+        <!--                                </tr>-->
+        <!--                            </thead>-->
+        <!--                            <tbody>-->
+        <!--                                <tr>-->
+        <!--                                    <td>-->
+        <!--                                        <t t-if="doc.bin_lifted_ids">-->
+        <!--                                            <t t-foreach="doc.bin_lifted_ids" t-as="b">-->
+        <!--                                                <div class="wmz-nowrap" t-esc="b.display_name"/>-->
+        <!--                                            </t>-->
+        <!--                                        </t>-->
+        <!--                                        <t t-else=""><span class="wmz-muted">-</span></t>-->
+        <!--                                    </td>-->
+        <!--                                    <td>-->
+        <!--                                        <t t-if="doc.bin_dropped_ids">-->
+        <!--                                            <t t-foreach="doc.bin_dropped_ids" t-as="b">-->
+        <!--                                                <div class="wmz-nowrap" t-esc="b.display_name"/>-->
+        <!--                                            </t>-->
+        <!--                                        </t>-->
+        <!--                                        <t t-else=""><span class="wmz-muted">-</span></t>-->
+        <!--                                    </td>-->
+        <!--                                </tr>-->
+        <!--                            </tbody>-->
+        <!--                        </table>-->
+        <!--                    </div>-->
+
+        <!--                    &lt;!&ndash; Billing (same data, two neat columns, nicer tables) &ndash;&gt;-->
+        <!--                    <div class="wmz-section">-->
+        <!--                        <div class="wmz-section-title">Billing</div>-->
+
+        <!--                        <div class="wmz-cols">-->
+        <!--                            <div class="wmz-col">-->
+        <!--                                <table class="wmz-table">-->
+        <!--                                    <tbody>-->
+        <!--                                        <tr><td class="wmz-k">Quantity</td><td class="wmz-righttxt" t-esc="doc.product_uom_qty or 0.0"/></tr>-->
+        <!--                                        <tr><td class="wmz-k">Liters Collected</td><td class="wmz-righttxt" t-esc="doc.liters_collected or 0.0"/></tr>-->
+        <!--                                        <tr><td class="wmz-k">Billing kL</td><td class="wmz-righttxt" t-esc="doc.billing_kl or 0.0"/></tr>-->
+        <!--                                    </tbody>-->
+        <!--                                </table>-->
+        <!--                            </div>-->
+
+        <!--                            <div class="wmz-col">-->
+        <!--                                <table class="wmz-table">-->
+        <!--                                    <tbody>-->
+        <!--                                        <tr><td class="wmz-k">Billing Amount (Excl. VAT)</td><td class="wmz-righttxt" t-esc="doc.billing_amount or 0.0"/></tr>-->
+        <!--                                        <tr><td class="wmz-k">Unit Price</td><td class="wmz-righttxt" t-esc="doc.price_unit or 0.0"/></tr>-->
+        <!--                                        <tr><td class="wmz-k">Product</td><td t-esc="doc.product_id.display_name or ''"/></tr>-->
+        <!--                                    </tbody>-->
+        <!--                                </table>-->
+        <!--                            </div>-->
+        <!--                        </div>-->
+        <!--                    </div>-->
+
+        <!--                    &lt;!&ndash; Footer &ndash;&gt;-->
+        <!--                    <div class="wmz-footer">-->
+        <!--                        Printed by <t t-esc="doc.env.user.name"/> —-->
+        <!--                        Last updated:-->
+        <!--                        <t t-esc="doc.write_date or doc.create_date or ''"/>-->
+        <!--                    </div>-->
+
+        <!--                </div>-->
+        <!--            </t>-->
+
+        <!--        </t>-->
+        <!--    </t>-->
+        <!--</template>-->
+        <!--</odoo>-->

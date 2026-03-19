@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_waste_service_request_form_inherit" model="ir.ui.view">
+        <field name="name">waste.service.request.form.inherit</field>
+        <field name="model">waste.service.request</field>
+        <field name="inherit_id" ref="waste_management_zakheni.view_form_service_request"/>
+        <field name="arch" type="xml">
+
+            <!-- Insert smart buttons inside the standard smart button bar -->
+            <xpath expr="//div[@class='oe_button_box']" position="inside">
+
+                <!--            <button name="action_view_schedules"-->
+                <!--                    type="object"-->
+                <!--                    class="oe_stat_button"-->
+                <!--                    icon="fa-clock-o">-->
+                <!--                <field name="schedule_count" widget="statinfo"/>-->
+                <!--            </button>-->
+
+                <!--            <button name="action_view_deliveries"-->
+                <!--                    type="object"-->
+                <!--                    class="oe_stat_button"-->
+                <!--                    icon="fa-truck">-->
+                <!--                <field name="delivery_count" widget="statinfo"/>-->
+                <!--            </button>-->
+
+                <!--            <button name="action_view_captures"-->
+                <!--                    type="object"-->
+                <!--                    class="oe_stat_button"-->
+                <!--                    icon="fa-camera">-->
+                <!--                <field name="capture_count" widget="statinfo"/>-->
+                <!--            </button>-->
+
+                <!--            <button name="action_view_uploads"-->
+                <!--                    type="object"-->
+                <!--                    class="oe_stat_button"-->
+                <!--                    icon="fa-upload">-->
+                <!--                <field name="upload_count" widget="statinfo"/>-->
+                <!--            </button>-->
+
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_waste_service_request_form_inherit_fields" model="ir.ui.view">
+        <field name="name">waste.service.request.form.inherit.fields</field>
+        <field name="model">waste.service.request</field>
+        <field name="inherit_id" ref="waste_management_zakheni.view_form_service_request"/>
+        <field name="arch" type="xml">
+            <!-- Target Container Location group and insert after it -->
+            <xpath expr="//sheet/group[last()]" position="after">
+                <field name="waste_type" invisible="1"/>
+                <group string="Schedule Information">
+                    <group>
+                        <field name="latest_driver_id" widget="many2one_avatar_user"/>
+                        <field name="latest_vehicle_id"/>
+                    </group>
+                    <group>
+                        <field name="latest_assistance_id" widget="many2one_avatar_user"/>
+                        <field name="latest_trailer_id"/>
+                    </group>
+                </group>
+            </xpath>
+            <xpath expr="//sheet/group[last()]" position="after">
+                <group string="Delivery Information">
+                    <group>
+                        <field name="latest_arrival_time"/>
+                        <field name="latest_departure_time"/>
+                    </group>
+                    <group>
+                        <field name="latest_kilometers"/>
+                        <field name="latest_quantity_collected"/>
+                    </group>
+                </group>
+            </xpath>
+            <xpath expr="//sheet/group[last()]" position="after">
+
+                <group string="Capture Information">
+                    <group>
+                        <field name="latest_return_date" readonly="0"/>
+                        <field name="latest_unit_of_measure" readonly="0"/>
+                    </group>
+                    <group>
+                        <field name="latest_capacity_tons" readonly="0"/>
+                        <field name="latest_driver_signature" widget="signature" readonly="0"/>
+<!--                          <button name="action_signature" type="object" string="Signature"-->
+<!--                            class="btn-info"/>-->
+
+
+                    </group>
+                </group>
+            </xpath>
+            <xpath expr="//sheet/group[last()]" position="after">
+                <field name="state" invisible="1"/>
+                <group string="Upload information" >
+                    <group style="display:flex; align-items:center;">
+                        <field name="latest_manifest_document" filename="latest_manifest_document_filename"
+                               style="flex:1;" readonly="0"/>
+                        <button name="action_open_manifest_document"
+                                type="object"
+                                icon="fa-file-pdf-o"
+                                invisible="latest_manifest_document == False"
+                                style="margin-left: -10px;"/>
+
+                    </group>
+
+                    <group style="display:flex; align-items:center;">
+                        <field name="latest_weighbridge_slip" filename="latest_weighbridge_slip_filename"
+                               style="flex:1;" readonly="0"/>
+                        <button name="action_open_weighbridge_slip"
+                                type="object"
+                                icon="fa-file-pdf-o"
+                                invisible="latest_weighbridge_slip == False"
+                                style="margin-left: -10px;"/>
+
+                    </group>
+
+
+                    <group style="display:flex; align-items:center;" invisible="waste_type != 'hazardous'">
+                        <field name="latest_safety_certificate" readonly="0"
+                               filename="latest_safety_certificate_filename"
+                               style="flex:1;"/>
+                        <button name="action_open_safety_certificate"
+                                type="object"
+                                icon="fa-file-pdf-o"
+                                invisible="latest_safety_certificate == False"
+                                style="margin-left: -10px;"/>
+                    </group>
+
+
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

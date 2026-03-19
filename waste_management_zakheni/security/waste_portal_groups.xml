@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Portal Customer -->
+    <record id="group_wmz_client_customer" model="res.groups">
+        <field name="name">Customer</field>
+        <!-- Use a VALID category id -->
+        <!--        <field name="category_id" ref="base.module_category_website"/>-->
+        <field name="category_id" ref="base.module_category_hidden"/>
+        <!-- Make it a portal-type group -->
+        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+    <!-- Portal Agent -->
+    <record id="group_wmz_client_agent" model="res.groups">
+        <field name="name">Agent</field>
+        <!-- Same valid category -->
+        <!--        <field name="category_id" ref="base.module_category_website"/>-->
+        <field name="category_id" ref="base.module_category_hidden"/>
+        <!-- Also inherits portal -->
+        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,64 @@
+<odoo>
+    <record id="view_move_form_inherit_waste_so_manifest" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.waste.so.manifest</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='other_info']/group" position="inside">
+                <group>
+                    <field name="sale_order_id" options="{'no_create': True}"/>
+                    <field name="service_request_id"
+                           options="{'no_create': True}"
+                           domain="[('sale_order_id', '=', sale_order_id)]"/>
+                </group>
+
+
+            </xpath>
+
+            <xpath expr="//button[@name='action_register_payment']" position="attributes">
+                <!-- Only these groups can see it -->
+                <attribute name="groups">
+                    waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance
+                </attribute>
+                 <attribute name="invisible">
+                      payment_state == 'paid' or state != 'posted' or batch_payment_state == 'paid'
+                </attribute>
+            </xpath>
+
+
+
+        </field>
+    </record>
+
+    <record id="account_move_form_limit_register_payment_batch" model="ir.ui.view">
+        <field name="name">account.move.form.limit.register.payment.batch</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="pastel_batch_payment.account_move_form_inherit_register_payment_batch"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_register_payment_batch']" position="attributes">
+                <attribute name="groups">
+                    waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance
+                </attribute>
+                <attribute name="invisible">
+                    payment_state == 'paid' or state != 'posted' or batch_payment_state == 'paid'
+                </attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+     <record id="account_move_invoice_tree_hide_due_date_batch_paid" model="ir.ui.view">
+        <field name="name">account.move.invoice.tree.hide.due.date.batch.paid</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='invoice_date_due']" position="attributes">
+                <attribute name="invisible">
+                    batch_payment_state == 'paid' or payment_state == 'paid'
+                </attribute>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
