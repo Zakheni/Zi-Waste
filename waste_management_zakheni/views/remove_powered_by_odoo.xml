@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <template id="hide_powered_by_odoo" inherit_id="website.layout">
-        <xpath expr="//*[contains(normalize-space(.), 'Powered by')]/a[contains(@href, 'odoo.com')]" position="attributes">
-            <attribute name="style">display:none !important;</attribute>
-        </xpath>
-    </template>
-</odoo>
