@@ -37,12 +37,14 @@ class WasteClientPortal(CustomerPortal):
         if user.has_group(self.AGENT_GROUP):
             return [
                 ('company_id', '=', user.company_id.id),
-                ('partner_id', 'child_of', commercial_id),
+                # ('partner_id', 'child_of', commercial_id),
+                ('provider_id.agent', '=', user.id),
                 ('state', 'in', AGENT_ALLOWED_STATES),
             ]
         return [
             ('company_id', '=', user.company_id.id),
-            ('partner_id', 'child_of', commercial_id),
+            # ('partner_id', 'child_of', commercial_id),
+            ('provider_id.agent', '=', user.id),
             ('state', 'in', CUSTOMER_ALLOWED_STATES),
         ]
 

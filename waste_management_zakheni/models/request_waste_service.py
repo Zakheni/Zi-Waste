@@ -105,6 +105,7 @@ class WasteServiceRequest(models.Model):
     disposal_site_id = fields.Many2one('waste.disposal.site', string="Disposal Side")
 
     vehicle_id = fields.Many2one("fleet.vehicle", string="Vehicle Registration Number")
+    employee_id = fields.Many2one('hr.employee', string="Employee")
     driver_id = fields.Many2one(string="Driver", related="vehicle_id.driver_id", store=True)
     assistance_id = fields.Many2one(string="Driver Assistance", related="vehicle_id.future_driver_id")
     trailer_id = fields.Many2one("fleet.vehicle", string="Trailer Registration Number")
@@ -123,7 +124,7 @@ class WasteServiceRequest(models.Model):
     )
     reject_reason = fields.Text(string="Enter Reject Reason", tracking=True, store=True)
     amend_comment = fields.Text(string="Enter Amend Comment", tracking=True, store=True)
-    driver_work_email = fields.Char(string="Driver Work email", related="vehicle_id.driver_email", store=True)
+    driver_work_email = fields.Char(string="Driver Work email", related="employee_id.work_email", store=True)
 
     from_portal = fields.Boolean(
         string="Created from portal",

@@ -18,10 +18,17 @@
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>
         <field name="global" eval="False"/>
         <field name="domain_force">
-            [
-            ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
-            ('partner_id.commercial_partner_id', '=', user.partner_id.commercial_partner_id.id)
-            ]
+
+
+    [
+    ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),
+    ('provider_id.agent', '=', user.id)
+    ]
+
+<!--            [-->
+<!--            ('state', 'in', ['scheduled', 'dispatched', 'service_delivered', 'cancelled', 'done']),-->
+<!--            ('partner_id.commercial_partner_id', '=', user.partner_id.commercial_partner_id.id)-->
+<!--            ]-->
         </field>
     </record>
 
@@ -33,10 +40,14 @@
         <field name="groups" eval="[(4, ref('waste_management_zakheni.group_wmz_client_agent'))]"/>
         <field name="global" eval="False"/>
         <field name="domain_force">
-            [
-            ('service_request_id.partner_id.commercial_partner_id',
-            '=', user.partner_id.commercial_partner_id.id)
-            ]
+
+             [
+    ('service_request_id.provider_id.agent', '=', user.id)
+    ]
+<!--            [-->
+<!--            ('service_request_id.partner_id.commercial_partner_id',-->
+<!--            '=', user.partner_id.commercial_partner_id.id)-->
+<!--            ]-->
         </field>
     </record>
 
