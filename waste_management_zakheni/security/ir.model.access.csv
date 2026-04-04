@@ -131,8 +131,10 @@ access_ir_actions_act_window_user,ir.actions.act_window user,base.model_ir_actio
 
 access_waste_worksheet_portal,waste.worksheet.portal,model_waste_worksheet,base.group_portal,1,0,0,0
 
+access_res_users_wmz_manager,res.users wmz manager,base.model_res_users,waste_management_zakheni.group_wmz_user_manager,1,1,1,0
+access_res_users_wmz,res.users wmz,base.model_res_users,waste_management_zakheni.group_wmz_user_manager,1,1,1,0
 
-
+access_wmz_user_manager,wmz user manager,model_wmz_service_request_user,waste_management_zakheni.group_wmz_user_manager,1,1,1,1
 
 
 

@@ -6,7 +6,9 @@ class PickupPoint(models.Model):
     _description = 'Pickup Point'
 
     name = fields.Char(string="Pickup Point Name", required=True, tracking=True)
-    partner_id = fields.Many2one('res.partner', string="Customer", ondelete='cascade', tracking=True)
+    partner_id = fields.Many2one('res.partner', string="Customer", ondelete='cascade', tracking=True,
+                                 domain=lambda self: [
+            ('is_company', '=', True)],)
     container_ids = fields.One2many('waste.container', 'pickup_point_id', string="Waste Containers", tracking=True)
     sale_order_id = fields.Many2one('sale.order', string="Sales Order", tracking=True)
 

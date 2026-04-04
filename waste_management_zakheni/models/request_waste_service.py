@@ -3388,6 +3388,26 @@ class WasteServiceRequest(models.Model):
             "target": "self",
         }
 
+    user_line_ids = fields.One2many(
+        'wmz.service.request.user',
+        'service_request_id',
+        string="Users"
+    )
+
+    def action_open_create_user_wizard(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Create User',
+            'res_model': 'wmz.create.user.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_service_request_id': self.id,
+                'default_email': self.partner_id.email,
+                'default_name': self.partner_id.name,
+            }
+        }
+
 
 
 

@@ -30,7 +30,17 @@
               name="Customers"
               parent="menu_pickup_root"
               action="action_res_company_custom"/>
-<!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>-->
+    <!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>-->
+
+
+
+    <!-- ✅ MENU (UNDER WASTE MANAGEMENT) -->
+    <menuitem id="menu_service_request_user"
+              name="Users"
+              parent="menu_pickup_root"
+              action="action_service_request_user"
+              sequence="9"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_user_manager"/>
 
 
     <menuitem id="menu_waste_configuration_site"

@@ -112,7 +112,9 @@ class WasteContainer(models.Model):
         'res.partner',
         string="Customer",
         tracking=True,
-        store=True
+        store=True,
+        domain=lambda self: [
+            ('is_company', '=', True),]
     )
 
     pickup_point_id = fields.Many2one(

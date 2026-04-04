@@ -3,15 +3,16 @@
     "version": "1.0",
     "author": "Lesiba",
     "depends": ['base', 'mail', 'sale', 'product', 'account', 'fleet', 'hr', 'stock', 'portal', 'website',
-                'auth_signup','link_tracker','portal'],
+                'auth_signup', 'link_tracker', 'portal'],
     "data": [
-        "security/menu_security.xml",
+        "security/waste_groups.xml",
         "security/waste_portal_groups.xml",
         "security/waste_portal_rules.xml",
-        "security/waste_groups.xml",
         "security/waste_portal_access.xml",
         "security/ir.model.access.csv",
         "security/waste_rules.xml",
+        "security/menu_security.xml",
+
         "data/sequence.xml",
         "data/tank_tariff_data.xml",
         "data/mail_reject_manifest.xml",
@@ -29,6 +30,7 @@
         # "data/waste_config.xml",
         # "views/waste_dashboard_action.xml",
 
+
         "views/auth_signup_templates.xml",
         "views/portal_waste_dashboard.xml",
         "views/portal_waste_report_html.xml",
@@ -38,6 +40,7 @@
         # "views/hide_cards_for_agent_group_temp.xml",
 
         "views/res_user_view.xml",
+        "views/service_request_user_view.xml",
         # "views/hide_sale_menu.xml",
         "views/pickup_point_views.xml",
         "views/waste_container.xml",

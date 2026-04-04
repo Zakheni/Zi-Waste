@@ -299,4 +299,18 @@
     </record>
 
 
+    <record id="wmz_service_request_user_company_rule" model="ir.rule">
+        <field name="name">Service Request Users - Multi Company</field>
+        <field name="model_id" ref="model_wmz_service_request_user"/>
+        <field name="domain_force">
+            ['|',
+            ('company_id', '=', False),
+            ('company_id', 'in', user.company_ids.ids)
+            ]
+        </field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+
+
 </odoo>

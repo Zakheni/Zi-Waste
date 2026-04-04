@@ -45,7 +45,7 @@
                             class="btn-info"
                             invisible="state != 'generated' or is_service_provider and provider_name == False"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
-                            />
+                    />
 
                     <!--                    &lt;!&ndash; NEW: Assign &ndash;&gt;-->
                     <!--                    <button string="Assign"-->
@@ -401,7 +401,6 @@
                             />
 
 
-
                             <field name="product_uom_qty"
                                    invisible="(not hide_general and not hide_tank_volume)
                                               or hide_bin"
@@ -455,7 +454,8 @@
 
 
                             <separator/>
-                            <field name="is_service_provider"  invisible="vehicle_id" readonly="state != 'draft' and state != 'cancelled' and state != 'generated'"/>
+                            <field name="is_service_provider" invisible="vehicle_id"
+                                   readonly="state != 'draft' and state != 'cancelled' and state != 'generated'"/>
 
                         </group>
                     </group>
@@ -463,15 +463,23 @@
 
                     <group string="drivers &amp; assistance" invisible="is_service_provider == True">
                         <group>
-                            <field name="driver_id" options="{'no_open': True}" widget="many2one_avatar_user"
+                            <!--                            <field name="driver_id" options="{'no_open': True}" widget="many2one_avatar_user"-->
 
-                                   readonly="1"
-                                   domain="[('id', 'not in', busy_driver_ids or [])]"/>
-
+                            <!--                                   readonly="1"-->
+                            <!--                                   domain="[('id', 'not in', busy_driver_ids or [])]"/>-->
+                            <field name="driver_id"
+                                   readonly="0"
+                                   widget="many2one_avatar_user"
+                                   options="{'no_open': True}"
+                                   domain="[
+           ('id', 'not in', busy_driver_ids or []),
+           ('user_ids.employee_id.job_id.name', '=', 'Driver')
+       ]"/>
                             <field name="assistance_id" widget="many2one_avatar_user"
                                    options="{'no_open': True}"
                                    readonly="1"
-                                   domain="[('id', 'not in', busy_assistance_ids or [])]"/>
+                                   domain="[('id', 'not in', busy_assistance_ids or []),
+                                   ('user_ids.employee_id.job_id.name', '=', 'Driver')]"/>
 
                         </group>
                         <group>
@@ -539,6 +547,96 @@
                             <field name="notes_html" widget="html" readonly="1"/>
 
                         </page>
+                        <!--                        <page string="User Access">-->
+                        <!--                            <group>-->
+                        <!--                                <button name="action_open_create_user_wizard"-->
+                        <!--                                        type="object"-->
+                        <!--                                        string="Create Contact &amp; User"-->
+                        <!--                                        class="btn-primary"/>-->
+                        <!--                            </group>-->
+                        <!--                        </page>-->
+
+                        <!--                        <page string="Users">-->
+                        <!--                            <field name="user_line_ids" mode="tree,kanban">-->
+
+                        <!--                                &lt;!&ndash; ✅ TREE (WORKING BUTTON) &ndash;&gt;-->
+                        <!--                                <tree editable="bottom">-->
+                        <!--                                    <field name="name"/>-->
+                        <!--                                    <field name="email"/>-->
+                        <!--                                    &lt;!&ndash;                                                                        <field name="role"/>&ndash;&gt;-->
+                        <!--                                    <field name="role_ids" widget="many2many_tags"/>-->
+                        <!--                                    &lt;!&ndash;                                    <field name="state"/>&ndash;&gt;-->
+                        <!--                                    <field name="state"-->
+                        <!--                                           widget="badge"-->
+                        <!--                                           decoration-success="state == 'created'"-->
+                        <!--                                           decoration-danger="state == 'error'"-->
+                        <!--                                           decoration-warning="state == 'draft'"/>-->
+
+                        <!--                                    &lt;!&ndash;                                    <field name="message" readonly="1"/>&ndash;&gt;-->
+                        <!--                                    <field name="message"-->
+                        <!--                                           readonly="1"-->
+                        <!--                                           class="text-muted"-->
+                        <!--                                           style="font-size:8px; font-style:italic;"/>-->
+
+
+                        <!--                                    <button name="action_create_user"-->
+                        <!--                                            type="object"-->
+                        <!--                                            string="Create User"-->
+                        <!--                                            class="btn-primary"-->
+                        <!--                                            invisible="state == 'created'"/>-->
+
+                        <!--                                    <button name="action_update_user"-->
+                        <!--                                            type="object"-->
+                        <!--                                            string="Edit User"-->
+                        <!--                                            class="btn-secondary"-->
+                        <!--                                            invisible="state != 'created'"/>-->
+                        <!--                                </tree>-->
+
+                        <!--                                &lt;!&ndash; ⚠️ KEEP KANBAN FOR DISPLAY ONLY &ndash;&gt;-->
+                        <!--                                <kanban>-->
+                        <!--                                    <templates>-->
+                        <!--                                        <t t-name="kanban-box">-->
+                        <!--                                            <div class="oe_kanban_card">-->
+                        <!--                                                <strong>-->
+                        <!--                                                    <field name="name"/>-->
+                        <!--                                                </strong>-->
+                        <!--                                                <div>-->
+                        <!--                                                    <field name="email"/>-->
+                        <!--                                                </div>-->
+                        <!--                                                <div>-->
+                        <!--                                                    &lt;!&ndash;                                                    <field name="role"/>&ndash;&gt;-->
+                        <!--                                                    <field name="role_ids" widget="many2many_tags"/>-->
+
+                        <!--                                                </div>-->
+
+                        <!--                                                &lt;!&ndash;                                                <field name="state"&ndash;&gt;-->
+                        <!--                                                &lt;!&ndash;                                                       widget="badge"&ndash;&gt;-->
+                        <!--                                                &lt;!&ndash;                                                       decoration-success="state == 'created'"&ndash;&gt;-->
+                        <!--                                                &lt;!&ndash;                                                       decoration-danger="state == 'error'"/>&ndash;&gt;-->
+                        <!--                                                <field name="state"-->
+                        <!--                                                       widget="badge"-->
+                        <!--                                                       decoration-success="state == 'created'"-->
+                        <!--                                                       decoration-danger="state == 'error'"-->
+                        <!--                                                       decoration-warning="state == 'draft'"/>-->
+
+                        <!--                                                &lt;!&ndash; ❌ REMOVE BUTTON FROM HERE &ndash;&gt;-->
+                        <!--                                                <field name="message"-->
+                        <!--                                                       readonly="1"-->
+                        <!--                                                       class="text-muted"-->
+                        <!--                                                       style="font-size:8px; font-style:italic;"/>-->
+
+                        <!--&lt;!&ndash;                                                <button name="action_update_user"&ndash;&gt;-->
+                        <!--&lt;!&ndash;                                                        type="object"&ndash;&gt;-->
+                        <!--&lt;!&ndash;                                                        string="Edit"&ndash;&gt;-->
+                        <!--&lt;!&ndash;                                                        class="btn btn-secondary btn-sm"&ndash;&gt;-->
+                        <!--&lt;!&ndash;                                                        invisible="state != 'created'"/>&ndash;&gt;-->
+                        <!--                                            </div>-->
+                        <!--                                        </t>-->
+                        <!--                                    </templates>-->
+                        <!--                                </kanban>-->
+
+                        <!--                            </field>-->
+                        <!--                        </page>-->
                     </notebook>
 
 

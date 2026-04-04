@@ -142,40 +142,49 @@ class ResUsers(models.Model):
                         "Not allowed:❌ %s"
                     ) % login)
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        creator = self.env.user
-
-        if creator.has_group("waste_management_zakheni.group_company_admin"):
-            for vals in vals_list:
-                vals["company_id"] = creator.company_id.id
-                vals["company_ids"] = [(6, 0, [creator.company_id.id])]
-
-
-        return super().create(vals_list)
-
-    @api.constrains("company_id", "company_ids")
-    def _check_company_assignment_governance(self):
-        current_user = self.env.user
-
-        for user in self:
-            # Company Admins: cannot touch company fields
-            if current_user.has_group("waste_management_zakheni.group_company_admin"):
-                if user.company_id != current_user.company_id:
-                    raise ValidationError(
-                        "Company Admins cannot assign users to another company."
-                    )
-
-                if len(user.company_ids) != 1 or user.company_ids[0] != current_user.company_id:
-                    raise ValidationError(
-                        "Company Admins cannot assign multiple companies."
-                    )
-
-            # Non-Central Admins: cannot create shared users
-            if len(user.company_ids) > 1:
-                if not current_user.has_group("waste_management_zakheni.group_central_admin"):
-                    raise ValidationError(
-                        "Only Central Admins can assign users to multiple companies."
-                    )
-
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     creator = self.env.user
+    #
+    #     if creator.has_group("waste_management_zakheni.group_company_admin"):
+    #         for vals in vals_list:
+    #             vals["company_id"] = creator.company_id.id
+    #             vals["company_ids"] = [(6, 0, [creator.company_id.id])]
+    #
+    #
+    #     return super().create(vals_list)
+    #
+    # @api.constrains("company_id", "company_ids")
+    # def _check_company_assignment_governance(self):
+    #     current_user = self.env.user
+    #
+    #     for user in self:
+    #         # Company Admins: cannot touch company fields
+    #         if current_user.has_group("waste_management_zakheni.group_company_admin"):
+    #             if user.company_id != current_user.company_id:
+    #                 raise ValidationError(
+    #                     "Company Admins cannot assign users to another company."
+    #                 )
+    #
+    #             if len(user.company_ids) != 1 or user.company_ids[0] != current_user.company_id:
+    #                 raise ValidationError(
+    #                     "Company Admins cannot assign multiple companies."
+    #                 )
+    #
+    #         # # Non-Central Admins: cannot create shared users
+    #         # if len(user.company_ids) > 1:
+    #         #     if not current_user.has_group("waste_management_zakheni.group_central_admin"):
+    #         #         raise ValidationError(
+    #         #             "Only Central Admins can assign users to multiple companies."
+    #         #         )
+    #
+    #         if len(user.company_ids) > 1:
+    #             if not (
+    #                     current_user.has_group("waste_management_zakheni.group_central_admin")
+    #                     or current_user.has_group("base.group_system")
+    #             ):
+    #                 raise ValidationError(
+    #                     "Only Central Admins or System Administrators can assign users to multiple companies."
+    #                 )
+    #
 
