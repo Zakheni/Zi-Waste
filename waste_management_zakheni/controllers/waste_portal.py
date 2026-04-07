@@ -472,11 +472,19 @@ class WasteClientPortal(CustomerPortal):
 
         is_agent = user.has_group(self.AGENT_GROUP)
         worksheets = False
-        if is_agent:
+        # if is_agent:
+        #     worksheets = Worksheet.search(
+        #         [('service_request_id', '=', wsr.id)],
+        #         order='create_date desc'
+        #     )
+
+        if is_agent and wsr.state in AGENT_ALLOWED_STATES:
             worksheets = Worksheet.search(
                 [('service_request_id', '=', wsr.id)],
                 order='create_date desc'
             )
+        else:
+            worksheets = False
 
         values = {
             'page_name': 'waste_request_detail',
@@ -700,13 +708,26 @@ class WasteClientPortal(CustomerPortal):
         # ============================================================
         # ✅ AFTER SAVE: update states
         # ============================================================
-        ws_sudo = ws.sudo()
+        # ws_sudo = ws.sudo()
 
         # 1) Worksheet state -> done
+        # worksheet_became_done = False
+        # if 'state' in ws_sudo._fields and ws_sudo.state in ('draft', 'in_progress'):
+        #     ws_sudo.write({'state': 'done'})
+        #     worksheet_became_done = True
+
+        # ============================================================
+        # ✅ AFTER SAVE: update states
+        # ============================================================
+        ws_sudo = ws.sudo()
+
+        # 1) Worksheet state -> done (ALWAYS)
         worksheet_became_done = False
-        if 'state' in ws_sudo._fields and ws_sudo.state in ('in_progress', 'progress', 'ongoing'):
-            ws_sudo.write({'state': 'done'})
-            worksheet_became_done = True
+
+        if 'state' in ws_sudo._fields:
+            if ws_sudo.state != 'done':
+                ws_sudo.write({'state': 'done'})
+                worksheet_became_done = True
 
         # 2) Manifest state: dispatched -> service_delivered
         req = ws_sudo.service_request_id.sudo()

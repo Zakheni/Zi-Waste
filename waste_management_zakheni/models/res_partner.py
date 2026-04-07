@@ -79,6 +79,155 @@ class ResPartner(models.Model):
     email = fields.Char(required=True)
     # mobile = fields.Char(required=True)
 
+    role_ids = fields.Many2many(
+        'res.groups',
+        string="Roles",
+        domain=[
+            ('category_id.name', 'in', [
+                'Client Management',
+
+            ])
+        ],
+
+        tracking=True
+    )
+
+    invite_url = fields.Char(string="Portal Invitation Link", readonly=True)
+    invite_message = fields.Html(string="Invitation Message", readonly=True)
+    # ------------------------------------------------------------
+    # CREATE
+    # ------------------------------------------------------------
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('phone'):
+                vals['phone'] = self._normalize_phone(vals['phone'])
+            if vals.get('mobile'):
+                vals['mobile'] = self._normalize_phone(vals['mobile'])
+
+        partners = super().create(vals_list)
+
+        # ✅ Ensure portal user + sync roles
+        partners._ensure_portal_user()
+        partners._sync_roles_to_users()
+
+        return partners
+
+    # ------------------------------------------------------------
+    # WRITE
+    # ------------------------------------------------------------
+
+    def write(self, vals):
+        if vals.get('phone'):
+            vals['phone'] = self._normalize_phone(vals['phone'])
+        if vals.get('mobile'):
+            vals['mobile'] = self._normalize_phone(vals['mobile'])
+
+        res = super().write(vals)
+
+        if 'role_ids' in vals:
+            self._ensure_portal_user()
+            self._sync_roles_to_users()
+
+        return res
+
+    # ------------------------------------------------------------
+    # DELETE RESTRICTION
+    # ------------------------------------------------------------
+
+    def unlink(self):
+        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+            raise UserError(_("You are not allowed to delete Contacts."))
+        return super().unlink()
+
+    # ------------------------------------------------------------
+    # ROLE SYNC LOGIC (🔥 CORE)
+    # ------------------------------------------------------------
+
+    def _sync_roles_to_users(self):
+        portal_group = self.env.ref('base.group_portal')
+
+        client_groups = self.env['res.groups'].search([
+            ('category_id.name', '=', 'Client Management')
+        ])
+
+        for partner in self:
+            for user in partner.user_ids:
+                user = user.sudo()  # ✅ bypass access rights
+
+                commands = []
+
+                # 1. Remove old Client Management roles
+                commands += [(3, g.id) for g in client_groups]
+
+                # 2. Add selected roles
+                commands += [(4, g.id) for g in partner.role_ids]
+
+                # 3. Ensure portal access
+                if partner.role_ids:
+                    commands.append((4, portal_group.id))
+
+                user.write({'groups_id': commands})
+
+    def action_send_portal_reset(self):
+        for partner in self:
+
+            # ❌ Must have email
+            if not partner.email:
+                raise ValidationError(_("Partner must have an email."))
+
+            # ✅ Ensure portal user exists
+            partner._ensure_portal_user()
+
+            user = partner.user_ids[:1]
+
+            if not user:
+                raise ValidationError(_("No user linked to this partner."))
+
+            # ✅ Send reset password (generates token)
+            user.sudo().action_reset_password()
+
+            # ✅ Build link
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            db_name = self.env.cr.dbname
+
+            invite_url = f"{base_url}/web/reset_password?db={db_name}&token={partner.signup_token}"
+
+            # ✅ Save message
+            partner.write({
+                'invite_url': invite_url,
+                'invite_message': f"""
+                    <div>
+                        <strong>Password reset link:</strong><br/>
+                        <a href="{invite_url}" target="_blank">{invite_url}</a>
+                    </div>
+                """
+            })
+
+    def action_clear_invite(self):
+        for rec in self:
+            rec.write({
+                'invite_url': False,
+                'invite_message': False,
+            })
+    # ------------------------------------------------------------
+    # AUTO CREATE PORTAL USER (🔥 IMPORTANT)
+    # ------------------------------------------------------------
+
+    def _ensure_portal_user(self):
+        portal_group = self.env.ref('base.group_portal')
+
+        for partner in self:
+            if not partner.user_ids and partner.email:
+                self.env['res.users'].sudo().create({
+                    'name': partner.name,
+                    'login': partner.email,
+                    'partner_id': partner.id,
+                    'groups_id': [(6, 0, [portal_group.id])]
+                })
+
+
 
     # ------------------------------------------------------------
     # Helper: normalize phone numbers
@@ -97,24 +246,24 @@ class ResPartner(models.Model):
     # ------------------------------------------------------------
     # CREATE: normalize BEFORE constraint
     # ------------------------------------------------------------
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('phone'):
-                vals['phone'] = self._normalize_phone(vals['phone'])
-            if vals.get('mobile'):
-                vals['mobile'] = self._normalize_phone(vals['mobile'])
-        return super().create(vals_list)
-
-    # ------------------------------------------------------------
-    # WRITE: normalize BEFORE constraint
-    # ------------------------------------------------------------
-    def write(self, vals):
-        if vals.get('phone'):
-            vals['phone'] = self._normalize_phone(vals['phone'])
-        if vals.get('mobile'):
-            vals['mobile'] = self._normalize_phone(vals['mobile'])
-        return super().write(vals)
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     for vals in vals_list:
+    #         if vals.get('phone'):
+    #             vals['phone'] = self._normalize_phone(vals['phone'])
+    #         if vals.get('mobile'):
+    #             vals['mobile'] = self._normalize_phone(vals['mobile'])
+    #     return super().create(vals_list)
+    #
+    # # ------------------------------------------------------------
+    # # WRITE: normalize BEFORE constraint
+    # # ------------------------------------------------------------
+    # def write(self, vals):
+    #     if vals.get('phone'):
+    #         vals['phone'] = self._normalize_phone(vals['phone'])
+    #     if vals.get('mobile'):
+    #         vals['mobile'] = self._normalize_phone(vals['mobile'])
+    #     return super().write(vals)
 
     # ------------------------------------------------------------
     # CONSTRAINT: validate normalized value ONLY

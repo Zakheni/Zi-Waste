@@ -61,32 +61,13 @@ class WasteServiceRequest(models.Model):
     )
 
     container_id = fields.Many2one('waste.container', string='Container')
+
+
     partner_id = fields.Many2one(
         'res.partner',
         string='Customer',
-        # domain="[('is_company','=',True)]",
-        # domain=[("is_company", "=", True), ("customer_rank", ">", 0)],
-
-        domain=lambda self: [
-            ('is_company', '=', True),
-        #     ('customer_rank', '>', 0),
-        #     ('id', '!=', self.env.user.partner_id.id),
-        ]
-
+        domain="['&', ('is_company', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
     )
-
-    # partner_id = fields.Many2one(
-    #     'res.partner',
-    #     string='Customer',
-    #     domain="""
-    #             [
-    #                 ('customer_rank', '>', 0),
-    #                 '|',
-    #                     ('company_id', '=', False),
-    #                     ('company_id', '=', company_id)
-    #             ]
-    #         """
-    # )
 
     portal_user_id = fields.Many2one(
         'res.users',
@@ -1383,6 +1364,45 @@ class WasteServiceRequest(models.Model):
                 template.send_mail(rec.id, force_send=True)
 
         return True
+    def action_set_scheduled(self):
+        Worksheet = self.env['waste.worksheet'].sudo()
+
+        for rec in self:
+            # 1️⃣ Change state
+            rec.state = 'scheduled'
+
+
+            # 2️⃣ Check if worksheet already exists (IMPORTANT)
+            existing_ws = Worksheet.search([
+                ('service_request_id', '=', rec.id)
+            ], limit=1)
+
+            if existing_ws:
+                continue  # already created → skip
+
+            # 3️⃣ Create worksheet
+            Worksheet.create({
+                'service_request_id': rec.id,
+                'company_id': rec.company_id.id,
+            })
+
+            if rec.is_service_provider:
+                # send SERVICE PROVIDER template
+                template = rec.env.ref(
+                    "waste_management_zakheni.mail_tmpl_service_request_service_provide_invitation",
+                    raise_if_not_found=False,
+                )
+            else:
+                # send DRIVER template
+                template = rec.env.ref(
+                    "waste_management_zakheni.mail_tmpl_service_request_driver_invitation",
+                    raise_if_not_found=False,
+                )
+
+            if template:
+                template.send_mail(rec.id, force_send=True)
+
+            return True
 
     def action_mark_done(self):
         for record in self:

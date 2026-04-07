@@ -8,7 +8,7 @@
             <tree>
                 <field name="name"/>
                 <field name="email" string="Login"/>
-                 <field name="lang"/>
+                <field name="lang"/>
                 <field name="last_login" string="Last Authentication"/>
                 <field name="company_id"/>
                 <!--                <field name="role_ids" widget="many2many_tags"/>-->
@@ -47,6 +47,57 @@
         <field name="name">wmz.service.request.user.form</field>
         <field name="model">wmz.service.request.user</field>
         <field name="arch" type="xml">
+            <!--            <form>-->
+            <!--                <header>-->
+            <!--                    <button name="action_create_user"-->
+            <!--                            type="object"-->
+            <!--                            string="Create User"-->
+            <!--                            class="btn-primary"-->
+            <!--                            invisible="state == 'created'"/>-->
+
+            <!--                    <button name="action_update_user"-->
+            <!--                            type="object"-->
+            <!--                            string="Update User"-->
+            <!--                            class="btn-secondary"-->
+            <!--                            invisible="state != 'created'"/>-->
+
+            <!--                    <field name="state"-->
+            <!--                           widget="statusbar"-->
+            <!--                           statusbar_visible="draft,created,error"/>-->
+            <!--                </header>-->
+            <!--                <sheet>-->
+            <!--                    <div class="oe_title">-->
+            <!--                        <h1>-->
+            <!--                            <field name="name" string="Name" placeholder="Name and Surname"/>-->
+            <!--                        </h1>-->
+            <!--                    </div>-->
+            <!--                    <div class="oe_title">-->
+            <!--                        <h1>-->
+            <!--                            <field name="email" string="Name" placeholder="Email Address"/>-->
+            <!--                        </h1>-->
+            <!--                    </div>-->
+            <!--                    <group>-->
+            <!--                        <field name="invite_url" widget="url" readonly="1"/>-->
+
+            <!--                        <field name="phone"/>-->
+            <!--                    </group>-->
+            <!--                    <group>-->
+            <!--                        <field name="message" readonly="1"/>-->
+            <!--                        <field name="role_ids" widget="many2many_tags"/>-->
+            <!--                        &lt;!&ndash;                        <field name="state"/>&ndash;&gt;-->
+
+            <!--                    </group>-->
+
+
+            <!--                </sheet>-->
+
+            <!--                <div class="oe_chatter">-->
+            <!--                    <field name="message_follower_ids" groups="base.group_user"/>-->
+            <!--                    <field name="activity_ids"/>-->
+            <!--                    <field name="message_ids"/>-->
+            <!--                </div>-->
+            <!--            </form>-->
+
             <form>
                 <header>
                     <button name="action_create_user"
@@ -61,33 +112,61 @@
                             class="btn-secondary"
                             invisible="state != 'created'"/>
 
+                    <!-- 🔥 NEW BUTTON -->
+                    <button name="action_reset_invite_link"
+                            type="object"
+                            string="Reset Invite Link"
+                            class="btn-warning"
+                            invisible="state != 'created'"
+                    />
+
+
                     <field name="state"
                            widget="statusbar"
                            statusbar_visible="draft,created,error"/>
                 </header>
+                <!-- ✅ SUCCESS ALERT (THIS IS WHAT YOU NEED) -->
+
+                <div class="alert alert-success alert-dismissible text-center"
+                     role="alert"
+                     invisible="state != 'created' or not message">
+
+                    <!-- ✅ Odoo-compatible close button -->
+                    <button name="action_clear_message"
+                            type="object"
+                            class="btn-close"
+                            aria-label="Close"
+                            style="float: right;"/>
+
+                    <div>
+                        <field name="message"
+                               widget="html"
+                               options="{'sanitize': False}"/>
+                    </div>
+
+                </div>
+
+
                 <sheet>
                     <div class="oe_title">
                         <h1>
-                            <field name="name" string="Name" placeholder="Name and Surname"/>
+                            <field name="name" placeholder="Name and Surname"/>
                         </h1>
                     </div>
+
                     <div class="oe_title">
                         <h1>
-                            <field name="email" string="Name" placeholder="Email Address"/>
+                            <field name="email" placeholder="Email Address"/>
                         </h1>
                     </div>
-                    <group>
 
+                    <group>
                         <field name="phone"/>
                     </group>
+
                     <group>
-                        <field name="message" readonly="1"/>
                         <field name="role_ids" widget="many2many_tags"/>
-                        <!--                        <field name="state"/>-->
-
                     </group>
-
-
                 </sheet>
 
                 <div class="oe_chatter">
@@ -96,6 +175,7 @@
                     <field name="message_ids"/>
                 </div>
             </form>
+
         </field>
     </record>
 

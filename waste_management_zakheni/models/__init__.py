@@ -31,6 +31,8 @@ from . import sales_order
 from . import account_move
 from . import ir_ui_menu
 from . import create_user_wizard
+from . import account_chart_template
+
 
 
 

@@ -43,7 +43,17 @@ class WasteWorksheet(models.Model):
     service_provider_signature = fields.Binary(string="Service Provider Signature",store=True , attachment=False)
     planned_date = fields.Datetime(string='Planned Date', related='service_request_id.planned_date', store=True)
 
-    partner_id = fields.Many2one('res.partner', string="Customer", related='service_request_id.partner_id',store=True)
+    partner_id = fields.Many2one('res.partner',
+                                 string="Customer",
+                                 related='service_request_id.partner_id',
+                                 store=True
+                                 )
+
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Customer',
+        domain="['&', ('is_company', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
+    )
     pickup_point_id = fields.Many2one('pickup.point', string="Drop-off/Pickup Point",
                                       related='service_request_id.pickup_point_id')
 

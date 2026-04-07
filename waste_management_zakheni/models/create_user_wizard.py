@@ -1,6 +1,7 @@
 from odoo import models, fields
 from odoo.exceptions import UserError
 
+
 class ServiceRequestUser(models.Model):
     _name = 'wmz.service.request.user'
     _inherit = ['mail.thread', 'mail.activity.mixin']
@@ -8,7 +9,7 @@ class ServiceRequestUser(models.Model):
     service_request_id = fields.Many2one('waste.service.request')
 
     name = fields.Char(required=True, tracking=True)
-    email = fields.Char(required=True,tracking=True)
+    email = fields.Char(required=True, tracking=True)
     phone = fields.Char(tracking=True)
     last_login = fields.Datetime(
         string="Last Login",
@@ -59,24 +60,6 @@ class ServiceRequestUser(models.Model):
                 delta = fields.Datetime.now() - rec.last_login
                 rec.is_online = delta.total_seconds() < 300
 
-    # role = fields.Selection([
-    #     ('admin', 'Super Admin'),
-    #     ('manager', 'Manager'),
-    #     ('clerk', 'Admin Clerk'),
-    #     ('driver', 'Driver'),
-    #     ('finance', 'Finance'),
-    #     ('customer', 'Customer'),
-    # ], required=True)
-
-    # role_ids = fields.Many2many(
-    #     'res.groups',
-    #     string="Roles",
-    #     domain="[('category_id.name', '=', 'Waste Management')]",
-    #     required=True,
-    #     tracking = True
-    #
-    # )
-
     role_ids = fields.Many2many(
         'res.groups',
         string="Roles",
@@ -106,7 +89,9 @@ class ServiceRequestUser(models.Model):
     ], default='draft', tracking=True)
 
     # message = fields.Text()
-    message = fields.Text(readonly=True)
+    # message = fields.Text(readonly=True)
+    message = fields.Html(string="Message", readonly=True)
+    invite_url = fields.Char(string="Invitation Link", readonly=True)
 
     def action_create_user(self):
         for rec in self:
@@ -166,15 +151,38 @@ class ServiceRequestUser(models.Model):
                     })
 
                 # ✅ SEND INVITE
+                # user.sudo().action_reset_password()
+
+                # ✅ Generate signup token + URL
+                # ✅ Send reset password email (generates token)
                 user.sudo().action_reset_password()
+
+                # ✅ Get base URL
+                base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+
+                # ✅ Get database name
+                db_name = self.env.cr.dbname
+
+                # ✅ Build SAME link as Odoo email
+                invite_url = f"{base_url}/web/reset_password?db={db_name}&token={partner.signup_token}"
 
                 # ✅ SAVE RESULT
                 rec.write({
                     'user_id': user.id,
                     'partner_id': partner.id,
+                    'message': f'<strong>An invitation email containing the following link has been sent:</strong><br/>'
+                               f'<a href="{invite_url}" target="_blank"><strong>{invite_url}</strong></a>',
+                    'invite_url': invite_url,
                     'state': 'created',
-                    'message': '✅ User created successfully and invitation sent'
                 })
+
+                # # ✅ SAVE RESULT
+                # rec.write({
+                #     'user_id': user.id,
+                #     'partner_id': partner.id,
+                #     'state': 'created',
+                #     'message': '✅ User created successfully and invitation sent'
+                # })
 
             except Exception as e:
                 rec.write({
@@ -244,3 +252,29 @@ class ServiceRequestUser(models.Model):
                     raise UserError(f"Cannot delete linked user: {str(e)}")
 
         return super(ServiceRequestUser, self).unlink()
+
+    def action_clear_message(self):
+        for rec in self:
+            rec.message = False
+
+    def action_reset_invite_link(self):
+        for rec in self:
+            if not rec.user_id:
+                raise UserError("No user to reset password for.")
+
+            # ✅ Generate new reset password token
+            rec.user_id.sudo().action_reset_password()
+
+            # ✅ Build new link
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            db_name = self.env.cr.dbname
+
+            invite_url = f"{base_url}/web/reset_password?db={db_name}&token={rec.partner_id.signup_token}"
+
+            # ✅ Update message + link
+            rec.write({
+                'invite_url': invite_url,
+                'message': f'<strong>Password reset link regenerated:</strong><br/>'
+                           f'<a href="{invite_url}" target="_blank"><strong>{invite_url}</strong></a>',
+                'state': 'created',
+            })

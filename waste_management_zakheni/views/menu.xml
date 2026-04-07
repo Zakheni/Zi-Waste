@@ -25,6 +25,7 @@
         <field name="view_id" eval="False"/>
     </record>
 
+
     <!-- Submenu linking to action -->
     <menuitem id="menu_custom_company"
               name="Customers"
@@ -32,9 +33,19 @@
               action="action_res_company_custom"/>
     <!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>-->
 
+<!--    <menuitem id="menu_custom_company"-->
+<!--              name="Customers"-->
+<!--              parent="menu_pickup_root"-->
+<!--              action="action_res_company_custom"/>-->
 
+    <menuitem id="menu_custom_company"
+          name="Company &amp; Branches"
+          parent="menu_pickup_root"
+          action="action_res_company_custom"/>
 
     <!-- ✅ MENU (UNDER WASTE MANAGEMENT) -->
+
+
     <menuitem id="menu_service_request_user"
               name="Users"
               parent="menu_pickup_root"

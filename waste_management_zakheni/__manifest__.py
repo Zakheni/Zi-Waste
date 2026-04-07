@@ -31,7 +31,7 @@
         # "views/waste_dashboard_action.xml",
 
 
-        "views/auth_signup_templates.xml",
+        # "views/auth_signup_templates.xml",
         "views/portal_waste_dashboard.xml",
         "views/portal_waste_report_html.xml",
         # "views/portal_validation.xml",

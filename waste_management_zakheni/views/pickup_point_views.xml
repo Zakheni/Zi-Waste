@@ -4,11 +4,81 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
+
+            <!-- ✅ CREATE HEADER (SAFE POSITION) -->
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_send_portal_reset"
+                            type="object"
+                            string="Send Portal Reset Link"
+                            class="btn-primary oe_highlight"
+                            invisible="email == False"/>
+                </header>
+            </xpath>
+
+            <!-- ✅ ALERT AT VERY TOP -->
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-success alert-dismissible text-center"
+                     role="alert"
+                     invisible="not invite_url"
+                     style="margin: 10px;">
+
+                    <!-- Close -->
+                    <button name="action_clear_invite"
+                            type="object"
+                            class="btn-close"
+                            style="float: right;"/>
+
+                    <!-- Message -->
+                    <field name="invite_message"
+                           widget="html"
+                           options="{'sanitize': False}"/>
+
+<!--                    &lt;!&ndash; Link &ndash;&gt;-->
+<!--                    <div style="margin-top: 5px;">-->
+<!--                        <strong>Direct Link:</strong>-->
+<!--                        <br/>-->
+<!--                        <field name="invite_url" readonly="1"/>-->
+<!--                    </div>-->
+
+
+                </div>
+            </xpath>
+
+            <!-- ✅ YOUR FIELDS (NO DUPLICATES) -->
             <field name="category_id" position="after">
+
                 <field name="company_id"
                        options="{'no_create': True}"
                        groups="base.group_multi_company"/>
+
+                <field name="role_ids"
+                       widget="many2many_tags"
+                       groups="waste_management_zakheni.group_wmz_admin,
+                           waste_management_zakheni.group_wmz_user_manager"/>
+
+                <field name="invite_message" readonly="1" widget="html" invisible="1"/>
+                <field name="invite_url" readonly="1" invisible="1"/>
+
+
             </field>
+
+            <!-- ✅ NOTEBOOK PAGES -->
+            <xpath expr="//notebook" position="inside">
+
+                <page string="Pickup Points">
+                    <field name="pickup_point_ids"
+                           widget="many2many_tags"
+                           readonly="1"/>
+                </page>
+
+            </xpath>
+
+
+
+
+
+
             <xpath expr="//notebook" position="inside">
                 <page string="Pickup Points">
                     <field name="pickup_point_ids" widget="many2many_tags" readonly="1"/>
@@ -46,11 +116,11 @@
 
                 </page>
             </xpath>
-             <!-- Example: put it near the name -->
+            <!-- Example: put it near the name -->
             <xpath expr="//field[@name='vat']" position="after">
-<!--                <group>-->
-<!--                    <field name="company_id"/>-->
-<!--                </group>-->
+                <!--                <group>-->
+                <!--                    <field name="company_id"/>-->
+                <!--                </group>-->
 
             </xpath>
         </field>
@@ -76,6 +146,7 @@
                         <!--                                <field name="name"/>-->
                         <!--                            </tree>-->
                         <!--                        </field>-->
+                        <field name="company_id" invisible="1"/>
                     </group>
                 </sheet>
                 <div class="oe_chatter">

@@ -55,9 +55,17 @@
                                placeholder="Select tank volume for this company..."
                                string="Waste Tank Volume for Company"/>
 
-
+                        <separator string="Allow users who does no have setting to create branch if it is unchecked"/>
+                        <field name="is_branch" readonly="1"/>
                     </group>
+
+
                 </page>
+            </xpath>
+
+
+            <xpath expr="//field[@name='parent_id']" position="attributes">
+                <attribute name="readonly">1</attribute>
             </xpath>
 
         </field>

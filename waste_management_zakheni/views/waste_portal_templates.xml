@@ -538,7 +538,7 @@
                                     <!-- Waste Type -->
                                     <div class="mb-3">
                                         <label class="form-label">Waste Type</label>
-                                        <select name="waste_type_id" class="form-select" required="required">
+                                        <select name="waste_type_id" class="form-select">
                                             <option value="">Select waste type</option>
                                             <t t-foreach="waste_types" t-as="wt">
                                                 <option t-att-value="wt.id">

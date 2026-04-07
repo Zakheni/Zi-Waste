@@ -118,12 +118,20 @@ access_sale_order_line_wmz_manager,sale.order.line wmz manager,model_sale_order_
 access_waste_tank_tariff,waste.tank.tariff wmz manager,model_waste_tank_tariff,base.group_user,1,1,1,1
 
 access_res_company_manager,res.company wmz manager,model_res_company,waste_management_zakheni.group_wmz_manager,1,1,1,0
+access_res_company_wmz,res.company.wmz,base.model_res_company,waste_management_zakheni.group_wmz_admin,1,1,1,0
+access_res_company_wmz_clerk,res.company.wmz.clerk,base.model_res_company,waste_management_zakheni.group_wmz_admin_clerk,1,0,1,0
 
 access_hr_employee_admin,hr.employee wmz admin,model_hr_employee,waste_management_zakheni.group_wmz_admin,1,1,1,0
 access_hr_department_admin,hr.department wmz admin,model_hr_department,waste_management_zakheni.group_wmz_admin,1,1,1,0
 
 
 access_res_partner_admin,res.partner wmz admin,model_res_partner,waste_management_zakheni.group_wmz_admin,1,1,1,0
+access_res_partner_user_manager,res.partner wmz user manager,model_res_partner,waste_management_zakheni.group_wmz_user_manager,1,1,1,0
+access_res_partner_customer_access,res.partner wmz customer access,model_res_partner,waste_management_zakheni.group_wmz_customer_access,1,1,1,0
+access_res_partner_manager,res.partner manager,model_res_partner,waste_management_zakheni.group_wmz_manager,1,1,0,0
+access_res_partner_clerk,res.partner clerk,model_res_partner,waste_management_zakheni.group_wmz_admin_clerk,1,1,0,0
+access_res_partner_finance,res.partner finance,model_res_partner,waste_management_zakheni.group_wmz_finance,1,1,0,0
+access_res_partner_driver,res.partner driver,model_res_partner,waste_management_zakheni.group_wmz_driver,1,1,0,0
 
 access_link_tracker_system,link.tracker system,link_tracker.model_link_tracker,base.group_system,1,1,1,1
 
