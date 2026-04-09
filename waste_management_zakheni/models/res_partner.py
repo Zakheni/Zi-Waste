@@ -109,7 +109,7 @@ class ResPartner(models.Model):
         partners = super().create(vals_list)
 
         # ✅ Ensure portal user + sync roles
-        partners._ensure_portal_user()
+        # partners._ensure_portal_user()
         partners._sync_roles_to_users()
 
         return partners
@@ -215,18 +215,32 @@ class ResPartner(models.Model):
     # AUTO CREATE PORTAL USER (🔥 IMPORTANT)
     # ------------------------------------------------------------
 
+    # def _ensure_portal_user(self):
+    #     portal_group = self.env.ref('base.group_portal')
+    #
+    #     for partner in self:
+    #         if not partner.user_ids and partner.email:
+    #             self.env['res.users'].sudo().create({
+    #                 'name': partner.name,
+    #                 'login': partner.email,
+    #                 'partner_id': partner.id,
+    #                 'groups_id': [(6, 0, [portal_group.id])]
+    #             })
+
     def _ensure_portal_user(self):
         portal_group = self.env.ref('base.group_portal')
 
         for partner in self:
-            if not partner.user_ids and partner.email:
+            if partner.user_ids:
+                continue  # ✅ already has user, skip
+
+            if partner.email:
                 self.env['res.users'].sudo().create({
                     'name': partner.name,
                     'login': partner.email,
                     'partner_id': partner.id,
                     'groups_id': [(6, 0, [portal_group.id])]
                 })
-
 
 
     # ------------------------------------------------------------

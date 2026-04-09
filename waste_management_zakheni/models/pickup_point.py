@@ -7,11 +7,17 @@ class PickupPoint(models.Model):
     _description = 'Pickup Point'
 
     name = fields.Char(string="Pickup Point Name", required=True, tracking=True)
+
+    # partner_id = fields.Many2one(
+    #     'res.partner',
+    #     string="Customer",
+    #     ondelete='cascade',
+    #     tracking=True,
+    #     domain="['&', ('is_company', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
+    # )
     partner_id = fields.Many2one(
         'res.partner',
-        string="Customer",
-        ondelete='cascade',
-        tracking=True,
+        string='Customer',
         domain="['&', ('is_company', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
     )
 

@@ -93,102 +93,166 @@ class ServiceRequestUser(models.Model):
     message = fields.Html(string="Message", readonly=True)
     invite_url = fields.Char(string="Invitation Link", readonly=True)
 
+    # def action_create_user(self):
+    #     for rec in self:
+    #         try:
+    #             # 🔴 CHECK duplicate
+    #
+    #             existing = self.env['res.users'].sudo().search([
+    #                 ('login', '=', rec.email)
+    #             ], limit=1)
+    #
+    #             if existing:
+    #                 rec.write({
+    #                     'user_id': existing.id,
+    #                     'partner_id': existing.partner_id.id,
+    #                     'state': 'error',
+    #                     'message': 'User already exists with this email'
+    #                 })
+    #                 continue
+    #
+    #             # ✅ CREATE PARTNER
+    #             partner = self.env['res.partner'].sudo().create({
+    #                 'name': rec.name,
+    #                 'email': rec.email,
+    #                 'phone': rec.phone,
+    #             })
+    #
+    #             # ✅ CREATE USER (ONLY ONCE)
+    #             user = self.env['res.users'].sudo().create({
+    #                 'name': rec.name,
+    #                 'login': rec.email,
+    #                 'email': rec.email,
+    #                 'partner_id': partner.id,
+    #                 'active': True,
+    #             })
+    #
+    #             # ✅ PREPARE GROUPS
+    #             groups = []
+    #
+    #             # Add selected roles
+    #             if rec.role_ids:
+    #                 groups.extend(rec.role_ids.ids)
+    #
+    #             # Always include internal user
+    #             base_group = self.env.ref('base.group_user')
+    #             if base_group.id not in groups:
+    #                 groups.append(base_group.id)
+    #
+    #             # ✅ ASSIGN GROUPS
+    #             # user.sudo().write({
+    #             #     'groups_id': [(6, 0, groups)]
+    #             # })
+    #
+    #             # Assign groups WITHOUT removing existing ones
+    #             for group_id in groups:
+    #                 user.sudo().write({
+    #                     'groups_id': [(4, group_id)]
+    #                 })
+    #
+    #             # ✅ SEND INVITE
+    #             # user.sudo().action_reset_password()
+    #
+    #             # ✅ Generate signup token + URL
+    #             # ✅ Send reset password email (generates token)
+    #             user.sudo().action_reset_password()
+    #
+    #             # ✅ Get base URL
+    #             base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+    #
+    #             # ✅ Get database name
+    #             db_name = self.env.cr.dbname
+    #
+    #             # ✅ Build SAME link as Odoo email
+    #             invite_url = f"{base_url}/web/reset_password?db={db_name}&token={partner.signup_token}"
+    #
+    #             # ✅ SAVE RESULT
+    #             rec.write({
+    #                 'user_id': user.id,
+    #                 'partner_id': partner.id,
+    #                 'message': f'<strong>An invitation email containing the following link has been sent:</strong><br/>'
+    #                            f'<a href="{invite_url}" target="_blank"><strong>{invite_url}</strong></a>',
+    #                 'invite_url': invite_url,
+    #                 'state': 'created',
+    #             })
+    #
+    #             # # ✅ SAVE RESULT
+    #             # rec.write({
+    #             #     'user_id': user.id,
+    #             #     'partner_id': partner.id,
+    #             #     'state': 'created',
+    #             #     'message': '✅ User created successfully and invitation sent'
+    #             # })
+    #
+    #         except Exception as e:
+    #             rec.write({
+    #                 'state': 'error',
+    #                 'message': f'❌ Error: {str(e)}'
+    #             })
+
     def action_create_user(self):
         for rec in self:
-            try:
-                # 🔴 CHECK duplicate
 
-                existing = self.env['res.users'].sudo().search([
-                    ('login', '=', rec.email)
-                ], limit=1)
+            # 1. Check if user already exists
+            existing_user = self.env['res.users'].sudo().search([
+                ('login', '=', rec.email)
+            ], limit=1)
 
-                if existing:
-                    rec.write({
-                        'user_id': existing.id,
-                        'partner_id': existing.partner_id.id,
-                        'state': 'error',
-                        'message': 'User already exists with this email'
-                    })
-                    continue
+            if existing_user:
+                rec.write({
+                    'user_id': existing_user.id,
+                    'partner_id': existing_user.partner_id.id,
+                    'state': 'error',
+                    'message': 'User already exists with this email'
+                })
+                continue
 
-                # ✅ CREATE PARTNER
+            # 2. Create or reuse partner
+            partner = self.env['res.partner'].sudo().search([
+                ('email', '=', rec.email)
+            ], limit=1)
+
+            if not partner:
                 partner = self.env['res.partner'].sudo().create({
                     'name': rec.name,
                     'email': rec.email,
                     'phone': rec.phone,
                 })
 
-                # ✅ CREATE USER (ONLY ONCE)
-                user = self.env['res.users'].sudo().create({
-                    'name': rec.name,
-                    'login': rec.email,
-                    'email': rec.email,
-                    'partner_id': partner.id,
-                    'active': True,
-                })
+            # 3. Create user (ONLY HERE)
+            user = self.env['res.users'].sudo().create({
+                'name': rec.name,
+                'login': rec.email,
+                'email': rec.email,
+                'partner_id': partner.id,
+                'active': True,
+            })
 
-                # ✅ PREPARE GROUPS
-                groups = []
+            # 4. Assign roles
+            groups = rec.role_ids.ids if rec.role_ids else []
 
-                # Add selected roles
-                if rec.role_ids:
-                    groups.extend(rec.role_ids.ids)
+            base_group = self.env.ref('base.group_user')
+            if base_group.id not in groups:
+                groups.append(base_group.id)
 
-                # Always include internal user
-                base_group = self.env.ref('base.group_user')
-                if base_group.id not in groups:
-                    groups.append(base_group.id)
+            user.write({'groups_id': [(6, 0, groups)]})
 
-                # ✅ ASSIGN GROUPS
-                # user.sudo().write({
-                #     'groups_id': [(6, 0, groups)]
-                # })
+            # 5. Send invite
+            user.sudo().action_reset_password()
 
-                # Assign groups WITHOUT removing existing ones
-                for group_id in groups:
-                    user.sudo().write({
-                        'groups_id': [(4, group_id)]
-                    })
+            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            db_name = self.env.cr.dbname
 
-                # ✅ SEND INVITE
-                # user.sudo().action_reset_password()
+            invite_url = f"{base_url}/web/reset_password?db={db_name}&token={partner.signup_token}"
 
-                # ✅ Generate signup token + URL
-                # ✅ Send reset password email (generates token)
-                user.sudo().action_reset_password()
-
-                # ✅ Get base URL
-                base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-
-                # ✅ Get database name
-                db_name = self.env.cr.dbname
-
-                # ✅ Build SAME link as Odoo email
-                invite_url = f"{base_url}/web/reset_password?db={db_name}&token={partner.signup_token}"
-
-                # ✅ SAVE RESULT
-                rec.write({
-                    'user_id': user.id,
-                    'partner_id': partner.id,
-                    'message': f'<strong>An invitation email containing the following link has been sent:</strong><br/>'
-                               f'<a href="{invite_url}" target="_blank"><strong>{invite_url}</strong></a>',
-                    'invite_url': invite_url,
-                    'state': 'created',
-                })
-
-                # # ✅ SAVE RESULT
-                # rec.write({
-                #     'user_id': user.id,
-                #     'partner_id': partner.id,
-                #     'state': 'created',
-                #     'message': '✅ User created successfully and invitation sent'
-                # })
-
-            except Exception as e:
-                rec.write({
-                    'state': 'error',
-                    'message': f'❌ Error: {str(e)}'
-                })
+            # 6. Save result
+            rec.write({
+                'user_id': user.id,
+                'partner_id': partner.id,
+                'invite_url': invite_url,
+                'message': f'<strong>Invitation link:</strong><br/><a href="{invite_url}" target="_blank">{invite_url}</a>',
+                'state': 'created',
+            })
 
     def action_update_user(self):
         for rec in self:
