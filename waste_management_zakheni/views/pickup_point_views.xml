@@ -34,12 +34,12 @@
                            widget="html"
                            options="{'sanitize': False}"/>
 
-<!--                    &lt;!&ndash; Link &ndash;&gt;-->
-<!--                    <div style="margin-top: 5px;">-->
-<!--                        <strong>Direct Link:</strong>-->
-<!--                        <br/>-->
-<!--                        <field name="invite_url" readonly="1"/>-->
-<!--                    </div>-->
+                    <!--                    &lt;!&ndash; Link &ndash;&gt;-->
+                    <!--                    <div style="margin-top: 5px;">-->
+                    <!--                        <strong>Direct Link:</strong>-->
+                    <!--                        <br/>-->
+                    <!--                        <field name="invite_url" readonly="1"/>-->
+                    <!--                    </div>-->
 
 
                 </div>
@@ -52,10 +52,11 @@
                        options="{'no_create': True}"
                        groups="base.group_multi_company"/>
 
-                <field name="role_ids"
-                       widget="many2many_tags"
-                       groups="waste_management_zakheni.group_wmz_admin,
-                           waste_management_zakheni.group_wmz_user_manager"/>
+<!--                <field name="role_ids"-->
+<!--                       widget="many2many_tags"-->
+<!--                       groups="waste_management_zakheni.group_wmz_admin,-->
+<!--                           waste_management_zakheni.group_wmz_user_manager"/>-->
+                <field name="role"/>
 
                 <field name="invite_message" readonly="1" widget="html" invisible="1"/>
                 <field name="invite_url" readonly="1" invisible="1"/>
@@ -73,10 +74,6 @@
                 </page>
 
             </xpath>
-
-
-
-
 
 
             <xpath expr="//notebook" position="inside">

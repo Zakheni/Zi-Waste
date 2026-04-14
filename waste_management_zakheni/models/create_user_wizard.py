@@ -235,7 +235,12 @@ class ServiceRequestUser(models.Model):
             if base_group.id not in groups:
                 groups.append(base_group.id)
 
-            user.write({'groups_id': [(6, 0, groups)]})
+            # user.write({'groups_id': [(6, 0, groups)]})
+
+            for group_id in groups:
+                user.write({
+                    'groups_id': [(4, group_id)]
+                })
 
             # 5. Send invite
             user.sudo().action_reset_password()

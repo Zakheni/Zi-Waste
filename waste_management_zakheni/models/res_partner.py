@@ -48,13 +48,13 @@ class ResPartner(models.Model):
         help="Waste types this company collected."
     )
 
-    # company_id = fields.Many2one(
-    #     'res.company',
-    #     string='Company',
-    #     required=False,
-    #     default=lambda self: self.env.company,
-    #     index=True
-    # )
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        required=False,
+        default=lambda self: self.env.company,
+        index=True
+    )
     # company_id = fields.Many2one(
     #     'res.company',
     #     string='Company',
@@ -79,18 +79,11 @@ class ResPartner(models.Model):
     email = fields.Char(required=True)
     # mobile = fields.Char(required=True)
 
-    role_ids = fields.Many2many(
-        'res.groups',
-        string="Roles",
-        domain=[
-            ('category_id.name', 'in', [
-                'Client Management',
 
-            ])
-        ],
-
-        tracking=True
-    )
+    role = fields.Selection([
+        ('customer', 'Customer'),
+        ('agent', 'Agent'),
+    ], string="Role", tracking=True)
 
     invite_url = fields.Char(string="Portal Invitation Link", readonly=True)
     invite_message = fields.Html(string="Invitation Message", readonly=True)
@@ -126,8 +119,8 @@ class ResPartner(models.Model):
 
         res = super().write(vals)
 
-        if 'role_ids' in vals:
-            self._ensure_portal_user()
+        if 'role' in vals:
+            # self._ensure_portal_user()
             self._sync_roles_to_users()
 
         return res
@@ -146,46 +139,53 @@ class ResPartner(models.Model):
     # ------------------------------------------------------------
 
     def _sync_roles_to_users(self):
-        portal_group = self.env.ref('base.group_portal')
 
-        client_groups = self.env['res.groups'].search([
-            ('category_id.name', '=', 'Client Management')
-        ])
+        group_customer = self.env.ref('waste_management_zakheni.group_wmz_client_customer')
+        group_agent = self.env.ref('waste_management_zakheni.group_wmz_client_agent')
 
         for partner in self:
             for user in partner.user_ids:
-                user = user.sudo()  # ✅ bypass access rights
+                user = user.sudo()
 
                 commands = []
 
-                # 1. Remove old Client Management roles
-                commands += [(3, g.id) for g in client_groups]
+                # ❌ Remove ONLY your custom groups
+                commands += [(3, group_customer.id)]
+                commands += [(3, group_agent.id)]
 
-                # 2. Add selected roles
-                commands += [(4, g.id) for g in partner.role_ids]
+                # ✅ Assign based on role
+                if partner.role == 'customer':
+                    commands.append((4, group_customer.id))
 
-                # 3. Ensure portal access
-                if partner.role_ids:
-                    commands.append((4, portal_group.id))
+                elif partner.role == 'agent':
+                    commands.append((4, group_agent.id))
 
                 user.write({'groups_id': commands})
 
     def action_send_portal_reset(self):
         for partner in self:
 
-            # ❌ Must have email
             if not partner.email:
                 raise ValidationError(_("Partner must have an email."))
 
-            # ✅ Ensure portal user exists
-            partner._ensure_portal_user()
-
             user = partner.user_ids[:1]
 
+            # ✅ AUTO CREATE USER IF MISSING
             if not user:
-                raise ValidationError(_("No user linked to this partner."))
+                user = self.env['res.users'].sudo().create({
+                    'name': partner.name,
+                    'login': partner.email,
+                    'email': partner.email,
+                    'partner_id': partner.id,
 
-            # ✅ Send reset password (generates token)
+                    # 🔥 FORCE PORTAL USER ONLY
+                    'groups_id': [(6, 0, [self.env.ref('base.group_portal').id])]
+                })
+
+                # ✅ assign role groups immediately
+                partner._sync_roles_to_users()
+
+            # ✅ Send reset password
             user.sudo().action_reset_password()
 
             # ✅ Build link
@@ -194,7 +194,6 @@ class ResPartner(models.Model):
 
             invite_url = f"{base_url}/web/reset_password?db={db_name}&token={partner.signup_token}"
 
-            # ✅ Save message
             partner.write({
                 'invite_url': invite_url,
                 'invite_message': f"""
@@ -204,6 +203,48 @@ class ResPartner(models.Model):
                     </div>
                 """
             })
+
+
+    # def action_send_portal_reset(self):
+    #     for partner in self:
+    #
+    #         # ❌ Must have email
+    #         if not partner.email:
+    #             raise ValidationError(_("Partner must have an email."))
+    #
+    #         # # ✅ Ensure portal user exists
+    #         # partner._ensure_portal_user()
+    #         #
+    #         # user = partner.user_ids[:1]
+    #         #
+    #         # if not user:
+    #         #     raise ValidationError(_("No user linked to this partner."))
+    #
+    #         user = partner.user_ids[:1]
+    #
+    #         if not user:
+    #             raise ValidationError(
+    #                 _("No user linked to this partner. Please create the user first from the Users module."))
+    #
+    #         # ✅ Send reset password (generates token)
+    #         user.sudo().action_reset_password()
+    #
+    #         # ✅ Build link
+    #         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+    #         db_name = self.env.cr.dbname
+    #
+    #         invite_url = f"{base_url}/web/reset_password?db={db_name}&token={partner.signup_token}"
+    #
+    #         # ✅ Save message
+    #         partner.write({
+    #             'invite_url': invite_url,
+    #             'invite_message': f"""
+    #                 <div>
+    #                     <strong>Password reset link:</strong><br/>
+    #                     <a href="{invite_url}" target="_blank">{invite_url}</a>
+    #                 </div>
+    #             """
+    #         })
 
     def action_clear_invite(self):
         for rec in self:
@@ -227,20 +268,21 @@ class ResPartner(models.Model):
     #                 'groups_id': [(6, 0, [portal_group.id])]
     #             })
 
-    def _ensure_portal_user(self):
-        portal_group = self.env.ref('base.group_portal')
+    # def _ensure_portal_user(self):
+    #     portal_group = self.env.ref('base.group_portal')
+    #
+    #     for partner in self:
+    #         if partner.user_ids:
+    #             continue  # ✅ already has user, skip
+    #
+    #         if partner.email:
+    #             self.env['res.users'].sudo().create({
+    #                 'name': partner.name,
+    #                 'login': partner.email,
+    #                 'partner_id': partner.id,
+    #                 'groups_id': [(6, 0, [portal_group.id])]
+    #             })
 
-        for partner in self:
-            if partner.user_ids:
-                continue  # ✅ already has user, skip
-
-            if partner.email:
-                self.env['res.users'].sudo().create({
-                    'name': partner.name,
-                    'login': partner.email,
-                    'partner_id': partner.id,
-                    'groups_id': [(6, 0, [portal_group.id])]
-                })
 
 
     # ------------------------------------------------------------
