@@ -68,6 +68,7 @@
         "views/reject_service_request_wizard_view.xml",
         "views/amend_service_request_widzard.xml",
         "views/waste_assign_bin_wizard_view.xml",
+        "views/authorize_wizard_view.xml",
         # "views/waste_worksheet_assign_bin_wizard_view.xml",
         # 'views/remove_powered_by_odoo.xml',
         "views/container_type_view.xml",

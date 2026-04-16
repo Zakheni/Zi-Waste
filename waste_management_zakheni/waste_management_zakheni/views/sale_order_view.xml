@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <odoo>
+        <record id="view_order_tree_inherit_manifest" model="ir.ui.view">
+            <field name="name">sale.order.tree.inherit.manifest</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_quotation_tree"/>
+            <field name="arch" type="xml">
+                <!-- Add Manifest column after Customer -->
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="service_request_id" optional="hide"/>
+                    <field name="planned_date"/>
+                </xpath>
+            </field>
+        </record>
+    </odoo>
+
+    <record id="view_order_form_inherit_manifest" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.manifest</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Place under Customer -->
+            <xpath expr="//field[@name='sale_order_template_id']" position="after">
+                <field name="service_request_id" invisible="service_request_id == False"
+                       context="{'default_service_request_id': active_id}" readonly="1"/>
+                <!--                <field name="planned_date"/>-->
+                <!--                <field name="pickup_point_id"/>-->
+                <!--                <field name="pickup_point_ids" widget="many2many_tags" invisible="partner_id == False"  required="0"/>-->
+                <!--                <field name="container_ids" widget="many2many_tags" context="{'default_sale_order_id': active_id}"-->
+                <!--                       />-->
+
+
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_order_form_inherit_waste_remove_extra" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.waste.remove_extra</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/tree/field[@name='price_unit']" position="after">
+                <!--            <button name="remove_sale_order_line_safe"-->
+                <!--                    type="object"-->
+                <!--                    string="Remove"-->
+                <!--                    class="btn btn-secondary btn-sm"/>-->
+            </xpath>
+
+            <xpath expr="//sheet" position="inside">
+                <div name="button_box" class="oe_button_box">
+                    <button
+                            name="action_open_service_request"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-recycle"
+                            invisible="service_request_id ==  False"
+                    >
+                        <field name="service_request_count" widget="statinfo"/>
+                    </button>
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <!--                <attribute name="domain">-->
+                <!--                    [('company_id', 'in', allowed_company_ids)]-->
+                <!--                </attribute>-->
+                <!--                <attribute name="domain">-->
+                <!--                    ['|', ('company_id', '=', False),-->
+                <!--                    ('company_id', 'in', allowed_company_ids)]-->
+                <!--                </attribute>-->
+                <attribute name="domain">
+                    ['&amp;',
+                    ('is_company', '=', True),
+                    '|',
+                    ('company_id', '=', False),
+                    ('company_id', '=', company_id)
+                    ]
+                </attribute>
+
+
+            </xpath>
+
+            <!-- Hide first invoice button -->
+            <xpath expr="//button[@id='create_invoice']" position="attributes">
+                <attribute name="groups">
+                    !waste_management_zakheni.group_wmz_manager,!waste_management_zakheni.group_wmz_admin_clerk
+                </attribute>
+            </xpath>
+
+            <!-- Hide percentage invoice button -->
+            <xpath expr="//button[@id='create_invoice_percentage']" position="attributes">
+                <attribute name="groups">
+                    !waste_management_zakheni.group_wmz_manager,!waste_management_zakheni.group_wmz_admin_clerk
+                </attribute>
+            </xpath>
+
+
+        </field>
+    </record>
+
+</odoo>
+

@@ -1,7 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessDenied, ValidationError
 
-
 class WasteWorksheet(models.Model):
     _name = "waste.worksheet"
     _description = "Waste Worksheet"
@@ -26,6 +25,7 @@ class WasteWorksheet(models.Model):
         readonly=True,
     )
 
+
     service_request_id = fields.Many2one(
         "waste.service.request",
         string="Service Request",
@@ -39,25 +39,69 @@ class WasteWorksheet(models.Model):
     unit_of_measure = fields.Many2one('uom.uom', string='Units of Measure', tracking=True)
     kilometers = fields.Integer(string='Kilometers', tracking=True)
     quantity_collected = fields.Float(string='Quantity Collected')
-    driver_signature = fields.Binary(string="Driver Signature", store=True, attachment=False)
-    service_provider_signature = fields.Binary(string="Service Provider Signature", store=True, attachment=False)
+    driver_signature = fields.Binary(string="Driver Signature",store=True, attachment=False)
+    service_provider_signature = fields.Binary(string="Service Provider Signature",store=True , attachment=False)
     planned_date = fields.Datetime(string='Planned Date', related='service_request_id.planned_date', store=True)
+    employee_id = fields.Many2one(
+        'hr.employee',
+        string="Mailto",
+        # domain=lambda self: [
+        #     ('groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_manager')),
+        #     ('company_ids', 'in', self.env.company)
+        # ]
+
+    )
+
+    manager_email = fields.Char(
+        related="employee_id.work_email",
+        store=True
+    )
+
+    # manager_email = fields.Char(
+    #     string="Manager Email",
+    #     compute="_compute_manager_email",
+    #     store=True
+    # )
+    #
+    # manager_email = fields.Char(
+    #     string="Admin Clerk Email",
+    #     compute="_compute_admin_clerk_email",
+    #     store=True
+    # )
+    #
+    # @api.depends('company_id')
+    # def _compute_admin_clerk_email(self):
+    #     group = self.env.ref('waste_management_zakheni.group_wmz_admin_clerk')
+    #
+    #     for rec in self:
+    #         users = self.env['res.users'].search([
+    #             ('groups_id', 'in', group.id),
+    #             '|',
+    #             ('company_id', '=', rec.company_id.id),
+    #             ('company_ids', 'in', rec.company_id.id)
+    #         ])
+    #
+    #         rec.admin_clerck_email = ",".join(
+    #             users.mapped('partner_id.email')
+    #         )
+
+
+
+
+    # partner_id = fields.Many2one('res.partner',
+    #                              string="Customer",
+    #                              related='service_request_id.partner_id',
+    #                              store=True
+    #                              )
 
     partner_id = fields.Many2one(
         'res.partner',
-        string="Customer",
-        related='service_request_id.partner_id',
-        store=True,
+        string='Customer',
         domain="['&', ('is_company', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
     )
-
-    # partner_id = fields.Many2one(
-    #     'res.partner',
-    #     string='Customer',
-    #     domain="['&', ('is_company', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
-    # )
     pickup_point_id = fields.Many2one('pickup.point', string="Drop-off/Pickup Point",
                                       related='service_request_id.pickup_point_id')
+
 
     driver_id = fields.Many2one(
         "res.partner",
@@ -67,7 +111,7 @@ class WasteWorksheet(models.Model):
         readonly=True,
     )
 
-    driver_work_email = fields.Char(string="Driver Work email", store=True)
+    driver_work_email = fields.Char(string="Driver Work email",  store=True)
 
     @api.depends('service_request_id', 'service_request_id.driver_id')
     def _compute_driver_id(self):
@@ -92,6 +136,7 @@ class WasteWorksheet(models.Model):
     safety_certificate = fields.Binary("Safety Certificate")
     safety_certificate_filename = fields.Char()
 
+
     @api.model
     def mobile_get_documents(self, worksheet_id):
         record = self.search([('id', '=', worksheet_id)], limit=1)
@@ -109,22 +154,6 @@ class WasteWorksheet(models.Model):
             "safety_certificate": record.safety_certificate or False,
             "safety_filename": record.safety_certificate_filename or "",
         }
-
-    @api.model
-    def mobile_get_images(self, worksheet_id):
-        images = self.env['waste.worksheet.image'].search([
-            ('worksheet_id', '=', worksheet_id)
-        ])
-
-        return [
-            {
-                "id": img.id,
-                "image": img.image or False,
-                "name": img.name or "",
-            }
-            for img in images
-        ]
-
     # Prevent duplicate of service_request_id
     _sql_constraints = [
         (
@@ -157,7 +186,6 @@ class WasteWorksheet(models.Model):
                 raise ValidationError(_(
                     "A worksheet already exists for service request %s."
                 ) % rec.service_request_id.display_name)
-
     # =========================
     # Date consistency checks
     # =========================
@@ -245,6 +273,8 @@ class WasteWorksheet(models.Model):
         readonly=True,
     )
 
+
+
     allowed_service_ids = fields.Many2many(
         "service.request",
         related="company_id.wmz_service_ids",
@@ -266,19 +296,18 @@ class WasteWorksheet(models.Model):
         readonly=True,
     )
 
+
+
     service_requested_id = fields.Many2one(
         'service.request',
         related='service_request_id.service_requested_id',
         string="Service Requested", store=True
         # domain="[('id', 'in', allowed_service_ids)]",
     )
-    waste_type_id = fields.Many2one('waste.type', related='service_request_id.waste_type_id', string="Waste Type",
-                                    store=True)
-    waste_details_id = fields.Many2one('waste.details', related='service_request_id.waste_details_id',
-                                       string="Waste Details", store=True)
-    bin_type_id = fields.Many2one('bin.type', related='service_request_id.bin_type_id', string="Bin Type", store=True)
-    tank_volume_id = fields.Many2one('tank.volume', related='service_request_id.tank_volume_id', string="Tank Volume",
-                                     store=True)
+    waste_type_id = fields.Many2one('waste.type',related='service_request_id.waste_type_id', string="Waste Type", store=True)
+    waste_details_id = fields.Many2one('waste.details',related='service_request_id.waste_details_id', string="Waste Details", store=True)
+    bin_type_id = fields.Many2one('bin.type',related='service_request_id.bin_type_id', string="Bin Type", store=True)
+    tank_volume_id = fields.Many2one('tank.volume',related='service_request_id.tank_volume_id', string="Tank Volume", store=True)
     container_type_id = fields.Many2one(
         'container.type',
         related='service_request_id.container_type_id',
@@ -296,9 +325,10 @@ class WasteWorksheet(models.Model):
         readonly=True
     )
 
-    liters_collected = fields.Float(string="Liters Collected", related='service_request_id.liters_collected',
-                                    store=True)
+    liters_collected = fields.Float(string="Liters Collected", related='service_request_id.liters_collected', store=True)
     sale_order_id = fields.Many2one('sale.order', string="Sales Order", store=True)
+
+
 
     @api.onchange("company_id")
     def _onchange_company_id_wmz(self):
@@ -393,9 +423,12 @@ class WasteWorksheet(models.Model):
             rec.hide_disposal_site = (is_disposal_site == 'hazardous')
             rec.hide_service_placement = (is_service_placement == 'placement of bins')
 
-    inUse = fields.Boolean(string='InUse', related='service_request_id.inUse')
+
+    inUse = fields.Boolean(string='InUse', related='service_request_id.inUse' )
     tank_ids = fields.Many2many('waste.container', 'waste_service_request_tanks_rel', string="Tanks",
                                 related='service_request_id.tank_ids')
+
+
 
     pickup_point_ids = fields.Many2many(
         'pickup.point',
@@ -452,6 +485,7 @@ class WasteWorksheet(models.Model):
     def action_set_to_draft(self):
         self.state = "draft"
 
+
     def action_start(self):
         for ws in self:
             sr = ws.service_request_id
@@ -482,11 +516,12 @@ class WasteWorksheet(models.Model):
     def action_done(self):
         for rec in self:
             # Mark worksheet done
+            print("Admin Clerck: ", rec.manager_email)
             rec.state = 'done'
 
             # Update related Service Request state to Service Delivered
             if rec.service_request_id and rec.service_request_id.state in ('scheduled', 'assigned', 'generated',
-                                                                           'dispatched', 'cancelled'):
+                                                                               'dispatched', 'cancelled'):
                 rec.service_request_id.with_context(skip_auto_state=True).write({
                     'state': 'service_delivered'
                 })
@@ -494,8 +529,17 @@ class WasteWorksheet(models.Model):
                 'waste_management_zakheni.mail_tmpl_service_request_worksheet_completion',
                 raise_if_not_found=False,
             )
-            if template:
-                template.send_mail(self.id, force_send=True)
+            # if template:
+            #     template.send_mail(self.id, force_send=True)
+
+            if template and rec.manager_email:
+                template.sudo().send_mail(
+                    rec.id,
+                    force_send=True,
+                    email_values={
+                        'email_to': rec.manager_email
+                    }
+                )
 
     image_ids = fields.One2many(
         'waste.worksheet.image',
@@ -516,7 +560,7 @@ class WasteWorksheet(models.Model):
 
     notes_html = fields.Html(
         string="Worksheet Notes",
-        help="Add notes and embed pictures directly in the content.", store=True
+        help="Add notes and embed pictures directly in the content.",store=True
     )
 
     pickup_point_bins_summary = fields.Text(
@@ -544,17 +588,17 @@ class WasteWorksheet(models.Model):
 
     sale_order_count = fields.Integer(
         string="Sale Order Count",
-        related="service_request_id.sale_order_count", store=True
+        related="service_request_id.sale_order_count",store=True
     )
+
 
     # REPLACE your old product_uom_qty field with this one
     product_uom_qty = fields.Float(
         related="service_request_id.product_uom_qty",
         string="Quantity",
         store=True,
-        readonly=False,  # still editable if you want
+        readonly=False,# still editable if you want
     )
-
     # ---------------------------------------------------------
     # Open wizard from smart button
     # ---------------------------------------------------------
@@ -572,7 +616,7 @@ class WasteWorksheet(models.Model):
         'sale.order.line',
         string="Sale Order Line",
         ondelete='set null',
-        help="The sale order line that this service request should update.", store=True
+        help="The sale order line that this service request should update.",store=True
     )
 
     # ------------------------------------------------------------
@@ -615,6 +659,8 @@ class WasteWorksheet(models.Model):
                     'product_uom_qty': qty
                 })
                 rec.order_line_id = line
+
+
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -681,6 +727,8 @@ class WasteWorksheet(models.Model):
 
         return res
 
+
+
     def action_open_ws_bin_assignment_wizard(self):
         self.ensure_one()
         # ✅ Reuse the existing wizard action
@@ -709,8 +757,7 @@ class WasteWorksheet(models.Model):
             "target": "current",
         }
 
-    request_sale_order_id = fields.Many2one('sale.order', related="service_request_id.sale_order_id",
-                                            String="Sale Order")
+    request_sale_order_id = fields.Many2one('sale.order', related="service_request_id.sale_order_id", String="Sale Order")
 
     def action_open_sale_order(self):
         self.ensure_one()
@@ -726,7 +773,6 @@ class WasteWorksheet(models.Model):
             "target": "current",
         }
 
-
 class WasteWorksheetBinLine(models.Model):
     _name = "waste.worksheet.bin.line"
     _description = "Waste Worksheet Bin Line"
@@ -734,7 +780,7 @@ class WasteWorksheetBinLine(models.Model):
     worksheet_id = fields.Many2one(
         "waste.worksheet",
         required=True,
-        ondelete="cascade", store=True
+        ondelete="cascade",store=True
     )
 
     waste_request_bin_id = fields.Many2one(
@@ -796,6 +842,7 @@ class WasteWorksheetImage(models.Model):
     _name = 'waste.worksheet.image'
     _description = 'Waste Worksheet Image'
 
+
     worksheet_id = fields.Many2one(
         'waste.worksheet',
         string='Worksheet',
@@ -810,6 +857,13 @@ class WasteWorksheetImage(models.Model):
         max_height=1920,
         attachment=True,
     )
+
+
+
+
+
+
+
 
 # from odoo import models, fields, api, _
 # from odoo.exceptions import UserError, AccessDenied, ValidationError

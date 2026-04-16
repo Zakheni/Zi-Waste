@@ -218,32 +218,32 @@ class WasteAssignBinWizard(models.TransientModel):
             if not pp_id:
                 raise ValidationError(_("Pickup Point is required on bin mapping line."))
 
-            # ---- DUPLICATE BIN VALIDATION --------------------------
-            pp_name = line.pickup_point_id.display_name or _("(no pickup)")
-            dp_name = line.dropoff_point_id.display_name or _("(no drop-off)")
-
-            # all bins on this line (lifted + dropped)
-            current_bin_ids = set(line.bin_lifted_ids.ids + line.bin_dropped_ids.ids)
-
-            for cid in current_bin_ids:
-                if cid in bin_usage_map:
-                    prev_pp_name, prev_dp_name = bin_usage_map[cid]
-                    bin_rec = self.env['waste.container'].browse(cid)
-                    raise ValidationError(_(
-                        "Bin %(bin)s is already assigned to "
-                        "Pickup '%(pp1)s' / Drop-off '%(dp1)s'.\n"
-                        "You cannot assign it again to "
-                        "Pickup '%(pp2)s' / Drop-off '%(dp2)s'."
-                    ) % {
-                                              'bin': bin_rec.display_name,
-                                              'pp1': prev_pp_name,
-                                              'dp1': prev_dp_name,
-                                              'pp2': pp_name,
-                                              'dp2': dp_name,
-                                          })
-
-                # remember where this bin is used
-                bin_usage_map[cid] = (pp_name, dp_name)
+            # # ---- DUPLICATE BIN VALIDATION --------------------------
+            # pp_name = line.pickup_point_id.display_name or _("(no pickup)")
+            # dp_name = line.dropoff_point_id.display_name or _("(no drop-off)")
+            #
+            # # all bins on this line (lifted + dropped)
+            # current_bin_ids = set(line.bin_lifted_ids.ids + line.bin_dropped_ids.ids)
+            #
+            # for cid in current_bin_ids:
+            #     if cid in bin_usage_map:
+            #         prev_pp_name, prev_dp_name = bin_usage_map[cid]
+            #         bin_rec = self.env['waste.container'].browse(cid)
+            #         raise ValidationError(_(
+            #             "Bin %(bin)s is already assigned to "
+            #             "Pickup '%(pp1)s' / Drop-off '%(dp1)s'.\n"
+            #             "You cannot assign it again to "
+            #             "Pickup '%(pp2)s' / Drop-off '%(dp2)s'."
+            #         ) % {
+            #                                   'bin': bin_rec.display_name,
+            #                                   'pp1': prev_pp_name,
+            #                                   'dp1': prev_dp_name,
+            #                                   'pp2': pp_name,
+            #                                   'dp2': dp_name,
+            #                               })
+            #
+            #     # remember where this bin is used
+            #     bin_usage_map[cid] = (pp_name, dp_name)
             # ---- END DUPLICATE VALIDATION -------------------------
 
             persistent_vals.append({

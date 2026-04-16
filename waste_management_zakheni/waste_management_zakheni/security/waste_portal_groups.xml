@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ✅ Custom Category -->
+    <record id="module_category_wmz_client" model="ir.module.category">
+        <field name="name">Client Management</field>
+        <field name="description">Access levels for WMZ Clients</field>
+        <field name="sequence">25</field>
+        <field name="visible" eval="False"/>
+    </record>
+
+    <!-- 👤 Customer Group -->
+    <record id="group_wmz_client_customer" model="res.groups">
+        <field name="name">Customer</field>
+        <field name="category_id" ref="module_category_wmz_client"/>
+
+        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+    <!-- 🧑‍💼 Agent Group -->
+    <record id="group_wmz_client_agent" model="res.groups">
+        <field name="name">Agent</field>
+        <field name="category_id" ref="module_category_wmz_client"/>
+
+        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>
+    </record>
+
+</odoo>
+<!--<odoo>-->
+
+<!--    &lt;!&ndash; Portal Customer &ndash;&gt;-->
+<!--    <record id="group_wmz_client_customer" model="res.groups">-->
+<!--        <field name="name">Customer</field>-->
+<!--        &lt;!&ndash; Use a VALID category id &ndash;&gt;-->
+<!--        &lt;!&ndash;        <field name="category_id" ref="base.module_category_website"/>&ndash;&gt;-->
+<!--        <field name="category_id" ref="base.module_category_hidden"/>-->
+<!--        &lt;!&ndash; Make it a portal-type group &ndash;&gt;-->
+<!--        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>-->
+<!--    </record>-->
+
+<!--    &lt;!&ndash; Portal Agent &ndash;&gt;-->
+<!--    <record id="group_wmz_client_agent" model="res.groups">-->
+<!--        <field name="name">Agent</field>-->
+<!--        &lt;!&ndash; Same valid category &ndash;&gt;-->
+<!--        &lt;!&ndash;        <field name="category_id" ref="base.module_category_website"/>&ndash;&gt;-->
+<!--        <field name="category_id" ref="base.module_category_hidden"/>-->
+<!--        &lt;!&ndash; Also inherits portal &ndash;&gt;-->
+<!--        <field name="implied_ids" eval="[(4, ref('base.group_portal'))]"/>-->
+<!--    </record>-->
+
+<!--</odoo>-->

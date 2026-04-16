@@ -6,7 +6,7 @@
             <field name="name">Authorize of Service Request/Manifest – Action Required</field>
             <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
             <field name="subject">Ament Required – {{object.name}}</field>
-            <field name="email_to">{{ctx.get('email_to') or ''}}</field>
+            <field name="email_to">{{object.finance_email}}</field>
 
             <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">
@@ -34,7 +34,7 @@
                         </div>
 
                         <!--                         Body-->
-                        <div style="padding: 20px; color: #333333; line-height: 1.6;">
+                        <div style="background-color: #ffffff; padding: 20px; color: #333333; line-height: 1.6;">
                             <p>Dear Finance,
                             </p>
 
@@ -79,9 +79,10 @@
                         <!-- Footer -->
                         <div style="background-color: #ffffff; color: #c1c1c1; text-align: center; padding: 10px; font-size: 12px;">
 
-                            <p class="mb-0">©
-                                <span t-esc="time.strftime('%Y-%m-%d')"/>
-                                Zakheni ICT. All rights reserved.
+                            <p class="mb-0">
+                                ©
+                                <span t-esc="time.strftime('%Y')"/>
+                                <span t-esc="object.company_id.display_name"/>. All rights reserved.
                             </p>
                         </div>
                     </div>

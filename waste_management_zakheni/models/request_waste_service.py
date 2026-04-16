@@ -105,13 +105,51 @@ class WasteServiceRequest(models.Model):
     )
     reject_reason = fields.Text(string="Enter Reject Reason", tracking=True, store=True)
     amend_comment = fields.Text(string="Enter Amend Comment", tracking=True, store=True)
-    driver_work_email = fields.Char(string="Driver Work email", related="employee_id.work_email", store=True)
+    # driver_work_email = fields.Char(string="Driver Work email", related="employee_id.work_email", store=True)
+    driver_work_email = fields.Char(
+        related="driver_id.email",
+        store=True
+    )
+
+
+    employee_email_id = fields.Many2one(
+        'hr.employee',
+        string="Mailto",
+        # domain=lambda self: [
+        #     ('groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_admin_clerk').id),
+        #     ('company_ids', 'in', self.env.company.id)
+        # ]
+
+    )
+
+    admin_clerck_email = fields.Char(
+        related="employee_email_id.work_email",
+        store=True
+    )
+
+    employee_manager_id = fields.Many2one(
+        'hr.employee',
+        string="Mailto",
+        # domain=lambda self: [
+        #     ('groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_manager')),
+        #     ('company_ids', 'in', self.env.company)
+        # ]
+
+    )
+
+    manager_email = fields.Char(
+        related="employee_manager_id.work_email",
+        store=True
+    )
 
     from_portal = fields.Boolean(
         string="Created from portal",
         default=False,
         help="Marked True when the service request is logged from the customer portal.",
     )
+
+    finance_employee_id = fields.Many2one('hr.employee', string="Mailto")
+    finance_email = fields.Char(related="finance_employee_id.work_email")
 
     @api.model
     def _get_busy_drivers_at_date(self, at_datetime):
@@ -224,6 +262,7 @@ class WasteServiceRequest(models.Model):
         related='provider_id.email',
         readonly=True,
     )
+
 
 
 
@@ -1339,31 +1378,7 @@ class WasteServiceRequest(models.Model):
 
             rec.state = 'generated'
 
-    def action_set_scheduled(self):
-        """
-        Manually move to 'scheduled'.
-        Only change state, then send email based on is_service_provider.
-        """
-        for rec in self:
-            rec.state = "scheduled"
 
-            if rec.is_service_provider:
-                # send SERVICE PROVIDER template
-                template = rec.env.ref(
-                    "waste_management_zakheni.mail_tmpl_service_request_service_provide_invitation",
-                    raise_if_not_found=False,
-                )
-            else:
-                # send DRIVER template
-                template = rec.env.ref(
-                    "waste_management_zakheni.mail_tmpl_service_request_driver_invitation",
-                    raise_if_not_found=False,
-                )
-
-            if template:
-                template.send_mail(rec.id, force_send=True)
-
-        return True
     def action_set_scheduled(self):
         Worksheet = self.env['waste.worksheet'].sudo()
 
@@ -1371,43 +1386,50 @@ class WasteServiceRequest(models.Model):
             # 1️⃣ Change state
             rec.state = 'scheduled'
 
-
-            # 2️⃣ Check if worksheet already exists (IMPORTANT)
+            # 2️⃣ Create worksheet if not exists
             existing_ws = Worksheet.search([
                 ('service_request_id', '=', rec.id)
             ], limit=1)
 
-            if existing_ws:
-                continue  # already created → skip
+            if not existing_ws:
+                Worksheet.create({
+                    'service_request_id': rec.id,
+                    'company_id': rec.company_id.id,
+                })
 
-            # 3️⃣ Create worksheet
-            Worksheet.create({
-                'service_request_id': rec.id,
-                'company_id': rec.company_id.id,
-            })
-
+            # 3️⃣ SEND EMAIL ✅
             if rec.is_service_provider:
-                # send SERVICE PROVIDER template
                 template = rec.env.ref(
                     "waste_management_zakheni.mail_tmpl_service_request_service_provide_invitation",
                     raise_if_not_found=False,
                 )
+                print("Provider Email: ", rec.provider_email)
+
             else:
-                # send DRIVER template
                 template = rec.env.ref(
                     "waste_management_zakheni.mail_tmpl_service_request_driver_invitation",
                     raise_if_not_found=False,
                 )
+                print("Driver Email: ", rec.driver_work_email)
 
+
+            # 🚨 IMPORTANT CHECKS
             if template:
-                template.send_mail(rec.id, force_send=True)
+                if rec.is_service_provider:
+                    if rec.provider_email:
+                        template.sudo().send_mail(rec.id, force_send=True)
+                else:
+                    if rec.driver_work_email:
+                        template.sudo().send_mail(rec.id, force_send=True)
 
-            return True
+        return True
 
     def action_mark_done(self):
         for record in self:
             # ✅ run whole logic with sudo to avoid Sales Order access errors
             rec = record.sudo()
+
+
 
             # Normalised service code
             svc_code = (rec.service_requested_id.code or '').lower() \
@@ -1503,47 +1525,6 @@ class WasteServiceRequest(models.Model):
                         body=f"Dropped bin '{dropped_bin.display_name}' at '{label}'"
                     )
 
-            # # -------------------------------------------------
-            # # SHUNTING OF BINS  (still uses shunt_* fields)
-            # # -------------------------------------------------
-            # elif svc_code == 'shunting of bins':
-            #
-            #     # Safely get shunt fields
-            #     shunt_from = rec.shunt_from_id if 'shunt_from_id' in rec._fields else False
-            #     shunt_to = rec.shunt_to_id if 'shunt_to_id' in rec._fields else False
-            #     shunt_bins = rec.shunt_container_ids if 'shunt_container_ids' in rec._fields else rec.env[
-            #         'waste.container']
-            #
-            #     from_label = shunt_from.display_name if shunt_from else "Unknown"
-            #     to_label = shunt_to.display_name if shunt_to else "Unknown"
-            #
-            #     for bin_rec in shunt_bins:
-            #         bin_rec = bin_rec.sudo()
-            # # elif svc_code == 'shunting of bins':
-            # #     from_label = rec.shunt_from_id.display_name if rec.shunt_from_id else "Unknown"
-            # #     to_label = rec.shunt_to_id.display_name if rec.shunt_to_id else "Unknown"
-            # #
-            # #     for bin_rec in rec.shunt_container_ids:
-            # #         bin_rec = bin_rec.sudo()
-            #         if 'pickup_point_id' in bin_rec._fields:
-            #             bin_rec.pickup_point_id = rec.shunt_to_id
-            #         if 'pickup_point_ids' in bin_rec._fields and rec.shunt_to_id:
-            #             bin_rec.pickup_point_ids = [(4, rec.shunt_to_id.id)]
-            #         if 'dropoff_point_id' in bin_rec._fields and rec.shunt_to_id:
-            #             bin_rec.dropoff_point_id = rec.shunt_to_id
-            #         if 'partner_id' in bin_rec._fields and cust:
-            #             bin_rec.partner_id = cust
-            #         if 'status' in bin_rec._fields:
-            #             bin_rec.status = 'in_use'
-            #         if 'inUse' in bin_rec._fields:
-            #             bin_rec.inUse = True
-            #         # 🔹 clear reservation after shunt is done
-            #         if 'reserved_request_id' in bin_rec._fields and bin_rec.reserved_request_id == rec:
-            #             bin_rec.reserved_request_id = False
-            #
-            #         rec.message_post(
-            #             body=f"Shunted bin '{bin_rec.display_name}' from '{from_label}' to '{to_label}'"
-            #         )
 
             elif svc_code == 'shunting of bins':
 
@@ -1620,37 +1601,6 @@ class WasteServiceRequest(models.Model):
                         rec.message_post(
                             body=f"Placed bin: {container.display_name} at {label}"
                         )
-
-            # # -------------------------------------------------
-            # # WASTE COLLECTION & DISPOSAL
-            # # -------------------------------------------------
-            # elif svc_code in (
-            #         'waste collection & disposal',
-            #         'waste collection and disposal',
-            #         'general collection & desposal',
-            # ):
-            #     containers = (rec.bin_lifted_ids | rec.bin_dropped_ids)
-            #     for container in containers:
-            #         container = container.sudo()
-            #         if 'pickup_point_ids' in container._fields:
-            #             container.pickup_point_ids = [(5, 0, 0)]
-            #         if 'pickup_point_id' in container._fields:
-            #             container.pickup_point_id = False
-            #         if 'dropoff_point_id' in container._fields:
-            #             container.dropoff_point_id = False
-            #         if 'partner_id' in container._fields:
-            #             container.partner_id = False
-            #         if 'status' in container._fields:
-            #             container.status = 'un_use'
-            #         if 'inUse' in container._fields:
-            #             container.inUse = False
-            #         # 🔹 clear reservation once collected/disposed
-            #         if 'reserved_request_id' in container._fields and container.reserved_request_id == rec:
-            #             container.reserved_request_id = False
-            #
-            #         rec.message_post(
-            #             body=f"Collected & Disposed bin: {container.display_name}"
-            #         )
 
             elif svc_code in (
                     'waste collection & disposal',
@@ -1813,27 +1763,81 @@ class WasteServiceRequest(models.Model):
 
             # ✅ finish as sudo (same as your line, just on sudo record)
             rec.state = "done"
+            #
+            # tmpl = rec.env.ref(
+            #     'waste_management_zakheni.mail_tmpl_service_request_authorize',
+            #     raise_if_not_found=False
+            # )
+            #
+            # if tmpl and rec.finance_email:
+            #     tmpl.sudo().send_mail(
+            #         rec.id,
+            #         force_send=True,
+            #         raise_exception=True,
+            #         email_values={
+            #             'email_to': rec.finance_email
+            #         }
+            #     )
+
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Authorize',
+                'res_model': 'authorize.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_user_id': rec.id,
+                    'default_finance_employee_id': rec.finance_employee_id.id,
+                }
+
+            }
+
 
             # ============================================================
-            # ✅ SEND EMAIL TO FINANCE (PUT IT HERE)
+            # ✅ SEND EMAIL TO FINANCE (NO TEMPLATE)
             # ============================================================
-            tmpl = rec.env.ref(
-                'waste_management_zakheni.mail_tmpl_service_request_authorize',
-                raise_if_not_found=False
-            )
-            if tmpl:
-                # get finance users for THIS company
-                finance_users = rec.env['res.users'].sudo().search([
-                    ('groups_id', 'in', rec.env.ref('waste_management_zakheni.group_wmz_finance').id),
-                    ('company_ids', 'in', rec.company_id.id),
-                    ('email', '!=', False),
-                ])
 
-                email_to = ",".join(finance_users.mapped('email'))
-                if email_to:
-                    tmpl.with_context(email_to=email_to).sudo().send_mail(
-                        rec.id, force_send=True, raise_exception=False
-                    )
+            # if rec.finance_email:
+            #     mail_values = {
+            #         'subject': f"Service Request Completed - {rec.name}",
+            #         'body_html': f"""
+            #             <p>Hello,</p>
+            #
+            #             <p>The following service request has been completed:</p>
+            #
+            #             <ul>
+            #                 <li><strong>Request:</strong> {rec.name}</li>
+            #                 <li><strong>Customer:</strong> {rec.partner_id.name or ''}</li>
+            #                 <li><strong>Service:</strong> {rec.service_requested_id.display_name or ''}</li>
+            #                 <li><strong>Status:</strong> {rec.state}</li>
+            #             </ul>
+            #
+            #             <p>Please proceed with billing.</p>
+            #
+            #             <br/>
+            #             <p>Regards,<br/>System</p>
+            #         """,
+            #         'email_to': rec.finance_email,
+            #     }
+            #
+            #     rec.env['mail.mail'].sudo().create(mail_values).send()
+            # tmpl = rec.env.ref(
+            #     'waste_management_zakheni.mail_tmpl_service_request_authorize',
+            #     raise_if_not_found=False
+            # )
+            #
+            # if tmpl and rec.finance_email:
+            #     tmpl.sudo().send_mail(
+            #         rec.id,
+            #         force_send=True,
+            #         raise_exception=True,
+            #         email_values={
+            #             'email_to': rec.finance_email
+            #         }
+            #     )
+
+
+
 
     def action_cancelled(self):
         self.ensure_one()

@@ -7,8 +7,8 @@
             <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
             <field name="subject">Action Required – {{object.name}}</field>
             <field name="email_from">{{user.email}}</field>
-<!--            <field name="email_to">info@zaheniict.co.za</field>-->
-            <field name="email_to" eval="'info@zaheniict.co.za'"/>
+            <field name="email_to">{{object.admin_clerck_email}}</field>
+<!--            <field name="email_to" eval="'info@zaheniict.co.za'"/>-->
             <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">
                 <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
@@ -35,7 +35,7 @@
                         </div>
 
                         <!--                         Body-->
-                        <div style="padding: 20px; color: #333333; line-height: 1.6;">
+                        <div style="background-color: #ffffff; padding: 20px; color: #333333; line-height: 1.6;">
                             <p>Dear Admin,
                             </p>
 
@@ -66,9 +66,10 @@
                         <!-- Footer -->
                         <div style="background-color: #ffffff; color: #c1c1c1; text-align: center; padding: 10px; font-size: 12px;">
 
-                            <p class="mb-0">©
-                                <span t-esc="time.strftime('%Y-%m-%d')"/>
-                                Zakheni ICT. All rights reserved.
+                           <p class="mb-0">
+                                ©
+                                <span t-esc="time.strftime('%Y')"/>
+                                <span t-esc="object.company_id.display_name"/>. All rights reserved.
                             </p>
                         </div>
                     </div>

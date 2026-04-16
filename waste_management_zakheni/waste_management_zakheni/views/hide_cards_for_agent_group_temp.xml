@@ -1,0 +1,16 @@
+<odoo>
+
+    <template id="hide_orders_for_agents"
+              inherit_id="portal.portal_my_home"
+              name="Hide Orders Card For Agents"
+              priority="50">
+
+        <xpath expr="//t[t-set='url' and text()='/my/orders']/.." position="attributes">
+            <attribute name="t-if">
+                not request.env.user.has_group('waste_management_zakheni.group_wmz_client_agent')
+            </attribute>
+        </xpath>
+
+    </template>
+
+</odoo>

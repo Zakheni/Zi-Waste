@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_inherit_pickup" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.pickup</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <!-- ✅ CREATE HEADER (SAFE POSITION) -->
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_send_portal_reset"
+                            type="object"
+                            string="Send Portal Reset Link"
+                            class="btn-primary oe_highlight"
+                            invisible="email == False"/>
+                </header>
+            </xpath>
+
+            <!-- ✅ ALERT AT VERY TOP -->
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-success alert-dismissible text-center"
+                     role="alert"
+                     invisible="not invite_url"
+                     style="margin: 10px;">
+
+                    <!-- Close -->
+                    <button name="action_clear_invite"
+                            type="object"
+                            class="btn-close"
+                            style="float: right;"/>
+
+                    <!-- Message -->
+                    <field name="invite_message"
+                           widget="html"
+                           options="{'sanitize': False}"/>
+
+
+                </div>
+            </xpath>
+
+            <!-- ✅ YOUR FIELDS (NO DUPLICATES) -->
+            <field name="category_id" position="after">
+
+                <field name="company_id"
+                       options="{'no_create': True}"
+                       groups="base.group_multi_company"/>
+
+
+                <field name="role"/>
+
+                <field name="invite_message" readonly="1" widget="html" invisible="1"/>
+                <field name="invite_url" readonly="1" invisible="1"/>
+
+
+            </field>
+
+            <!-- ✅ NOTEBOOK PAGES -->
+            <xpath expr="//notebook" position="inside">
+
+                <page string="Pickup Points">
+                    <field name="pickup_point_ids"
+                           widget="many2many_tags"
+                           readonly="1"/>
+                </page>
+
+            </xpath>
+
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Pickup Points">
+                    <field name="pickup_point_ids" widget="many2many_tags" readonly="1"/>
+                    <!--                        <tree editable="bottom">-->
+                    <!--                            <field name="name"/>-->
+                    <!--                        </tree>-->
+                    <!--                    </field>-->
+                </page>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Waste Management" name="wmz_waste_management"
+                      invisible="'is_company' == False">
+
+                    <group string="Service Configuration" col="2">
+
+                        <field name="wmz_use_company_config"/>
+                        <field name="wmz_service_ids"
+                               widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               placeholder="Select services for this company..."
+                               string="Waste Services for Company"/>
+
+                        <field name="wmz_container_type_ids"
+                               widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               placeholder="Select container types for this company..."
+                               string="Container Types for Company"/>
+
+                        <field name="wmz_waste_type_ids"
+                               widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               placeholder="Select waste types for this company..."
+                               string="Waste Types for Company"/>
+                    </group>
+
+                </page>
+            </xpath>
+            <!-- Example: put it near the name -->
+            <xpath expr="//field[@name='vat']" position="after">
+                <!--                <group>-->
+                <!--                    <field name="company_id"/>-->
+                <!--                </group>-->
+
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>
