@@ -69,6 +69,7 @@
         "views/amend_service_request_widzard.xml",
         "views/waste_assign_bin_wizard_view.xml",
         "views/authorize_wizard_view.xml",
+        "views/finish_worksheet_wizard.xml",
         # "views/waste_worksheet_assign_bin_wizard_view.xml",
         # 'views/remove_powered_by_odoo.xml',
         "views/container_type_view.xml",
@@ -81,38 +82,6 @@
         "views/waste_dashboard_menu.xml",
         "views/menu.xml",
     ],
-
-    # 'assets': {
-    #     'web.assets_backend': [
-    #         'waste_management_zakheni/static/src/scss/waste_kanban.scss',
-    #     ],
-    # },
-
-    # "assets": {
-    #     "web.assets_backend": [
-    #         'web/static/lib/Chart/Chart.js',
-    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.js",
-    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.xml",
-    #         # optional css:
-    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.css",
-    #     ],
-    # },
-
-    # "assets": {
-    #     "web.assets_backend": [
-    #         "/web/static/lib/chartjs/chart.umd.js",
-    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.js",
-    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.xml",
-    #         "waste_management_zakheni/static/src/dashboard/waste_dashboard.css",
-    #     ],
-    # },
-
-    # "assets": {
-    #     "web.assets_frontend": [
-    #         "/web/static/lib/chartjs/chart.umd.js",
-    #         "waste_management_zakheni/static/src/css/branding.css",
-    #     ],
-    # },
 
     "assets": {
         "web.assets_frontend": [
@@ -128,6 +97,8 @@
             "waste_management_zakheni/static/src/dashboard/waste_dashboard.js",
             "waste_management_zakheni/static/src/dashboard/waste_dashboard.xml",
             "waste_management_zakheni/static/src/dashboard/waste_dashboard.css",
+            # 'waste_management_zakheni/static/src/js/stopwatch.js',
+            # 'waste_management_zakheni/static/src/xml/stopwatch.xml',
 
         ],
     },

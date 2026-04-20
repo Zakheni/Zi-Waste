@@ -30,9 +30,10 @@ from . import tank_tariff
 from . import sales_order
 from . import account_move
 from . import ir_ui_menu
-from . import create_user_wizard
+from . import create_user
 from . import account_chart_template
 from . import authorize_wizard
+from . import finish_worksheet_wizard
 
 
 

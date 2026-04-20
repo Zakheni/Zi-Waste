@@ -36,9 +36,10 @@ class ServiceProvider(models.Model):
         string="Agent",
         domain=lambda self: [
             ('groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_client_agent').id),
-            ('company_ids', 'in', self.env.company.id)
+            ('company_ids', 'in', self.env.company.id),
         ]
     )
+
 
     company_id = fields.Many2one(
         'res.company',
@@ -47,8 +48,6 @@ class ServiceProvider(models.Model):
         default=lambda self: self.env.company,
         index=True
     )
-
-
 
     # Contacts
     phone = fields.Char(required=True, tracking=True)

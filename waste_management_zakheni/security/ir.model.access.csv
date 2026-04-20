@@ -145,6 +145,8 @@ access_res_users_wmz,res.users wmz,base.model_res_users,waste_management_zakheni
 access_wmz_user_manager,wmz user manager,model_wmz_service_request_user,waste_management_zakheni.group_wmz_user_manager,1,1,1,1
 
 access_authorize_wizard,access_authorize_wizard,model_authorize_wizard,base.group_user,1,1,1,1
+access_finish_worksheet_wizard,access_finish_worksheet_wizard,model_finish_worksheet_wizard,base.group_user,1,1,1,1
+
 
 
 

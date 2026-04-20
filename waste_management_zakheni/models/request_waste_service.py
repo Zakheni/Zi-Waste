@@ -111,13 +111,11 @@ class WasteServiceRequest(models.Model):
         store=True
     )
 
-
     employee_email_id = fields.Many2one(
         'hr.employee',
         string="Mailto",
         # domain=lambda self: [
-        #     ('groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_admin_clerk').id),
-        #     ('company_ids', 'in', self.env.company.id)
+        #     ('user_id.groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_admin_clerk').ids)
         # ]
 
     )
@@ -131,8 +129,7 @@ class WasteServiceRequest(models.Model):
         'hr.employee',
         string="Mailto",
         # domain=lambda self: [
-        #     ('groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_manager')),
-        #     ('company_ids', 'in', self.env.company)
+        #     ('user_id.groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_manager').ids)
         # ]
 
     )

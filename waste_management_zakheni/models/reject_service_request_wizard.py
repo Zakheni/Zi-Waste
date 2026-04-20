@@ -27,10 +27,9 @@ class RejectServiceRequestWizard(models.TransientModel):
     employee_email_id = fields.Many2one(
         'hr.employee',
         string="Mailto",
-        # domain=lambda self: [
-        #     ('groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_admin_clerk').id),
-        #     ('company_ids', 'in', self.env.company.id)
-        # ]
+        domain=lambda self: [
+            ('user_id.groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_admin_clerk').ids)
+        ]
 
     )
 

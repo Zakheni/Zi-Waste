@@ -4,27 +4,26 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class AuthorizeWizard(models.TransientModel):
-    _name = 'authorize.wizard'
-    _description = 'Authorize Wizard'
+class FinishWorksheetWizard(models.TransientModel):
+    _name = 'finish.worksheet.wizard'
+    _description = 'Finish Worksheet Wizard'
 
     user_id = fields.Many2one('waste.service.request', string="Target Record", required=True)
-    finance_employee_id = fields.Many2one(
+    employee_id = fields.Many2one(
         'hr.employee',
         string="Mailto",
         required=True,
         domain=lambda self: [
-            ('user_id.groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_finance').ids)
+            ('user_id.groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_manager').ids)
         ]
     )
 
-    finance_email = fields.Char(
-        related="finance_employee_id.work_email",
+    manager_email = fields.Char(
+        related="employee_id.work_email",
         store=True  # ✅ IMPORTANT FIX
     )
 
-
-    def action_authorise(self):
+    def action_finish_worksheet(self):
         self.ensure_one()
 
         if not self.user_id:
@@ -32,28 +31,28 @@ class AuthorizeWizard(models.TransientModel):
             return {'type': 'ir.actions.act_window_close'}
 
         template = self.env.ref(
-            'waste_management_zakheni.mail_tmpl_service_request_authorize',
+            'waste_management_zakheni.mail_tmpl_service_request_worksheet_completion',
             raise_if_not_found=False,
         )
 
-        _logger.info("Authorize USER → %s", self.user_id.id)
-        _logger.info("Authorize EMAIL → %s", self.finance_email)
-        _logger.info("Authorize TEMPLATE → %s", template)
+        _logger.info("Finish Worksheet USER → %s", self.user_id.id)
+        _logger.info("Finish Worksheet → %s", self.manager_email)
+        _logger.info("Finish Worksheet  TEMPLATE → %s", template)
 
-        if template and self.finance_email:
+        if template and self.manager_email:
             template.sudo().send_mail(
                 self.user_id.id,
                 force_send=True,
                 raise_exception=True,
                 email_values={
-                    'email_to': self.finance_email
+                    'email_to': self.manager_email
                 }
             )
         else:
             _logger.warning(
-                "Authorize email NOT sent. Template: %s, Email: %s",
+                "Finish Worksheet email NOT sent. Template: %s, Email: %s",
                 template,
-                self.finance_email
+                self.manager_email
             )
 
         return {'type': 'ir.actions.act_window_close'}

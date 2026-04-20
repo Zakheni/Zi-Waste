@@ -42,61 +42,23 @@ class WasteWorksheet(models.Model):
     driver_signature = fields.Binary(string="Driver Signature",store=True, attachment=False)
     service_provider_signature = fields.Binary(string="Service Provider Signature",store=True , attachment=False)
     planned_date = fields.Datetime(string='Planned Date', related='service_request_id.planned_date', store=True)
+
     employee_id = fields.Many2one(
         'hr.employee',
         string="Mailto",
-        # domain=lambda self: [
-        #     ('groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_manager')),
-        #     ('company_ids', 'in', self.env.company)
-        # ]
-
+        domain=lambda self: [
+            ('user_id.groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_manager').ids)
+        ]
     )
-
     manager_email = fields.Char(
         related="employee_id.work_email",
         store=True
     )
 
-    # manager_email = fields.Char(
-    #     string="Manager Email",
-    #     compute="_compute_manager_email",
-    #     store=True
-    # )
-    #
-    # manager_email = fields.Char(
-    #     string="Admin Clerk Email",
-    #     compute="_compute_admin_clerk_email",
-    #     store=True
-    # )
-    #
-    # @api.depends('company_id')
-    # def _compute_admin_clerk_email(self):
-    #     group = self.env.ref('waste_management_zakheni.group_wmz_admin_clerk')
-    #
-    #     for rec in self:
-    #         users = self.env['res.users'].search([
-    #             ('groups_id', 'in', group.id),
-    #             '|',
-    #             ('company_id', '=', rec.company_id.id),
-    #             ('company_ids', 'in', rec.company_id.id)
-    #         ])
-    #
-    #         rec.admin_clerck_email = ",".join(
-    #             users.mapped('partner_id.email')
-    #         )
-
-
-
-
-    # partner_id = fields.Many2one('res.partner',
-    #                              string="Customer",
-    #                              related='service_request_id.partner_id',
-    #                              store=True
-    #                              )
-
     partner_id = fields.Many2one(
         'res.partner',
         string='Customer',
+        related='service_request_id.partner_id',
         domain="['&', ('is_company', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
     )
     pickup_point_id = fields.Many2one('pickup.point', string="Drop-off/Pickup Point",
@@ -485,7 +447,6 @@ class WasteWorksheet(models.Model):
     def action_set_to_draft(self):
         self.state = "draft"
 
-
     def action_start(self):
         for ws in self:
             sr = ws.service_request_id
@@ -525,21 +486,20 @@ class WasteWorksheet(models.Model):
                 rec.service_request_id.with_context(skip_auto_state=True).write({
                     'state': 'service_delivered'
                 })
-            template = self.env.ref(
-                'waste_management_zakheni.mail_tmpl_service_request_worksheet_completion',
-                raise_if_not_found=False,
-            )
-            # if template:
-            #     template.send_mail(self.id, force_send=True)
 
-            if template and rec.manager_email:
-                template.sudo().send_mail(
-                    rec.id,
-                    force_send=True,
-                    email_values={
-                        'email_to': rec.manager_email
-                    }
-                )
+
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Finish Worksheet',
+                'res_model': 'finish.worksheet.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_user_id': rec.id,
+                    'default_employee_id': rec.employee_id.id,
+                }
+
+            }
 
     image_ids = fields.One2many(
         'waste.worksheet.image',
@@ -851,7 +811,7 @@ class WasteWorksheetImage(models.Model):
     )
 
     name = fields.Char(string='Description')
-    image = fields.Image(
+    image = fields.Binary(
         string='Image',
         max_width=1920,
         max_height=1920,
