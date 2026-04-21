@@ -8,6 +8,8 @@
                 <group>
                     <field name="amend_comment" required="1"/>
                     <field name="user_id" invisible="1"/>
+                     <field name="employee_manager_id" widget="many2one_avatar_user" required="1"/>-->
+                    <field name="manager_email" readonly="1"/>
                 </group>
                 <group>
                     <footer>

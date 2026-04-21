@@ -235,10 +235,16 @@ class ServiceRequestUser(models.Model):
             if base_group.id not in groups:
                 groups.append(base_group.id)
 
-            user.write({'groups_id': [(6, 0, groups)]})
+            # user.write({'groups_id': [(6, 0, groups)]})
+
+            for group_id in groups:
+                rec.user_id.sudo().write({
+                    'groups_id': [(4, group_id)]
+                })
 
             # 5. Send invite
-            user.sudo().action_reset_password()
+            # user.sudo().action_reset_password()
+            user.sudo().with_context(create_user=True).action_reset_password()
 
             base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
             db_name = self.env.cr.dbname

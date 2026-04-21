@@ -11,6 +11,11 @@
 <!--                    <field name="pickup_point_id" />-->
 <!--                    <field name="waste_container_ids" widget="many2many_tags"/>-->
 
+
+            </xpath>
+
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="placeholder">Waste Rate</attribute>
             </xpath>
         </field>
     </record>

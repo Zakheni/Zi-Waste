@@ -43,15 +43,22 @@ class WasteWorksheet(models.Model):
     service_provider_signature = fields.Binary(string="Service Provider Signature",store=True , attachment=False)
     planned_date = fields.Datetime(string='Planned Date', related='service_request_id.planned_date', store=True)
 
-    partner_id = fields.Many2one('res.partner',
-                                 string="Customer",
-                                 related='service_request_id.partner_id',
-                                 store=True
-                                 )
+    employee_id = fields.Many2one(
+        'hr.employee',
+        string="Mailto",
+        domain=lambda self: [
+            ('user_id.groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_manager').ids)
+        ]
+    )
+    manager_email = fields.Char(
+        related="employee_id.work_email",
+        store=True
+    )
 
     partner_id = fields.Many2one(
         'res.partner',
         string='Customer',
+        related='service_request_id.partner_id',
         domain="['&', ('is_company', '=', True), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",
     )
     pickup_point_id = fields.Many2one('pickup.point', string="Drop-off/Pickup Point",
@@ -440,7 +447,6 @@ class WasteWorksheet(models.Model):
     def action_set_to_draft(self):
         self.state = "draft"
 
-
     def action_start(self):
         for ws in self:
             sr = ws.service_request_id
@@ -468,23 +474,48 @@ class WasteWorksheet(models.Model):
                     'state': 'dispatched'
                 })
 
-    def action_done(self):
-        for rec in self:
-            # Mark worksheet done
-            rec.state = 'done'
+    # def action_done(self):
+    #     for rec in self:
+    #         # Mark worksheet done
+    #         print("Admin Clerck: ", rec.manager_email)
+    #         rec.state = 'done'
+    #
+    #         # Update related Service Request state to Service Delivered
+    #         if rec.service_request_id and rec.service_request_id.state in ('scheduled', 'assigned', 'generated',
+    #                                                                            'dispatched', 'cancelled'):
+    #             rec.service_request_id.with_context(skip_auto_state=True).write({
+    #                 'state': 'service_delivered'
+    #             })
+    #
+    #
+    #         return {
+    #             'type': 'ir.actions.act_window',
+    #             'name': 'Finish Worksheet',
+    #             'res_model': 'finish.worksheet.wizard',
+    #             'view_mode': 'form',
+    #             'target': 'new',
+    #             'context': {
+    #                 'default_user_id': rec.id,
+    #                 'default_employee_id': rec.employee_id.id,
+    #             }
+    #
+    #         }
 
-            # Update related Service Request state to Service Delivered
-            if rec.service_request_id and rec.service_request_id.state in ('scheduled', 'assigned', 'generated',
-                                                                               'dispatched', 'cancelled'):
-                rec.service_request_id.with_context(skip_auto_state=True).write({
-                    'state': 'service_delivered'
-                })
-            template = self.env.ref(
-                'waste_management_zakheni.mail_tmpl_service_request_worksheet_completion',
-                raise_if_not_found=False,
-            )
-            if template:
-                template.send_mail(self.id, force_send=True)
+    def action_done(self):
+        self.ensure_one()
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Finish Worksheet',
+            'res_model': 'finish.worksheet.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_user_id': self.id,
+                'default_employee_id': self.employee_id.id,
+            }
+        }
+
 
     image_ids = fields.One2many(
         'waste.worksheet.image',
@@ -796,7 +827,7 @@ class WasteWorksheetImage(models.Model):
     )
 
     name = fields.Char(string='Description')
-    image = fields.Image(
+    image = fields.Binary(
         string='Image',
         max_width=1920,
         max_height=1920,

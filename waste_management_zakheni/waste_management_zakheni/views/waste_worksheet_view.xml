@@ -23,8 +23,11 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_set_to_draft" type="object" string="Set to Draft"
+                    <button name="action_set_to_draft"
+                            type="object"
+                            string="Set to Draft"
                             class="btn-secondary"
+                            invisible="state not in ('in_progres','done')"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_driver,waste_management_zakheni.group_wmz_admin_clerk"
 
                     />
@@ -36,14 +39,17 @@
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_driver,waste_management_zakheni.group_wmz_admin_clerk"
 
                     />
-                    <button name="action_done" type="object" string="Mark as done"
+                    <button name="action_done"
+                            type="object"
+                            string="Mark as done"
                             class="btn-primary"
+                            invisible="state in ('draft','done')"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_driver,waste_management_zakheni.group_wmz_admin_clerk"
 
                     />
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
                 </header>
-                <sheet>
+                <sheet readonly="state == 'draft'">
 
                     <div name="button_box" class="oe_button_box">
 
@@ -63,7 +69,7 @@
                                 class="oe_stat_button"
                                 icon="fa-truck"
                                 string="Assign Bins"
-                                invisible="state == 'done' or hide_bin == False"
+                                invisible="state in ('draft','done') or hide_bin == False"
                         >
 
                             <!-- Pickup Points -->
@@ -116,16 +122,21 @@
                     <group>
 
                         <group string="Worksheet information">
-                            <field name="arrival_time" required="state  == 'in_progress'" readonly="state == 'done'"/>
-                            <field name="kilometers" required="state == 'in_progress'" readonly="state == 'done'"/>
-                            <field name="unit_of_measure" required="state == 'in_progress'" readonly="state == 'done'"/>
-                            <field name="return_date" readonly="state == 'done'"/>
+                            <field name="arrival_time" required="state  == 'in_progress'"
+                                   readonly="state in ('draft','done')"/>
+                            <field name="kilometers" required="state == 'in_progress'"
+                                   readonly="state in ('draft','done')"/>
+                            <field name="unit_of_measure" required="state == 'in_progress'"
+                                   readonly="state in ('draft','done')"/>
+                            <field name="return_date" readonly="state in ('draft','done')"/>
                             <!--                            <field name="quantity_collected" required="state == 'in_progress'"/>-->
                             <separator/>
                             <field name="driver_signature" widget="signature" required="state == 'in_progress'"
-                                   readonly="state == 'done'"/>
+                                   readonly="state in ('draft','done')"/>
                             <field name="service_provider_signature" string="Customer Signature" widget="signature"
-                                   required="state == 'in_progress'" readonly="state == 'done'"/>
+                                   required="state == 'in_progress'" readonly="state in ('draft','done')"/>
+                            <!--                            <field name="employee_id" widget="many2one_avatar_user" required="1"/>-->
+                            <!--                            <field name="manager_email" readonly="1"/>-->
                         </group>
                         <group string="Manifest Details">
 
@@ -313,7 +324,7 @@
 
                         <group style="display:flex; align-items:center;">
                             <field name="manifest_document" filename="manifest_document_filename"
-                                   style="flex:1;" readonly="state == 'done'"/>
+                                   style="flex:1;" readonly="state in ('draft', 'done')"/>
                             <button name="action_open_manifest_document"
                                     type="object"
                                     icon="fa-file-pdf-o"
@@ -326,7 +337,7 @@
                         <group style="display:flex; align-items:center;">
                             <field name="weighbridge_slip" invisible="hide_waste_type == True"
                                    filename="weighbridge_slip_filename"
-                                   style="flex:1;" readonly="state == 'done'"/>
+                                   style="flex:1;" readonly="state in ('draft','done' )"/>
                             <button name="action_open_weighbridge_slip"
                                     type="object"
                                     icon="fa-file-pdf-o"
@@ -339,7 +350,7 @@
 
                         <group style="display:flex; align-items:center;" invisible="not hide_hazardous_fields">
                             <field name="safety_certificate" filename="safety_certificate_filename"
-                                   style="flex:1;" readonly="state == 'done'"/>
+                                   style="flex:1;" readonly="state in ('draft', 'done')"/>
                             <button name="action_open_safety_certificate"
                                     type="object"
                                     class="btn-sm"
@@ -355,7 +366,7 @@
 
                     <notebook>
                         <page string="Photos">
-                            <field name="image_ids" mode="kanban" readonly="state == 'done'">
+                            <field name="image_ids" mode="kanban" readonly="state in ('draft','done')">
                                 <kanban create="true" quick_create="false" class="o_kanban_large_column">
                                     <field name="image"/>
                                     <field name="name"/>
@@ -365,18 +376,18 @@
                                             <div class="oe_kanban_global_click o_kanban_card" style="padding: 6px;">
                                                 <!-- Image block with fixed height -->
                                                 <div style="
-                            height: 220px;
-                            overflow: hidden;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                        ">
+                                                        height: 220px;
+                                                        overflow: hidden;
+                                                        display: flex;
+                                                        align-items: center;
+                                                        justify-content: center;
+                                                    ">
                                                     <img t-att-src="kanban_image('waste.worksheet.image', 'image', record.id.value)"
                                                          style="
-                                     width: 100%;
-                                     height: 100%;
-                                     object-fit: cover;
-                                 "/>
+                                                             width: 100%;
+                                                             height: 100%;
+                                                             object-fit: cover;
+                                                         "/>
                                                 </div>
 
                                                 <!-- Caption / description -->

@@ -218,7 +218,7 @@ class WasteAssignBinWizard(models.TransientModel):
             if not pp_id:
                 raise ValidationError(_("Pickup Point is required on bin mapping line."))
 
-            # ---- DUPLICATE BIN VALIDATION --------------------------
+            # # ---- DUPLICATE BIN VALIDATION --------------------------
             pp_name = line.pickup_point_id.display_name or _("(no pickup)")
             dp_name = line.dropoff_point_id.display_name or _("(no drop-off)")
 

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_finish_worksheet_wizard_form" model="ir.ui.view">
+        <field name="name">finish.worksheet.wizard.form</field>
+        <field name="model">finish.worksheet.wizard</field>
+        <field name="arch" type="xml">
+            <form string="">
+                <group>
+                    <!-- Hide completely -->
+                    <field name="user_id" invisible="1" readonly="1"/>
+
+                    <field name="employee_id"
+                           widget="many2one_avatar_user"
+                           required="1"/>
+
+                    <field name="manager_email" readonly="1"/>
+                </group>
+
+                <footer>
+                    <button name="action_finish_worksheet"
+                            string="Submit"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

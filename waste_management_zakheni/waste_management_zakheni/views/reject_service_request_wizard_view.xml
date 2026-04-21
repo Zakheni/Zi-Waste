@@ -8,6 +8,9 @@
                 <group>
                     <field name="reject_reason"/>
                     <field name="user_id" invisible="1"/>
+
+                    <field name="employee_email_id" widget="many2one_avatar_user" required="1"/>-->
+                    <field name="admin_clerck_email" readonly="1"/>
                 </group>
                 <group>
                     <footer>
