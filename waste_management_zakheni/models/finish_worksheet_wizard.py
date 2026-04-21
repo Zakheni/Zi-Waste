@@ -8,7 +8,7 @@ class FinishWorksheetWizard(models.TransientModel):
     _name = 'finish.worksheet.wizard'
     _description = 'Finish Worksheet Wizard'
 
-    user_id = fields.Many2one('waste.service.request', string="Target Record", required=True)
+    user_id = fields.Many2one('waste.worksheet', string="Target Record", required=True)
     employee_id = fields.Many2one(
         'hr.employee',
         string="Mailto",
