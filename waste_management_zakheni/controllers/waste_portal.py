@@ -180,12 +180,18 @@ class WasteClientPortal(CustomerPortal):
         commercial_partner = partner.commercial_partner_id
         company = user.company_id.sudo()
 
+        admin_clerck_email = request.env['hr.employee'].sudo().search([
+            ('user_id.groups_id', 'in',
+             request.env.ref('waste_management_zakheni.group_wmz_admin_clerk').ids)
+        ])
+
         values = {
             'page_name': 'waste_new_request',
             'csrf_token': request.csrf_token(),
 
             # ✅ THIS is what your template needs
             'client_partner': commercial_partner,
+            'admin_clerck_email': admin_clerck_email,
 
             # pickup points for THIS client only
             'pickup_points': env['pickup.point'].sudo().search(
@@ -202,6 +208,7 @@ class WasteClientPortal(CustomerPortal):
                 "bin.type"].sudo().browse(),
             "tank_volumes": company.wmz_tank_volume_ids if "wmz_tank_volume_ids" in company._fields else env[
                 "tank.volume"].sudo().browse(),
+
         }
 
         return request.render(
@@ -372,15 +379,44 @@ class WasteClientPortal(CustomerPortal):
         )
 
         # ------------------------------------------------------------
-        # ✅ SEND EMAIL CONFIRMATION
+        # ✅ SEND EMAIL TO SELECTED ADMIN CLERK
         # ------------------------------------------------------------
-        template = env.ref(
-            "waste_management_zakheni.mail_tmpl_service_request_portal_completion",
-            raise_if_not_found=False
-        )
-        if template:
-            template.sudo().send_mail(wsr.id, force_send=True, raise_exception=False)
+        if post.get('employee_id'):
+            try:
+                employee_id = int(post.get('employee_id'))
+                employee = env['hr.employee'].sudo().browse(employee_id)
 
+                if employee and employee.work_email:
+                    template = env.ref(
+                        "waste_management_zakheni.mail_tmpl_service_request_portal_completion",
+                        raise_if_not_found=False
+                    )
+
+                    if template:
+                        email_values = {
+                            'email_to': employee.work_email
+                        }
+
+                        template.sudo().send_mail(
+                            wsr.id,
+                            force_send=True,
+                            raise_exception=False,
+                            email_values=email_values
+                        )
+
+            except Exception as e:
+                _logger.warning("Manager email failed: %s", e)
+
+        # # ------------------------------------------------------------
+        # # ✅ SEND EMAIL CONFIRMATION
+        # # ------------------------------------------------------------
+        # template = env.ref(
+        #     "waste_management_zakheni.mail_tmpl_service_request_portal_completion",
+        #     raise_if_not_found=False
+        # )
+        # if template:
+        #     template.sudo().send_mail(wsr.id, force_send=True, raise_exception=False)
+        #
         return request.redirect('/my/waste/request/thankyou/%s' % wsr.id)
 
 
@@ -594,6 +630,14 @@ class WasteClientPortal(CustomerPortal):
         # Worksheet qty (product_uom_qty lives on worksheet in your POST save)
         product_uom_qty = getattr(ws, "product_uom_qty", 0.0) or 0.0
 
+        # ✅ ADD THIS BLOCK HERE
+        managers = request.env['hr.employee'].sudo().search([
+            ('user_id.groups_id', 'in',
+             request.env.ref('waste_management_zakheni.group_wmz_manager').ids)
+        ])
+
+        # managers = request.env['hr.employee'].sudo().search([])
+
         values = {
             'page_name': 'waste_worksheet_edit',
             'worksheet': ws,
@@ -607,6 +651,7 @@ class WasteClientPortal(CustomerPortal):
             'bin_lifted': bin_lifted,
             'bin_dropped': bin_dropped,
             'product_uom_qty': product_uom_qty,
+            'managers': managers
 
         }
         return request.render('waste_management_zakheni.portal_waste_worksheet_form', values)
@@ -804,18 +849,41 @@ class WasteClientPortal(CustomerPortal):
                 'image': base64.b64encode(img_file.read()),
             })
 
-        # ---------------- REDIRECT WITH SUCCESS MESSAGE + EMAIL ----------------
+            # ---------------- SAVE MANAGER ----------------
+        if post.get('employee_id'):
+            try:
+                vals['employee_id'] = int(post.get('employee_id'))
+            except Exception:
+                pass
 
+            # ---------------- WRITE ----------------
+        if vals:
+            ws.write(vals)
+
+            # ---------------- SEND EMAIL ----------------
         template_agent = self._get_template_sudo(
             'waste_management_zakheni.mail_tmpl_service_request_portal_worksheet_completion'
         )
         if template_agent:
             template_agent.send_mail(ws.id, force_send=True, raise_exception=False)
 
-        # ---------------- REDIRECT WITH SUCCESS MESSAGE ----------------
+        # ---------------- REDIRECT ----------------
         return request.redirect(
             '/my/waste/worksheet/%s/edit?msg=worksheet_saved' % ws.id
         )
+
+        # # ---------------- REDIRECT WITH SUCCESS MESSAGE + EMAIL ----------------
+        #
+        # template_agent = self._get_template_sudo(
+        #     'waste_management_zakheni.mail_tmpl_service_request_portal_worksheet_completion'
+        # )
+        # if template_agent:
+        #     template_agent.send_mail(ws.id, force_send=True, raise_exception=False)
+        #
+        # # ---------------- REDIRECT WITH SUCCESS MESSAGE ----------------
+        # return request.redirect(
+        #     '/my/waste/worksheet/%s/edit?msg=worksheet_saved' % ws.id
+        # )
 
     # ------------------------------------------------------------
     # DASHBOARD: /my/waste

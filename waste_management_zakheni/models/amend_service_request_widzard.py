@@ -33,7 +33,7 @@ class AmendServiceRequestWizard(models.TransientModel):
         'hr.employee',
         string="Mailto",
         domain=lambda self: [
-            ('user_id.groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_admin_clerk').ids)
+            ('user_id.groups_id', 'in', self.env.ref('waste_management_zakheni.group_wmz_manager').ids)
         ]
 
     )

@@ -1758,24 +1758,6 @@ class WasteServiceRequest(models.Model):
                 ):
                     tank.reserved_request_id = False
 
-            # ✅ finish as sudo (same as your line, just on sudo record)
-            rec.state = "done"
-            #
-            # tmpl = rec.env.ref(
-            #     'waste_management_zakheni.mail_tmpl_service_request_authorize',
-            #     raise_if_not_found=False
-            # )
-            #
-            # if tmpl and rec.finance_email:
-            #     tmpl.sudo().send_mail(
-            #         rec.id,
-            #         force_send=True,
-            #         raise_exception=True,
-            #         email_values={
-            #             'email_to': rec.finance_email
-            #         }
-            #     )
-
             return {
                 'type': 'ir.actions.act_window',
                 'name': 'Authorize',

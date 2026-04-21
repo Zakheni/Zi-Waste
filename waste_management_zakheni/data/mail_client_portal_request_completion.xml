@@ -6,8 +6,8 @@
             <field name="name">Request Portal Completion</field>
             <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
             <field name="subject">Service Request Logged – {{ object.name or '' }}</field>
-            <field name="email_from">{{object.driver_work_email}}</field>
-            <field name="email_to">{{user.email}}</field>
+            <field name="email_from">{{user.email}}</field>
+            <field name="email_to">{{object.admin_clerck_email}}</field>
             <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">
                 <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">

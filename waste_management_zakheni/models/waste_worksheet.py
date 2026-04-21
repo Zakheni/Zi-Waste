@@ -474,32 +474,48 @@ class WasteWorksheet(models.Model):
                     'state': 'dispatched'
                 })
 
+    # def action_done(self):
+    #     for rec in self:
+    #         # Mark worksheet done
+    #         print("Admin Clerck: ", rec.manager_email)
+    #         rec.state = 'done'
+    #
+    #         # Update related Service Request state to Service Delivered
+    #         if rec.service_request_id and rec.service_request_id.state in ('scheduled', 'assigned', 'generated',
+    #                                                                            'dispatched', 'cancelled'):
+    #             rec.service_request_id.with_context(skip_auto_state=True).write({
+    #                 'state': 'service_delivered'
+    #             })
+    #
+    #
+    #         return {
+    #             'type': 'ir.actions.act_window',
+    #             'name': 'Finish Worksheet',
+    #             'res_model': 'finish.worksheet.wizard',
+    #             'view_mode': 'form',
+    #             'target': 'new',
+    #             'context': {
+    #                 'default_user_id': rec.id,
+    #                 'default_employee_id': rec.employee_id.id,
+    #             }
+    #
+    #         }
+
     def action_done(self):
-        for rec in self:
-            # Mark worksheet done
-            print("Admin Clerck: ", rec.manager_email)
-            rec.state = 'done'
+        self.ensure_one()
 
-            # Update related Service Request state to Service Delivered
-            if rec.service_request_id and rec.service_request_id.state in ('scheduled', 'assigned', 'generated',
-                                                                               'dispatched', 'cancelled'):
-                rec.service_request_id.with_context(skip_auto_state=True).write({
-                    'state': 'service_delivered'
-                })
-
-
-            return {
-                'type': 'ir.actions.act_window',
-                'name': 'Finish Worksheet',
-                'res_model': 'finish.worksheet.wizard',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': {
-                    'default_user_id': rec.id,
-                    'default_employee_id': rec.employee_id.id,
-                }
-
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Finish Worksheet',
+            'res_model': 'finish.worksheet.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_user_id': self.id,
+                'default_employee_id': self.employee_id.id,
             }
+        }
+
 
     image_ids = fields.One2many(
         'waste.worksheet.image',

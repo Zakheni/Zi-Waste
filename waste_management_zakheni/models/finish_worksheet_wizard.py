@@ -23,36 +23,72 @@ class FinishWorksheetWizard(models.TransientModel):
         store=True  # ✅ IMPORTANT FIX
     )
 
+    # def action_finish_worksheet(self):
+    #     self.ensure_one()
+    #
+    #     if not self.user_id:
+    #         _logger.warning("No user_id found on wizard")
+    #         return {'type': 'ir.actions.act_window_close'}
+    #
+    #     template = self.env.ref(
+    #         'waste_management_zakheni.mail_tmpl_service_request_worksheet_completion',
+    #         raise_if_not_found=False,
+    #     )
+    #
+    #     _logger.info("Finish Worksheet USER → %s", self.user_id.id)
+    #     _logger.info("Finish Worksheet → %s", self.manager_email)
+    #     _logger.info("Finish Worksheet  TEMPLATE → %s", template)
+    #
+    #     if template and self.manager_email:
+    #         template.sudo().send_mail(
+    #             self.user_id.id,
+    #             force_send=True,
+    #             raise_exception=True,
+    #             email_values={
+    #                 'email_to': self.manager_email
+    #             }
+    #         )
+    #     else:
+    #         _logger.warning(
+    #             "Finish Worksheet email NOT sent. Template: %s, Email: %s",
+    #             template,
+    #             self.manager_email
+    #         )
+    #
+    #     return {'type': 'ir.actions.act_window_close'}
+
     def action_finish_worksheet(self):
         self.ensure_one()
 
-        if not self.user_id:
-            _logger.warning("No user_id found on wizard")
+        ws = self.user_id
+
+        if not ws:
             return {'type': 'ir.actions.act_window_close'}
 
+        # ✅ UPDATE STATES ONLY AFTER CONFIRM
+        ws.state = 'done'
+
+        if ws.service_request_id and ws.service_request_id.state in (
+                'scheduled', 'assigned', 'generated', 'dispatched'
+        ):
+            ws.service_request_id.with_context(skip_auto_state=True).write({
+                'state': 'service_delivered'
+            })
+
+        # ✅ SEND EMAIL
         template = self.env.ref(
             'waste_management_zakheni.mail_tmpl_service_request_worksheet_completion',
             raise_if_not_found=False,
         )
 
-        _logger.info("Finish Worksheet USER → %s", self.user_id.id)
-        _logger.info("Finish Worksheet → %s", self.manager_email)
-        _logger.info("Finish Worksheet  TEMPLATE → %s", template)
-
         if template and self.manager_email:
             template.sudo().send_mail(
-                self.user_id.id,
+                ws.id,
                 force_send=True,
                 raise_exception=True,
                 email_values={
                     'email_to': self.manager_email
                 }
-            )
-        else:
-            _logger.warning(
-                "Finish Worksheet email NOT sent. Template: %s, Email: %s",
-                template,
-                self.manager_email
             )
 
         return {'type': 'ir.actions.act_window_close'}

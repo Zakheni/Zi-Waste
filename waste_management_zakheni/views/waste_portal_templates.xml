@@ -597,76 +597,6 @@
                                     </div>
 
 
-                                    <!--                                    <div class="mb-3">-->
-                                    <!--                                        <label class="form-label d-flex justify-content-between align-items-center">-->
-                                    <!--                                            <span>Collection address</span>-->
-
-                                    <!--                                            <button type="button"-->
-                                    <!--                                                    class="btn btn-sm btn-outline-primary"-->
-                                    <!--                                                    data-bs-toggle="modal"-->
-                                    <!--                                                    data-bs-target="#addPickupPointModal">-->
-                                    <!--                                                + Add-->
-                                    <!--                                            </button>-->
-                                    <!--                                        </label>-->
-
-                                    <!--                                        <select id="pickup_point_ids"-->
-                                    <!--                                                name="pickup_point_ids"-->
-                                    <!--                                                class="form-select"-->
-                                    <!--                                                multiple="multiple">-->
-
-                                    <!--                                            <t t-foreach="pickup_points" t-as="pp">-->
-                                    <!--                                                <option t-att-value="pp.id">-->
-                                    <!--                                                    <t t-esc="pp.name"/>-->
-                                    <!--                                                </option>-->
-                                    <!--                                            </t>-->
-
-                                    <!--                                        </select>-->
-
-                                    <!--                                        &lt;!&ndash;                                        <select id="pickup_point_ids"&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                                name="pickup_point_ids"&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                                class="form-select"&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                                multiple="multiple"&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                                size="5">&ndash;&gt;-->
-
-                                    <!--                                        &lt;!&ndash;                                            <t t-foreach="pickup_points" t-as="pp">&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                                <option t-att-value="pp.id">&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                                    <t t-esc="pp.name"/>&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                                </option>&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                            </t>&ndash;&gt;-->
-
-                                    <!--                                        &lt;!&ndash;                                        </select>&ndash;&gt;-->
-
-                                    <!--                                        &lt;!&ndash;                                        <small class="text-muted">&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                            Hold CTRL (or CMD) to select multiple addresses&ndash;&gt;-->
-                                    <!--                                        &lt;!&ndash;                                        </small>&ndash;&gt;-->
-
-                                    <!--                                    </div>-->
-
-                                    <!--                                    <div class="mb-3">-->
-                                    <!--                                        <label class="form-label d-flex justify-content-between align-items-center">-->
-                                    <!--                                            <span>Collection address</span>-->
-
-                                    <!--                                            &lt;!&ndash; ✅ MUST be type="button" &ndash;&gt;-->
-                                    <!--                                            <button type="button"-->
-                                    <!--                                                    class="btn btn-sm btn-outline-primary"-->
-                                    <!--                                                    data-bs-toggle="modal"-->
-                                    <!--                                                    data-bs-target="#addPickupPointModal">-->
-                                    <!--                                                + Add-->
-                                    <!--                                            </button>-->
-                                    <!--                                        </label>-->
-
-                                    <!--                                        <select id="pickup_point_id" name="pickup_point_id" class="form-select">-->
-                                    <!--                                            <option value="">Select recognised address</option>-->
-                                    <!--                                            <t t-foreach="pickup_points" t-as="pp">-->
-                                    <!--                                                <option t-att-value="pp.id">-->
-                                    <!--                                                    <t t-esc="pp.name"/>-->
-                                    <!--                                                </option>-->
-                                    <!--                                            </t>-->
-                                    <!--                                        </select>-->
-
-                                    <!--                                    </div>-->
-
-
                                     <div class="mb-3">
                                         <label class="form-label">Container Type</label>
                                         <select id="container_type_id" name="container_type_id" class="form-select"
@@ -681,8 +611,10 @@
                                         </select>
                                     </div>
 
+
                                 </div>
                             </div>
+
 
                             <!-- Container Size when Bin (bin_type_id) -->
                             <div class="mb-3 d-none" id="bin_type_group">
@@ -711,6 +643,23 @@
                             </div>
 
                             <!-- Description -->
+                            <div class="mb-3">
+                                <label class="form-label">Notify Admin Clerk</label>
+                                <select name="employee_id" class="form-select">
+                                    <option value="">Select admin clerk</option>
+                                    <t t-foreach="admin_clerck_email" t-as="m">
+                                        <option t-att-value="m.id">
+                                            <t t-esc="m.name"/>
+                                        </option>
+                                    </t>
+                                </select>
+
+                                <div class="form-text text-info">
+                                    ℹ️This will send an email notification to the selected admin clerk.
+                                </div>
+                            </div>
+
+
                             <div class="mb-4">
                                 <label class="form-label">Service Description</label>
                                 <textarea name="service_description"
@@ -908,15 +857,15 @@
             <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet"/>
             <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
 
-            $(document).ready(function () {
-
-            $('#pickup_point_ids').select2({
-            placeholder: "Select collection addresses",
-            width: '100%',
-            closeOnSelect: false // 🔥 important for multi-select UX
-            });
-
-            });
+            <script type="text/javascript">
+                $(document).ready(function () {
+                $('#pickup_point_id').select2({
+                placeholder: "Select collection addresses",
+                width: '100%',
+                closeOnSelect: false
+                });
+                });
+            </script>
 
             <script>
                 (function () {
@@ -1759,7 +1708,7 @@
                                            step="0.01"
                                            min="0"
                                            t-att-value="worksheet.product_uom_qty or 0.0"/>
-                                    <div class="form-text">
+                                    <div class="form-text text-info">
                                         This updates the sales order line quantity for billing.
                                     </div>
                                 </div>
@@ -1778,10 +1727,29 @@
                                             </option>
                                         </t>
                                     </select>
-                                    <div class="form-text">
+                                    <div class="form-text text-info">
                                         Pick the unit used for this quantity (e.g. kL, L, km, etc.).
                                     </div>
                                 </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Select Manager</label>
+
+                                    <select name="employee_id" class="form-select" required="required">
+                                        <option value="">Select manager</option>
+
+                                        <t t-foreach="managers" t-as="mgr">
+                                            <option t-att-value="mgr.id"
+                                                    t-att-selected="worksheet.employee_id.id == mgr.id and 'selected' or None">
+                                                <t t-esc="mgr.name"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                    <div class="form-text text-info">
+                                        This send the email message to the manger selected.
+                                    </div>
+                                </div>
+
                             </div>
 
 
