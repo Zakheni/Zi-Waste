@@ -60,6 +60,7 @@
                        widget="badge"
                        invisible="payment_state != 'paid'"
                        decoration-success="batch_payment_state == 'paid'"
+                       decoration-warning="batch_payment_state == 'exported'"
                        decoration-danger="batch_payment_state == 'not_paid'"/>
 
             </xpath>

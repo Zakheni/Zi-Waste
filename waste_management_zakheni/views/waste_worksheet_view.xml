@@ -10,6 +10,7 @@
                 <field name="kilometers"/>
                 <field name="return_date"/>
                 <field name="unit_of_measure"/>
+                <field name="quantity_collected"/>
                 <field name="driver_id" widget="many2one_avatar_user"/>
                 <field name="service_request_id"/>
                 <field name="state" widget="badge"/>
@@ -129,7 +130,7 @@
                             <field name="unit_of_measure" required="state == 'in_progress'"
                                    readonly="state in ('draft','done')"/>
                             <field name="return_date" readonly="state in ('draft','done')"/>
-                            <!--                            <field name="quantity_collected" required="state == 'in_progress'"/>-->
+                            <field name="quantity_collected" required="state == 'in_progress'"/>
                             <separator/>
                             <field name="driver_signature" widget="signature" required="state == 'in_progress'"
                                    readonly="state in ('draft','done')"/>

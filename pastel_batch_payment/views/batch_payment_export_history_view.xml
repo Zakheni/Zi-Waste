@@ -11,7 +11,7 @@
             <tree default_order="export_date desc">
                 <field name="export_date"/>
                 <field name="batch_id"/>
-                <field name="user_id"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
                 <field name="state"
                        widget="badge"
                        decoration-success="state == 'success'"

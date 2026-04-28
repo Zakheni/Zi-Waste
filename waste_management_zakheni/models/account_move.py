@@ -14,24 +14,6 @@ class AccountMove(models.Model):
         readonly=True,
     )
 
-    # from odoo import models, _
-    # from odoo.exceptions import UserError
-    #
-    # class AccountMove(models.Model):
-    #     _inherit = 'account.move'
-    #
-    #     def unlink(self):
-    #         if (
-    #                 self.env.user.has_group('waste_management_zakheni.group_wmz_admin')
-    #                 or
-    #                 self.env.user.has_group('waste_management_zakheni.group_wmz_finance')
-    #         ):
-    #             raise UserError(_("You are not allowed to delete invoices."))
-    #
-    #         return super(AccountMove, self).unlink()
-
-
-
     service_request_id = fields.Many2one(
         "waste.service.request",
         string="Manifest",

@@ -4,21 +4,21 @@ from odoo import models,fields
 class AccountMove(models.Model):
     _inherit = "account.move"
 
-    # batch_force_paid = fields.Boolean(
-    #     string="Paid via Batch",
-    #     default=False,
+    # batch_payment_state = fields.Selection(
+    #     [
+    #         ("not_paid", "Not Paid (Batch)"),
+    #         ("paid", "Paid via Batch"),
+    #     ],
+    #     string="Batch Payment Status",
+    #     default="not_paid",
     #     copy=False,
+    #     tracking=True,
     # )
-
-    # def _compute_payment_state(self):
-    #     super()._compute_payment_state()
-    #     for move in self:
-    #         if move.batch_force_paid:
-    #             move.payment_state = 'paid'
 
     batch_payment_state = fields.Selection(
         [
             ("not_paid", "Not Paid (Batch)"),
+            ("exported", "Exported to Sage"),  # ✅ ADD THIS
             ("paid", "Paid via Batch"),
         ],
         string="Batch Payment Status",
