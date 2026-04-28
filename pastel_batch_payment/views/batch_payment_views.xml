@@ -37,7 +37,7 @@
 
 
                     <!--                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid"/>-->
-                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid" />
 
                 </header>
                 <sheet>

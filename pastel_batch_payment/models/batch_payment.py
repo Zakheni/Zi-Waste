@@ -315,15 +315,7 @@ class BatchPayment(models.Model):
 
             url = base.rstrip("/") + "/payments/batch"
             headers = {"x-api-key": key}
-            # try:
-            #     r = requests.post(url, json=payload, headers=headers, timeout=60)
-            #     r.raise_for_status()
-            #     data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
-            # except Exception as e:
-            #     raise UserError(_("Sage export failed: %s") % e)
-            #
-            # rec.exported_ref = data.get("batch_id") or data.get("reference") or rec.name
-            # rec.state = "exported"
+
 
             try:
                 r = requests.post(url, json=payload, headers=headers, timeout=60)
@@ -344,8 +336,55 @@ class BatchPayment(models.Model):
                     "response_payload": json.dumps(response_data, indent=2),
                 })
 
+                # rec.exported_ref = response_data.get("batch_id") or response_data.get("reference")
+                # rec.state = "exported"
+
                 rec.exported_ref = response_data.get("batch_id") or response_data.get("reference")
+
+                # ---------------------------------------
+                # ✅ UPDATE INVOICES + RECONCILE
+                # ---------------------------------------
+                for line in rec.line_ids:
+                    invoice = line.move_id
+                    payment = line.payment_id
+
+                    if not invoice:
+                        continue
+
+                    # ✅ STEP 1: mark invoice as EXPORTED
+                    invoice.write({
+                        "batch_payment_state": "exported",
+                        "batch_payment_id": rec.id,
+                    })
+
+                    if not payment:
+                        continue
+
+                    if invoice.state != "posted" or payment.state != "posted":
+                        continue
+
+                    # Find receivable/payable lines
+                    inv_lines = invoice.line_ids.filtered(
+                        lambda l: l.account_id.account_type in (
+                            'asset_receivable', 'liability_payable'
+                        ) and not l.reconciled
+                    )
+
+                    pay_lines = payment.move_id.line_ids.filtered(
+                        lambda l: l.account_id in inv_lines.mapped("account_id") and not l.reconciled
+                    )
+
+                    # Reconcile ONLY (no state change here)
+                    if inv_lines and pay_lines:
+                        (inv_lines + pay_lines).reconcile()
+
+                # ---------------------------------------
+                # ✅ FINAL BATCH STATE
+                # ---------------------------------------
                 rec.state = "exported"
+
+
+
 
             except Exception as e:
                 # ✅ SAVE HISTORY (FAILED)
@@ -358,31 +397,7 @@ class BatchPayment(models.Model):
 
                 raise UserError(_("Sage export failed: %s") % e)
 
-    # ----------------------------------------------------------------
-    # HARD SET invoice paid in DB if residual is 0
-    # ----------------------------------------------------------------
-    # def _force_set_invoice_paid(self, invoice):
-    #     """
-    #     Hard-force account.move.payment_state to 'paid' when residual is 0.
-    #     This is the most reliable way to reflect paid status immediately in the UI
-    #     after custom reconciliation flows.
-    #     """
-    #     invoice = invoice.sudo().exists()
-    #     if not invoice or invoice.state != "posted":
-    #         return
-    #
-    #     if float_is_zero(invoice.amount_residual, precision_rounding=invoice.currency_id.rounding):
-    #         # Direct DB update (payment_state is stored)
-    #         self.env.cr.execute(
-    #             "UPDATE account_move SET payment_state = 'paid' WHERE id = %s",
-    #             (invoice.id,)
-    #         )
-    #         self.env.flush_all()
-    #         invoice.invalidate_recordset(["payment_state", "amount_residual"])
 
-    # ----------------------------------------------------------------
-    # Pay Batch (Reconcile and mark invoices paid)
-    # ----------------------------------------------------------------
     def action_pay_batch(self):
         for batch in self:
             if batch.state not in ("validated", "exported"):
@@ -419,36 +434,6 @@ class BatchPayment(models.Model):
             batch.state = "paid"
 
         return {"type": "ir.actions.client", "tag": "reload"}
-
-    # def action_pay_batch(self):
-    #     for batch in self:
-    #         if batch.state not in ("validated", "exported"):
-    #             raise UserError(_("Only validated or exported batches can be paid."))
-    #
-    #         if not batch.invoice_ids:
-    #             raise UserError(_("Please select at least one invoice to pay in this batch."))
-    #
-    #         for invoice in batch.invoice_ids:
-    #             if invoice.state != "posted":
-    #                 continue
-    #
-    #             invoice.sudo().write({
-    #                 "batch_payment_state": "paid",
-    #                 "batch_payment_id": batch.id,
-    #             })
-    #
-    #             invoice.message_post(
-    #                 body=_(
-    #                     "Invoice marked as Paid via Batchin Batch %s."
-    #                 ) % batch.name
-    #             )
-    #
-    #         batch.state = "paid"
-    #
-    #     return {
-    #         "type": "ir.actions.client",
-    #         "tag": "reload",
-    #     }
 
 
     @api.onchange("journal_id", "payment_method_line_id", "partner_id", "company_id")
