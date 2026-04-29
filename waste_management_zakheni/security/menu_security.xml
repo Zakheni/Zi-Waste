@@ -30,8 +30,6 @@
         </record>
 
 
-
-
         <record id="base.menu_action_res_company_form"
                 model="ir.ui.menu">
             <field name="groups_id"
@@ -43,7 +41,6 @@
                    ])
                ]"/>
         </record>
-
 
 
         <record id="hr.menu_hr_root"
@@ -123,8 +120,6 @@
         </record>
 
 
-
-
         <!-- =========================
              INVENTORY (STOCK)
              ========================= -->
@@ -187,7 +182,7 @@
                 ])]"/>
         </record>
 
-         <!-- Hide Configuration menu -->
+        <!-- Hide Configuration menu -->
         <record id="base.menu_custom" model="ir.ui.menu">
             <field name="groups_id" eval="[(6, 0, [
                     ref('base.group_system'),
@@ -225,6 +220,13 @@
 
                 ])]"/>
         </record>
+
+<!--        <record id="menu_waste_root" model="ir.ui.menu">-->
+<!--            <field name="groups_id" eval="[(6,0,[-->
+<!--        ref('waste_management_zakheni.group_wmz_driver'),-->
+<!--        ref('waste_management_zakheni.group_wmz_manager'),-->
+<!--    ])]"/>-->
+<!--        </record>-->
 
     </data>
 </odoo>
