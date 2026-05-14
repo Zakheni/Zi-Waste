@@ -1,0 +1,30 @@
+<odoo noupdate="0">
+    <!-- Attribute -->
+    <record id="attr_service_requested" model="product.attribute">
+        <field name="name">Service Requested</field>
+    </record>
+
+    <!-- Values with XML IDs you referenced above -->
+    <record id="product_attribute_value_sr_placement_of_bins" model="product.attribute.value">
+        <field name="name">Placement of Bins</field>
+        <field name="attribute_id" ref="attr_service_requested"/>
+    </record>
+    <record id="product_attribute_value_sr_shunting_of_bins" model="product.attribute.value">
+        <field name="name">Shunting of Bins</field>
+        <field name="attribute_id" ref="attr_service_requested"/>
+    </record>
+    <record id="product_attribute_value_sr_removal_of_bins" model="product.attribute.value">
+        <field name="name">Removal of Bins</field>
+        <field name="attribute_id" ref="attr_service_requested"/>
+    </record>
+    <record id="product_attribute_value_sr_swapping_of_bins" model="product.attribute.value">
+        <field name="name">Swapping of Bins</field>
+        <field name="attribute_id" ref="attr_service_requested"/>
+    </record>
+    <record id="product_attribute_value_sr_waste_collection_and_disposal" model="product.attribute.value">
+        <field name="name">Waste Collection &amp; Disposal</field>
+        <field name="attribute_id" ref="attr_service_requested"/>
+    </record>
+
+    <!-- Do the same for Waste Type, Waste Details, Bin Type, Tank Volume -->
+</odoo>

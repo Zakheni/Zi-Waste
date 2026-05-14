@@ -1,0 +1,685 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tree_service_request" model="ir.ui.view">
+        <field name="name">waste.service.request.tree</field>
+        <field name="model">waste.service.request</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc" string="Waste Service Request">
+                <field name="name" decoration-bf="1"/>
+                <field name="partner_id"/>
+                <field name="from_portal" optional="hide"/>
+                <field name="create_uid" optional="hide"/>
+                <field name="write_uid" optional="hide"/>
+                <field name="create_date" widget="badge" optional="hide"/>
+                <field name="write_date" widget="badge" optional="hide"/>
+                <field name="company_id" optional="hide"/>
+                <field name="service_requested_id"/>
+                <field name="container_type_id"/>
+                <field name="bin_dropped_ids" widget="many2many_tags" optional="hide"/>
+                <field name="bin_lifted_ids" widget="many2many_tags" optional="hide"/>
+                <field name="pickup_point_ids" widget="many2many_tags" optional="hide"/>
+                <field name="dropoff_point_ids" widget="many2many_tags" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state == 'generated'"
+                       decoration-danger="state == 'cancelled'"
+                       decoration-warning="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_form_service_request" model="ir.ui.view">
+        <field name="name">waste.service.request.form</field>
+        <field name="model">waste.service.request</field>
+        <field name="arch" type="xml">
+            <form string="Waste Service Request" edit="1">
+                <header>
+
+                    <button string="Draft" type="object" name="action_draft" class="btn-primary"
+                            invisible="state == 'done'"
+                            groups="waste_management_zakheni.group_wmz_admin"/>
+
+                    <!-- NEW: Schedule -->
+                    <button string="Schedule"
+                            type="object"
+                            name="action_set_scheduled"
+                            class="btn-info"
+                            invisible="state != 'generated' or is_service_provider and provider_name == False"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+                    />
+
+                    <!--                    &lt;!&ndash; NEW: Assign &ndash;&gt;-->
+                    <!--                    <button string="Assign"-->
+                    <!--                            type="object"-->
+                    <!--                            name="action_set_assigned"-->
+                    <!--                            class="btn-info"-->
+                    <!--                            invisible="state != 'assigned' and state != 'scheduled' or is_service_provider == False"-->
+                    <!--                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>-->
+
+
+                    <button string="Generate" type="object" name="action_generated" class="btn-info"
+                            invisible="state != 'draft' or bin_line_count == 0 and not hide_tank_volume "
+
+                    />
+                    <!--                            invisible="state != 'scheduled' or is_service_provider == True"/>-->
+                    <button string="Authorise" type="object" name="action_mark_done" class="btn-success"
+                            invisible="state != 'service_delivered' or worksheet_count == 0"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>
+                    <button string="Reject" type="object" name="action_cancelled" class="btn-danger"
+                            invisible="state != 'service_delivered' or worksheet_count == 0"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>
+                    <button string="Amend" type="object" name="action_amend" class="btn-primary"
+                            invisible="state != 'cancelled' or worksheet_count == 0"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
+                    <button name="action_open_related_sales" type="object"
+                            string="Create Invoice" class="btn-primary"
+                            invisible="state != 'done'"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"/>
+                    <button name="action_print_manifest_pdf"
+                            type="object"
+                            string="Print"
+                            class="btn btn-primary"
+                            invisible="state != 'done' and state != 'scheduled' "/>
+
+
+                    <button name="action_open_simple_provider_wizard"
+                            type="object"
+                            string="Find Service Provider"
+                            class="oe_highlight"
+                            invisible="is_service_provider == False or state != 'generated'"
+
+                    />
+
+                    <!--                    <button name="action_push_extra_products_to_so"-->
+                    <!--                            type="object"-->
+                    <!--                            string="Update Sales Order"-->
+                    <!--                            class="btn-primary"-->
+                    <!--                            invisible="sale_order_id == False or state != 'scheduled' and state != 'dispatched' and state != 'cancelled' and state != 'service_delivered' or extra_product_count == 0 "-->
+                    <!--                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"-->
+
+                    <!--                    />-->
+                    <!--                    <button name="action_push_extra_products_to_so"-->
+                    <!--                            type="object"-->
+                    <!--                            string="Update Sales Order"-->
+                    <!--                            class="btn-primary"-->
+                    <!--                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"-->
+                    <!--                            invisible="sale_order_id == False or state not in ('scheduled','dispatched','cancelled','service_delivered') or extra_product_count == 0 or hide_tank == True"/>-->
+
+
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,generated,scheduled,dispatched,service_delivered,done,cancelled"/>
+                </header>
+                <sheet>
+                    <div name="button_box" class="oe_button_box">
+                        <button name="action_view_worksheet"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-edit"
+
+                                invisible="state != 'scheduled' and state != 'dispatched' and state != 'cancelled' and state != 'service_delivered'"
+                        >
+                            <field name="worksheet_count" widget="statinfo"/>
+                        </button>
+
+                        <!--                        <button name="action_open_product_selector"-->
+                        <!--                                type="object"-->
+                        <!--                                class="oe_stat_button"-->
+                        <!--                                icon="fa-shopping-cart"-->
+                        <!--                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"-->
+                        <!--                                invisible="state != 'scheduled' and state != 'dispatched' and state != 'cancelled' and state != 'service_delivered'"-->
+
+                        <!--                        >-->
+                        <!--                            <field name="extra_product_count"-->
+                        <!--                                   widget="statinfo"-->
+                        <!--                                   string="Extra Products"/>-->
+                        <!--                        </button>-->
+
+                        <!--                        <button name="action_open_product_selector"-->
+                        <!--                                type="object"-->
+                        <!--                                class="oe_stat_button"-->
+                        <!--                                icon="fa-shopping-cart"-->
+                        <!--                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"-->
+                        <!--                                invisible="state not in ('scheduled','dispatched','cancelled','service_delivered') or hide_tank == True">-->
+                        <!--                            <field name="extra_product_count" widget="statinfo" string="Extra Products"/>-->
+                        <!--                        </button>-->
+
+                        <button name="action_open_bin_assignment_wizard"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-truck"
+                                string="Assign Bins"
+                                invisible="sale_order_id == False or hide_bin == False"
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_finance">
+
+                            <!-- Pickup Points -->
+                            <field name="wizard_pickup_point_count"
+                                   widget="statinfo"
+                                   string="Pickup Point(s)"/>
+
+                            <!-- Slash separator -->
+                            <span style="font-size:14px; padding:0 4px;">|</span>
+
+                            <!-- Bins -->
+                            <field name="bin_line_count"
+                                   widget="statinfo"
+                                   string="Bin(s)"/>
+                        </button>
+
+
+                        <button name="action_open_sale_order"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-external-link"
+                                string="Sales Order"
+                                invisible="sale_order_id == False"
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance">
+                            <!--                            <field name="sale_order_count" widget="statinfo" string="Order(s)"/>-->
+                            <field name="sale_order_id" widget="statinfo" string="Order(s)"/>
+                        </button>
+
+                    </div>
+
+                    <div class="alert alert-danger d-flex align-items-start" style="font-size:14px;"
+                         invisible="state != 'cancelled'">
+                        <i class="fa fa-times-circle" style="font-size:20px; margin-right:10px; margin-top:2px;"/>
+                        <div>
+                            <strong>Rejected Reason:</strong>
+                            <br/>
+                            <field name="reject_reason" readonly="1"/>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info d-flex align-items-start" style="font-size:14px;"
+                         invisible="state != 'service_delivered' or is_rejected == False">
+                        <i class="fa fa-info-circle" style="font-size:20px; margin-right:10px; margin-top:2px;"/>
+                        <div>
+                            <strong>Amendments:</strong>
+                            <br/>
+                            <field name="amend_comment" readonly="1"/>
+
+                        </div>
+                    </div>
+                    <field name="wizard_pickup_point_count" invisible="1"/>
+                    <field name="bin_line_count" invisible="1"/>
+
+                    <div class="alert alert-success d-flex align-items-start" style="font-size:14px;"
+                         invisible="state != 'done'">
+                        <i class="fa fa-info-circle" style="font-size:20px; margin-right:10px; margin-top:2px;"/>
+                        <div>
+                            <strong>Pickup/Drop off Points and Bins Summary:</strong>
+                            <br/>
+                            <field name="pickup_point_bins_summary" readonly="1"/>
+
+                        </div>
+                    </div>
+                    <group>
+
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="state != 'draft'"/>
+                            </h1>
+                        </div>
+
+                        <group>
+                            <field name="is_rejected" invisible="1" readonly="1"/>
+                        </group>
+
+                    </group>
+                    <group string="Manifest Information">
+                        <group>
+                            <field name="service_request_date" readonly="state != 'draft' and state != 'cancelled'"/>
+                            <field name="partner_id"
+                                   widget="res_partner_many2one"
+                                   options="{'no_open': True}"
+                                   readonly="state != 'draft' and state != 'cancelled'"
+                                   context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}"
+                                   placeholder="Type to find a customer..."/>
+                            <field name="sale_order_id" required="1"
+                                   options="{'no_open': True}"
+                                   readonly="state != 'draft' and state != 'cancelled'"
+                                   domain="[('partner_id', '=', partner_id),
+                                                     ('validity_date', '>=', context_today()),
+                                                     ('state', '=', 'sale'),
+                                                     ('invoice_status', '=', 'to invoice'),
+                                                     ('service_request_id', '=', False)]"
+                                   invisible="not partner_id"/>
+
+
+                            <field name="hide_waste_type" invisible="1"/>
+                            <field name="hide_waste_details" invisible="1"/>
+                            <field name="hide_bin" invisible="1"/>
+                            <field name="hide_tank" invisible="1"/>
+
+                            <field name="service_requested_id"
+                                   options="{'no_open': True}"
+                                   readonly="state != 'draft'"
+
+
+                            />
+
+                            <field name="waste_type_id" readonly="state != 'draft'"
+                                   options="{'no_open': True}"
+                                   invisible="hide_waste_type == True"
+
+                            />
+
+                            <field name="waste_details_id"
+                                   options="{'no_open': True}"
+                                   readonly="state != 'draft'"
+                                   invisible="hide_waste_details == True"/>
+
+                            <field name="container_type_id" readonly="state != 'draft'" widget="radio"
+                                   options="{'horizontal': True}"/>
+                            <!--                            <field name="container_type_id" options="{'no_open': True}" readonly="state != 'draft'"-->
+                            <!--                            />-->
+                            <field name="bin_type_id"
+                                   options="{'no_open': True}"
+
+                                   readonly="state != 'draft'"
+                                   invisible="hide_tank == True and hide_bin == False"/>
+
+
+                            <!--                            <field name="tank_volume_id"-->
+                            <!--                                   options="{'no_open': True}"-->
+                            <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
+                            <!--                                                                           or hide_bin"-->
+                            <!--                            />-->
+                            <field name="truck_tanker_id" readonly="1"
+                                   options="{'no_open': True}" string="Tank Truck"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                                                           or hide_bin"
+                            />
+
+                            <!--                            <field name="employee_email_id" widget="many2one_avatar_user" required="1"/>-->
+                            <!--                             <field name="admin_clerck_email" readonly="1"/>-->
+
+                            <!--                            <field name="finance_employee_id" widget="many2one_avatar_user" required="1"/>-->
+                            <!--                             <field name="finance_email" readonly="1"/>-->
+
+                            <separator string="DEBUG" invisible="1"/>
+                            <field name="company_id" readonly="1" invisible="1"/>
+                            <field name="allowed_service_count" readonly="1" invisible="1"/>
+                            <field name="allowed_container_count" readonly="1" invisible="1"/>
+                            <field name="allowed_waste_count" readonly="1" invisible="1"/>
+
+
+                        </group>
+                        <group>
+
+                            <field name="allowed_service_ids" invisible="1" widget="many2many_tags"/>
+                            <field name="allowed_container_type_ids" invisible="1"/>
+                            <field name="allowed_waste_type_ids" invisible="1"/>
+                            <field name="allowed_waste_details_ids" invisible="1"/>
+                            <field name="allowed_bin_type_ids" invisible="1" widget="many2many_tags"/>
+                            <field name="allowed_tank_volume_ids" invisible="1" widget="many2many_tags"/>
+                            <field name="pickup_id" invisible="1"/>
+                            <!--                            <field name="customer_id" invisible="1"/>-->
+                            <field name="hide_droppoff_container_ids_placement" invisible="1"/>
+                            <field name="hide_droppoff_container_ids_removal" invisible="1"/>
+                            <field name="hide_droppoff_container_ids_collection" invisible="1"/>
+                            <field name="hide_droppoff_container_ids_is_bin" invisible="1"/>
+
+                            <field name="hide_lifted_bin_ids_swap" invisible="1"/>
+                            <field name="hide_dropped_bin_ids_swap" invisible="1"/>
+                            <field name="hide_dropped_to_swap" invisible="1"/>
+
+                            <field name="from_portal" invisible="1"/>
+                            <field name="hide_tank_ids" invisible="1"/>
+                            <field name="hide_tank_volume" invisible="1"/>
+                            <field name="hide_liters_collected" invisible="1"/>
+                            <field name="hide_liters_remaining" invisible="1"/>
+                            <field name="hide_service_collection" invisible="1"/>
+                            <field name="hide_shunt_container_ids" invisible="1"/>
+
+                            <field name="hide_hazardous_fields" invisible="1"/>
+                            <field name="hide_general" invisible="1"/>
+                            <field name="hide_none_general" invisible="1"/>
+                            <field name="hide_service_placement" invisible="1"/>
+                            <field name="hide_disposal_site" invisible="1"/>
+                            <field name="allowed_disposal_site_ids" invisible="1"/>
+                            <field name="qty_updated_from_worksheet" invisible="1"/>
+
+
+                            <field name="pickup_point_bins_summary" readonly="1" class="text-muted"
+                                   style="font-size:10px;"
+                                   placeholder="No bins assigned yet." decoration-info="1" decoration-bf="1"/>
+                            <field name="pickup_point_ids" widget="many2many_tags"
+                                   readonly="state != 'draft' and state != 'scheduled'  and state != 'generated'  and state != 'cancelled'"
+                                   domain="[('partner_id', '=', partner_id)]"
+                                   invisible="hide_droppoff_container_ids_placement
+                                              or (not hide_droppoff_container_ids_collection
+                                                  and not hide_tank_volume
+                                                  and not hide_lifted_bin_ids_swap
+                                                  and not hide_shunt_container_ids
+                                                  and not hide_droppoff_container_ids_removal)"
+                            />
+
+                            <field name="bin_lifted_ids"
+                                   widget="many2many_tags" readonly="1"
+                                   domain="[('pickup_point_id', 'in', pickup_point_ids),
+                                               ('pickup_point_id.partner_id', '=', partner_id),
+                                               ('status', 'in', ['in_use', 'un_use']),
+                                               ('inUse', '=', True),
+                                               ('container_type_id.name', 'ilike', 'bin')
+                                            ]"
+                                   invisible="hide_droppoff_container_ids_placement
+                                              or (not hide_droppoff_container_ids_collection
+                                                  and not hide_lifted_bin_ids_swap
+                                                  and not hide_shunt_container_ids
+                                                  and not hide_droppoff_container_ids_removal
+                                                  and not hide_bin)
+                                              or hide_tank_volume"
+                            />
+
+                            <!-- bin_dropped_ids for placement / general use -->
+                            <field name="bin_dropped_ids" widget="many2many_tags" readonly="1"
+                                   domain="[('partner_id', '=', False),
+                                               ('pickup_point_id', '=', False),
+                                               ('status', '=', 'intact'),
+                                               ('inUse', '=', False),
+                                               ('dropoff_point_id', '=', False),
+                                               ('bin_type_id', '=', bin_type_id)
+
+
+                                           ]"
+
+                                   invisible="not (hide_droppoff_container_ids_placement
+                or hide_droppoff_container_ids_collection) or hide_tank_volume"
+
+
+                            />
+
+                            <!-- bin_dropped_ids for swap / shunt behaviour -->
+                            <field name="bin_dropped_ids" widget="many2many_tags" readonly="1"
+                                   domain="[('partner_id', '=', False),
+                                               ('pickup_point_id', '=', False),
+                                               ('status', '=', 'intact'),
+                                               ('inUse', '=', False),
+                                               ('dropoff_point_id', '=', False),
+                                           ]"
+                                   invisible="not hide_lifted_bin_ids_swap
+                                              or (not hide_general and hide_shunt_container_ids)"
+                            />
+
+                            <field name="dropoff_point_ids" widget="many2many_tags" readonly="1"
+                                   domain="[('partner_id', '=', partner_id)]"
+                                   invisible="(not hide_droppoff_container_ids_placement
+                                               and not hide_shunt_container_ids)
+                                               or hide_tank_volume"
+                            />
+
+
+                            <field name="product_uom_qty"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                              or hide_bin"
+                                   readonly="state != 'draft' and state != 'scheduled' and state != 'generated' and state != 'cancelled'"
+                            />
+
+                            <field name="qty_update_label"
+                                   class="oe_inline text-success"
+                                   readonly="1"
+                                   invisible="qty_updated_from_worksheet == False"
+                            />
+
+
+                            <field name="liters_collected" readonly="1"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                              or hide_bin"/>
+                            <field name="billing_amount" readonly="1"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                              or hide_bin"/>
+
+
+                            <field name="product_uom_qty" string="No. of Bins" readonly="1"
+                                   invisible="not partner_id or  hide_bin == False"/>
+
+                            <field name="planned_date" string="Planned Date"
+                                   readonly="state != 'draft' and state != 'cancelled' and state != 'generated'
+                                             and state != 'cancelled'
+                                             and state != 'generated'"/>
+
+                            <field name="disposal_site_id" string="Disposal Site"
+                                   invisible="hide_droppoff_container_ids_placement
+                                              or (not hide_droppoff_container_ids_collection
+                                                  and not hide_lifted_bin_ids_swap
+                                                  and not hide_shunt_container_ids
+                                                  and not hide_droppoff_container_ids_removal)"
+                                   readonly="state != 'draft' and state != 'cancelled'"
+                            />
+
+
+                            <field name="quote_no" readonly="state != 'draft' and state != 'cancelled'"/>
+                            <field name="service_description" readonly="state != 'draft' and state != 'cancelled'"/>
+
+                            <field name="UN_No_SIN_No" invisible="not hide_hazardous_fields"
+                                   readonly="state != 'draft' and state != 'cancelled'"/>
+                            <field name="waste_profile_Data_sheet_No" invisible="not hide_hazardous_fields"
+                                   readonly="state != 'draft' and state != 'cancelled'"/>
+                            <field name="DTNumber"
+                                   invisible="not hide_hazardous_fields"
+                                   required="hide_hazardous_fields == True"
+                                   readonly="state != 'draft' and state != 'cancelled'"/>
+
+                            <!--                            <field name="is_disposal_hazardous" invisible="1"/>-->
+
+                            <!--                            <group string="Hazardous Waste Information"-->
+                            <!--                                   invisible="not is_disposal_hazardous">-->
+
+                            <!--                                <field name="UN_No_SIN_No" invisible="not is_disposal_hazardous" />-->
+
+                            <!--                                <field name="waste_profile_Data_sheet_No" invisible="not is_disposal_hazardous"/>-->
+
+                            <!--                                <field name="DTNumber"-->
+                            <!--                                       required="is_disposal_hazardous" invisible="not is_disposal_hazardous"/>-->
+
+                            <!--&lt;!&ndash;                            </group>&ndash;&gt;-->
+
+
+                            <separator/>
+                            <field name="is_service_provider" invisible="vehicle_id"
+                                   readonly="state != 'draft' and state != 'cancelled' and state != 'generated'"/>
+
+                        </group>
+                    </group>
+
+
+                    <group string="drivers &amp; assistance" invisible="is_service_provider == True">
+                        <group>
+                            <!--                            <field name="driver_id" options="{'no_open': True}" widget="many2one_avatar_user"-->
+
+                            <!--                                   readonly="1"-->
+                            <!--                                   domain="[('id', 'not in', busy_driver_ids or [])]"/>-->
+                            <field name="driver_id"
+                                   readonly="0"
+                                   widget="many2one_avatar_user"
+                                   options="{'no_open': True}"
+                                   domain="[
+           ('id', 'not in', busy_driver_ids or []),
+           ('user_ids.employee_id.job_id.name', '=', 'Driver')
+       ]"/>
+                            <field name="assistance_id" widget="many2one_avatar_user"
+                                   options="{'no_open': True}"
+                                   readonly="1"
+                                   domain="[('id', 'not in', busy_assistance_ids or []),
+                                   ('user_ids.employee_id.job_id.name', '=', 'Driver')]"/>
+
+                        </group>
+                        <group>
+                            <field name="vehicle_id" widget="many2one_avatar_user"
+                                   options="{'no_open': True}"
+                                   readonly="state != 'draft' and state != 'cancelled' and state != 'generated'
+                                             and state != 'cancelled'
+                                             and state != 'generated'"
+                                   domain="[('id', 'not in', busy_track_ids or []), ('vehicle_type', '!=', 'trailer')]"/>
+                            <field name="trailer_id" widget="many2one_avatar_user"
+                                   options="{'no_open': True}"
+                                   readonly="state != 'draft' and state != 'cancelled' and state != 'generated'
+                                             and state != 'cancelled'
+                                             and state != 'generated'"
+                                   domain="[('id', 'not in', busy_trailler_ids or []), ('vehicle_type', '=', 'trailer')]"
+
+
+                            />
+
+                        </group>
+
+                    </group>
+
+
+                    <notebook>
+                        <page string="Busy drivers &amp; assistants and Tucks &amp; Traillers"
+                              invisible="is_service_provider == True">
+                            <group>
+                                <group string="Busy Trucks and Drivers">
+                                    <field name="busy_driver_ids" string="Drivers" widget="many2many_tags"/>
+                                    <field name="busy_track_ids" string="Trucks" widget="many2many_tags"/>
+                                </group>
+
+                                <group string="Busy Assistants and Trailers">
+                                    <field name="busy_assistance_ids" string="Assistants" widget="many2many_tags"/>
+                                    <field name="busy_trailler_ids" string="Trailers" widget="many2many_tags"/>
+                                </group>
+                            </group>
+
+
+                        </page>
+                        <page string="Service Provider" invisible="is_service_provider == False">
+                            <group invisible="provider_id == False">
+                                <group>
+                                    <field name="provider_id" invisible="1" required="is_service_provider == True"/>
+                                    <field name="provider_name" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_province" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_email" readonly="1" widget="email" decoration-bf="1"/>
+                                    <field name="provider_phone" readonly="1" widget="phone" decoration-bf="1"/>
+                                </group>
+                                <group>
+                                    <field name="provider_city" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_suburb" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_phone" readonly="1" decoration-bf="1"/>
+                                    <field name="provider_mobile" readonly="1" widget="phone" decoration-bf="1"/>
+
+                                </group>
+
+                            </group>
+                        </page>
+                        <page string="Information From Driver">
+
+                            <field name="work_sheet_id" context="{'default_service_request_id': active_id}"
+                                   invisible="1"/>
+                            <field name="notes_html" widget="html" readonly="1"/>
+
+                        </page>
+                        <!--                        <page string="User Access">-->
+                        <!--                            <group>-->
+                        <!--                                <button name="action_open_create_user_wizard"-->
+                        <!--                                        type="object"-->
+                        <!--                                        string="Create Contact &amp; User"-->
+                        <!--                                        class="btn-primary"/>-->
+                        <!--                            </group>-->
+                        <!--                        </page>-->
+
+                        <!--                        <page string="Users">-->
+                        <!--                            <field name="user_line_ids" mode="tree,kanban">-->
+
+                        <!--                                &lt;!&ndash; ✅ TREE (WORKING BUTTON) &ndash;&gt;-->
+                        <!--                                <tree editable="bottom">-->
+                        <!--                                    <field name="name"/>-->
+                        <!--                                    <field name="email"/>-->
+                        <!--                                    &lt;!&ndash;                                                                        <field name="role"/>&ndash;&gt;-->
+                        <!--                                    <field name="role_ids" widget="many2many_tags"/>-->
+                        <!--                                    &lt;!&ndash;                                    <field name="state"/>&ndash;&gt;-->
+                        <!--                                    <field name="state"-->
+                        <!--                                           widget="badge"-->
+                        <!--                                           decoration-success="state == 'created'"-->
+                        <!--                                           decoration-danger="state == 'error'"-->
+                        <!--                                           decoration-warning="state == 'draft'"/>-->
+
+                        <!--                                    &lt;!&ndash;                                    <field name="message" readonly="1"/>&ndash;&gt;-->
+                        <!--                                    <field name="message"-->
+                        <!--                                           readonly="1"-->
+                        <!--                                           class="text-muted"-->
+                        <!--                                           style="font-size:8px; font-style:italic;"/>-->
+
+
+                        <!--                                    <button name="action_create_user"-->
+                        <!--                                            type="object"-->
+                        <!--                                            string="Create User"-->
+                        <!--                                            class="btn-primary"-->
+                        <!--                                            invisible="state == 'created'"/>-->
+
+                        <!--                                    <button name="action_update_user"-->
+                        <!--                                            type="object"-->
+                        <!--                                            string="Edit User"-->
+                        <!--                                            class="btn-secondary"-->
+                        <!--                                            invisible="state != 'created'"/>-->
+                        <!--                                </tree>-->
+
+                        <!--                                &lt;!&ndash; ⚠️ KEEP KANBAN FOR DISPLAY ONLY &ndash;&gt;-->
+                        <!--                                <kanban>-->
+                        <!--                                    <templates>-->
+                        <!--                                        <t t-name="kanban-box">-->
+                        <!--                                            <div class="oe_kanban_card">-->
+                        <!--                                                <strong>-->
+                        <!--                                                    <field name="name"/>-->
+                        <!--                                                </strong>-->
+                        <!--                                                <div>-->
+                        <!--                                                    <field name="email"/>-->
+                        <!--                                                </div>-->
+                        <!--                                                <div>-->
+                        <!--                                                    &lt;!&ndash;                                                    <field name="role"/>&ndash;&gt;-->
+                        <!--                                                    <field name="role_ids" widget="many2many_tags"/>-->
+
+                        <!--                                                </div>-->
+
+                        <!--                                                &lt;!&ndash;                                                <field name="state"&ndash;&gt;-->
+                        <!--                                                &lt;!&ndash;                                                       widget="badge"&ndash;&gt;-->
+                        <!--                                                &lt;!&ndash;                                                       decoration-success="state == 'created'"&ndash;&gt;-->
+                        <!--                                                &lt;!&ndash;                                                       decoration-danger="state == 'error'"/>&ndash;&gt;-->
+                        <!--                                                <field name="state"-->
+                        <!--                                                       widget="badge"-->
+                        <!--                                                       decoration-success="state == 'created'"-->
+                        <!--                                                       decoration-danger="state == 'error'"-->
+                        <!--                                                       decoration-warning="state == 'draft'"/>-->
+
+                        <!--                                                &lt;!&ndash; ❌ REMOVE BUTTON FROM HERE &ndash;&gt;-->
+                        <!--                                                <field name="message"-->
+                        <!--                                                       readonly="1"-->
+                        <!--                                                       class="text-muted"-->
+                        <!--                                                       style="font-size:8px; font-style:italic;"/>-->
+
+                        <!--&lt;!&ndash;                                                <button name="action_update_user"&ndash;&gt;-->
+                        <!--&lt;!&ndash;                                                        type="object"&ndash;&gt;-->
+                        <!--&lt;!&ndash;                                                        string="Edit"&ndash;&gt;-->
+                        <!--&lt;!&ndash;                                                        class="btn btn-secondary btn-sm"&ndash;&gt;-->
+                        <!--&lt;!&ndash;                                                        invisible="state != 'created'"/>&ndash;&gt;-->
+                        <!--                                            </div>-->
+                        <!--                                        </t>-->
+                        <!--                                    </templates>-->
+                        <!--                                </kanban>-->
+
+                        <!--                            </field>-->
+                        <!--                        </page>-->
+                    </notebook>
+
+
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="action_waste_service_request" model="ir.actions.act_window">
+        <field name="name">Waste service request</field>
+        <field name="res_model">waste.service.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="groups_id" eval="[(6,0,[ref('waste_management_zakheni.group_wmz_driver')])]"/>
+    </record>
+
+</odoo>
+
+
+
+
+

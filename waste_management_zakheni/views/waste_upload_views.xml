@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_waste_upload_tree" model="ir.ui.view">
+        <field name="name">waste.upload.tree</field>
+        <field name="model">waste.upload</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc">
+                <field name="manifest_document"/>
+                <field name="weighbridge_slip"/>
+                <field name="safety_certificate"/>
+                <field name="service_request_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_waste_uploads_form" model="ir.ui.view">
+        <field name="name">waste.upload.form</field>
+        <field name="model">waste.upload</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_set_to_draft" type="object" string="Set to Draft"
+                            class="btn-secondary"/>
+                    <button name="action_set_to_uploads" type="object" string="Upload"
+                            class="btn-primary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,uploaded"/>
+                </header>
+                <sheet>
+
+                    <group>
+
+                        <group>
+                            <field name="service_request_id" readonly="1"/>
+                            <field name="waste_type" invisible="1"/>
+                        </group>
+
+
+                        <group>
+                            <field name="planned_date" string=" Planned Date" widget="badge"
+                                   decoration-warning="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Manifest Details">
+                            <field name="partner_id"
+                            />
+                            <!--                            <field name="sale_order_id" readonly="state != 'draft'"-->
+                            <!--                                   domain="[('partner_id', '=', partner_id),-->
+                            <!--                                             ('validity_date', '>=', context_today()),-->
+                            <!--                                             ('state', '=', 'sale'),-->
+                            <!--                                             ('invoice_status', '=', 'to invoice'),-->
+                            <!--                                             ('service_request_id', '=', False)]"/>-->
+                            <field name="service_requested" readonly="state != 'draft'"/>
+                            <field name="waste_type" readonly="state != 'draft'"
+                                   invisible="service_requested  in ('placement_of_bins',)"/>
+                            <field name="waste_details" readonly="state != 'draft'"
+                                   invisible="service_requested in ('placement_of_bins',)"/>
+                            <field name="bin_type" readonly="state != 'draft'"/>
+                            <field name="container_type" readonly="state != 'draft'" widget="radio"
+                                   options="{'horizontal': True}"/>
+
+                            <field name="pickup_point_id" readonly="state != 'draft'" invisible="0"/>
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'placement_of_bins'"/>
+
+
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested not in ( 'removal_of_bins')"
+                                   required="1"/>
+
+
+                            <field name="dropoff_container_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested not in ( 'waste_collection_&amp;_disposal') or container_type != 'bin'"/>
+
+
+                            <!--                            <field name="pickup_id" invisible="1"/>-->
+                            <!--  Swap  -->
+                            <field name="lifted_bin_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'swapping_of_bins'"
+                            />
+                            <field name="dropped_bin_ids" widget="many2many_tags" readonly="state != 'draft'"
+                                   invisible="service_requested != 'swapping_of_bins'"
+                                   domain="[('status', '=', 'intact')]"/>
+                            <field name="pickup_point_id" invisible="service_requested != 'swapping_of_bins'"
+                                   readonly="state != 'draft'"/>
+                            <!--                      Shunt  -->
+
+                            <field name="shunt_container_ids" string="Bin Lifted" widget="many2many_tags"
+                                   readonly="state != 'draft'"
+                                   invisible="service_requested != 'shunting_of_bins'"/>
+                            <!--                        <field name="shunt_from_id"/>-->
+                            <field name="shunt_to_id" string="Drop off Point" readonly="state != 'draft'"
+                                   invisible="service_requested != 'shunting_of_bins'"/>
+
+                            <field name="tank_ids" widget="many2many_tags" invisible="container_type != 'tank'"
+                                   readonly="state != 'draft'"/>
+
+
+                            <field name="tank_volume" readonly="1" invisible="container_type != 'tank'"/>
+
+                        </group>
+                        <group string="Upload information">
+                        <group style="display:flex; align-items:center;">
+                            <field name="manifest_document" filename="manifest_document_filename"
+                                   style="flex:1;"/>
+                            <button name="action_open_manifest_document"
+                                    type="object"
+                                    icon="fa-file-pdf-o"
+                                    invisible="manifest_document == False"
+                                    style="margin-left: -10px;"/>
+
+                        </group>
+
+                        <group style="display:flex; align-items:center;">
+                            <field name="weighbridge_slip" filename="weighbridge_slip_filename"
+                                   style="flex:1;"/>
+                            <button name="action_open_weighbridge_slip"
+                                    type="object"
+                                    icon="fa-file-pdf-o"
+                                    invisible="weighbridge_slip == False"
+                                    style="margin-left: -10px;"/>
+
+                        </group>
+
+
+                        <group style="display:flex; align-items:center;" invisible="waste_type != 'hazardous'">
+                            <field name="safety_certificate" filename="safety_certificate_filename"
+                                   style="flex:1;"/>
+                            <button name="action_open_safety_certificate"
+                                    type="object"
+                                    icon="fa-file-pdf-o"
+                                    invisible="safety_certificate == False"
+                                    style="margin-left: -10px;"/>
+
+                        </group>
+
+
+                    </group>
+                    </group>
+
+
+
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="action_waste_upload" model="ir.actions.act_window">
+        <field name="name">Waste Upload</field>
+        <field name="res_model">waste.upload</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

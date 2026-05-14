@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="mail.menu_root_discuss" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_system')])]"/>
+        </record>
+
+        <!-- Restrict Apps menu to System Admin only -->
+        <record id="base.menu_management" model="ir.ui.menu">
+            <field name="groups_id"
+                   eval="[(6, 0, [ref('base.group_system')])]"/>
+        </record>
+
+
+        <!--        <record id="contacts.menu_contacts" model="ir.ui.menu">-->
+        <!--            <field name="groups_id"-->
+        <!--                   eval="[(6, 0, [-->
+        <!--                        ref('waste_management_zakheni.group_wmz_admin'),-->
+        <!--                        ref('waste_management_zakheni.group_wmz_manager'),-->
+        <!--                        ref('waste_management_zakheni.group_wmz_admin_clerk'),-->
+        <!--                        ref('waste_management_zakheni.group_company_admin'),-->
+        <!--                        ref('base.group_system')-->
+        <!--                   ])]"/>-->
+        <!--        </record>-->
+
+
+        <record id="utm.menu_link_tracker_root" model="ir.ui.menu">
+            <field name="groups_id"
+                   eval="[(6, 0, [ref('base.group_system')])]"/>
+        </record>
+
+
+        <record id="base.menu_action_res_company_form"
+                model="ir.ui.menu">
+            <field name="groups_id"
+                   eval="[
+                   Command.set([
+                       ref('base.group_system'),
+                        ref('base.group_system'),
+                       ref('waste_management_zakheni.group_central_admin'),
+                   ])
+               ]"/>
+        </record>
+
+
+        <record id="hr.menu_hr_root"
+                model="ir.ui.menu">
+            <field name="groups_id"
+                   eval="[(6, 0, [ref('hr.group_hr_manager')])]"/>
+        </record>
+
+        <!--        <record id="web.menu_home" model="ir.ui.menu">-->
+        <!--            <field name="groups_id"-->
+        <!--                   eval="[(6, 0, [ref('base.group_system')])]"/>-->
+        <!--        </record>-->
+
+        <!-- =========================
+       SALES MODULE
+       ========================= -->
+
+        <record id="sale.sale_menu_root" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6,0,[
+                        ref('waste_management_zakheni.group_wmz_admin'),
+                        ref('waste_management_zakheni.group_wmz_admin_clerk'),
+                        ref('waste_management_zakheni.group_wmz_finance'),
+                        ref('waste_management_zakheni.group_wmz_manager'),
+                    ])]"/>
+        </record>
+
+        <!-- =========================
+        INVOICING / ACCOUNTING
+        ========================= -->
+        <!-- Root Accounting/Invoices app menu -->
+        <record id="account.menu_finance" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6,0,[
+                        ref('waste_management_zakheni.group_wmz_admin'),
+                        ref('waste_management_zakheni.group_wmz_finance'),
+                      ])]"/>
+        </record>
+
+        <!-- If your DB uses a separate invoicing root (some setups do), uncomment: -->
+
+        <!--        <record id="account.menu_invoicing" model="ir.ui.menu">-->
+        <!--            <field name="groups_id"-->
+        <!--                   eval="[(6, 0, [-->
+        <!--               ref('waste_management_zakheni.group_wmz_admin'),-->
+        <!--               ref('waste_management_zakheni.group_wmz_admin_clerk'),-->
+        <!--               ref('waste_management_zakheni.group_wmz_finance'),-->
+        <!--               ref('waste_management_zakheni.group_wmz_manager')-->
+        <!--           ])]"/>-->
+        <!--        </record>-->
+
+
+        <!-- =========================
+             EMPLOYEES (HR)
+             ========================= -->
+        <!-- Root Employees app menu -->
+        <record id="hr.menu_hr_root" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6,0,[
+                        ref('waste_management_zakheni.group_wmz_admin'),
+                        ref('waste_management_zakheni.group_wmz_manager')
+                      ])]"/>
+        </record>
+
+        <!-- Root Flee app menu -->
+        <record id="fleet.menu_root" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6,0,[
+                        ref('waste_management_zakheni.group_wmz_admin'),
+                        ref('waste_management_zakheni.group_wmz_manager')
+                      ])]"/>
+        </record>
+
+        <record id="contacts.menu_contacts" model="ir.ui.menu">
+            <field name="groups_id"
+                   eval="[(6, 0, [
+                        ref('waste_management_zakheni.group_wmz_admin'),
+                        ref('waste_management_zakheni.group_company_admin'),
+                        ref('waste_management_zakheni.group_wmz_user_manager'),
+                   ])]"/>
+        </record>
+
+
+        <!-- =========================
+             INVENTORY (STOCK)
+             ========================= -->
+        <!-- Root Inventory app menu -->
+        <record id="stock.menu_stock_root" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6,0,[
+                        ref('waste_management_zakheni.group_wmz_admin'),
+                        ref('waste_management_zakheni.group_wmz_finance'),
+
+                      ])]"/>
+        </record>
+
+
+        <record id="base.menu_administration" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+                    ref('base.group_erp_manager')
+                ])]"/>
+        </record>
+
+
+        <!-- To invoice menu -->
+        <record id="sale.menu_sale_invoicing" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+                    ref('base.group_erp_manager'),
+                    ref('waste_management_zakheni.group_wmz_admin'),
+                    ref('waste_management_zakheni.group_wmz_finance'),
+                    ref('waste_management_zakheni.group_wmz_manager')
+                ])]"/>
+        </record>
+
+        <!-- Hide Products menu -->
+        <record id="sale.product_menu_catalog" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+                    ref('base.group_erp_manager'),
+                    ref('waste_management_zakheni.group_wmz_admin'),
+                    ref('waste_management_zakheni.group_wmz_finance'),
+                ])]"/>
+        </record>
+
+        <!-- Hide Reporting menu -->
+        <record id="sale.menu_sale_report" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+                    ref('base.group_erp_manager'),
+                    ref('waste_management_zakheni.group_wmz_admin'),
+                    ref('waste_management_zakheni.group_wmz_finance'),
+                ])]"/>
+        </record>
+
+        <!-- Hide Configuration menu -->
+        <record id="sale.menu_sale_config" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+                    ref('base.group_erp_manager'),
+                    ref('waste_management_zakheni.group_wmz_admin'),
+                    ref('waste_management_zakheni.group_wmz_finance'),
+                ])]"/>
+        </record>
+
+        <!-- Hide Configuration menu -->
+        <record id="base.menu_custom" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+
+                ])]"/>
+        </record>
+
+        <!-- Hide Configuration menu -->
+        <record id="base.menu_translation" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+
+                ])]"/>
+        </record>
+
+        <!-- Hide Configuration menu -->
+        <record id="base.menu_translation_app" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+
+                ])]"/>
+        </record>
+
+        <!-- Hide Configuration menu -->
+        <record id="base.menu_translation_export" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+
+                ])]"/>
+        </record>
+
+        <record id="base.menu_action_res_groups" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                    ref('base.group_system'),
+
+                ])]"/>
+        </record>
+
+<!--        <record id="menu_waste_root" model="ir.ui.menu">-->
+<!--            <field name="groups_id" eval="[(6,0,[-->
+<!--        ref('waste_management_zakheni.group_wmz_driver'),-->
+<!--        ref('waste_management_zakheni.group_wmz_manager'),-->
+<!--    ])]"/>-->
+<!--        </record>-->
+
+    </data>
+</odoo>
+
+

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_batch_payment_root"
+              name="Batch Payments"
+              parent="account.menu_finance"
+              sequence="80"/>
+
+    <menuitem id="menu_batch_payment"
+              name="Batches"
+              parent="menu_batch_payment_root"
+              action="action_batch_payment"/>
+
+    <menuitem id="menu_batch_export_history"
+              name="Export History"
+              parent="menu_batch_payment_root"
+              action="action_batch_payment_export_history"
+              sequence="20"/>
+
+</odoo>

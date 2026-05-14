@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ===================== -->
+    <!-- TREE VIEW -->
+    <!-- ===================== -->
+    <record id="view_batch_payment_export_history_tree" model="ir.ui.view">
+        <field name="name">batch.payment.export.history.tree</field>
+        <field name="model">batch.payment.export.history</field>
+        <field name="arch" type="xml">
+            <tree default_order="export_date desc">
+                <field name="export_date"/>
+                <field name="batch_id"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="state"
+                       widget="badge"
+                       decoration-success="state == 'success'"
+                       decoration-danger="state == 'failed'"/>
+                <field name="sage_reference"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ===================== -->
+    <!-- FORM VIEW -->
+    <!-- ===================== -->
+    <record id="view_batch_payment_export_history_form" model="ir.ui.view">
+        <field name="name">batch.payment.export.history.form</field>
+        <field name="model">batch.payment.export.history</field>
+        <field name="arch" type="xml">
+            <form string="Batch Export History">
+                <sheet>
+
+                    <!-- Title -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="batch_id" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <!-- Header info -->
+                    <group>
+                        <group>
+                            <field name="export_date" readonly="1"/>
+                            <field name="user_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="state"
+                                   widget="badge"
+                                   decoration-success="state == 'success'"
+                                   decoration-danger="state == 'failed'"
+                                   readonly="1"/>
+                            <field name="sage_reference" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Payloads -->
+                    <notebook>
+                        <page string="Request Payload">
+                            <field name="request_payload"
+                                   widget="text"
+                                   readonly="1"
+                                   class="oe_inline"/>
+                        </page>
+                        <page string="Response / Error">
+                            <field name="response_payload"
+                                   widget="text"
+                                   readonly="1"
+                                   class="oe_inline"/>
+                        </page>
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===================== -->
+    <!-- ACTION -->
+    <!-- ===================== -->
+    <record id="action_batch_payment_export_history" model="ir.actions.act_window">
+        <field name="name">Batch Export History</field>
+        <field name="res_model">batch.payment.export.history</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No batch exports recorded yet.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- MODULE CATEGORY -->
+    <record id="module_category_waste_management" model="ir.module.category">
+        <field name="name">Waste Management</field>
+        <field name="description">Access groups for Waste Management (Zakheni)</field>
+        <field name="visible" eval="1"/>
+        <field name="sequence">25</field>
+    </record>
+
+    <!-- BASE WMZ USER: gives backend access -->
+    <record id="group_wmz_user" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+        <!-- Internal user (backend) -->
+        <field name="implied_ids" eval="[
+            (4, ref('base.group_user'))
+        ]"/>
+    </record>
+
+    <!-- SUPER ADMIN -->
+    <record id="group_wmz_admin" model="res.groups">
+        <field name="name">Super Admin</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_user'))
+        ]"/>
+    </record>
+
+    <!-- MANAGER -->
+    <record id="group_wmz_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_user'))
+        ]"/>
+    </record>
+
+    <!-- ADMIN CLERK -->
+    <record id="group_wmz_admin_clerk" model="res.groups">
+        <field name="name">Admin Clerk</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_user'))
+        ]"/>
+    </record>
+
+    <!-- DRIVER -->
+    <record id="group_wmz_driver" model="res.groups">
+        <field name="name">Driver</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_user'))
+        ]"/>
+    </record>
+
+    <!-- FINANCE -->
+    <record id="group_wmz_finance" model="res.groups">
+        <field name="name">Finance</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_user'))
+        ]"/>
+    </record>
+
+    <!-- PROVIDER -->
+    <record id="group_wmz_provider" model="res.groups">
+        <field name="name">Provider</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_user'))
+        ]"/>
+    </record>
+
+    <!--    <record id="group_super_admin_scoped" model="res.groups">-->
+    <!--        <field name="name">Super Admin (Company Scoped)</field>-->
+    <!--        <field name="implied_ids" eval="[-->
+    <!--        (4, ref('waste_management_zakheni.group_wmz_admin'))-->
+    <!--    ]"/>-->
+    <!--        <field name="category_id" ref="base.module_category_administration"/>-->
+    <!--    </record>-->
+
+
+    <record id="group_company_admin" model="res.groups">
+        <field name="name">Company Admin</field>
+
+        <field name="category_id" ref="base.module_category_administration"/>
+        <field name="implied_ids" eval="[
+        (4, ref('waste_management_zakheni.group_wmz_user'))
+
+    ]"/>
+
+    </record>
+
+
+    <!-- Central Admin -->
+    <record id="group_central_admin" model="res.groups">
+        <field name="name">Central Admin</field>
+        <field name="category_id" ref="base.module_category_administration"/>
+
+    </record>
+
+    <record id="group_wmz_customer_access" model="res.groups">
+        <field name="name">Customer Access</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+    </record>
+
+
+<!--    <record id="menu_custom_company" model="ir.ui.menu">-->
+<!--        <field name="groups_id"-->
+<!--               eval="[(6, 0, [-->
+<!--               ref('waste_management_zakheni.group_wmz_customer_access')-->
+<!--           ])]"/>-->
+<!--    </record>-->
+
+    <record id="group_wmz_user_manager" model="res.groups">
+        <field name="name">User Manager</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
+    </record>
+
+</odoo>

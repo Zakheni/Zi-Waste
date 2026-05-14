@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_waste_details_tree" model="ir.ui.view">
+        <field name="name">waste.details.tree</field>
+        <field name="model">waste.details</field>
+        <field name="arch" type="xml">
+            <tree string="Waste Details" >
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_waste_details_form" model="ir.ui.view">
+        <field name="name">waste.details.form</field>
+        <field name="model">waste.details</field>
+        <field name="arch" type="xml">
+            <form string="Waste Details">
+                <sheet>
+                    <group>
+                        <field name="sequence" widget="handle"/>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="action_waste_details" model="ir.actions.act_window">
+        <field name="name">Waste Details</field>
+        <field name="res_model">waste.details</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create New Waste Details
+            </p>
+        </field>
+    </record>
+
+
+</odoo>
