@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_fleet_vehicle1_form_inherit_waste" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.waste</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+
+            <!--            <xpath expr="//sheet//group//group" position="inside">-->
+
+
+            <!--                    <field name="is_vehicle_available" readonly="1"/>-->
+
+            <!--            </xpath>-->
+            <xpath expr="//field[@name='image_128']"
+                   position="after">
+                <group>
+                    <field name="is_vehicle_available"
+                           widget="boolean_toggle"
+                           readonly="1"/>
+
+                </group>
+
+
+            </xpath>
+
+
+        </field>
+    </record>
+
+
+</odoo>

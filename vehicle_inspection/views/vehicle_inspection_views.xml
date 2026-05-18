@@ -12,15 +12,18 @@
                 <field name="inspector_id" widget="many2one_avatar_user"/>
                 <field name="partner_id" optional="hide"/>
                 <field name="driver_id" widget="many2one_avatar_user"/>
-                <field name="comment"/>
-                <field name="km_open"/>
-                <field name="vehicle_description"/>
-                <field name="km_close"/>
+                <field name="comment" optional="hide"/>
+                <field name="km_open" optional="hide"/>
+                <field name="vehicle_description" optional="hide"/>
+                <field name="km_close" optional="hide"/>
                 <field name="inspection_date" optional="hide"/>
                 <field name="next_inspection_date" optional="hide"/>
                 <field name="state" widget="badge"
+                       decoration-danger="state == 'faulty'"
+                       decoration-warning="state == 'not_running'"
+                       decoration-info="state == 'resolved'"
                        decoration-success="state == 'done'"
-                       decoration-warning="state == 'draft'"/>
+                />
 
 
             </tree>
@@ -32,17 +35,57 @@
         <field name="model">vehicle.inspection</field>
         <field name="arch" type="xml">
             <form>
+                <field name="show_notify_button" invisible="1"/>
+                <field name="show_resolved_button" invisible="1"/>
                 <header>
-                    <button name="action_done"
-                            type="object"
-                            string="Mark Done"
-                            invisible="state != 'draft'"
-                    />
+
+
                     <button name="action_draft"
                             type="object"
-                            string="Mark Draft"
-                            invisible="state != 'done'"
+                            string="Draft"
+                            class="btn-dark"
+                            invisible="state == 'draft'"/>
+
+                    <button name="action_open_fault_wizard"
+                            type="object"
+                            string="Faulty"
+                            class="btn-danger"
+                            invisible="state != 'draft' or show_notify_button == False"
+
                     />
+
+                    <!--                    <button name="action_open_fault_wizard"-->
+                    <!--                            type="object"-->
+                    <!--                            string="Notify Manager"-->
+                    <!--                            class="btn-danger"-->
+                    <!--                            invisible="show_notify_button == False"/>-->
+
+                    <button name="action_open_not_running_wizard"
+                            type="object"
+                            string="Not Running"
+                            class="btn-warning"
+                            invisible="state != 'draft' or show_notify_button == False"/>
+
+                    <!--                            invisible="state not in ('draft','faulty')" />-->
+
+
+                    <button name="action_open_resolved_wizard"
+                            type="object"
+                            string="Resolved"
+                            class="btn-success"
+                            invisible="show_resolved_button == False or state in ('resolved','done')"/>
+
+                    <button name="action_open_resolved_not_running_wizard"
+                            type="object"
+                            string="Resolved"
+                            class="btn-success"
+                            invisible="state in ('draft','resolved','done') or show_resolved_button == True"/>
+
+                    <button name="action_done"
+                            type="object"
+                            string="Done"
+                            class="btn-primary"
+                            invisible="state != 'resolved'"/>
 
                     <button name="action_print_inspection_report"
                             type="object"
@@ -52,10 +95,18 @@
                     />
 
 
-                    <field name="state" widget="statusbar"/>
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft, faulty, not_running, resolved, done"/>
+
                 </header>
 
+
                 <sheet>
+                    <group>
+<!--                        <field name="vehicle_available"/>-->
+<!--                        <field name="is_vehicle_available"/>-->
+                    </group>
                     <div class="oe_title">
                         <h1>
                             <field name="name" readonly="state != 'draft'"/>
@@ -67,7 +118,7 @@
                             <field name="vehicle_id" widget="many2one_avatar_user" readonly="state != 'draft'"/>
                             <!--                            <field name="partner_id" readonly="state != 'draft'"/>-->
                             <field name="driver_id" string="Driver" widget="many2one_avatar_user"
-                                   readonly="state != 'draft'"/>
+                                   readonly="1"/>
                             <field name="inspection_date" readonly="state != 'draft'"/>
 
 
@@ -86,36 +137,123 @@
                         </group>
                     </group>
 
-                    <field name="require_photo" invisible="1"/>
                     <field name="used_item_ids" invisible="1"/>
 
                     <notebook>
+                        <!--                        <page string="Checklist">-->
+                        <!--                            <field name="line_ids" readonly="state != 'draft'">-->
+                        <!--                                <tree editable="bottom">-->
+                        <!--                                    <field name="category_id"/>-->
+                        <!--                                    <field name="item_id"-->
+                        <!--                                           domain="[('id', 'not in', parent.used_item_ids)]"/>-->
+                        <!--                                    <field name="result" widget="radio"-->
+                        <!--                                           options="{'horizontal': True}" string="Check"/>-->
+                        <!--                                    <field name="note"/>-->
+                        <!--                                    <field name="require_photo"/>-->
+
+                        <!--                                    &lt;!&ndash; 📷 PHOTO BUTTON &ndash;&gt;-->
+                        <!--                                    <button name="open_line_form"-->
+                        <!--                                            type="object"-->
+                        <!--                                            icon="fa-camera"-->
+                        <!--                                            string="Photos"-->
+                        <!--                                            invisible="require_photo == False"/>-->
+
+                        <!--                                </tree>-->
+
+                        <!--                                &lt;!&ndash;                                 <form ref="vehicle_inspection.view_inspection_line_photo_form"/>&ndash;&gt;-->
+                        <!--                                <form ref="vehicle_inspection.view_inspection_line_form"/>-->
+
+                        <!--                            </field>-->
+                        <!--                        </page>-->
+
+
                         <page string="Checklist">
-                            <field name="line_ids" readonly="state != 'draft'">
-                                <tree editable="bottom">
+
+                            <field name="line_ids"
+                                   readonly="state != 'draft'">
+
+                                <tree>
                                     <field name="category_id"/>
+
                                     <field name="item_id"
                                            domain="[('id', 'not in', parent.used_item_ids)]"/>
-                                    <field name="result" widget="radio"
-                                           options="{'horizontal': True}" string="Check"/>
-                                    <field name="note"/>
-                                    <field name="require_photo"/>
 
-                                    <!-- 📷 PHOTO BUTTON -->
-                                    <button name="open_line_form"
-                                            type="object"
-                                            icon="fa-camera"
-                                            string="Photos"
-                                            invisible="require_photo == False"/>
+                                    <field name="result"
+                                           widget="radio"
+                                           options="{'horizontal': True}"
+                                           string="Check"/>
+
+                                    <field name="note"/>
+
+                                    <field name="require_photo" invisible="result != 'fault'"/>
 
                                 </tree>
 
-                                <!--                                 <form ref="vehicle_inspection.view_inspection_line_photo_form"/>-->
-                                <form ref="vehicle_inspection.view_inspection_line_form"/>
+
+                                <form>
+
+                                    <sheet>
+
+
+                                        <group>
+                                            <group>
+                                                <field name="category_id" readonly="1"/>
+                                                <field name="item_id"/>
+                                                <field name="result"
+                                                       widget="radio"
+                                                       options="{'horizontal': True}"
+                                                       invisible="item_id == False"/>
+                                                <field name="result" invisible="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="note"/>
+                                                <field name="require_photo" invisible="result != 'fault'"/>
+                                            </group>
+                                            <!--                                            <group string="Photos"-->
+                                            <!--                                                   invisible="result != 'fault'">-->
+
+                                            <field name="photo_ids" invisible="result != 'fault'">
+
+                                                <tree editable="bottom">
+
+                                                    <field name="image"
+                                                           widget="image"/>
+
+                                                    <field name="name"/>
+
+
+                                                </tree>
+
+                                                <form>
+
+                                                    <sheet>
+
+                                                        <group>
+
+                                                            <field name="image" required="1"
+                                                                   widget="image"/>
+
+                                                            <field name="name" required="1"/>
+
+
+                                                        </group>
+
+                                                    </sheet>
+
+                                                </form>
+
+                                            </field>
+
+                                        </group>
+                                        <!--                                        </group>-->
+
+                                    </sheet>
+
+                                </form>
 
                             </field>
-                        </page>
 
+                        </page>
                         <page string="Photos">
                             <field name="image_ids" mode="kanban">
                                 <kanban>
@@ -143,45 +281,6 @@
                             </field>
                         </page>
 
-
-                        <!--                        <page string="Photos">-->
-                        <!--                            <field name="image_ids" mode="kanban" readonly="state == 'done'">-->
-                        <!--                                <kanban create="true" quick_create="false" class="o_kanban_large_column">-->
-                        <!--                                    <field name="image"/>-->
-                        <!--                                    <field name="name"/>-->
-
-                        <!--                                    <templates>-->
-                        <!--                                        <t t-name="kanban-box">-->
-                        <!--                                            <div class="oe_kanban_global_click o_kanban_card" style="padding: 6px;">-->
-                        <!--                                                &lt;!&ndash; Image block with fixed height &ndash;&gt;-->
-                        <!--                                                <div style="-->
-                        <!--                            height: 220px;-->
-                        <!--                            overflow: hidden;-->
-                        <!--                            display: flex;-->
-                        <!--                            align-items: center;-->
-                        <!--                            justify-content: center;-->
-                        <!--                        ">-->
-                        <!--                                                    <img t-att-src="kanban_image('vehicle.inspection.image', 'image', record.id.value)"-->
-                        <!--                                                         style="-->
-                        <!--                                     width: 100%;-->
-                        <!--                                     height: 100%;-->
-                        <!--                                     object-fit: cover;-->
-                        <!--                                 "/>-->
-                        <!--                                                </div>-->
-
-                        <!--                                                &lt;!&ndash; Caption / description &ndash;&gt;-->
-                        <!--                                                <div class="oe_kanban_details o_kanban_record_title"-->
-                        <!--                                                     style="margin-top: 4px;">-->
-                        <!--                                                    <strong>-->
-                        <!--                                                        <field name="name"/>-->
-                        <!--                                                    </strong>-->
-                        <!--                                                </div>-->
-                        <!--                                            </div>-->
-                        <!--                                        </t>-->
-                        <!--                                    </templates>-->
-                        <!--                                </kanban>-->
-                        <!--                            </field>-->
-                        <!--                        </page>-->
 
                         <page string="Signature">
                             <field name="signature" widget="signature" readonly="state != 'draft'"/>

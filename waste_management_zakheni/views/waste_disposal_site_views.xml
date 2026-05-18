@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <tree string="Disposal Sites">
                 <field name="name"/>
-                <field name="site_code"/>
+                <field name="waste_type"/>
                 <field name="location"/>
                 <field name="capacity_tons"/>
                 <field name="current_load"/>
@@ -23,11 +23,11 @@
             <form string="Disposal Site">
                 <sheet>
                     <h1>
-                        <field name="name"/>
+                        <field name="name" readonly="0"/>
                     </h1>
                     <group>
                         <group>
-                            <field name="site_code"/>
+                            <field name="site_code" />
                             <field name="location"/>
                             <field name="waste_type"/>
                             <field name="capacity_tons"/>

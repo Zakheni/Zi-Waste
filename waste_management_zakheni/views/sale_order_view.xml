@@ -8,8 +8,8 @@
             <field name="arch" type="xml">
                 <!-- Add Manifest column after Customer -->
                 <xpath expr="//field[@name='partner_id']" position="after">
-                    <field name="service_request_id" optional="hide"/>
-                    <field name="planned_date"/>
+                    <field name="service_request_id" optional="hide" required="1"/>
+                    <field name="planned_date" optional="hide"/>
                 </xpath>
             </field>
         </record>
@@ -22,7 +22,7 @@
         <field name="arch" type="xml">
             <!-- Place under Customer -->
             <xpath expr="//field[@name='sale_order_template_id']" position="after">
-                <field name="service_request_id" invisible="service_request_id == False"
+                <field name="service_request_id" invisible="state not in ('sale')"
                        context="{'default_service_request_id': active_id}" readonly="1"/>
                 <!--                <field name="planned_date"/>-->
                 <!--                <field name="pickup_point_id"/>-->

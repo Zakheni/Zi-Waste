@@ -5,6 +5,8 @@ class DisposalSite(models.Model):
     _name = 'waste.disposal.site'
     _description = 'Waste Disposal Site'
     _inherit = ['mail.thread', 'mail.activity.mixin']
+    # _rec_name = 'display_name_custom'
+
 
     name = fields.Char(
         string='Request ID',
@@ -28,6 +30,25 @@ class DisposalSite(models.Model):
         ('general_compactable', 'General Compactable'),
         ('none', 'None')
     ], string="Waste Type")
+
+    # display_name_custom = fields.Char(
+    #     string="Display Name",
+    #     compute="_compute_display_name_custom",
+    #     store=True
+    # )
+    #
+    # @api.depends('site_code', 'name', 'waste_type')
+    # def _compute_display_name_custom(self):
+    #
+    #     selection_dict = dict(self._fields['waste_type'].selection)
+    #
+    #     for rec in self:
+    #         waste_label = selection_dict.get(rec.waste_type, '')
+    #
+    #         base_name = rec.site_code or rec.name or ''
+    #
+    #         rec.display_name_custom = f"{base_name} [{waste_label}]"
+
 
     capacity_tons = fields.Float()
     current_load = fields.Float()

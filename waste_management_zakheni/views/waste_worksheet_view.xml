@@ -127,10 +127,10 @@
                                    readonly="state in ('draft','done')"/>
                             <field name="kilometers" required="state == 'in_progress'"
                                    readonly="state in ('draft','done')"/>
-                            <field name="unit_of_measure" required="state == 'in_progress'"
+                            <field name="unit_of_measure"
                                    readonly="state in ('draft','done')"/>
                             <field name="return_date" readonly="state in ('draft','done')"/>
-                            <field name="quantity_collected" required="state == 'in_progress'"/>
+                            <field name="quantity_collected"/>
                             <separator/>
                             <field name="driver_signature" widget="signature" required="state == 'in_progress'"
                                    readonly="state in ('draft','done')"/>

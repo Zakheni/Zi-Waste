@@ -35,7 +35,7 @@
                 <header>
 
                     <button string="Draft" type="object" name="action_draft" class="btn-primary"
-
+                            invisible="state == 'done'"
                             groups="waste_management_zakheni.group_wmz_admin"/>
 
                     <!-- NEW: Schedule -->
@@ -97,12 +97,12 @@
                     <!--                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"-->
 
                     <!--                    />-->
-                    <button name="action_push_extra_products_to_so"
-                            type="object"
-                            string="Update Sales Order"
-                            class="btn-primary"
-                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"
-                            invisible="sale_order_id == False or state not in ('scheduled','dispatched','cancelled','service_delivered') or extra_product_count == 0 or hide_tank == True"/>
+                    <!--                    <button name="action_push_extra_products_to_so"-->
+                    <!--                            type="object"-->
+                    <!--                            string="Update Sales Order"-->
+                    <!--                            class="btn-primary"-->
+                    <!--                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"-->
+                    <!--                            invisible="sale_order_id == False or state not in ('scheduled','dispatched','cancelled','service_delivered') or extra_product_count == 0 or hide_tank == True"/>-->
 
 
                     <field name="state" widget="statusbar"
@@ -133,14 +133,14 @@
                         <!--                                   string="Extra Products"/>-->
                         <!--                        </button>-->
 
-                        <button name="action_open_product_selector"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-shopping-cart"
-                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"
-                                invisible="state not in ('scheduled','dispatched','cancelled','service_delivered') or hide_tank == True">
-                            <field name="extra_product_count" widget="statinfo" string="Extra Products"/>
-                        </button>
+                        <!--                        <button name="action_open_product_selector"-->
+                        <!--                                type="object"-->
+                        <!--                                class="oe_stat_button"-->
+                        <!--                                icon="fa-shopping-cart"-->
+                        <!--                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"-->
+                        <!--                                invisible="state not in ('scheduled','dispatched','cancelled','service_delivered') or hide_tank == True">-->
+                        <!--                            <field name="extra_product_count" widget="statinfo" string="Extra Products"/>-->
+                        <!--                        </button>-->
 
                         <button name="action_open_bin_assignment_wizard"
                                 type="object"
@@ -289,11 +289,11 @@
                                                                            or hide_bin"
                             />
 
-<!--                            <field name="employee_email_id" widget="many2one_avatar_user" required="1"/>-->
-<!--                             <field name="admin_clerck_email" readonly="1"/>-->
+                            <!--                            <field name="employee_email_id" widget="many2one_avatar_user" required="1"/>-->
+                            <!--                             <field name="admin_clerck_email" readonly="1"/>-->
 
-<!--                            <field name="finance_employee_id" widget="many2one_avatar_user" required="1"/>-->
-<!--                             <field name="finance_email" readonly="1"/>-->
+                            <!--                            <field name="finance_employee_id" widget="many2one_avatar_user" required="1"/>-->
+                            <!--                             <field name="finance_email" readonly="1"/>-->
 
                             <separator string="DEBUG" invisible="1"/>
                             <field name="company_id" readonly="1" invisible="1"/>
@@ -335,6 +335,7 @@
                             <field name="hide_none_general" invisible="1"/>
                             <field name="hide_service_placement" invisible="1"/>
                             <field name="hide_disposal_site" invisible="1"/>
+                            <field name="allowed_disposal_site_ids" invisible="1"/>
                             <field name="qty_updated_from_worksheet" invisible="1"/>
 
 
@@ -436,7 +437,9 @@
                                              and state != 'cancelled'
                                              and state != 'generated'"/>
 
-                            <field name="disposal_site_id" string="Disposal Site"
+                            <field name="disposal_site_ids"
+                                   string="Disposal Site"
+                                   widget="many2many_tags"
                                    invisible="hide_droppoff_container_ids_placement
                                               or (not hide_droppoff_container_ids_collection
                                                   and not hide_lifted_bin_ids_swap
@@ -444,6 +447,17 @@
                                                   and not hide_droppoff_container_ids_removal)"
                                    readonly="state != 'draft' and state != 'cancelled'"
                             />
+
+
+<!--                            <field name="disposal_site_id" -->
+<!--                                   string="Disposal Site"-->
+<!--                                   invisible="hide_droppoff_container_ids_placement-->
+<!--                                              or (not hide_droppoff_container_ids_collection-->
+<!--                                                  and not hide_lifted_bin_ids_swap-->
+<!--                                                  and not hide_shunt_container_ids-->
+<!--                                                  and not hide_droppoff_container_ids_removal)"-->
+<!--                                   readonly="state != 'draft' and state != 'cancelled'"-->
+<!--                            />-->
 
 
                             <field name="quote_no" readonly="state != 'draft' and state != 'cancelled'"/>
@@ -457,6 +471,20 @@
                                    invisible="not hide_hazardous_fields"
                                    required="hide_hazardous_fields == True"
                                    readonly="state != 'draft' and state != 'cancelled'"/>
+
+                            <!--                            <field name="is_disposal_hazardous" invisible="1"/>-->
+
+                            <!--                            <group string="Hazardous Waste Information"-->
+                            <!--                                   invisible="not is_disposal_hazardous">-->
+
+                            <!--                                <field name="UN_No_SIN_No" invisible="not is_disposal_hazardous" />-->
+
+                            <!--                                <field name="waste_profile_Data_sheet_No" invisible="not is_disposal_hazardous"/>-->
+
+                            <!--                                <field name="DTNumber"-->
+                            <!--                                       required="is_disposal_hazardous" invisible="not is_disposal_hazardous"/>-->
+
+                            <!--&lt;!&ndash;                            </group>&ndash;&gt;-->
 
 
                             <separator/>
@@ -494,7 +522,7 @@
                                    readonly="state != 'draft' and state != 'cancelled' and state != 'generated'
                                              and state != 'cancelled'
                                              and state != 'generated'"
-                                   domain="[('id', 'not in', busy_track_ids or []), ('vehicle_type', '!=', 'trailer')]"/>
+                                   domain="[('id', 'not in', busy_track_ids or []), ('vehicle_type', '!=', 'trailer'), ('is_vehicle_available', '=', True)]"/>
                             <field name="trailer_id" widget="many2one_avatar_user"
                                    options="{'no_open': True}"
                                    readonly="state != 'draft' and state != 'cancelled' and state != 'generated'

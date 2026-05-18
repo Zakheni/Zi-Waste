@@ -283,6 +283,77 @@ class BatchPayment(models.Model):
             if not base or not key:
                 raise UserError(_("Bridge base URL or API key not configured."))
 
+            # -------------------------------------------------
+            # EXPORT INVOICES TO SAGE FIRST
+            # -------------------------------------------------
+            invoice_headers = {
+                "x-api-key": key,
+                "Content-Type": "application/json",
+            }
+
+            for ln in rec.line_ids:
+
+                invoice = ln.move_id
+
+                if not invoice:
+                    continue
+
+                # Skip if already exported
+                if invoice.x_pastel_doc_no:
+                    continue
+
+                invoice_payload = {
+                    "doc_no": str(invoice.id),
+                    "invoice_date": str(invoice.invoice_date or rec.payment_date),
+                    "delivery_date": str(invoice.invoice_date_due or invoice.invoice_date or rec.payment_date),
+
+                    "customer_code":
+                        (getattr(invoice.partner_id, "x_pastel_code", "") or "")
+                        or (invoice.partner_id.ref or "")
+                        or str(invoice.partner_id.id),
+
+                    "payment_reference":
+                        invoice.payment_reference or invoice.name,
+
+                    "currency":
+                        invoice.currency_id.name or "ZAR",
+
+                    "document_type": 3,
+
+                    "lines": []
+                }
+
+                for il in invoice.invoice_line_ids:
+                    invoice_payload["lines"].append({
+                        "product_code":
+                            (getattr(il.product_id, "x_pastel_code", "") or "")
+                            or str(il.product_id.id),
+
+                        "name": il.name,
+                        "quantity": float(il.quantity),
+                        "price_unit": float(il.price_unit),
+                        "tax_code": "1",
+                    })
+
+                _logger.info(
+                    "Exporting invoice to Sage:\n%s",
+                    json.dumps(invoice_payload, indent=2)
+                )
+
+                invoice_url = base.rstrip("/") + "/invoices"
+
+                inv_response = requests.post(
+                    invoice_url,
+                    json=invoice_payload,
+                    headers=invoice_headers,
+                    timeout=60
+                )
+
+                inv_response.raise_for_status()
+
+                # save returned doc number
+                invoice.x_pastel_doc_no = str(invoice.id)
+
             lines = []
             for ln in rec.line_ids:
                 partner = ln.partner_id

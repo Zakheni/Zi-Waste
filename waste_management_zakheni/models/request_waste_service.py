@@ -83,9 +83,12 @@ class WasteServiceRequest(models.Model):
     UN_No_SIN_No = fields.Char(string='UN No/SIN No')
     waste_profile_Data_sheet_No = fields.Char(string='Waste Profile/Data sheet No')
     DTNumber = fields.Char(string='DTNumber')
-    disposal_site_id = fields.Many2one('waste.disposal.site', string="Disposal Side")
+    # disposal_site_id = fields.Many2one('waste.disposal.site', string="Disposal Side")
 
-    vehicle_id = fields.Many2one("fleet.vehicle", string="Vehicle Registration Number")
+    vehicle_id = fields.Many2one(
+        "fleet.vehicle",
+        string="Vehicle Registration Number",
+    )
     employee_id = fields.Many2one('hr.employee', string="Employee")
     driver_id = fields.Many2one(string="Driver", related="vehicle_id.driver_id", store=True)
     assistance_id = fields.Many2one(string="Driver Assistance", related="vehicle_id.future_driver_id")
@@ -147,6 +150,201 @@ class WasteServiceRequest(models.Model):
 
     finance_employee_id = fields.Many2one('hr.employee', string="Mailto")
     finance_email = fields.Char(related="finance_employee_id.work_email")
+
+    disposal_site_id = fields.Many2one(
+        'waste.disposal.site',
+        string="Disposal Site",
+        domain="[('id', 'in', allowed_disposal_site_ids)]"
+    )
+
+    # disposal_site_id = fields.Many2one(
+    #     'waste.disposal.site',
+    #     string="Disposal Site",
+    #     domain="[('id', 'in', allowed_disposal_site_ids)]"
+    # )
+
+    disposal_site_ids = fields.Many2many(
+        'waste.disposal.site',
+        'waste_request_disposal_site_rel',
+        'request_id',
+        'disposal_site_id',
+        string="Disposal Sites",
+        domain="[('id', 'in', allowed_disposal_site_ids)]"
+    )
+
+    allowed_disposal_site_ids = fields.Many2many(
+        'waste.disposal.site',
+        compute='_compute_allowed_disposal_sites',
+        string="Allowed Disposal Sites",
+        store=False
+    )
+
+
+    # @api.depends('waste_type_id')
+    # def _compute_allowed_disposal_sites(self):
+    #
+    #     DisposalSite = self.env['waste.disposal.site']
+    #
+    #     for rec in self:
+    #
+    #         if not rec.waste_type_id:
+    #             rec.allowed_disposal_site_ids = DisposalSite.search([])
+    #             continue
+    #
+    #         waste_name = (rec.waste_type_id.name or '').strip().lower()
+    #
+    #         # Hazardous
+    #         if waste_name == 'hazardous':
+    #
+    #             sites = DisposalSite.search([
+    #                 ('waste_type', '=', 'hazardous')
+    #             ])
+    #
+    #         # General Compactable
+    #         elif waste_name == 'general compactable':
+    #
+    #             sites = DisposalSite.search([
+    #                 ('waste_type', '=', 'general_compactable')
+    #             ])
+    #
+    #         # General Non-Compactable
+    #         elif waste_name == 'general non-compactable':
+    #
+    #             sites = DisposalSite.search([
+    #                 ('waste_type', '=', 'general_non-compactable')
+    #             ])
+    #
+    #         else:
+    #             sites = DisposalSite.search([])
+    #
+    #         rec.allowed_disposal_site_ids = sites
+    #
+    #
+    # @api.onchange('waste_type_id')
+    # def _onchange_waste_type_id_disposal_site(self):
+    #
+    #     self.disposal_site_id = False
+    #
+    #     if not self.waste_type_id:
+    #         return
+    #
+    #     waste_name = (self.waste_type_id.name or '').strip().lower()
+    #
+    #     allowed_type = False
+    #
+    #     if waste_name == 'hazardous':
+    #         allowed_type = 'hazardous'
+    #
+    #     elif waste_name == 'general compactable':
+    #         allowed_type = 'general_compactable'
+    #
+    #     elif waste_name == 'general non-compactable':
+    #         allowed_type = 'general_non-compactable'
+    #
+    #     if (
+    #             self.disposal_site_id
+    #             and self.disposal_site_id.waste_type != allowed_type
+    #     ):
+    #         self.disposal_site_id = False
+
+    @api.depends('waste_type_id')
+    def _compute_allowed_disposal_sites(self):
+
+        DisposalSite = self.env['waste.disposal.site']
+
+        for rec in self:
+
+            if not rec.waste_type_id:
+                rec.allowed_disposal_site_ids = DisposalSite.search([])
+                continue
+
+            waste_name = (rec.waste_type_id.name or '').strip().lower()
+
+            # Hazardous
+            if waste_name == 'hazardous':
+
+                sites = DisposalSite.search([
+                    '|',
+                    ('waste_type', '=', 'hazardous'),
+                    ('waste_type', '=', False)
+                ])
+
+            # General Compactable
+            elif waste_name == 'general compactable':
+
+                sites = DisposalSite.search([
+                    '|',
+                    ('waste_type', '=', 'general_compactable'),
+                    ('waste_type', '=', False)
+                ])
+
+            # General Non-Compactable
+            elif waste_name == 'general non-compactable':
+
+                sites = DisposalSite.search([
+                    '|',
+                    ('waste_type', '=', 'general_non-compactable'),
+                    ('waste_type', '=', False)
+                ])
+
+            else:
+                sites = DisposalSite.search([])
+
+            rec.allowed_disposal_site_ids = sites
+
+    # @api.onchange('waste_type_id')
+    # def _onchange_waste_type_id_disposal_site(self):
+    #
+    #     if not self.disposal_site_id:
+    #         return
+    #
+    #     waste_name = (self.waste_type_id.name or '').strip().lower()
+    #
+    #     allowed_type = False
+    #
+    #     if waste_name == 'hazardous':
+    #         allowed_type = 'hazardous'
+    #
+    #     elif waste_name == 'general compactable':
+    #         allowed_type = 'general_compactable'
+    #
+    #     elif waste_name == 'general non-compactable':
+    #         allowed_type = 'general_non-compactable'
+    #
+    #     # Allow empty disposal site waste type everywhere
+    #     if self.disposal_site_id.waste_type in (False, allowed_type):
+    #         return
+    #
+    #     self.disposal_site_id = False
+
+        @api.onchange('waste_type_id')
+        def _onchange_waste_type_id_disposal_site(self):
+
+            if not self.disposal_site_ids:
+                return
+
+            waste_name = (self.waste_type_id.name or '').strip().lower()
+
+            allowed_type = False
+
+            if waste_name == 'hazardous':
+                allowed_type = 'hazardous'
+
+            elif waste_name == 'general compactable':
+                allowed_type = 'general_compactable'
+
+            elif waste_name == 'general non-compactable':
+                allowed_type = 'general_non-compactable'
+
+            allowed_sites = self.disposal_site_ids.filtered(
+                lambda s:
+                not s.waste_type
+                or s.waste_type == allowed_type
+            )
+
+            self.disposal_site_ids = allowed_sites
+
+
 
     @api.model
     def _get_busy_drivers_at_date(self, at_datetime):
@@ -2009,20 +2207,20 @@ class WasteServiceRequest(models.Model):
         for rec in self:
             rec.extra_product_count = len(rec.extra_product_line_ids)
 
-    def action_open_product_selector(self):
-        """Smart button → fancy product grid (kanban)"""
-        self.ensure_one()
-        action = self.env.ref(
-            'waste_management_zakheni.action_waste_request_product_selector'
-        ).sudo().read()[0]
-
-        ctx = dict(self.env.context)
-        ctx.update({
-            'waste_request_id': self.id,
-            'search_default_sale_ok': 1,  # only storable/service for sale
-        })
-        action['context'] = ctx
-        return action
+    # def action_open_product_selector(self):
+    #     """Smart button → fancy product grid (kanban)"""
+    #     self.ensure_one()
+    #     action = self.env.ref(
+    #         'waste_management_zakheni.action_waste_request_product_selector'
+    #     ).sudo().read()[0]
+    #
+    #     ctx = dict(self.env.context)
+    #     ctx.update({
+    #         'waste_request_id': self.id,
+    #         'search_default_sale_ok': 1,  # only storable/service for sale
+    #     })
+    #     action['context'] = ctx
+    #     return action
 
     def action_push_extra_products_to_so(self):
         """Create / update sale.order.line from extra products.

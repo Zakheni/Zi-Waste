@@ -98,6 +98,7 @@ class FleetVehicle(models.Model):
         store=False,
     )
 
+
     @api.depends('driver_id')
     def _compute_busy_driver_ids(self):
         WSR = self.env['waste.service.request']

@@ -16,20 +16,24 @@
         'security/ir.model.access.csv',
         'data/sequence.xml',
         'data/inspection_cron.xml',
+        'data/mail_template_not_running.xml',
+        'data/mail_template_fault.xml',
+        'data/mail_template_resolved.xml',
+        'data/mail_template_resolved_not_running.xml',
 
         # reports
         'report/inspection_report.xml',
         'report/inspection_report_template.xml',
 
-        # # DASHBOARD FIRST (creates board.board record + action)
-
-        # 'views/vehicle_inspection_dashboard_action.xml',
-
-        # normal views
         'views/inspection_line_views.xml',
         'views/inspection_category_views.xml',
         'views/inspection_item_views.xml',
         'views/vehicle_inspection_views.xml',
+        'views/vehicle_fault_wizard_views.xml',
+        'views/vehicle_not_running_wizard_views.xml',
+        'views/vehicle_resolved_wizard_views.xml',
+        'views/vehicle_resolved_not_running_wizard_views.xml',
+        'views/fleet_vehicle_views.xml',
 
         # MENU MUST BE LAST
         'views/menu.xml',

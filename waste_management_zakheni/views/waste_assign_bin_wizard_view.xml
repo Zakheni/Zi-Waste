@@ -31,7 +31,7 @@
                     </group>
 
                     <field name="line_ids">
-                        <tree editable="bottom" create="1" edit="1" >
+                        <tree editable="bottom" create="1" edit="1" delete="1" >
 
                             <!-- Pickup Point
                                  Show for everything except 'placement of bins'

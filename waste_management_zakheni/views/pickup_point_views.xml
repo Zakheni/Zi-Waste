@@ -134,7 +134,7 @@
                 <sheet>
                     <group>
                         <field name="name"/>
-                        <field name="partner_id"/>
+                        <field name="partner_id" />
                     </group>
                     <group string="Waste Containers">
                         <!--                        <field name="container_ids" widget="many2many_tags" context="{'default_pickup_point_id': active_id}" domain="[('pickup_point_id', '=', False), ('pickup_point_id', '=', id)]" />-->

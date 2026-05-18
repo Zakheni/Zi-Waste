@@ -9,6 +9,8 @@ from fastapi import FastAPI, Header, HTTPException, Request, Query, Body, Path
 from pydantic import BaseModel
 from dotenv import load_dotenv, find_dotenv
 
+from apscheduler.schedulers.background import BackgroundScheduler
+
 # ----------------------------------------------------------------------
 # Environment
 # ----------------------------------------------------------------------
@@ -20,6 +22,7 @@ DEFAULT_CURRENCY = os.getenv("BRIDGE_DEFAULT_CURRENCY", "ZAR")
 
 app = FastAPI(title="Pastel Partner Bridge (Customers, Products, Suppliers, Invoices via doc_no)")
 
+
 # ----------------------------------------------------------------------
 # DB / Security helpers
 # ----------------------------------------------------------------------
@@ -28,12 +31,14 @@ def get_conn():
         raise HTTPException(status_code=500, detail="ODBC_DSN missing from environment")
     return pyodbc.connect(f"DSN={DSN};", autocommit=True)
 
+
 def require_key(header_key: Optional[str], query_key: Optional[str]):
     provided = header_key or query_key
     if not API_KEY:
         raise HTTPException(status_code=500, detail="API_KEY missing from environment")
     if not provided or provided != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
+
 
 # ----------------------------------------------------------------------
 # Generic helpers
@@ -51,6 +56,7 @@ def _to_float(x):
     except Exception:
         return None
 
+
 def _to_date_str(d):
     if not d:
         return None
@@ -66,6 +72,7 @@ def _to_date_str(d):
     except Exception:
         return None
 
+
 def _norm_text(v):
     if v is None:
         return None
@@ -73,6 +80,7 @@ def _norm_text(v):
         return None
     s = str(v).strip()
     return s or None
+
 
 def _to_bool(v):
     if v is None:
@@ -96,8 +104,10 @@ def _to_bool(v):
     except Exception:
         return False
 
+
 def _qident(name: str) -> str:
     return name
+
 
 def _pick_table(cur, candidates: List[str]) -> Optional[str]:
     tables = [t.table_name for t in cur.tables(tableType="TABLE").fetchall()]
@@ -111,6 +121,7 @@ def _pick_table(cur, candidates: List[str]) -> Optional[str]:
                 return t
     return None
 
+
 def _pick_col_from(cur, table: str, candidates: List[str]) -> Optional[str]:
     cols = [r.column_name for r in cur.columns(table=table)]
     for want in candidates:
@@ -123,11 +134,14 @@ def _pick_col_from(cur, table: str, candidates: List[str]) -> Optional[str]:
                 return c
     return None
 
+
 def _cast_char50(expr: str) -> str:
     return f"CAST({expr} AS CHAR(50))"
 
+
 def _norm_doc_no(v: str) -> str:
     return (str(v or "")).strip().upper()
+
 
 def _exists_doc(cur, hdr_tbl, doc_no_col, doc_type_col, doc_no: str, doc_type: int) -> bool:
     cur.execute(
@@ -136,6 +150,7 @@ def _exists_doc(cur, hdr_tbl, doc_no_col, doc_type_col, doc_no: str, doc_type: i
     )
     return cur.fetchone() is not None
 
+
 def _find_invoice_doc_type(cur, hdr_tbl, doc_no_col, doc_type_col, doc_no) -> Optional[int]:
     cur.execute(
         f"SELECT TOP 1 {doc_type_col} FROM {hdr_tbl} WHERE UPPER(RTRIM({doc_no_col}))=UPPER(?)",
@@ -143,7 +158,7 @@ def _find_invoice_doc_type(cur, hdr_tbl, doc_no_col, doc_type_col, doc_no) -> Op
     )
     row = cur.fetchone()
     return int(row[0]) if row and row[0] is not None else None
-    
+
 
 # ----------------------------------------------------------------------
 # Pydantic models
@@ -175,6 +190,7 @@ class CustomerOut(BaseModel):
     create_date: Optional[str] = None
     guid: Optional[str] = None
 
+
 class ProductOut(BaseModel):
     code: str
     name: Optional[str] = None
@@ -197,6 +213,7 @@ class ProductOut(BaseModel):
     updated_on: Optional[str] = None
     guid: Optional[str] = None
 
+
 class SupplierOut(BaseModel):
     code: str
     name: Optional[str] = None
@@ -212,12 +229,14 @@ class SupplierOut(BaseModel):
     updated_on: Optional[str] = None
     guid: Optional[str] = None
 
+
 class InvoiceLineOut(BaseModel):
     product_code: Optional[str] = None
     name: Optional[str] = None
     quantity: float = 0.0
     price_unit: float = 0.0
     tax_code: Optional[str] = None
+
 
 class InvoiceOut(BaseModel):
     doc_no: str
@@ -233,6 +252,7 @@ class InvoiceOut(BaseModel):
     currency_code: Optional[str] = None
     lines: List[InvoiceLineOut] = []
 
+
 # ----------------------------------------------------------------------
 # Basic endpoints & debug
 # ----------------------------------------------------------------------
@@ -241,6 +261,7 @@ def health():
     with get_conn() as cn:
         cn.cursor().execute("SELECT 1")
     return {"ok": True}
+
 
 @app.get("/debug/key")
 def debug_key(req: Request):
@@ -252,15 +273,16 @@ def debug_key(req: Request):
         "sent_api_key_len": len(sent),
     }
 
+
 # ----------------------------------------------------------------------
 # CUSTOMERS
 # ----------------------------------------------------------------------
 @app.get("/customers", response_model=List[CustomerOut])
 def list_customers(
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None,
-    limit: int = Query(500, ge=1, le=5000),
-    q: Optional[str] = Query(None, description="search code/name contains"),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None,
+        limit: int = Query(500, ge=1, le=5000),
+        q: Optional[str] = Query(None, description="search code/name contains"),
 ):
     require_key(x_api_key, key)
     out: List[CustomerOut] = []
@@ -277,37 +299,55 @@ def list_customers(
         addr4 = _pick_col_from(cur, cust_tbl, ["PostAddress04", "Address4"])
         pcode = _pick_col_from(cur, cust_tbl, ["PostAddress05", "PostalCode"])
         phone = _pick_col_from(cur, cust_tbl, ["Telephone", "Phone"])
-        fax   = _pick_col_from(cur, cust_tbl, ["Fax"])
+        fax = _pick_col_from(cur, cust_tbl, ["Fax"])
         email = _pick_col_from(cur, cust_tbl, ["EMail", "Email"])
         contact = _pick_col_from(cur, cust_tbl, ["Contact"])
-        tax    = _pick_col_from(cur, cust_tbl, ["TaxCode", "TaxType"])
-        crlim  = _pick_col_from(cur, cust_tbl, ["CreditLimit"])
-        bal    = _pick_col_from(cur, cust_tbl, ["CurrBalanceThis01", "Balance", "CurrentBalance"])
+        tax = _pick_col_from(cur, cust_tbl, ["TaxCode", "TaxType"])
+        crlim = _pick_col_from(cur, cust_tbl, ["CreditLimit"])
+        bal = _pick_col_from(cur, cust_tbl, ["CurrBalanceThis01", "Balance", "CurrentBalance"])
         settle = _pick_col_from(cur, cust_tbl, ["SettlementTerms"])
-        payt   = _pick_col_from(cur, cust_tbl, ["PaymentTerms"])
-        disc   = _pick_col_from(cur, cust_tbl, ["Discount"])
-        ctry   = _pick_col_from(cur, cust_tbl, ["CountryCode"])
-        curr   = _pick_col_from(cur, cust_tbl, ["CurrencyCode"])
-        intr   = _pick_col_from(cur, cust_tbl, ["InterestAfter"])
+        payt = _pick_col_from(cur, cust_tbl, ["PaymentTerms"])
+        disc = _pick_col_from(cur, cust_tbl, ["Discount"])
+        ctry = _pick_col_from(cur, cust_tbl, ["CountryCode"])
+        curr = _pick_col_from(cur, cust_tbl, ["CurrencyCode"])
+        intr = _pick_col_from(cur, cust_tbl, ["InterestAfter"])
         price_regime = _pick_col_from(cur, cust_tbl, ["PriceRegime"])
         blocked = _pick_col_from(cur, cust_tbl, ["Blocked", "IsActive"])
-        upd    = _pick_col_from(cur, cust_tbl, ["UpdatedOn", "UpdateDate"])
-        created= _pick_col_from(cur, cust_tbl, ["CreateDate"])
-        guid   = _pick_col_from(cur, cust_tbl, ["GUID"])
+        upd = _pick_col_from(cur, cust_tbl, ["UpdatedOn", "UpdateDate"])
+        created = _pick_col_from(cur, cust_tbl, ["CreateDate"])
+        guid = _pick_col_from(cur, cust_tbl, ["GUID"])
 
         if not code_col or not name_col:
             raise HTTPException(status_code=500, detail="Required columns not found on customer table")
 
         sel = [f"{code_col} AS code", f"{name_col} AS name"]
+
         def add(col, alias):
             if col: sel.append(f"{col} AS {alias}")
-        add(addr1,"address1"); add(addr2,"address2"); add(addr3,"address3"); add(addr4,"address4")
-        add(pcode,"postal_code"); add(phone,"phone"); add(fax,"fax"); add(email,"email")
-        add(contact,"contact_person"); add(tax,"tax_code"); add(crlim,"credit_limit"); add(bal,"balance")
-        add(settle,"settlement_terms"); add(payt,"payment_terms"); add(disc,"discount_percent")
-        add(ctry,"country_code"); add(curr,"currency_code"); add(intr,"interest_after_days")
-        add(price_regime,"price_regime"); add(blocked,"blocked"); add(upd,"updated_on")
-        add(created,"create_date"); add(guid,"guid")
+
+        add(addr1, "address1");
+        add(addr2, "address2");
+        add(addr3, "address3");
+        add(addr4, "address4")
+        add(pcode, "postal_code");
+        add(phone, "phone");
+        add(fax, "fax");
+        add(email, "email")
+        add(contact, "contact_person");
+        add(tax, "tax_code");
+        add(crlim, "credit_limit");
+        add(bal, "balance")
+        add(settle, "settlement_terms");
+        add(payt, "payment_terms");
+        add(disc, "discount_percent")
+        add(ctry, "country_code");
+        add(curr, "currency_code");
+        add(intr, "interest_after_days")
+        add(price_regime, "price_regime");
+        add(blocked, "blocked");
+        add(upd, "updated_on")
+        add(created, "create_date");
+        add(guid, "guid")
 
         where, params = [], []
         if q:
@@ -345,7 +385,8 @@ def list_customers(
                 discount_percent=_to_float(d.get("discount_percent")),
                 country_code=_norm_text(d.get("country_code")),
                 currency_code=_norm_text(d.get("currency_code")),
-                interest_after_days=int(_to_float(d.get("interest_after_days")) or 0) if d.get("interest_after_days") is not None else None,
+                interest_after_days=int(_to_float(d.get("interest_after_days")) or 0) if d.get(
+                    "interest_after_days") is not None else None,
                 price_regime=_norm_text(d.get("price_regime")),
                 blocked=_to_bool(d.get("blocked")),
                 updated_on=_norm_text(d.get("updated_on")),
@@ -354,12 +395,13 @@ def list_customers(
             ))
     return out
 
+
 @app.put("/customers/{code}")
 def upsert_customer(
-    code: str,
-    payload: dict = Body(...),
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None
+        code: str,
+        payload: dict = Body(...),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None
 ):
     require_key(x_api_key, key)
     with get_conn() as cn:
@@ -369,16 +411,16 @@ def upsert_customer(
             raise HTTPException(status_code=500, detail="Customer table not found")
         code_col = _pick_col_from(cur, cust_tbl, ["CustomerCode", "Code", "Account"])
         name_col = _pick_col_from(cur, cust_tbl, ["CustomerDesc", "Description", "Name"])
-        tax_col  = _pick_col_from(cur, cust_tbl, ["TaxCode", "TaxType"])
+        tax_col = _pick_col_from(cur, cust_tbl, ["TaxCode", "TaxType"])
         curr_col = _pick_col_from(cur, cust_tbl, ["CurrencyCode"])
-        crlim_col= _pick_col_from(cur, cust_tbl, ["CreditLimit"])
+        crlim_col = _pick_col_from(cur, cust_tbl, ["CreditLimit"])
         if not (code_col and name_col):
             raise HTTPException(status_code=500, detail="Customer code/name columns missing")
 
         name = payload.get("name") or code
-        tax  = payload.get("tax_code")
+        tax = payload.get("tax_code")
         curr = payload.get("currency_code")
-        crlim= payload.get("credit_limit") or 0
+        crlim = payload.get("credit_limit") or 0
 
         cur.execute(f"SELECT 1 FROM {cust_tbl} WHERE UPPER(RTRIM({code_col}))=UPPER(?)", code.strip())
         exists = cur.fetchone() is not None
@@ -395,19 +437,20 @@ def upsert_customer(
             if crlim_col: cols.append(crlim_col); vals.append(crlim)
             if tax_col:   cols.append(tax_col);   vals.append(tax)
             if curr_col:  cols.append(curr_col);  vals.append(curr)
-            qmarks = ",".join(["?"]*len(vals))
+            qmarks = ",".join(["?"] * len(vals))
             cur.execute(f"INSERT INTO {cust_tbl} ({', '.join(cols)}) VALUES ({qmarks})", *vals)
         return {"ok": True, "code": code, "updated": bool(exists)}
+
 
 # ----------------------------------------------------------------------
 # PRODUCTS
 # ----------------------------------------------------------------------
 @app.get("/products", response_model=List[ProductOut])
 def list_products(
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None,
-    limit: int = Query(500, ge=1, le=5000),
-    q: Optional[str] = Query(None, description="search code/name contains"),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None,
+        limit: int = Query(500, ge=1, le=5000),
+        q: Optional[str] = Query(None, description="search code/name contains"),
 ):
     require_key(x_api_key, key)
     out: List[ProductOut] = []
@@ -418,29 +461,38 @@ def list_products(
             raise HTTPException(status_code=500, detail="Inventory table not found")
         code_col = _pick_col_from(cur, inv_tbl, ["ItemCode", "Code"])
         name_col = _pick_col_from(cur, inv_tbl, ["Description", "Name"])
-        cat_col  = _pick_col_from(cur, inv_tbl, ["Category"])
-        bc_col   = _pick_col_from(cur, inv_tbl, ["Barcode"])
+        cat_col = _pick_col_from(cur, inv_tbl, ["Category"])
+        bc_col = _pick_col_from(cur, inv_tbl, ["Barcode"])
         unit_col = _pick_col_from(cur, inv_tbl, ["UnitSize", "UOM"])
-        tax_col  = _pick_col_from(cur, inv_tbl, ["SalesTaxType", "TaxType"])
-        gl_col   = _pick_col_from(cur, inv_tbl, ["GLCode"])
-        allow_col= _pick_col_from(cur, inv_tbl, ["AllowTax"])
-        wt_col   = _pick_col_from(cur, inv_tbl, ["NettMass", "Weight"])
-        custom1  = _pick_col_from(cur, inv_tbl, ["UserDefText01"])
-        upd_col  = _pick_col_from(cur, inv_tbl, ["UpdatedOn", "UpdateDate"])
+        tax_col = _pick_col_from(cur, inv_tbl, ["SalesTaxType", "TaxType"])
+        gl_col = _pick_col_from(cur, inv_tbl, ["GLCode"])
+        allow_col = _pick_col_from(cur, inv_tbl, ["AllowTax"])
+        wt_col = _pick_col_from(cur, inv_tbl, ["NettMass", "Weight"])
+        custom1 = _pick_col_from(cur, inv_tbl, ["UserDefText01"])
+        upd_col = _pick_col_from(cur, inv_tbl, ["UpdatedOn", "UpdateDate"])
         guid_col = _pick_col_from(cur, inv_tbl, ["GUID"])
         if not (code_col and name_col):
             raise HTTPException(status_code=500, detail="Required columns not found on inventory table")
 
         sel = [f"{code_col} AS code", f"{name_col} AS name"]
+
         def add(c, a):
             if c: sel.append(f"{c} AS {a}")
-        add(cat_col,"category"); add(bc_col,"barcode"); add(unit_col,"unit_size")
-        add(tax_col,"tax_code"); add(gl_col,"gl_code"); add(allow_col,"allow_tax")
-        add(wt_col,"weight"); add(custom1,"custom_text1"); add(upd_col,"updated_on"); add(guid_col,"guid")
+
+        add(cat_col, "category");
+        add(bc_col, "barcode");
+        add(unit_col, "unit_size")
+        add(tax_col, "tax_code");
+        add(gl_col, "gl_code");
+        add(allow_col, "allow_tax")
+        add(wt_col, "weight");
+        add(custom1, "custom_text1");
+        add(upd_col, "updated_on");
+        add(guid_col, "guid")
 
         where, params = [], []
         if q:
-            like=f"%{q}%"
+            like = f"%{q}%"
             where.append(f"(UPPER({code_col}) LIKE UPPER(?) OR UPPER({name_col}) LIKE UPPER(?))")
             params += [like, like]
 
@@ -470,12 +522,13 @@ def list_products(
             ))
     return out
 
+
 @app.put("/products/{code}")
 def upsert_product(
-    code: str,
-    payload: dict = Body(...),
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None
+        code: str,
+        payload: dict = Body(...),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None
 ):
     require_key(x_api_key, key)
     with get_conn() as cn:
@@ -485,12 +538,12 @@ def upsert_product(
             raise HTTPException(status_code=500, detail="Inventory table not found")
         code_col = _pick_col_from(cur, inv_tbl, ["ItemCode", "Code"])
         name_col = _pick_col_from(cur, inv_tbl, ["Description", "Name"])
-        tax_col  = _pick_col_from(cur, inv_tbl, ["SalesTaxType", "TaxType"])
+        tax_col = _pick_col_from(cur, inv_tbl, ["SalesTaxType", "TaxType"])
         if not (code_col and name_col):
             raise HTTPException(status_code=500, detail="Inventory code/name columns missing")
 
         name = payload.get("name") or code
-        tax  = payload.get("tax_code")
+        tax = payload.get("tax_code")
 
         cur.execute(f"SELECT 1 FROM {inv_tbl} WHERE UPPER(RTRIM({code_col}))=UPPER(?)", code.strip())
         exists = cur.fetchone() is not None
@@ -505,20 +558,22 @@ def upsert_product(
             cols = [code_col, name_col]
             vals = [code.strip(), name]
             if tax_col:
-                cols.append(tax_col); vals.append(tax)
-            qmarks = ",".join(["?"]*len(vals))
+                cols.append(tax_col);
+                vals.append(tax)
+            qmarks = ",".join(["?"] * len(vals))
             cur.execute(f"INSERT INTO {inv_tbl} ({', '.join(cols)}) VALUES ({qmarks})", *vals)
         return {"ok": True, "code": code, "updated": bool(exists)}
+
 
 # ----------------------------------------------------------------------
 # SUPPLIERS (read-only)
 # ----------------------------------------------------------------------
 @app.get("/suppliers", response_model=List[SupplierOut])
 def list_suppliers(
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None,
-    limit: int = Query(500, ge=1, le=5000),
-    q: Optional[str] = Query(None, description="search code/name contains"),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None,
+        limit: int = Query(500, ge=1, le=5000),
+        q: Optional[str] = Query(None, description="search code/name contains"),
 ):
     require_key(x_api_key, key)
     out: List[SupplierOut] = []
@@ -544,16 +599,25 @@ def list_suppliers(
             raise HTTPException(status_code=500, detail="Supplier code/name columns missing")
 
         sel = [f"{code_col} AS code", f"{name_col} AS name"]
+
         def add(c, a):
             if c: sel.append(f"{c} AS {a}")
-        add(phone_col,"phone"); add(email_col,"email"); add(credit_limit_col,"credit_limit")
-        add(balance_col,"balance"); add(tax_code_col,"tax_code"); add(country_col,"country_code")
-        add(currency_col,"currency_code"); add(pay_terms_col,"payment_terms")
-        add(settle_terms_col,"settlement_terms"); add(updated_on_col,"updated_on"); add(guid_col,"guid")
+
+        add(phone_col, "phone");
+        add(email_col, "email");
+        add(credit_limit_col, "credit_limit")
+        add(balance_col, "balance");
+        add(tax_code_col, "tax_code");
+        add(country_col, "country_code")
+        add(currency_col, "currency_code");
+        add(pay_terms_col, "payment_terms")
+        add(settle_terms_col, "settlement_terms");
+        add(updated_on_col, "updated_on");
+        add(guid_col, "guid")
 
         where, params = [], []
         if q:
-            like=f"%{q}%"
+            like = f"%{q}%"
             where.append(f"(UPPER({code_col}) LIKE UPPER(?) OR UPPER({name_col}) LIKE UPPER(?))")
             params += [like, like]
 
@@ -583,6 +647,9 @@ def list_suppliers(
                 guid=_norm_text(d.get("guid")),
             ))
     return out
+
+
+
 
 # ----------------------------------------------------------------------
 # INVOICES
@@ -616,22 +683,25 @@ def _coalesce_lines_server(raw_lines):
         out.append(v)
     return out
 
+
 def _insert_header_and_lines(
-    cur,
-    hdr_tbl, ln_tbl,
-    doc_no_col, doc_date_col, cust_code_col, doc_type_col,
-    total_col, total_tax_col, excl_incl_col,
-    pay_ref_col, pay_terms_col, deliv_date_col, curr_code_col,
-    ln_doc_no_col, ln_doc_type_col, ln_item_col, ln_desc_col, ln_qty_col, ln_price_col, ln_tax_col,
-    *,
-    doc_no, inv_date, customer, doc_type, pay_ref, pay_terms, deliv_dt, curr_code,
-    lines
+        cur,
+        hdr_tbl, ln_tbl,
+        doc_no_col, doc_date_col, cust_code_col, doc_type_col,
+        total_col, total_tax_col, excl_incl_col,
+        pay_ref_col, pay_terms_col, deliv_date_col, curr_code_col,
+        ln_doc_no_col, ln_doc_type_col, ln_item_col, ln_desc_col, ln_qty_col, ln_price_col, ln_tax_col,
+        *,
+        doc_no, inv_date, customer, doc_type, pay_ref, pay_terms, deliv_dt, curr_code,
+        lines
 ):
     # header
     h_cols, h_vals = [], []
+
     def add(c, v):
         if c is not None and v is not None:
-            h_cols.append(c); h_vals.append(v)
+            h_cols.append(c);
+            h_vals.append(v)
 
     add(doc_type_col, doc_type)
     add(doc_no_col, doc_no)
@@ -639,31 +709,114 @@ def _insert_header_and_lines(
     add(doc_date_col, inv_date)
     add(pay_terms_col, int(pay_terms) if pay_terms not in (None, "", False) else 0)
     add(deliv_date_col if deliv_dt is not None else None, deliv_dt)
-    add(curr_code_col, int(curr_code) if curr_code not in (None, "", False) else 0)
+    # add(curr_code_col, int(curr_code) if curr_code not in (None, "", False) else 0)
+    # add(curr_code_col, curr_code or "ZAR")
+    currency_map = {
+        "ZAR": 0,
+        "USD": 1,
+        "EUR": 2,
+        "GBP": 3,
+    }
+
+    currency_value = currency_map.get(str(curr_code).upper(), 0)
+
+    add(curr_code_col, currency_value)
+
     add(pay_ref_col, pay_ref)
     if excl_incl_col: add(excl_incl_col, 0)
     if total_col:     add(total_col, 0)
     if total_tax_col: add(total_tax_col, 0)
 
-    cur.execute(
-        f"INSERT INTO {hdr_tbl} ({', '.join(h_cols)}) VALUES ({', '.join(['?']*len(h_cols))})",
-        *h_vals
-    )
+    # cur.execute(
+    #     f"INSERT INTO {hdr_tbl} ({', '.join(h_cols)}) VALUES ({', '.join(['?'] * len(h_cols))})",
+    #     *h_vals
+    # )
+
+    try:
+        print("===================================")
+        print("INSERTING HEADER")
+        print("TABLE:", hdr_tbl)
+        print("COLUMNS:", h_cols)
+        print("VALUES:", h_vals)
+
+        sql = f"""
+        INSERT INTO {hdr_tbl}
+        ({', '.join(h_cols)})
+        VALUES ({', '.join(['?'] * len(h_cols))})
+        """
+
+        print("SQL:", sql)
+
+        cur.execute(sql, *h_vals)
+
+        print("HEADER INSERT SUCCESS")
+        print("===================================")
+
+    except Exception as e:
+        print("HEADER INSERT FAILED")
+        print(str(e))
+        raise
+
 
     total = 0.0
     total_tax = 0.0
     for ln in lines:
         prod_code = ln.get("product_code") or ln.get("name") or ln.get("label")
-        desc      = ln.get("description") or ln.get("decription") or ln.get("name") or ln.get("label")
-        qty       = float(ln.get("quantity") or 0)
-        price     = float(ln.get("price_unit") or ln.get("lst_price") or 0)
-        tax_code  = ln.get("tax_code")
-        cur.execute(
-            f"""INSERT INTO {ln_tbl}
-                ({ln_doc_no_col},{ln_doc_type_col},{ln_item_col},{ln_desc_col},{ln_qty_col},{ln_price_col},{ln_tax_col})
-                VALUES (?,?,?,?,?,?,?)""",
-            doc_no, doc_type, prod_code, desc, qty, price, tax_code
-        )
+        desc = ln.get("description") or ln.get("decription") or ln.get("name") or ln.get("label")
+        qty = float(ln.get("quantity") or 0)
+        price = float(ln.get("price_unit") or ln.get("lst_price") or 0)
+        tax_code = ln.get("tax_code")
+        # cur.execute(
+        #     f"""INSERT INTO {ln_tbl}
+        #         ({ln_doc_no_col},{ln_doc_type_col},{ln_item_col},{ln_desc_col},{ln_qty_col},{ln_price_col},{ln_tax_col})
+        #         VALUES (?,?,?,?,?,?,?)""",
+        #     doc_no, doc_type, prod_code, desc, qty, price, tax_code
+        # )
+
+        try:
+            print("-----------------------------------")
+            print("INSERTING LINE")
+            print("PRODUCT:", prod_code)
+            print("DESC:", desc)
+            print("QTY:", qty)
+            print("PRICE:", price)
+            print("TAX:", tax_code)
+
+            sql_line = f"""
+            INSERT INTO {ln_tbl}
+            (
+                {ln_doc_no_col},
+                {ln_doc_type_col},
+                {ln_item_col},
+                {ln_desc_col},
+                {ln_qty_col},
+                {ln_price_col},
+                {ln_tax_col}
+            )
+            VALUES (?,?,?,?,?,?,?)
+            """
+
+            print("SQL:", sql_line)
+
+            cur.execute(
+                sql_line,
+                doc_no,
+                doc_type,
+                prod_code,
+                desc,
+                qty,
+                price,
+                tax_code
+            )
+
+            print("LINE INSERT SUCCESS")
+            print("-----------------------------------")
+
+        except Exception as e:
+            print("LINE INSERT FAILED")
+            print(str(e))
+            raise
+
         total += qty * price
 
     if total_col:
@@ -681,34 +834,129 @@ def _insert_header_and_lines(
             )
     return total
 
+
+# @app.get("/invoices/exists")
+# def invoice_exists(
+#         doc_no: str = Query(...),
+#         doc_type: Optional[int] = Query(None),
+#         x_api_key: Optional[str] = Header(default=None),
+#         key: Optional[str] = None
+# ):
+#     require_key(x_api_key, key)
+#     with get_conn() as cn:
+#         cur = cn.cursor()
+#         hdr_tbl = _pick_table(cur, ["HistoryHeader"])
+#         if not hdr_tbl:
+#             raise HTTPException(status_code=500, detail="HistoryHeader table not found")
+#         doc_no_col = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
+#         doc_type_col = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
+#         if not (doc_no_col and doc_type_col):
+#             raise HTTPException(status_code=500, detail="Required columns missing")
+#         strict = False
+#         if doc_type is not None:
+#             strict = _exists_doc(cur, hdr_tbl, doc_no_col, doc_type_col, doc_no, int(doc_type))
+#         found_type = _find_invoice_doc_type(cur, hdr_tbl, doc_no_col, doc_type_col, doc_no)
+#         return {"exists": found_type is not None, "exists_strict": bool(strict), "doc_type": found_type}
+
 @app.get("/invoices/exists")
 def invoice_exists(
-    doc_no: str = Query(...),
-    doc_type: Optional[int] = Query(None),
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None
+        doc_no: str = Query(...),
+        doc_type: Optional[int] = Query(None),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None
 ):
     require_key(x_api_key, key)
-    with get_conn() as cn:
-        cur = cn.cursor()
-        hdr_tbl = _pick_table(cur, ["HistoryHeader"])
-        if not hdr_tbl:
-            raise HTTPException(status_code=500, detail="HistoryHeader table not found")
-        doc_no_col = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
-        doc_type_col = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
-        if not (doc_no_col and doc_type_col):
-            raise HTTPException(status_code=500, detail="Required columns missing")
-        strict = False
-        if doc_type is not None:
-            strict = _exists_doc(cur, hdr_tbl, doc_no_col, doc_type_col, doc_no, int(doc_type))
-        found_type = _find_invoice_doc_type(cur, hdr_tbl, doc_no_col, doc_type_col, doc_no)
-        return {"exists": found_type is not None, "exists_strict": bool(strict), "doc_type": found_type}
+
+    try:
+
+        print("===================================")
+        print("CHECKING INVOICE EXISTS")
+        print("DOC NO:", doc_no)
+        print("DOC TYPE:", doc_type)
+
+        with get_conn() as cn:
+
+            cur = cn.cursor()
+
+            hdr_tbl = _pick_table(cur, ["HistoryHeader"])
+
+            print("HEADER TABLE:", hdr_tbl)
+
+            if not hdr_tbl:
+                raise HTTPException(
+                    status_code=500,
+                    detail="HistoryHeader table not found"
+                )
+
+            doc_no_col = _pick_col_from(
+                cur,
+                hdr_tbl,
+                ["DocumentNumber"]
+            )
+
+            doc_type_col = _pick_col_from(
+                cur,
+                hdr_tbl,
+                ["DocumentType"]
+            )
+
+            print("DOC_NO_COL:", doc_no_col)
+            print("DOC_TYPE_COL:", doc_type_col)
+
+            if not (doc_no_col and doc_type_col):
+                raise HTTPException(
+                    status_code=500,
+                    detail="Required columns missing"
+                )
+
+            strict = False
+
+            if doc_type is not None:
+
+                strict = _exists_doc(
+                    cur,
+                    hdr_tbl,
+                    doc_no_col,
+                    doc_type_col,
+                    doc_no,
+                    int(doc_type)
+                )
+
+                print("STRICT EXISTS:", strict)
+
+            found_type = _find_invoice_doc_type(
+                cur,
+                hdr_tbl,
+                doc_no_col,
+                doc_type_col,
+                doc_no
+            )
+
+            print("FOUND TYPE:", found_type)
+
+            print("===================================")
+
+            return {
+                "exists": found_type is not None,
+                "exists_strict": bool(strict),
+                "doc_type": found_type
+            }
+
+    except Exception as e:
+
+        print("===================================")
+        print("INVOICE EXISTS CHECK FAILED")
+        print(str(e))
+        print("===================================")
+
+        raise
+
 
 @app.post("/invoices")
 def create_invoice(
-    payload: dict = Body(...),
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None
+        payload: dict = Body(...),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None
 ):
     require_key(x_api_key, key)
     doc_no = payload.get("doc_no")
@@ -716,27 +964,35 @@ def create_invoice(
         raise HTTPException(status_code=400, detail="doc_no required")
     return _write_invoice(doc_no, payload, mode="create")
 
+
 @app.put("/invoices/{doc_no:path}")
 def replace_invoice(
-    doc_no: str,
-    payload: dict = Body(...),
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None
+        doc_no: str,
+        payload: dict = Body(...),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None
 ):
     require_key(x_api_key, key)
     payload = dict(payload or {})
     payload["doc_no"] = doc_no
     return _write_invoice_smart_replace(doc_no, payload)
 
+
 def _write_invoice(doc_no: str, payload: dict, *, mode: str):
-    customer   = payload.get("customer_code")
-    inv_date   = payload.get("invoice_date")
-    doc_type   = int(payload.get("document_type") or 3)
-    lines      = _coalesce_lines_server(payload.get("lines") or [])
-    pay_ref    = payload.get("payment_reference") or doc_no
-    pay_terms  = payload.get("invoice_payment_term_id")
-    deliv_dt   = payload.get("delivery_date") or payload.get("invoice_date_due") or inv_date
-    curr_code  = payload.get("currency_id")
+    customer = payload.get("customer_code")
+    inv_date = payload.get("invoice_date")
+    doc_type = int(payload.get("document_type") or 3)
+    lines = _coalesce_lines_server(payload.get("lines") or [])
+    pay_ref = payload.get("payment_reference") or doc_no
+    pay_terms = payload.get("invoice_payment_term_id")
+    deliv_dt = payload.get("delivery_date") or payload.get("invoice_date_due") or inv_date
+    # curr_code = payload.get("currency_id")
+    curr_code = (
+            payload.get("currency_id")
+            or payload.get("currency_code")
+            or payload.get("currency")
+            or "ZAR"
+    )
 
     if not customer:
         raise HTTPException(status_code=400, detail="customer_code required")
@@ -744,29 +1000,29 @@ def _write_invoice(doc_no: str, payload: dict, *, mode: str):
     with get_conn() as cn:
         cur = cn.cursor()
         hdr_tbl = _pick_table(cur, ["HistoryHeader"])
-        ln_tbl  = _pick_table(cur, ["HistoryLines"])
+        ln_tbl = _pick_table(cur, ["HistoryLines"])
         if not (hdr_tbl and ln_tbl):
             raise HTTPException(status_code=500, detail="History tables not found")
 
-        doc_no_col     = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
-        doc_date_col   = _pick_col_from(cur, hdr_tbl, ["DocumentDate"])
-        cust_code_col  = _pick_col_from(cur, hdr_tbl, ["CustomerCode"])
-        doc_type_col   = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
-        total_col      = _pick_col_from(cur, hdr_tbl, ["Total"])
-        total_tax_col  = _pick_col_from(cur, hdr_tbl, ["TotalTax"])
-        excl_incl_col  = _pick_col_from(cur, hdr_tbl, ["ExclIncl"])
-        pay_ref_col    = _pick_col_from(cur, hdr_tbl, ["PaymentReference", "OrderNumber", "Reference", "ExtReference"])
-        pay_terms_col  = _pick_col_from(cur, hdr_tbl, ["PaymentTerms", "Terms"])
+        doc_no_col = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
+        doc_date_col = _pick_col_from(cur, hdr_tbl, ["DocumentDate"])
+        cust_code_col = _pick_col_from(cur, hdr_tbl, ["CustomerCode"])
+        doc_type_col = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
+        total_col = _pick_col_from(cur, hdr_tbl, ["Total"])
+        total_tax_col = _pick_col_from(cur, hdr_tbl, ["TotalTax"])
+        excl_incl_col = _pick_col_from(cur, hdr_tbl, ["ExclIncl"])
+        pay_ref_col = _pick_col_from(cur, hdr_tbl, ["PaymentReference", "OrderNumber", "Reference", "ExtReference"])
+        pay_terms_col = _pick_col_from(cur, hdr_tbl, ["PaymentTerms", "Terms"])
         deliv_date_col = _pick_col_from(cur, hdr_tbl, ["DeliveryDate", "DueDate", "ClosingDate"])
-        curr_code_col  = _pick_col_from(cur, hdr_tbl, ["CurrencyCode"])
+        curr_code_col = _pick_col_from(cur, hdr_tbl, ["CurrencyCode"])
 
-        ln_doc_no_col   = _pick_col_from(cur, ln_tbl, ["DocumentNumber"])
+        ln_doc_no_col = _pick_col_from(cur, ln_tbl, ["DocumentNumber"])
         ln_doc_type_col = _pick_col_from(cur, ln_tbl, ["DocumentType"])
-        ln_item_col     = _pick_col_from(cur, ln_tbl, ["ItemCode"])
-        ln_desc_col     = _pick_col_from(cur, ln_tbl, ["Description"])
-        ln_qty_col      = _pick_col_from(cur, ln_tbl, ["Qty"])
-        ln_price_col    = _pick_col_from(cur, ln_tbl, ["UnitPrice"])
-        ln_tax_col      = _pick_col_from(cur, ln_tbl, ["TaxType"])
+        ln_item_col = _pick_col_from(cur, ln_tbl, ["ItemCode"])
+        ln_desc_col = _pick_col_from(cur, ln_tbl, ["Description"])
+        ln_qty_col = _pick_col_from(cur, ln_tbl, ["Qty"])
+        ln_price_col = _pick_col_from(cur, ln_tbl, ["UnitPrice"])
+        ln_tax_col = _pick_col_from(cur, ln_tbl, ["TaxType"])
 
         if not all([doc_no_col, doc_type_col, ln_doc_no_col, ln_doc_type_col]):
             raise HTTPException(status_code=500, detail="Required columns missing")
@@ -798,17 +1054,25 @@ def _write_invoice(doc_no: str, payload: dict, *, mode: str):
             pay_ref=pay_ref, pay_terms=pay_terms, deliv_dt=deliv_dt, curr_code=curr_code,
             lines=lines
         )
-    return {"ok": True, "doc_no": _norm_doc_no(doc_no), "mode": mode, "lines": len(lines), "total_excl": round(total, 2)}
+    return {"ok": True, "doc_no": _norm_doc_no(doc_no), "mode": mode, "lines": len(lines),
+            "total_excl": round(total, 2)}
+
 
 def _write_invoice_smart_replace(doc_no: str, payload: dict):
-    customer   = payload.get("customer_code")
-    inv_date   = payload.get("invoice_date")
-    req_type   = int(payload.get("document_type") or 3)
-    lines      = _coalesce_lines_server(payload.get("lines") or [])
-    pay_ref    = payload.get("payment_reference") or doc_no
-    pay_terms  = payload.get("invoice_payment_term_id")
-    deliv_dt   = payload.get("delivery_date") or payload.get("invoice_date_due") or inv_date
-    curr_code  = payload.get("currency_id")
+    customer = payload.get("customer_code")
+    inv_date = payload.get("invoice_date")
+    req_type = int(payload.get("document_type") or 3)
+    lines = _coalesce_lines_server(payload.get("lines") or [])
+    pay_ref = payload.get("payment_reference") or doc_no
+    pay_terms = payload.get("invoice_payment_term_id")
+    deliv_dt = payload.get("delivery_date") or payload.get("invoice_date_due") or inv_date
+    # curr_code = payload.get("currency_id")
+    curr_code = (
+            payload.get("currency_id")
+            or payload.get("currency_code")
+            or payload.get("currency")
+            or "ZAR"
+    )
 
     if not customer:
         raise HTTPException(status_code=400, detail="customer_code required")
@@ -816,29 +1080,29 @@ def _write_invoice_smart_replace(doc_no: str, payload: dict):
     with get_conn() as cn:
         cur = cn.cursor()
         hdr_tbl = _pick_table(cur, ["HistoryHeader"])
-        ln_tbl  = _pick_table(cur, ["HistoryLines"])
+        ln_tbl = _pick_table(cur, ["HistoryLines"])
         if not (hdr_tbl and ln_tbl):
             raise HTTPException(status_code=500, detail="History tables not found")
 
-        doc_no_col     = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
-        doc_date_col   = _pick_col_from(cur, hdr_tbl, ["DocumentDate"])
-        cust_code_col  = _pick_col_from(cur, hdr_tbl, ["CustomerCode"])
-        doc_type_col   = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
-        total_col      = _pick_col_from(cur, hdr_tbl, ["Total"])
-        total_tax_col  = _pick_col_from(cur, hdr_tbl, ["TotalTax"])
-        excl_incl_col  = _pick_col_from(cur, hdr_tbl, ["ExclIncl"])
-        pay_ref_col    = _pick_col_from(cur, hdr_tbl, ["PaymentReference", "OrderNumber", "Reference", "ExtReference"])
-        pay_terms_col  = _pick_col_from(cur, hdr_tbl, ["PaymentTerms", "Terms"])
+        doc_no_col = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
+        doc_date_col = _pick_col_from(cur, hdr_tbl, ["DocumentDate"])
+        cust_code_col = _pick_col_from(cur, hdr_tbl, ["CustomerCode"])
+        doc_type_col = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
+        total_col = _pick_col_from(cur, hdr_tbl, ["Total"])
+        total_tax_col = _pick_col_from(cur, hdr_tbl, ["TotalTax"])
+        excl_incl_col = _pick_col_from(cur, hdr_tbl, ["ExclIncl"])
+        pay_ref_col = _pick_col_from(cur, hdr_tbl, ["PaymentReference", "OrderNumber", "Reference", "ExtReference"])
+        pay_terms_col = _pick_col_from(cur, hdr_tbl, ["PaymentTerms", "Terms"])
         deliv_date_col = _pick_col_from(cur, hdr_tbl, ["DeliveryDate", "DueDate", "ClosingDate"])
-        curr_code_col  = _pick_col_from(cur, hdr_tbl, ["CurrencyCode"])
+        curr_code_col = _pick_col_from(cur, hdr_tbl, ["CurrencyCode"])
 
-        ln_doc_no_col   = _pick_col_from(cur, ln_tbl, ["DocumentNumber"])
+        ln_doc_no_col = _pick_col_from(cur, ln_tbl, ["DocumentNumber"])
         ln_doc_type_col = _pick_col_from(cur, ln_tbl, ["DocumentType"])
-        ln_item_col     = _pick_col_from(cur, ln_tbl, ["ItemCode"])
-        ln_desc_col     = _pick_col_from(cur, ln_tbl, ["Description"])
-        ln_qty_col      = _pick_col_from(cur, ln_tbl, ["Qty"])
-        ln_price_col    = _pick_col_from(cur, ln_tbl, ["UnitPrice"])
-        ln_tax_col      = _pick_col_from(cur, ln_tbl, ["TaxType"])
+        ln_item_col = _pick_col_from(cur, ln_tbl, ["ItemCode"])
+        ln_desc_col = _pick_col_from(cur, ln_tbl, ["Description"])
+        ln_qty_col = _pick_col_from(cur, ln_tbl, ["Qty"])
+        ln_price_col = _pick_col_from(cur, ln_tbl, ["UnitPrice"])
+        ln_tax_col = _pick_col_from(cur, ln_tbl, ["TaxType"])
 
         if not all([doc_no_col, doc_type_col, ln_doc_no_col, ln_doc_type_col]):
             raise HTTPException(status_code=500, detail="Required columns missing")
@@ -866,21 +1130,23 @@ def _write_invoice_smart_replace(doc_no: str, payload: dict):
             pay_ref=pay_ref, pay_terms=pay_terms, deliv_dt=deliv_dt, curr_code=curr_code,
             lines=lines
         )
-    return {"ok": True, "doc_no": _norm_doc_no(doc_no), "document_type": use_type, "mode": "replace", "total_excl": round(total, 2)}
+    return {"ok": True, "doc_no": _norm_doc_no(doc_no), "document_type": use_type, "mode": "replace",
+            "total_excl": round(total, 2)}
+
 
 # -------- Idempotent insert-by-doc_no (SKIPS if exists) --------
 @app.post("/invoices/upsert_by_doc")
 def upsert_by_doc(
-    payload: dict = Body(...),
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None,
+        payload: dict = Body(...),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None,
 ):
     require_key(x_api_key, key)
 
-    doc_no    = payload.get("doc_no")
-    customer  = payload.get("customer_code")
-    inv_date  = payload.get("invoice_date")
-    doc_type  = int(payload.get("document_type") or 3)
+    doc_no = payload.get("doc_no")
+    customer = payload.get("customer_code")
+    inv_date = payload.get("invoice_date")
+    doc_type = int(payload.get("document_type") or 3)
 
     if not doc_no:
         raise HTTPException(status_code=400, detail="doc_no required")
@@ -890,37 +1156,43 @@ def upsert_by_doc(
     doc_no_norm = _norm_doc_no(doc_no)
     lines = _coalesce_lines_server(payload.get("lines") or [])
 
-    pay_ref   = payload.get("payment_reference") or doc_no_norm
+    pay_ref = payload.get("payment_reference") or doc_no_norm
     pay_terms = payload.get("invoice_payment_term_id")
-    deliv_dt  = payload.get("delivery_date") or payload.get("invoice_date_due") or inv_date
-    curr_code = payload.get("currency_id")
+    deliv_dt = payload.get("delivery_date") or payload.get("invoice_date_due") or inv_date
+    # curr_code = payload.get("currency_id")
+    curr_code = (
+            payload.get("currency_id")
+            or payload.get("currency_code")
+            or payload.get("currency")
+            or "ZAR"
+    )
 
     with get_conn() as cn:
         cur = cn.cursor()
         hdr_tbl = _pick_table(cur, ["HistoryHeader"])
-        ln_tbl  = _pick_table(cur, ["HistoryLines"])
+        ln_tbl = _pick_table(cur, ["HistoryLines"])
         if not (hdr_tbl and ln_tbl):
             raise HTTPException(status_code=500, detail="History tables not found")
 
-        doc_no_col     = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
-        doc_date_col   = _pick_col_from(cur, hdr_tbl, ["DocumentDate"])
-        cust_code_col  = _pick_col_from(cur, hdr_tbl, ["CustomerCode"])
-        doc_type_col   = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
-        total_col      = _pick_col_from(cur, hdr_tbl, ["Total"])
-        total_tax_col  = _pick_col_from(cur, hdr_tbl, ["TotalTax"])
-        excl_incl_col  = _pick_col_from(cur, hdr_tbl, ["ExclIncl"])
-        pay_ref_col    = _pick_col_from(cur, hdr_tbl, ["PaymentReference","OrderNumber","Reference","ExtReference"])
-        pay_terms_col  = _pick_col_from(cur, hdr_tbl, ["PaymentTerms","Terms"])
-        deliv_date_col = _pick_col_from(cur, hdr_tbl, ["DeliveryDate","DueDate","ClosingDate"])
-        curr_code_col  = _pick_col_from(cur, hdr_tbl, ["CurrencyCode"])
+        doc_no_col = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
+        doc_date_col = _pick_col_from(cur, hdr_tbl, ["DocumentDate"])
+        cust_code_col = _pick_col_from(cur, hdr_tbl, ["CustomerCode"])
+        doc_type_col = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
+        total_col = _pick_col_from(cur, hdr_tbl, ["Total"])
+        total_tax_col = _pick_col_from(cur, hdr_tbl, ["TotalTax"])
+        excl_incl_col = _pick_col_from(cur, hdr_tbl, ["ExclIncl"])
+        pay_ref_col = _pick_col_from(cur, hdr_tbl, ["PaymentReference", "OrderNumber", "Reference", "ExtReference"])
+        pay_terms_col = _pick_col_from(cur, hdr_tbl, ["PaymentTerms", "Terms"])
+        deliv_date_col = _pick_col_from(cur, hdr_tbl, ["DeliveryDate", "DueDate", "ClosingDate"])
+        curr_code_col = _pick_col_from(cur, hdr_tbl, ["CurrencyCode"])
 
-        ln_doc_no_col   = _pick_col_from(cur, ln_tbl, ["DocumentNumber"])
+        ln_doc_no_col = _pick_col_from(cur, ln_tbl, ["DocumentNumber"])
         ln_doc_type_col = _pick_col_from(cur, ln_tbl, ["DocumentType"])
-        ln_item_col     = _pick_col_from(cur, ln_tbl, ["ItemCode"])
-        ln_desc_col     = _pick_col_from(cur, ln_tbl, ["Description"])
-        ln_qty_col      = _pick_col_from(cur, ln_tbl, ["Qty"])
-        ln_price_col    = _pick_col_from(cur, ln_tbl, ["UnitPrice"])
-        ln_tax_col      = _pick_col_from(cur, ln_tbl, ["TaxType"])
+        ln_item_col = _pick_col_from(cur, ln_tbl, ["ItemCode"])
+        ln_desc_col = _pick_col_from(cur, ln_tbl, ["Description"])
+        ln_qty_col = _pick_col_from(cur, ln_tbl, ["Qty"])
+        ln_price_col = _pick_col_from(cur, ln_tbl, ["UnitPrice"])
+        ln_tax_col = _pick_col_from(cur, ln_tbl, ["TaxType"])
 
         if not all([doc_no_col, doc_type_col, ln_doc_no_col, ln_doc_type_col]):
             raise HTTPException(status_code=500, detail="Required columns missing")
@@ -944,35 +1216,36 @@ def upsert_by_doc(
     return {"ok": True, "skipped": False, "doc_no": doc_no_norm, "document_type": doc_type,
             "lines": len(lines), "total_excl": round(total, 2)}
 
+
 # ----------------------------------------------------------------------
 # LIST invoices (with lines)
 # ----------------------------------------------------------------------
 @app.get("/invoices", response_model=List[InvoiceOut])
 def invoices(
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None,
-    limit: int = Query(200, ge=1, le=5000),
-    since: Optional[str] = Query(None, description="YYYY-MM-DD: HistoryHeader.DocumentDate >= since"),
-    doc_type: Optional[str] = Query(None, description="DocumentType number")
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None,
+        limit: int = Query(200, ge=1, le=5000),
+        since: Optional[str] = Query(None, description="YYYY-MM-DD: HistoryHeader.DocumentDate >= since"),
+        doc_type: Optional[str] = Query(None, description="DocumentType number")
 ):
     require_key(x_api_key, key)
     with get_conn() as cn:
         cur = cn.cursor()
 
         hdr_tbl = "HistoryHeader"
-        ln_tbl  = "HistoryLines"
+        ln_tbl = "HistoryLines"
 
-        doc_no_col     = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
-        doc_date_col   = _pick_col_from(cur, hdr_tbl, ["DocumentDate"])
-        cust_code_col  = _pick_col_from(cur, hdr_tbl, ["CustomerCode"])
-        doc_type_col   = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
-        total_col      = _pick_col_from(cur, hdr_tbl, ["Total"])
-        total_tax_col  = _pick_col_from(cur, hdr_tbl, ["TotalTax"])
-        excl_incl_col  = _pick_col_from(cur, hdr_tbl, ["ExclIncl"])
-        pay_ref_col    = _pick_col_from(cur, hdr_tbl, ["PaymentReference","OrderNumber","Reference","ExtReference"])
-        pay_terms_col  = _pick_col_from(cur, hdr_tbl, ["PaymentTerms","Terms"])
-        deliv_date_col = _pick_col_from(cur, hdr_tbl, ["DeliveryDate","DueDate","ClosingDate"])
-        curr_code_col  = _pick_col_from(cur, hdr_tbl, ["CurrencyCode"])
+        doc_no_col = _pick_col_from(cur, hdr_tbl, ["DocumentNumber"])
+        doc_date_col = _pick_col_from(cur, hdr_tbl, ["DocumentDate"])
+        cust_code_col = _pick_col_from(cur, hdr_tbl, ["CustomerCode"])
+        doc_type_col = _pick_col_from(cur, hdr_tbl, ["DocumentType"])
+        total_col = _pick_col_from(cur, hdr_tbl, ["Total"])
+        total_tax_col = _pick_col_from(cur, hdr_tbl, ["TotalTax"])
+        excl_incl_col = _pick_col_from(cur, hdr_tbl, ["ExclIncl"])
+        pay_ref_col = _pick_col_from(cur, hdr_tbl, ["PaymentReference", "OrderNumber", "Reference", "ExtReference"])
+        pay_terms_col = _pick_col_from(cur, hdr_tbl, ["PaymentTerms", "Terms"])
+        deliv_date_col = _pick_col_from(cur, hdr_tbl, ["DeliveryDate", "DueDate", "ClosingDate"])
+        curr_code_col = _pick_col_from(cur, hdr_tbl, ["CurrencyCode"])
 
         if not (doc_no_col and doc_date_col and cust_code_col):
             raise HTTPException(status_code=500, detail="Required columns missing.")
@@ -1013,12 +1286,12 @@ def invoices(
 
         doc_nos = [str(h.get("doc_no") or "").strip() for h in headers]
 
-        ln_doc_no_col   = _pick_col_from(cur, ln_tbl, ["DocumentNumber"])
-        ln_item_col     = _pick_col_from(cur, ln_tbl, ["ItemCode"])
-        ln_desc_col     = _pick_col_from(cur, ln_tbl, ["Description"])
-        ln_qty_col      = _pick_col_from(cur, ln_tbl, ["Qty"])
-        ln_price_col    = _pick_col_from(cur, ln_tbl, ["UnitPrice"])
-        ln_tax_col      = _pick_col_from(cur, ln_tbl, ["TaxType"])
+        ln_doc_no_col = _pick_col_from(cur, ln_tbl, ["DocumentNumber"])
+        ln_item_col = _pick_col_from(cur, ln_tbl, ["ItemCode"])
+        ln_desc_col = _pick_col_from(cur, ln_tbl, ["Description"])
+        ln_qty_col = _pick_col_from(cur, ln_tbl, ["Qty"])
+        ln_price_col = _pick_col_from(cur, ln_tbl, ["UnitPrice"])
+        ln_tax_col = _pick_col_from(cur, ln_tbl, ["TaxType"])
 
         qmarks = ",".join(["?"] * len(doc_nos))
         sql_lines = f"""
@@ -1053,7 +1326,7 @@ def invoices(
             doc_lines = by_doc.get(doc_no, [])
 
             total_hdr = _to_float(h.get("total")) or 0.0
-            tax_hdr   = _to_float(h.get("total_tax")) or 0.0
+            tax_hdr = _to_float(h.get("total_tax")) or 0.0
             excl_flag = str(h.get("excl_incl") or "0").strip()
 
             if (total_hdr == 0.0 and tax_hdr == 0.0) and doc_lines:
@@ -1095,9 +1368,9 @@ def invoices(
 
 @app.delete("/invoices/{doc_no:path}")
 def delete_invoice(
-    doc_no: str,
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None
+        doc_no: str,
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None
 ):
     """
     Permanently delete an invoice (and its lines) by doc_no.
@@ -1138,19 +1411,18 @@ def delete_invoice(
             doc_no, doc_type
         )
 
-
-
         cn.commit()
 
     return {"ok": True, "deleted_doc_no": doc_no, "document_type": doc_type}
 
 
-#=====================================================================================================================================================================
+# =====================================================================================================================================================================
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from fastapi import Body, Header, HTTPException
 import datetime
+
 
 # ---- Models (match what Odoo sends) ----
 class PaymentLine(BaseModel):
@@ -1160,6 +1432,7 @@ class PaymentLine(BaseModel):
     reference: Optional[str] = None
     currency_code: Optional[str] = None
 
+
 class PaymentBatchIn(BaseModel):
     batch_ref: str
     payment_date: str  # YYYY-MM-DD
@@ -1167,6 +1440,7 @@ class PaymentBatchIn(BaseModel):
     journal_code: Optional[str] = None  # kept for parity; not used on this fallback
     currency_code: Optional[str] = None
     lines: List[PaymentLine]
+
 
 # ---- utils reused from your bridge ----
 def _to_date_sql(s: Optional[str]):
@@ -1177,18 +1451,21 @@ def _to_date_sql(s: Optional[str]):
     except Exception:
         return None
 
+
 def _safe_str(v):
     return None if v is None else str(v).strip()
+
 
 def _list_tables(cur) -> List[str]:
     return [t.table_name for t in cur.tables(tableType="TABLE").fetchall()]
 
+
 # POST /payments/batch  (ReceiptTransactions fallback)
 @app.post("/payments/batch")
 def create_payment_batch(
-    payload: PaymentBatchIn = Body(...),
-    x_api_key: Optional[str] = Header(default=None),
-    key: Optional[str] = None,
+        payload: PaymentBatchIn = Body(...),
+        x_api_key: Optional[str] = Header(default=None),
+        key: Optional[str] = None,
 ):
     require_key(x_api_key, key)
     if not payload.batch_ref or not payload.lines:
@@ -1229,13 +1506,13 @@ def create_payment_batch(
 
         rcpt_tbl = "ReceiptTransactions"
         # Discover the flexible columns in your dataset
-        rcpt_no_col   = _pick_col_from(cur, rcpt_tbl, ["ReceiptNumber","ReferenceNo","Number","DocNo"])
-        rcpt_date_col = _pick_col_from(cur, rcpt_tbl, ["ReceiptDate","Date"])
-        cust_code_col = _pick_col_from(cur, rcpt_tbl, ["CustomerCode","Code","Account"])
-        amount_col    = _pick_col_from(cur, rcpt_tbl, ["Amount","TotalAmount","ReceiptAmount","Value"])
-        ref_col       = _pick_col_from(cur, rcpt_tbl, ["Reference","ExtReference","OrderNumber","Description","Memo"])
-        curr_col      = _pick_col_from(cur, rcpt_tbl, ["CurrencyCode","Currency"])
-        bank_col      = _pick_col_from(cur, rcpt_tbl, ["BankAccount","BankCode","Cashbook","CashbookCode","Journal"])
+        rcpt_no_col = _pick_col_from(cur, rcpt_tbl, ["ReceiptNumber", "ReferenceNo", "Number", "DocNo"])
+        rcpt_date_col = _pick_col_from(cur, rcpt_tbl, ["ReceiptDate", "Date"])
+        cust_code_col = _pick_col_from(cur, rcpt_tbl, ["CustomerCode", "Code", "Account"])
+        amount_col = _pick_col_from(cur, rcpt_tbl, ["Amount", "TotalAmount", "ReceiptAmount", "Value"])
+        ref_col = _pick_col_from(cur, rcpt_tbl, ["Reference", "ExtReference", "OrderNumber", "Description", "Memo"])
+        curr_col = _pick_col_from(cur, rcpt_tbl, ["CurrencyCode", "Currency"])
+        bank_col = _pick_col_from(cur, rcpt_tbl, ["BankAccount", "BankCode", "Cashbook", "CashbookCode", "Journal"])
 
         # Minimal required
         if not (rcpt_no_col and rcpt_date_col and cust_code_col and amount_col):
@@ -1243,7 +1520,8 @@ def create_payment_batch(
                 status_code=500,
                 detail={
                     "error": "Required columns missing on ReceiptTransactions",
-                    "need": ["ReceiptNumber/ReferenceNo", "ReceiptDate/Date", "CustomerCode/Code/Account", "Amount/TotalAmount"],
+                    "need": ["ReceiptNumber/ReferenceNo", "ReceiptDate/Date", "CustomerCode/Code/Account",
+                             "Amount/TotalAmount"],
                 }
             )
 
@@ -1261,18 +1539,200 @@ def create_payment_batch(
             vals = [rcpt_no, pay_date, _safe_str(ln.partner_code), amt]
 
             if ref_col:
-                cols.append(ref_col); vals.append(ln.reference or batch_id)
+                cols.append(ref_col);
+                vals.append(ln.reference or batch_id)
             if curr_col:
-                cols.append(curr_col); vals.append(ln.currency_code or payload.currency_code or "ZAR")
+                cols.append(curr_col);
+                vals.append(ln.currency_code or payload.currency_code or "ZAR")
             # bank_col is optional – in many datasets ReceiptTransactions doesn't store bank per line
             if bank_col and payload.journal_code:
-                cols.append(bank_col); vals.append(payload.journal_code)
+                cols.append(bank_col);
+                vals.append(payload.journal_code)
 
             cur.execute(
-                f"INSERT INTO {rcpt_tbl} ({', '.join(cols)}) VALUES ({', '.join(['?']*len(cols))})",
+                f"INSERT INTO {rcpt_tbl} ({', '.join(cols)}) VALUES ({', '.join(['?'] * len(cols))})",
                 *vals
             )
             inserted += 1
 
         return {"ok": True, "batch_id": batch_id, "partner_type": "customer", "inserted": inserted}
 
+# ----------------------------------------------------------------------
+# Sync to SQL Server
+# ----------------------------------------------------------------------
+
+def get_sqlserver_conn():
+
+    return pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=LESIBA\\SQLEXPRESS;"
+        "DATABASE=ODBC_DB;"
+        "Trusted_Connection=yes;"
+    )
+
+
+def sync_table(
+        pastel_table,
+        sqlserver_table
+):
+
+    try:
+
+        pastel_conn = get_conn()
+        sql_conn = get_sqlserver_conn()
+
+        pastel_cur = pastel_conn.cursor()
+        sql_cur = sql_conn.cursor()
+
+        # READ PASTEL DATA
+        pastel_cur.execute(f"SELECT * FROM {pastel_table}")
+
+        columns = [column[0] for column in pastel_cur.description]
+
+        rows = pastel_cur.fetchall()
+
+        print(f"FOUND {len(rows)} ROWS")
+
+        # DROP TABLE IF EXISTS
+        sql_cur.execute(f"""
+        IF OBJECT_ID('{sqlserver_table}', 'U') IS NOT NULL
+            DROP TABLE {sqlserver_table}
+        """)
+
+        sql_conn.commit()
+
+        # CREATE TABLE
+        create_cols = ", ".join(
+            [f"[{col}] NVARCHAR(MAX)" for col in columns]
+        )
+
+        create_sql = f"""
+        CREATE TABLE {sqlserver_table}
+        (
+            {create_cols}
+        )
+        """
+
+        sql_cur.execute(create_sql)
+
+        sql_conn.commit()
+
+        # INSERT DATA
+        placeholders = ",".join(["?"] * len(columns))
+
+        insert_sql = f"""
+        INSERT INTO {sqlserver_table}
+        VALUES ({placeholders})
+        """
+
+        for row in rows:
+
+            cleaned = [
+                str(v) if v is not None else None
+                for v in row
+            ]
+
+            sql_cur.execute(insert_sql, cleaned)
+
+        sql_conn.commit()
+
+        return {
+            "ok": True,
+            "rows": len(rows),
+            "table": sqlserver_table
+        }
+
+    except Exception as e:
+
+        print(str(e))
+
+        return {
+            "ok": False,
+            "error": str(e)
+        }
+
+
+@app.post("/sync/customers")
+def sync_customers():
+
+    return sync_table(
+        "CustomerMaster",
+        "SageCustomers"
+    )
+
+
+@app.post("/sync/suppliers")
+def sync_suppliers():
+
+    return sync_table(
+        "SupplierMaster",
+        "SageSuppliers"
+    )
+
+
+@app.post("/sync/products")
+def sync_products():
+
+    return sync_table(
+        "Inventory",
+        "SageProducts"
+    )
+
+
+@app.post("/sync/invoices")
+def sync_invoices():
+
+    return sync_table(
+        "HistoryHeader",
+        "SageInvoices"
+    )
+
+
+@app.post("/sync/invoice-lines")
+def sync_invoice_lines():
+
+    return sync_table(
+        "HistoryLines",
+        "SageInvoiceLines"
+    )
+
+
+def run_all_syncs():
+
+    try:
+
+        print("STARTING AUTO SYNC")
+
+        sync_customers()
+        sync_suppliers()
+        sync_products()
+        sync_invoices()
+        sync_invoice_lines()
+
+        print("AUTO SYNC COMPLETE")
+
+    except Exception as e:
+
+        print("AUTO SYNC FAILED")
+        print(str(e))
+
+
+scheduler = BackgroundScheduler()
+
+# RUN EVERY 5 MINUTES
+# scheduler.add_job(
+#     run_all_syncs,
+#     'interval',
+#     minutes=1,
+#     max_instances=1
+# )
+
+# RUN EVERY 30 SECONDS
+scheduler.add_job(
+    run_all_syncs,
+    'interval',
+    seconds=30,
+    max_instances=1
+)
+
+scheduler.start()
