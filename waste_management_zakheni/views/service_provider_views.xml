@@ -27,6 +27,7 @@
                     <button name="action_open_find_wizard"
                             type="object"
                             string="Find Provider"
+                            invisible="1"
                             class="oe_highlight"/>
                 </header>
                 <sheet>

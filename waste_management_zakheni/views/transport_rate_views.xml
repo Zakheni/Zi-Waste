@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================== -->
+    <!-- TREE VIEW -->
+    <!-- ================================================== -->
+    <record id="view_waste_transport_tariff_tree"
+            model="ir.ui.view">
+
+        <field name="name">waste.transport.tariff.tree</field>
+
+        <field name="model">waste.transport.tariff</field>
+
+        <field name="arch" type="xml">
+
+            <tree string="Transport Tariffs">
+
+                <field name="name"/>
+
+                <field name="code"/>
+
+                <field name="company_id"/>
+
+                <field name="date_from"/>
+
+                <field name="date_to"/>
+
+                <field name="active"/>
+
+            </tree>
+
+        </field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- FORM VIEW -->
+    <!-- ================================================== -->
+    <record id="view_waste_transport_tariff_form"
+            model="ir.ui.view">
+
+        <field name="name">waste.transport.tariff.form</field>
+
+        <field name="model">waste.transport.tariff</field>
+
+        <field name="arch" type="xml">
+
+            <form string="Transport Tariff">
+
+                <sheet>
+
+                    <!-- ====================================== -->
+                    <!-- HEADER -->
+                    <!-- ====================================== -->
+                    <group>
+
+                        <group>
+
+                            <field name="name"/>
+
+                            <field name="code"/>
+
+                            <field name="company_id"/>
+
+                            <field name="active"/>
+
+                        </group>
+
+                        <group>
+
+                            <field name="date_from"/>
+
+                            <field name="date_to"/>
+
+                        </group>
+
+                    </group>
+
+                    <notebook>
+
+                        <!-- ================================== -->
+                        <!-- STANDARD PRICING -->
+                        <!-- ================================== -->
+                        <page string="Standard Pricing">
+
+                            <group>
+
+                                <group>
+
+                                    <field name="rate"/>
+
+                                    <field name="base_rate"/>
+
+                                    <field name="per_km_rate"/>
+
+                                </group>
+
+                                <group>
+
+                                    <field name="per_bin_rate"/>
+
+                                    <field name="per_trip_rate"/>
+
+                                </group>
+
+                            </group>
+
+                        </page>
+
+                        <!-- ================================== -->
+                        <!-- FLAT RATE -->
+                        <!-- ================================== -->
+                        <page string="Flat Rates">
+
+                            <group>
+
+                                <group>
+
+                                    <field name="single_bin_price"/>
+
+                                </group>
+
+                                <group>
+
+                                    <field name="multiple_bin_price"/>
+
+                                </group>
+
+                            </group>
+
+                        </page>
+
+                        <!-- ================================== -->
+                        <!-- TIERING -->
+                        <!-- ================================== -->
+                        <page string="Tiering">
+
+                            <group>
+
+                                <group>
+
+                                    <field name="min_bin_qty"/>
+
+                                    <field name="max_bin_qty"/>
+
+                                </group>
+
+                                <group>
+
+                                    <field name="min_distance"/>
+
+                                    <field name="max_distance"/>
+
+                                </group>
+
+                            </group>
+
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+
+                <!-- ====================================== -->
+                <!-- CHATTER -->
+                <!-- ====================================== -->
+                <chatter/>
+
+            </form>
+
+        </field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- SEARCH VIEW -->
+    <!-- ================================================== -->
+    <record id="view_waste_transport_tariff_search"
+            model="ir.ui.view">
+
+        <field name="name">waste.transport.tariff.search</field>
+
+        <field name="model">waste.transport.tariff</field>
+
+        <field name="arch" type="xml">
+
+            <search string="Search Transport Tariffs">
+
+                <field name="name"/>
+
+                <field name="code"/>
+
+                <field name="company_id"/>
+
+                <field name="active"/>
+
+                <group expand="0" string="Group By">
+
+                    <filter string="Tariff Type"
+                            name="group_by_code"
+                            context="{'group_by':'code'}"/>
+
+                    <filter string="Company"
+                            name="group_by_company"
+                            context="{'group_by':'company_id'}"/>
+
+                </group>
+
+            </search>
+
+        </field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- ACTION -->
+    <!-- ================================================== -->
+    <record id="action_waste_transport_tariff"
+            model="ir.actions.act_window">
+
+        <field name="name">Transport Tariffs</field>
+
+        <field name="res_model">waste.transport.tariff</field>
+
+        <field name="view_mode">tree,form</field>
+
+        <field name="search_view_id"
+               ref="view_waste_transport_tariff_search"/>
+
+    </record>
+
+
+
+</odoo>

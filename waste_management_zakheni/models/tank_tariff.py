@@ -124,44 +124,4 @@ class TankTariff(models.Model):
                 ))
 
 
-# from odoo import models, fields
-#
-# class TankTariff(models.Model):
-#     _name = "waste.tank.tariff"
-#     _inherit = ['mail.thread', 'mail.activity.mixin']
-#     _description = "Tank Tariff Configuration"
-#     _rec_name = "name"
-#
-#     name = fields.Char(
-#         string="Tariff Name",
-#         required=True,
-#         tracking=True,
-#     )
-#
-#     code = fields.Char(
-#         string="Tariff Code",
-#         required=True,
-#         tracking=True,
-#         help="Internal code e.g. septic, grease"
-#     )
-#
-#     base_kl = fields.Float(
-#         string="Base kL",
-#         default=4.0,
-#         required=True,
-#         tracking=True,
-#     )
-#
-#     base_price = fields.Float(
-#         string="Base Price",
-#         required=True,
-#         tracking=True,
-#     )
-#
-#     extra_rate = fields.Float(
-#         string="Extra Rate per kL",
-#         required=True,
-#         tracking = True,
-#     )
-#
-#     active = fields.Boolean(default=True, tracking=True,)
+

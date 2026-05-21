@@ -33,15 +33,15 @@
               action="action_res_company_custom"/>
     <!--              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_manager"/>-->
 
-<!--    <menuitem id="menu_custom_company"-->
-<!--              name="Customers"-->
-<!--              parent="menu_pickup_root"-->
-<!--              action="action_res_company_custom"/>-->
+    <!--    <menuitem id="menu_custom_company"-->
+    <!--              name="Customers"-->
+    <!--              parent="menu_pickup_root"-->
+    <!--              action="action_res_company_custom"/>-->
 
     <menuitem id="menu_custom_company"
-          name="Company &amp; Branches"
-          parent="menu_pickup_root"
-          action="action_res_company_custom"/>
+              name="Company &amp; Branches"
+              parent="menu_pickup_root"
+              action="action_res_company_custom"/>
 
     <!-- ✅ MENU (UNDER WASTE MANAGEMENT) -->
 
@@ -177,7 +177,16 @@
               name="Tank Tariff"
               parent="menu_waste_tank_tariff_conf"
               action="action_tank_tariff"
-              sequence="27"
+              sequence="28"
               groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"/>
+
+    <menuitem
+            id="menu_waste_transport_tariff"
+            name="Transport Tariffs"
+            parent="menu_waste_tank_tariff_conf"
+            action="action_waste_transport_tariff"
+            sequence="29"
+            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_manager"/>
+
 
 </odoo>

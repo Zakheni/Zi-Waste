@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ====================================================== -->
+    <!-- CATEGORIES -->
+    <!-- ====================================================== -->
+
+    <record id="vehicle_inspection_category_engine" model="vehicle.inspection.category">
+        <field name="name">Engine / Drivetrain</field>
+        <field name="sequence">1</field>
+    </record>
+
+    <record id="vehicle_inspection_category_electrical" model="vehicle.inspection.category">
+        <field name="name">Electrical / Lighting</field>
+        <field name="sequence">2</field>
+    </record>
+
+    <record id="vehicle_inspection_category_tyres" model="vehicle.inspection.category">
+        <field name="name">Tyres / Wheels</field>
+        <field name="sequence">3</field>
+    </record>
+
+    <record id="vehicle_inspection_category_safety" model="vehicle.inspection.category">
+        <field name="name">Safety Equipment</field>
+        <field name="sequence">4</field>
+    </record>
+
+    <record id="vehicle_inspection_category_body" model="vehicle.inspection.category">
+        <field name="name">Body / Exterior</field>
+        <field name="sequence">5</field>
+    </record>
+
+    <record id="vehicle_inspection_category_air" model="vehicle.inspection.category">
+        <field name="name">Air / Brake Systems</field>
+        <field name="sequence">6</field>
+    </record>
+
+    <record id="vehicle_inspection_category_trailer" model="vehicle.inspection.category">
+        <field name="name">Trailer / Linkage</field>
+        <field name="sequence">7</field>
+    </record>
+
+    <record id="vehicle_inspection_category_general" model="vehicle.inspection.category">
+        <field name="name">General Operation</field>
+        <field name="sequence">8</field>
+    </record>
+
+    <!-- ====================================================== -->
+    <!-- ENGINE / DRIVETRAIN -->
+    <!-- ====================================================== -->
+
+    <record id="item_oil_leaks" model="vehicle.inspection.item">
+        <field name="name">Oil Leaks</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_gearbox_oil" model="vehicle.inspection.item">
+        <field name="name">Gearbox Oil Level</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_oil_filter" model="vehicle.inspection.item">
+        <field name="name">Oil Filter Secure</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_temp_gauge" model="vehicle.inspection.item">
+        <field name="name">Temperature Gauge Working</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_handbrake" model="vehicle.inspection.item">
+        <field name="name">Handbrake/Air Brake</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_water_leaks" model="vehicle.inspection.item">
+        <field name="name">Water Leaks</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_engine_oil_pressure" model="vehicle.inspection.item">
+        <field name="name">Engine Oil Pressure</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_engine_mounting" model="vehicle.inspection.item">
+        <field name="name">Engine Mounting Secure</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_fan_belt" model="vehicle.inspection.item">
+        <field name="name">Fan Belt Condition/Tension</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_gears" model="vehicle.inspection.item">
+        <field name="name">Gears Working</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_engine_oil_level" model="vehicle.inspection.item">
+        <field name="name">Engine Oil Level</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_brake_fluid" model="vehicle.inspection.item">
+        <field name="name">Brake Fluid Level</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_fuel_level" model="vehicle.inspection.item">
+        <field name="name">Fuel Level</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_water_level" model="vehicle.inspection.item">
+        <field name="name">Water Level/Radiator</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <record id="item_clutch" model="vehicle.inspection.item">
+        <field name="name">Clutch Working</field>
+        <field name="category_id" ref="vehicle_inspection_category_engine"/>
+    </record>
+
+    <!-- ====================================================== -->
+    <!-- ELECTRICAL -->
+    <!-- ====================================================== -->
+
+    <record id="item_engine_warning" model="vehicle.inspection.item">
+        <field name="name">Engine warning lights - in working order</field>
+        <field name="category_id" ref="vehicle_inspection_category_electrical"/>
+    </record>
+
+    <record id="item_indicators" model="vehicle.inspection.item">
+        <field name="name">Indicators</field>
+        <field name="category_id" ref="vehicle_inspection_category_electrical"/>
+    </record>
+
+    <record id="item_brake_lights" model="vehicle.inspection.item">
+        <field name="name">Brake Lights - all working</field>
+        <field name="category_id" ref="vehicle_inspection_category_electrical"/>
+    </record>
+
+    <record id="item_headlights" model="vehicle.inspection.item">
+        <field name="name">Headlights - all working</field>
+        <field name="category_id" ref="vehicle_inspection_category_electrical"/>
+    </record>
+
+    <record id="item_light_connection" model="vehicle.inspection.item">
+        <field name="name">Light Connection</field>
+        <field name="category_id" ref="vehicle_inspection_category_electrical"/>
+    </record>
+
+    <!-- ====================================================== -->
+    <!-- TYRES -->
+    <!-- ====================================================== -->
+
+    <record id="item_tyres" model="vehicle.inspection.item">
+        <field name="name">Tyres Good/Worn</field>
+        <field name="category_id" ref="vehicle_inspection_category_tyres"/>
+    </record>
+
+    <record id="item_spare_wheel" model="vehicle.inspection.item">
+        <field name="name">Spare Wheel</field>
+        <field name="category_id" ref="vehicle_inspection_category_tyres"/>
+    </record>
+
+    <record id="item_wheel_nuts" model="vehicle.inspection.item">
+        <field name="name">Wheel Nuts Secure</field>
+        <field name="category_id" ref="vehicle_inspection_category_tyres"/>
+    </record>
+
+    <!-- ====================================================== -->
+    <!-- SAFETY -->
+    <!-- ====================================================== -->
+
+    <record id="item_fire_extinguisher" model="vehicle.inspection.item">
+        <field name="name">Fire Extinguisher</field>
+        <field name="category_id" ref="vehicle_inspection_category_safety"/>
+    </record>
+
+    <record id="item_jack_triangle" model="vehicle.inspection.item">
+        <field name="name">Jack &amp; Wheel Spanner &amp; Warning Triangle</field>
+        <field name="category_id" ref="vehicle_inspection_category_safety"/>
+    </record>
+
+    <record id="item_stop_block" model="vehicle.inspection.item">
+        <field name="name">Stop Block</field>
+        <field name="category_id" ref="vehicle_inspection_category_safety"/>
+    </record>
+
+    <!-- ====================================================== -->
+    <!-- BODY -->
+    <!-- ====================================================== -->
+
+    <record id="item_mirrors" model="vehicle.inspection.item">
+        <field name="name">Mirrors - Damaged</field>
+        <field name="category_id" ref="vehicle_inspection_category_body"/>
+    </record>
+
+    <record id="item_vehicle_license" model="vehicle.inspection.item">
+        <field name="name">Vehicle License</field>
+        <field name="category_id" ref="vehicle_inspection_category_body"/>
+    </record>
+
+    <record id="item_trailer_license" model="vehicle.inspection.item">
+        <field name="name">Trailer License</field>
+        <field name="category_id" ref="vehicle_inspection_category_body"/>
+    </record>
+
+    <record id="item_dents" model="vehicle.inspection.item">
+        <field name="name">Check for dents</field>
+        <field name="category_id" ref="vehicle_inspection_category_body"/>
+    </record>
+
+    <record id="item_reflectors" model="vehicle.inspection.item">
+        <field name="name">Reflectors/Chevron/Reflector tape</field>
+        <field name="category_id" ref="vehicle_inspection_category_body"/>
+    </record>
+
+    <record id="item_chevron_clean" model="vehicle.inspection.item">
+        <field name="name">Chevron/Reflectors/Reflector Tape Clean</field>
+        <field name="category_id" ref="vehicle_inspection_category_body"/>
+    </record>
+
+    <record id="item_wipers" model="vehicle.inspection.item">
+        <field name="name">Wipers - Operational &amp; Worn</field>
+        <field name="category_id" ref="vehicle_inspection_category_body"/>
+    </record>
+
+    <record id="item_windscreen" model="vehicle.inspection.item">
+        <field name="name">Windscreen - Chipped &amp; Cracked</field>
+        <field name="category_id" ref="vehicle_inspection_category_body"/>
+    </record>
+
+    <record id="item_fuel_cap" model="vehicle.inspection.item">
+        <field name="name">Fuel Cap Secure</field>
+        <field name="category_id" ref="vehicle_inspection_category_body"/>
+    </record>
+
+</odoo>

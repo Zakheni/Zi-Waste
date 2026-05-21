@@ -34,6 +34,8 @@ from . import create_user
 from . import account_chart_template
 from . import authorize_wizard
 from . import finish_worksheet_wizard
+from . import transport_rate
+from . import sale_order_line
 
 
 

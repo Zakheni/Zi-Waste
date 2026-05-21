@@ -15,6 +15,7 @@
 
         "data/sequence.xml",
         "data/tank_tariff_data.xml",
+        "data/transport_tariff_data.xml",
         "data/mail_reject_manifest.xml",
         "data/mail_amend_manifest.xml",
         "data/mail_authorise_manifest.xml",
@@ -50,6 +51,7 @@
         "views/product_inherit.view.xml",
         "views/account_move_view.xml",
         "views/sale_order_view.xml",
+        "views/sale_order_line_views.xml",
         "views/res_company_view.xml",
         "views/hr_employee_view.xml",
         "views/fleet_vehicle_module.xml",
@@ -70,6 +72,8 @@
         "views/waste_assign_bin_wizard_view.xml",
         "views/authorize_wizard_view.xml",
         "views/finish_worksheet_wizard.xml",
+        "views/transport_rate_views.xml",
+        "views/transport_rate_views.xml",
         # "views/waste_worksheet_assign_bin_wizard_view.xml",
         # 'views/remove_powered_by_odoo.xml',
         "views/container_type_view.xml",
@@ -80,6 +84,7 @@
         "popups/view_weighbridge_slip_popup.xml",
         "popups/view_weighbridge_slip_up_pop.xml",
         "views/waste_dashboard_menu.xml",
+
         "views/menu.xml",
     ],
 

@@ -8,6 +8,10 @@ class VehicleInspectionLine(models.Model):
 
     name = fields.Char()
 
+    display_type = fields.Selection([
+        ('line_section', "Section"),
+    ], default=False)
+
     inspection_id = fields.Many2one(
         'vehicle.inspection',
         ondelete='cascade',
@@ -16,7 +20,7 @@ class VehicleInspectionLine(models.Model):
 
     item_id = fields.Many2one(
         'vehicle.inspection.item',
-        required=True
+
     )
 
     category_id = fields.Many2one(
@@ -27,7 +31,7 @@ class VehicleInspectionLine(models.Model):
     result = fields.Selection([
         ("clear", "Clear"),
         ("fault", "Fault"),
-    ], required=True)
+    ], )
 
     note = fields.Text()
 
@@ -51,37 +55,21 @@ class VehicleInspectionLine(models.Model):
         readonly=True
     )
 
-    # def open_line_form(self):
-    #
-    #     self.ensure_one()
-    #
-    #     return {
-    #         'type': 'ir.actions.act_window',
-    #         'name': 'Inspection Line',
-    #         'res_model': 'vehicle.inspection.line',
-    #         'res_id': self.id,
-    #         'view_mode': 'form',
-    #         'target': 'new',
-    #     }
+    def action_open_photos(self):
 
-    # def open_line_form(self):
-    #     self.ensure_one()
-    #
-    #     if not self.id:
-    #         raise ValidationError(
-    #             "Please save inspection first."
-    #         )
-    #
-    #     return {
-    #         'type': 'ir.actions.act_window',
-    #         'name': 'Inspection Line',
-    #         'res_model': 'vehicle.inspection.line',
-    #         'res_id': self.id,
-    #         'view_mode': 'form',
-    #         'target': 'new',
-    #     }
+        self.ensure_one()
 
-
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Photos',
+            'res_model': 'vehicle.inspection.image',
+            'view_mode': 'tree,form',
+            'target': 'new',
+            'domain': [('line_id', '=', self.id)],
+            'context': {
+                'default_line_id': self.id,
+            }
+        }
 
     _sql_constraints = [
 
@@ -92,6 +80,38 @@ class VehicleInspectionLine(models.Model):
         ),
 
     ]
+
+    @api.constrains(
+        'display_type',
+        'item_id',
+        'result',
+        'photo_ids',
+        'require_photo'
+    )
+    def _check_normal_lines(self):
+
+        for rec in self:
+
+            # Skip section rows
+            if rec.display_type == 'line_section':
+                continue
+
+            if not rec.item_id:
+                raise ValidationError(
+                    "Inspection item is required."
+                )
+
+
+            # PHOTO REQUIRED VALIDATION
+            if (
+                    rec.require_photo
+                    and rec.result == 'fault'
+                    and not rec.photo_ids
+            ):
+                raise ValidationError(
+                    "Please upload photo(s) for: %s"
+                    % rec.item_id.name
+                )
 
     # @api.model_create_multi
     # def create(self, vals_list):
@@ -137,24 +157,24 @@ class VehicleInspectionLine(models.Model):
     #
     #     return res
 
-    @api.constrains("photo_ids", "require_photo", "result")
-    def _check_required_photo(self):
-
-        for line in self:
-
-            # Skip unsaved/new records
-            if not line._origin.id:
-                continue
-
-            if (
-                    line.require_photo
-                    and line.result == "fault"
-                    and not line.photo_ids
-            ):
-                raise ValidationError(
-                    "Photos are required for item: %s"
-                    % line.item_id.name
-                )
+    # @api.constrains("photo_ids", "require_photo", "result")
+    # def _check_required_photo(self):
+    #
+    #     for line in self:
+    #
+    #         # Skip unsaved/new records
+    #         if not line._origin.id:
+    #             continue
+    #
+    #         if (
+    #                 line.require_photo
+    #                 and line.result == "fault"
+    #                 and not line.photo_ids
+    #         ):
+    #             raise ValidationError(
+    #                 "Photos are required for item: %s"
+    #                 % line.item_id.name
+    #             )
 
     def _open_fault_wizard(self):
 

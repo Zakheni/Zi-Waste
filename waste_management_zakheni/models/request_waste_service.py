@@ -8,6 +8,9 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, AccessDenied, ValidationError
 from .service_provider import SA_PROVINCES
 
+# from datetime import timedelta
+
+
 _logger = logging.getLogger(__name__)
 
 EMAIL_REGEX = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
@@ -151,26 +154,26 @@ class WasteServiceRequest(models.Model):
     finance_employee_id = fields.Many2one('hr.employee', string="Mailto")
     finance_email = fields.Char(related="finance_employee_id.work_email")
 
-    disposal_site_id = fields.Many2one(
-        'waste.disposal.site',
-        string="Disposal Site",
-        domain="[('id', 'in', allowed_disposal_site_ids)]"
-    )
-
     # disposal_site_id = fields.Many2one(
     #     'waste.disposal.site',
     #     string="Disposal Site",
     #     domain="[('id', 'in', allowed_disposal_site_ids)]"
     # )
 
-    disposal_site_ids = fields.Many2many(
+    disposal_site_id = fields.Many2one(
         'waste.disposal.site',
-        'waste_request_disposal_site_rel',
-        'request_id',
-        'disposal_site_id',
-        string="Disposal Sites",
+        string="Disposal Site",
         domain="[('id', 'in', allowed_disposal_site_ids)]"
     )
+
+    # disposal_site_ids = fields.Many2many(
+    #     'waste.disposal.site',
+    #     'waste_request_disposal_site_rel',
+    #     'request_id',
+    #     'disposal_site_id',
+    #     string="Disposal Sites",
+    #     domain="[('id', 'in', allowed_disposal_site_ids)]"
+    # )
 
     allowed_disposal_site_ids = fields.Many2many(
         'waste.disposal.site',
@@ -218,8 +221,8 @@ class WasteServiceRequest(models.Model):
     #             sites = DisposalSite.search([])
     #
     #         rec.allowed_disposal_site_ids = sites
-    #
-    #
+
+
     # @api.onchange('waste_type_id')
     # def _onchange_waste_type_id_disposal_site(self):
     #
@@ -292,57 +295,58 @@ class WasteServiceRequest(models.Model):
 
             rec.allowed_disposal_site_ids = sites
 
-    # @api.onchange('waste_type_id')
-    # def _onchange_waste_type_id_disposal_site(self):
-    #
-    #     if not self.disposal_site_id:
-    #         return
-    #
-    #     waste_name = (self.waste_type_id.name or '').strip().lower()
-    #
-    #     allowed_type = False
-    #
-    #     if waste_name == 'hazardous':
-    #         allowed_type = 'hazardous'
-    #
-    #     elif waste_name == 'general compactable':
-    #         allowed_type = 'general_compactable'
-    #
-    #     elif waste_name == 'general non-compactable':
-    #         allowed_type = 'general_non-compactable'
-    #
-    #     # Allow empty disposal site waste type everywhere
-    #     if self.disposal_site_id.waste_type in (False, allowed_type):
-    #         return
-    #
-    #     self.disposal_site_id = False
 
-        @api.onchange('waste_type_id')
-        def _onchange_waste_type_id_disposal_site(self):
+    @api.onchange('waste_type_id')
+    def _onchange_waste_type_id_disposal_site(self):
 
-            if not self.disposal_site_ids:
-                return
+        if not self.disposal_site_id:
+            return
 
-            waste_name = (self.waste_type_id.name or '').strip().lower()
+        waste_name = (self.waste_type_id.name or '').strip().lower()
 
-            allowed_type = False
+        allowed_type = False
 
-            if waste_name == 'hazardous':
-                allowed_type = 'hazardous'
+        if waste_name == 'hazardous':
+            allowed_type = 'hazardous'
 
-            elif waste_name == 'general compactable':
-                allowed_type = 'general_compactable'
+        elif waste_name == 'general compactable':
+            allowed_type = 'general_compactable'
 
-            elif waste_name == 'general non-compactable':
-                allowed_type = 'general_non-compactable'
+        elif waste_name == 'general non-compactable':
+            allowed_type = 'general_non-compactable'
 
-            allowed_sites = self.disposal_site_ids.filtered(
-                lambda s:
-                not s.waste_type
-                or s.waste_type == allowed_type
-            )
+        # Allow empty disposal site waste type everywhere
+        if self.disposal_site_id.waste_type in (False, allowed_type):
+            return
 
-            self.disposal_site_ids = allowed_sites
+        self.disposal_site_id = False
+
+        # @api.onchange('waste_type_id')
+        # def _onchange_waste_type_id_disposal_site(self):
+        #
+        #     if not self.disposal_site_ids:
+        #         return
+        #
+        #     waste_name = (self.waste_type_id.name or '').strip().lower()
+        #
+        #     allowed_type = False
+        #
+        #     if waste_name == 'hazardous':
+        #         allowed_type = 'hazardous'
+        #
+        #     elif waste_name == 'general compactable':
+        #         allowed_type = 'general_compactable'
+        #
+        #     elif waste_name == 'general non-compactable':
+        #         allowed_type = 'general_non-compactable'
+        #
+        #     allowed_sites = self.disposal_site_ids.filtered(
+        #         lambda s:
+        #         not s.waste_type
+        #         or s.waste_type == allowed_type
+        #     )
+        #
+        #     self.disposal_site_ids = allowed_sites
 
 
 
@@ -504,48 +508,156 @@ class WasteServiceRequest(models.Model):
     # ---------------------------------------------------------
     # Busy Drivers and assistance depend on Planned date.
     # ---------------------------------------------------------
+    # @api.depends('planned_date')
+    # def _compute_busy_drivers(self):
+    #     now = fields.Datetime.now()
+    #     for rec in self:
+    #         busy = self.env['waste.service.request'].search([
+    #             ('planned_date', '>=', now),
+    #             ('driver_id', '!=', False),
+    #             ('id', '!=', rec._origin.id or 0)  # ✅ safe check
+    #         ]).mapped('driver_id').ids
+    #         rec.busy_driver_ids = [(6, 0, busy)]
+    #
+    # @api.depends('planned_date')
+    # def _compute_busy_assistants(self):
+    #     now = fields.Datetime.now()
+    #     for rec in self:
+    #         busy = self.env['waste.service.request'].search([
+    #             ('planned_date', '>=', now),
+    #             ('assistance_id', '!=', False),
+    #             ('id', '!=', rec._origin.id or 0)
+    #         ]).mapped('assistance_id').ids
+    #         rec.busy_assistance_ids = [(6, 0, busy)]
+    #
+    # @api.depends('planned_date')
+    # def _compute_busy_trucks(self):
+    #     now = fields.Datetime.now()
+    #     for rec in self:
+    #         busy = self.env['waste.service.request'].search([
+    #             ('planned_date', '>=', now),
+    #             ('vehicle_id', '!=', False),
+    #             ('id', '!=', rec._origin.id or 0)
+    #         ]).mapped('vehicle_id').ids
+    #         rec.busy_track_ids = [(6, 0, busy)]
+    #
+    # @api.depends('planned_date')
+    # def _compute_busy_traillers(self):
+    #     now = fields.Datetime.now()
+    #     for rec in self:
+    #         busy = self.env['waste.service.request'].search([
+    #             ('planned_date', '>=', now),
+    #             ('trailer_id', '!=', False),
+    #             ('id', '!=', rec._origin.id or 0)
+    #         ]).mapped('trailer_id').ids
+    #         rec.busy_trailler_ids = [(6, 0, busy)]
+
+    # ---------------------------------------------------------
+    # Busy Drivers
+    # ---------------------------------------------------------
     @api.depends('planned_date')
     def _compute_busy_drivers(self):
+
         now = fields.Datetime.now()
+
         for rec in self:
             busy = self.env['waste.service.request'].search([
+
                 ('planned_date', '>=', now),
+
                 ('driver_id', '!=', False),
-                ('id', '!=', rec._origin.id or 0)  # ✅ safe check
+
+                ('id', '!=', rec._origin.id or 0),
+
+                ('state', 'in', [
+                    'scheduled',
+                    'assigned',
+                    'dispatched'
+                ])
+
             ]).mapped('driver_id').ids
+
             rec.busy_driver_ids = [(6, 0, busy)]
 
+    # ---------------------------------------------------------
+    # Busy Assistants
+    # ---------------------------------------------------------
     @api.depends('planned_date')
     def _compute_busy_assistants(self):
+
         now = fields.Datetime.now()
+
         for rec in self:
             busy = self.env['waste.service.request'].search([
+
                 ('planned_date', '>=', now),
+
                 ('assistance_id', '!=', False),
-                ('id', '!=', rec._origin.id or 0)
+
+                ('id', '!=', rec._origin.id or 0),
+
+                ('state', 'in', [
+                    'scheduled',
+                    'assigned',
+                    'dispatched'
+                ])
+
             ]).mapped('assistance_id').ids
+
             rec.busy_assistance_ids = [(6, 0, busy)]
 
+    # ---------------------------------------------------------
+    # Busy Trucks
+    # ---------------------------------------------------------
     @api.depends('planned_date')
     def _compute_busy_trucks(self):
+
         now = fields.Datetime.now()
+
         for rec in self:
             busy = self.env['waste.service.request'].search([
+
                 ('planned_date', '>=', now),
+
                 ('vehicle_id', '!=', False),
-                ('id', '!=', rec._origin.id or 0)
+
+                ('id', '!=', rec._origin.id or 0),
+
+                ('state', 'in', [
+                    'scheduled',
+                    'assigned',
+                    'dispatched'
+                ])
+
             ]).mapped('vehicle_id').ids
+
             rec.busy_track_ids = [(6, 0, busy)]
 
+    # ---------------------------------------------------------
+    # Busy Trailers
+    # ---------------------------------------------------------
     @api.depends('planned_date')
     def _compute_busy_traillers(self):
+
         now = fields.Datetime.now()
+
         for rec in self:
             busy = self.env['waste.service.request'].search([
+
                 ('planned_date', '>=', now),
+
                 ('trailer_id', '!=', False),
-                ('id', '!=', rec._origin.id or 0)
+
+                ('id', '!=', rec._origin.id or 0),
+
+                ('state', 'in', [
+                    'scheduled',
+                    'assigned',
+                    'dispatched'
+                ])
+
             ]).mapped('trailer_id').ids
+
             rec.busy_trailler_ids = [(6, 0, busy)]
 
     state = fields.Selection([
@@ -1224,6 +1336,8 @@ class WasteServiceRequest(models.Model):
                     qty = float(len(rec.bin_dropped_ids))
 
             rec.product_uom_qty = qty
+
+
 
     # ------------------------------------------------------------
     # SALE ORDER QTY SYNC

@@ -12,8 +12,8 @@
 
                     <group>
 
-                        <field name="fleet_operations_id" widget="many2one_avatar_user"/>
-                        <field name="operator_email" String="Mail To"
+                        <field name="reporting_manager_id" widget="many2one_avatar_user" string="Fleet Manager"/>
+                        <field name="manager_email" String="Mail To"
                                readonly="1"/>
                         <field name="comment"/>
 

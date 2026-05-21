@@ -150,7 +150,6 @@ access_finish_worksheet_wizard,access_finish_worksheet_wizard,model_finish_works
 
 access_ir_actions_act_window_view_driver,ir.actions.act.window.view driver,base.model_ir_actions_act_window_view,waste_management_zakheni.group_wmz_driver,1,0,0,0
 
-
-
+access_waste_transport_tariff,waste.transport.tariff.user,model_waste_transport_tariff,base.group_user,1,1,1,1
 
 

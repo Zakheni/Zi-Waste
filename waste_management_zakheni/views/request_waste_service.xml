@@ -437,20 +437,9 @@
                                              and state != 'cancelled'
                                              and state != 'generated'"/>
 
-                            <field name="disposal_site_ids"
-                                   string="Disposal Site"
-                                   widget="many2many_tags"
-                                   invisible="hide_droppoff_container_ids_placement
-                                              or (not hide_droppoff_container_ids_collection
-                                                  and not hide_lifted_bin_ids_swap
-                                                  and not hide_shunt_container_ids
-                                                  and not hide_droppoff_container_ids_removal)"
-                                   readonly="state != 'draft' and state != 'cancelled'"
-                            />
-
-
-<!--                            <field name="disposal_site_id" -->
+<!--                            <field name="disposal_site_ids"-->
 <!--                                   string="Disposal Site"-->
+<!--                                   widget="many2many_tags"-->
 <!--                                   invisible="hide_droppoff_container_ids_placement-->
 <!--                                              or (not hide_droppoff_container_ids_collection-->
 <!--                                                  and not hide_lifted_bin_ids_swap-->
@@ -458,6 +447,17 @@
 <!--                                                  and not hide_droppoff_container_ids_removal)"-->
 <!--                                   readonly="state != 'draft' and state != 'cancelled'"-->
 <!--                            />-->
+
+ <field name="allowed_disposal_site_ids" invisible="1"/>
+                            <field name="disposal_site_id"
+                                   string="Disposal Site"
+                                   invisible="hide_droppoff_container_ids_placement
+                                              or (not hide_droppoff_container_ids_collection
+                                                  and not hide_lifted_bin_ids_swap
+                                                  and not hide_shunt_container_ids
+                                                  and not hide_droppoff_container_ids_removal)"
+                                   readonly="state != 'draft' and state != 'cancelled'"
+                            />
 
 
                             <field name="quote_no" readonly="state != 'draft' and state != 'cancelled'"/>

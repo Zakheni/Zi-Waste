@@ -13,9 +13,9 @@ class VehicleResolvedWizard(models.TransientModel):
 
     reporting_manager_id = fields.Many2one(
         "hr.employee",
-        string="Reporting Manager",
+        string="Fleet Manager",
         required=True,
-        domain=[('job_id.name', '=', 'Reporting Manager')]
+        domain=[('job_id.name', '=', 'Fleet Manager')]
     )
 
     manager_email = fields.Char(

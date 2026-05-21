@@ -12,7 +12,7 @@
 
                     <group>
 
-                        <field name="reporting_manager_id" widget="many2one_avatar_user"/>
+                        <field name="reporting_manager_id" widget="many2one_avatar_user" string="Fleet Manager"/>
                         <field name="manager_email" string="Mail To"
                                readonly="1"/>
                         <field name="comment"/>

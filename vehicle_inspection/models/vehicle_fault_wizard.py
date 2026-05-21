@@ -13,9 +13,9 @@ class VehicleFaultWizard(models.TransientModel):
 
     reporting_manager_id = fields.Many2one(
         "hr.employee",
-        string="Reporting Manager",
+        string="Fleet Manager",
         required=True,
-        domain=[('job_id.name', '=', 'Reporting Manager')]
+        domain=[('job_id.name', '=', 'Fleet Manager')]
     )
 
     manager_email = fields.Char(
@@ -28,69 +28,69 @@ class VehicleFaultWizard(models.TransientModel):
         required=True
     )
 
-    def action_send_fault_email(self):
-
-        self.ensure_one()
-
-        if not self.manager_email:
-
-            raise ValidationError(
-                "Selected manager does not have email address."
-            )
-
-        mail_values = {
-
-            'subject': 'Vehicle Fault',
-
-            'body_html': f'''
-                <p>
-                    Vehicle fault detected.
-                </p>
-
-                <p>
-                    <strong>Vehicle:</strong>
-                    {self.inspection_id.vehicle_id.display_name}
-                </p>
-
-                <p>
-                    <strong>Inspection:</strong>
-                    {self.inspection_id.name}
-                </p>
-
-                <p>
-                    <strong>Comment:</strong>
-                    {self.comment}
-                </p>
-            ''',
-
-            'email_to': self.manager_email,
-        }
-
-        mail = self.env[
-            'mail.mail'
-        ].create(mail_values)
-
-        mail.send()
-
-        self.inspection_id.state = 'faulty'
-
-        # self.inspection_id.vehicle_id.is_vehicle_available = False
-
-        self.inspection_id.message_post(
-            body=f"""
-                Fault email sent to:
-                {self.reporting_manager_id.name}
-
-                <br/><br/>
-
-                Comment:
-                {self.comment}
-            """
-        )
-
-        return {
-            'type': 'ir.actions.act_window_close'
-        }
+    # def action_send_fault_email(self):
+    #
+    #     self.ensure_one()
+    #
+    #     if not self.manager_email:
+    #
+    #         raise ValidationError(
+    #             "Selected manager does not have email address."
+    #         )
+    #
+    #     mail_values = {
+    #
+    #         'subject': 'Vehicle Fault',
+    #
+    #         'body_html': f'''
+    #             <p>
+    #                 Vehicle fault detected.
+    #             </p>
+    #
+    #             <p>
+    #                 <strong>Vehicle:</strong>
+    #                 {self.inspection_id.vehicle_id.display_name}
+    #             </p>
+    #
+    #             <p>
+    #                 <strong>Inspection:</strong>
+    #                 {self.inspection_id.name}
+    #             </p>
+    #
+    #             <p>
+    #                 <strong>Comment:</strong>
+    #                 {self.comment}
+    #             </p>
+    #         ''',
+    #
+    #         'email_to': self.manager_email,
+    #     }
+    #
+    #     mail = self.env[
+    #         'mail.mail'
+    #     ].create(mail_values)
+    #
+    #     mail.send()
+    #
+    #     self.inspection_id.state = 'faulty'
+    #
+    #     # self.inspection_id.vehicle_id.is_vehicle_available = False
+    #
+    #     self.inspection_id.message_post(
+    #         body=f"""
+    #             Fault email sent to:
+    #             {self.reporting_manager_id.name}
+    #
+    #             <br/><br/>
+    #
+    #             Comment:
+    #             {self.comment}
+    #         """
+    #     )
+    #
+    #     return {
+    #         'type': 'ir.actions.act_window_close'
+    #     }
 
     def action_send_fault_email(self):
         self.ensure_one()

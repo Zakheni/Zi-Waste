@@ -24,20 +24,6 @@
     </record>
 
 
-    <!--    <record id="tank_tariff_septic" model="waste.tank.tariff">-->
-    <!--        <field name="name">Septic Tank</field>-->
-    <!--        <field name="code">septic</field>-->
-    <!--        <field name="base_kl">4</field>-->
-    <!--        <field name="base_price">2395</field>-->
-    <!--        <field name="extra_rate">295</field>-->
-    <!--    </record>-->
 
-    <!--    <record id="tank_tariff_grease" model="waste.tank.tariff">-->
-    <!--        <field name="name">Grease Trap</field>-->
-    <!--        <field name="code">grease</field>-->
-    <!--        <field name="base_kl">4</field>-->
-    <!--        <field name="base_price">3606.75</field>-->
-    <!--        <field name="extra_rate">362.25</field>-->
-    <!--    </record>-->
 
 </odoo>

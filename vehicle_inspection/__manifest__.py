@@ -20,7 +20,7 @@
         'data/mail_template_fault.xml',
         'data/mail_template_resolved.xml',
         'data/mail_template_resolved_not_running.xml',
-
+        'data/vehicle_inspection_data.xml',
         # reports
         'report/inspection_report.xml',
         'report/inspection_report_template.xml',
@@ -34,6 +34,7 @@
         'views/vehicle_resolved_wizard_views.xml',
         'views/vehicle_resolved_not_running_wizard_views.xml',
         'views/fleet_vehicle_views.xml',
+        'views//vehicle_inspection_history_views.xml',
 
         # MENU MUST BE LAST
         'views/menu.xml',

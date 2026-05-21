@@ -8,17 +8,19 @@
 
                 <field name="name"/>
                 <field name="inspection_type" optional="hide"/>
-                <field name="vehicle_id"/>
-                <field name="inspector_id" widget="many2one_avatar_user"/>
+                <field name="vehicle_id" widget="many2one_avatar_user"/>
                 <field name="partner_id" optional="hide"/>
                 <field name="driver_id" widget="many2one_avatar_user"/>
                 <field name="comment" optional="hide"/>
                 <field name="km_open" optional="hide"/>
+                <field name="inspection_date"/>
                 <field name="vehicle_description" optional="hide"/>
                 <field name="km_close" optional="hide"/>
                 <field name="inspection_date" optional="hide"/>
                 <field name="next_inspection_date" optional="hide"/>
+                <field name="inspector_id" widget="many2one_avatar_user"/>
                 <field name="state" widget="badge"
+                       decoration-primary="state == 'draft'"
                        decoration-danger="state == 'faulty'"
                        decoration-warning="state == 'not_running'"
                        decoration-info="state == 'resolved'"
@@ -44,7 +46,7 @@
                             type="object"
                             string="Draft"
                             class="btn-dark"
-                            invisible="state == 'draft'"/>
+                            invisible="state in ('draft', 'done')"/>
 
                     <button name="action_open_fault_wizard"
                             type="object"
@@ -69,17 +71,17 @@
                     <!--                            invisible="state not in ('draft','faulty')" />-->
 
 
-                    <button name="action_open_resolved_wizard"
-                            type="object"
-                            string="Resolved"
-                            class="btn-success"
-                            invisible="show_resolved_button == False or state in ('resolved','done')"/>
+<!--                    <button name="action_open_resolved_wizard"-->
+<!--                            type="object"-->
+<!--                            string="Resolved"-->
+<!--                            class="btn-success"-->
+<!--                            invisible="show_resolved_button == False or state in ('draft','resolved','done')"/>-->
 
                     <button name="action_open_resolved_not_running_wizard"
                             type="object"
                             string="Resolved"
                             class="btn-success"
-                            invisible="state in ('draft','resolved','done') or show_resolved_button == True"/>
+                            invisible="state in ('resolved','done') or show_resolved_button == True"/>
 
                     <button name="action_done"
                             type="object"
@@ -104,8 +106,8 @@
 
                 <sheet>
                     <group>
-<!--                        <field name="vehicle_available"/>-->
-<!--                        <field name="is_vehicle_available"/>-->
+                        <!--                        <field name="vehicle_available"/>-->
+                        <!--                        <field name="is_vehicle_available"/>-->
                     </group>
                     <div class="oe_title">
                         <h1>
@@ -169,83 +171,311 @@
 
                         <page string="Checklist">
 
+                            <!--                            <field name="line_ids"-->
+                            <!--                                   readonly="state != 'draft'">-->
+
+                            <!--                                <tree editable="bottom">-->
+                            <!--                                    <field name="category_id"/>-->
+
+                            <!--                                    <field name="item_id"-->
+                            <!--                                           domain="[('id', 'not in', parent.used_item_ids)]"/>-->
+
+                            <!--                                    <field name="result"-->
+                            <!--                                           widget="radio"-->
+                            <!--                                           options="{'horizontal': True}"-->
+                            <!--                                           string="Check"/>-->
+
+                            <!--                                    <field name="note"/>-->
+
+                            <!--                                    <field name="require_photo" invisible="result != 'fault'"/>-->
+
+                            <!--                                </tree>-->
+                            <!--                            <field name="line_ids"-->
+                            <!--                                   readonly="state != 'draft'">-->
+
+                            <!--                                <tree editable="bottom">-->
+
+                            <!--                                    <field name="display_type" column_invisible="1"/>-->
+
+                            <!--                                    <field name="name"-->
+                            <!--                                           readonly="1"-->
+                            <!--                                           invisible="display_type != 'line_section'"/>-->
+
+                            <!--                                    <field name="category_id"-->
+                            <!--                                           invisible="display_type == 'line_section'"/>-->
+
+                            <!--                                    <field name="item_id"-->
+                            <!--                                           invisible="display_type == 'line_section'"-->
+                            <!--                                           domain="[('id', 'not in', parent.used_item_ids)]"/>-->
+
+                            <!--                                    <field name="result"-->
+                            <!--                                           invisible="display_type == 'line_section'"-->
+                            <!--                                           widget="radio"-->
+                            <!--                                           options="{'horizontal': True}"-->
+                            <!--                                           string="Check"/>-->
+
+                            <!--                                    <field name="note"-->
+                            <!--                                           invisible="display_type == 'line_section'"/>-->
+
+                            <!--                                    <field name="require_photo"-->
+                            <!--                                           invisible="result != 'fault'"/>-->
+
+                            <!--                                </tree>-->
+
+
+                            <!--                                <form>-->
+
+                            <!--                                    <sheet>-->
+
+
+                            <!--                                        <group>-->
+                            <!--                                            <group>-->
+                            <!--                                                <field name="category_id" readonly="1"/>-->
+                            <!--                                                <field name="item_id"/>-->
+                            <!--                                                <field name="result"-->
+                            <!--                                                       widget="radio"-->
+                            <!--                                                       options="{'horizontal': True}"-->
+                            <!--                                                       invisible="item_id == False"/>-->
+                            <!--                                                <field name="result" invisible="1"/>-->
+                            <!--                                            </group>-->
+                            <!--                                            <group>-->
+                            <!--                                                <field name="note"/>-->
+                            <!--                                                <field name="require_photo" invisible="result != 'fault'"/>-->
+                            <!--                                            </group>-->
+                            <!--                                            &lt;!&ndash;                                            <group string="Photos"&ndash;&gt;-->
+                            <!--                                            &lt;!&ndash;                                                   invisible="result != 'fault'">&ndash;&gt;-->
+
+                            <!--                                            <field name="photo_ids" invisible="result != 'fault'">-->
+
+                            <!--                                                <tree editable="bottom">-->
+
+                            <!--                                                    <field name="image"-->
+                            <!--                                                           widget="image"/>-->
+
+                            <!--                                                    <field name="name"/>-->
+
+
+                            <!--                                                </tree>-->
+
+                            <!--                                                <form>-->
+
+                            <!--                                                    <sheet>-->
+
+                            <!--                                                        <group>-->
+
+                            <!--                                                            <field name="image" required="1"-->
+                            <!--                                                                   widget="image"/>-->
+
+                            <!--                                                            <field name="name" required="1"/>-->
+
+
+                            <!--                                                        </group>-->
+
+                            <!--                                                    </sheet>-->
+
+                            <!--                                                </form>-->
+
+                            <!--                                            </field>-->
+
+                            <!--                                        </group>-->
+                            <!--                                        &lt;!&ndash;                                        </group>&ndash;&gt;-->
+
+                            <!--                                    </sheet>-->
+
+                            <!--                                </form>-->
+
+                            <!--                            </field>-->
+
+
+                            <!--                            <field name="line_ids"-->
+                            <!--                                   readonly="state != 'draft'">-->
+
+                            <!--                                <tree editable="bottom">-->
+
+                            <!--                                    <field name="display_type" column_invisible="1"/>-->
+
+                            <!--                                    <field name="name"-->
+                            <!--                                           readonly="1"-->
+                            <!--                                           invisible="display_type != 'line_section'"/>-->
+
+                            <!--                                    <field name="category_id"-->
+                            <!--                                           invisible="display_type == 'line_section'"/>-->
+
+                            <!--                                    <field name="item_id"-->
+                            <!--                                           invisible="display_type == 'line_section'"/>-->
+
+                            <!--                                    <field name="result"-->
+                            <!--                                           invisible="display_type == 'line_section'"-->
+                            <!--                                           widget="radio"-->
+                            <!--                                           options="{'horizontal': True}"/>-->
+
+                            <!--                                    <field name="note"-->
+                            <!--                                           invisible="display_type == 'line_section'"/>-->
+
+                            <!--                                </tree>-->
+
+                            <!--                                <form>-->
+
+                            <!--                                    <sheet>-->
+
+                            <!--                                        <group>-->
+
+                            <!--                                            <group>-->
+
+                            <!--                                                <field name="display_type" invisible="1"/>-->
+
+                            <!--                                                <field name="name"-->
+                            <!--                                                       invisible="display_type != 'line_section'"/>-->
+
+                            <!--                                                <field name="category_id"-->
+                            <!--                                                       invisible="display_type == 'line_section'"-->
+                            <!--                                                       readonly="1"/>-->
+
+                            <!--                                                <field name="item_id"-->
+                            <!--                                                       invisible="display_type == 'line_section'"/>-->
+
+                            <!--                                                <field name="result"-->
+                            <!--                                                       invisible="display_type == 'line_section'"-->
+                            <!--                                                       widget="radio"-->
+                            <!--                                                       options="{'horizontal': True}"/>-->
+
+                            <!--                                            </group>-->
+
+                            <!--                                            <group>-->
+
+                            <!--                                                <field name="note"-->
+                            <!--                                                       invisible="display_type == 'line_section'"/>-->
+
+                            <!--                                            </group>-->
+
+                            <!--                                        </group>-->
+
+                            <!--                                    </sheet>-->
+
+                            <!--                                </form>-->
+
+                            <!--                            </field>-->
+
                             <field name="line_ids"
                                    readonly="state != 'draft'">
 
-                                <tree>
-                                    <field name="category_id"/>
+                                <tree open_form_view="1"
+                                      decoration-muted="display_type == 'line_section'">
+
+                                    <field name="display_type" column_invisible="1"/>
+
+                                    <field name="name"
+                                           readonly="1"
+                                           class="fw-bold text-uppercase text-primary"
+                                           width="300"/>
+
+                                    <field name="category_id"
+                                           invisible="display_type == 'line_section'"
+                                           width="220"/>
 
                                     <field name="item_id"
-                                           domain="[('id', 'not in', parent.used_item_ids)]"/>
+                                           invisible="display_type == 'line_section'"
+                                           width="350"/>
 
                                     <field name="result"
+                                           invisible="display_type == 'line_section'"
                                            widget="radio"
                                            options="{'horizontal': True}"
-                                           string="Check"/>
+                                           width="180"/>
 
-                                    <field name="note"/>
+                                    <field name="require_photo"
+                                           invisible="display_type == 'line_section' or result != 'fault'"
+                                           readonly="1"
+                                           width="120"/>
 
-                                    <field name="require_photo" invisible="result != 'fault'"/>
+                                    <!--                                    <button name="action_open_photos"-->
+                                    <!--                                            type="object"-->
+                                    <!--                                            icon="fa-camera"-->
+                                    <!--                                            string="Photos"-->
+                                    <!--                                            invisible="display_type == 'line_section' or result != 'fault'"-->
+                                    <!--                                            width="120"/>-->
 
                                 </tree>
-
 
                                 <form>
 
                                     <sheet>
 
-
                                         <group>
+
                                             <group>
-                                                <field name="category_id" readonly="1"/>
-                                                <field name="item_id"/>
+
+                                                <field name="display_type" invisible="1"/>
+
+                                                <field name="name"
+                                                       invisible="display_type != 'line_section'"
+                                                       class="fw-bold text-primary"
+                                                       readonly="1"/>
+
+                                                <field name="category_id"
+                                                       invisible="display_type == 'line_section'"
+                                                       readonly="1"/>
+
+                                                <field name="item_id"
+                                                       invisible="display_type == 'line_section'"  readonly="1"/>
+
                                                 <field name="result"
+                                                       invisible="display_type == 'line_section'"
                                                        widget="radio"
-                                                       options="{'horizontal': True}"
-                                                       invisible="item_id == False"/>
-                                                <field name="result" invisible="1"/>
+                                                       options="{'horizontal': True}"/>
+
+
+
                                             </group>
+
                                             <group>
-                                                <field name="note"/>
-                                                <field name="require_photo" invisible="result != 'fault'"/>
+
+                                                <field name="note"
+                                                       invisible="display_type == 'line_section'"/>
+                                                <field name="require_photo"
+                                                       invisible="display_type == 'line_section'"
+                                                       readonly="1"/>
+
                                             </group>
-                                            <!--                                            <group string="Photos"-->
-                                            <!--                                                   invisible="result != 'fault'">-->
-
-                                            <field name="photo_ids" invisible="result != 'fault'">
-
-                                                <tree editable="bottom">
-
-                                                    <field name="image"
-                                                           widget="image"/>
-
-                                                    <field name="name"/>
 
 
-                                                </tree>
-
-                                                <form>
-
-                                                    <sheet>
-
-                                                        <group>
-
-                                                            <field name="image" required="1"
-                                                                   widget="image"/>
-
-                                                            <field name="name" required="1"/>
+                                            <!-- PHOTO SECTION -->
 
 
-                                                        </group>
 
-                                                    </sheet>
+                                                <field name="photo_ids" invisible="result != 'fault' or display_type == 'line_section'">
 
-                                                </form>
+                                                    <tree editable="bottom">
 
-                                            </field>
+                                                        <field name="image"
+                                                               widget="image"/>
+
+                                                        <field name="name" required="1"/>
+
+                                                    </tree>
+
+                                                    <form>
+
+                                                        <sheet>
+
+                                                            <group>
+
+                                                                <field name="image"
+                                                                       widget="image"
+                                                                       required="1"/>
+
+                                                                <field name="name"
+                                                                       required="1"/>
+
+                                                            </group>
+
+                                                        </sheet>
+
+                                                    </form>
+
+                                                </field>
 
                                         </group>
-                                        <!--                                        </group>-->
 
                                     </sheet>
 
@@ -300,5 +530,9 @@
         <field name="name">Vehicle Inspections</field>
         <field name="res_model">vehicle.inspection</field>
         <field name="view_mode">tree,form</field>
+        <field name="views" eval="[
+        (ref('view_vehicle_inspection_tree'), 'tree'),
+        (ref('view_vehicle_inspection_form'), 'form')
+    ]"/>
     </record>
 </odoo>

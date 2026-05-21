@@ -23,24 +23,117 @@ class VehicleInspection(models.Model):
         index=True
     )
 
+    # @api.model
+    # def create(self, vals):
+    #     if vals.get('name', 'New') == 'New':
+    #         vals['name'] = self.env['ir.sequence'].next_by_code('vehicle.inspection') or 'New'
+    #
+    #     return super().create(vals)
+
+    @api.model
+    def default_get(self, fields_list):
+
+        res = super().default_get(fields_list)
+
+        lines = []
+
+        categories = self.env[
+            'vehicle.inspection.category'
+        ].search(
+            [('active', '=', True)],
+            order='sequence'
+        )
+
+        for category in categories:
+
+            # SECTION
+            lines.append((0, 0, {
+                'display_type': 'line_section',
+                'name': category.name,
+            }))
+
+            items = self.env[
+                'vehicle.inspection.item'
+            ].search([
+                ('category_id', '=', category.id),
+                ('active', '=', True)
+            ])
+
+            for item in items:
+                lines.append((0, 0, {
+                    'item_id': item.id,
+                }))
+
+        res['line_ids'] = lines
+
+        return res
+
+    @api.model
+    def default_get(self, fields_list):
+
+        res = super().default_get(fields_list)
+
+        lines = []
+
+        categories = self.env[
+            'vehicle.inspection.category'
+        ].search(
+            [('active', '=', True)],
+            order='sequence'
+        )
+
+        for category in categories:
+
+            # SECTION
+            lines.append((0, 0, {
+                'display_type': 'line_section',
+                'name': category.name,
+            }))
+
+            items = self.env[
+                'vehicle.inspection.item'
+            ].search([
+                ('category_id', '=', category.id),
+                ('active', '=', True)
+            ])
+
+            for item in items:
+                lines.append((0, 0, {
+                    'item_id': item.id,
+                }))
+
+        res['line_ids'] = lines
+
+        return res
+
     @api.model
     def create(self, vals):
+
         if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('vehicle.inspection') or 'New'
+            vals['name'] = self.env[
+                               'ir.sequence'
+                           ].next_by_code(
+                'vehicle.inspection'
+            ) or 'New'
 
         return super().create(vals)
-
     inspection_type = fields.Selection([
         ("fleet", "Internal Fleet"),
         ("customer", "Customer / Garage")
     ], default="fleet", required=True)
 
+
     vehicle_id = fields.Many2one(
         "fleet.vehicle",
         required=True,
         tracking=True,
-        domain=[('is_vehicle_available', '=', True)]
+        domain=lambda self: [
+            ('id', 'not in', self.env['vehicle.inspection'].search([
+                ('state', 'in', ['faulty', 'not_running', 'draft'])
+            ]).mapped('vehicle_id').ids)
+        ]
     )
+
     partner_id = fields.Many2one("res.partner")
     inspection_date = fields.Date(default=fields.Date.today, required=True)
     inspector_id = fields.Many2one("res.users", default=lambda self: self.env.user)
@@ -61,6 +154,7 @@ class VehicleInspection(models.Model):
     line_ids = fields.One2many("vehicle.inspection.line", "inspection_id")
     signature = fields.Binary(string="Inspector Signature")
     next_inspection_date = fields.Date()
+    active = fields.Boolean(default=True)
 
     has_issue = fields.Boolean(compute="_compute_has_issue", store=True)
 
@@ -91,13 +185,15 @@ class VehicleInspection(models.Model):
             if not rec.vehicle_id:
                 continue
 
-            if rec.state in ['faulty', 'not_running']:
+            if rec.state in ['not_running']:
 
                 rec.vehicle_id.is_vehicle_available = False
 
             else:
 
                 rec.vehicle_id.is_vehicle_available = True
+
+
 
     @api.depends("line_ids.result")
     def _compute_has_issue(self):
@@ -109,31 +205,24 @@ class VehicleInspection(models.Model):
 
     # @api.onchange("inspection_type")
     # def _onchange_inspection_type(self):
-    #     self.line_ids = [(5, 0, 0)]
-    #     items = self.env["vehicle.inspection.item"].search([])
-    #     self.line_ids = [(0, 0, {
-    #         "category_id": i.category_id.id,
-    #         "item_id": i.id
-    #     }) for i in items]
+    #
+    #     if self.line_ids:
+    #         return
+    #
+    #     items = self.env[
+    #         "vehicle.inspection.item"
+    #     ].search([
+    #         ("active", "=", True)
+    #     ])
+    #
+    #     self.line_ids = [
+    #         (0, 0, {
+    #             "item_id": item.id,
+    #         })
+    #         for item in items
+    #     ]
 
-    @api.onchange("inspection_type")
-    def _onchange_inspection_type(self):
 
-        if self.line_ids:
-            return
-
-        items = self.env[
-            "vehicle.inspection.item"
-        ].search([
-            ("active", "=", True)
-        ])
-
-        self.line_ids = [
-            (0, 0, {
-                "item_id": item.id,
-            })
-            for item in items
-        ]
 
     def action_draft(self):
         self.state = "draft"
@@ -176,10 +265,25 @@ class VehicleInspection(models.Model):
 
         return True
 
+    # def action_done(self):
+    #
+    #     for rec in self:
+    #         rec.state = "done"
+    #
+    #         rec.message_post(
+    #             body="✅ Inspection completed."
+    #         )
+    #
+    #     return True
+
     def action_done(self):
 
         for rec in self:
             rec.state = "done"
+
+            rec.vehicle_id.is_vehicle_available = True
+
+            rec.active = False
 
             rec.message_post(
                 body="✅ Inspection completed."
@@ -203,7 +307,7 @@ class VehicleInspection(models.Model):
 
             if rec.vehicle_id:
 
-                if rec.state in ['faulty', 'not_running']:
+                if rec.state in ['not_running']:
 
                     rec.vehicle_id.is_vehicle_available = False
 
@@ -320,6 +424,9 @@ class VehicleInspection(models.Model):
             }
         }
 
+
+
+
     show_fault_button = fields.Boolean(
         compute="_compute_show_fault_button"
     )
@@ -368,7 +475,7 @@ class VehicleInspectionImage(models.Model):
         'vehicle.inspection.line',
         string='Inspection Line',
         ondelete='cascade',
-        required=True,
+
     )
 
     item_id = fields.Many2one(
@@ -377,7 +484,7 @@ class VehicleInspectionImage(models.Model):
         readonly=True,
     )
 
-    name = fields.Char(string='Description', required=True,)
+    name = fields.Char(string='Description', )
 
     image = fields.Image(
         string='Image',

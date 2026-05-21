@@ -6,7 +6,7 @@
             <field name="model_id" ref="vehicle_inspection.model_vehicle_not_running_wizard"/>
             <field name="subject">Vehicle Not Running - {{object.inspection_id.name}}</field>
             <field name="email_from">{{user.email}}</field>
-            <field name="email_to">{{object.operator_email}}</field>
+            <field name="email_to">{{object.manager_email}}</field>
             <field name="auto_delete" eval="False"/>
 
             <field name="body_html" type="html">

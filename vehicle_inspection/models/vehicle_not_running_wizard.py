@@ -11,15 +11,15 @@ class VehicleNotRunningWizard(models.TransientModel):
         required=True
     )
 
-    fleet_operations_id = fields.Many2one(
+    reporting_manager_id = fields.Many2one(
         "hr.employee",
-        string="Reporting Manager",
+        string="Fleet Manager",
         required=True,
-        domain=[('job_id.name', '=', 'Fleet Operations')]
+        domain=[('job_id.name', '=', 'Fleet Manager')]
     )
 
-    operator_email = fields.Char(
-        related="fleet_operations_id.work_email",
+    manager_email = fields.Char(
+        related="reporting_manager_id.work_email",
         readonly=True
     )
 
@@ -31,7 +31,7 @@ class VehicleNotRunningWizard(models.TransientModel):
     def action_send_not_running_email(self):
         self.ensure_one()
 
-        if not self.operator_email:
+        if not self.manager_email:
             raise ValidationError(
                 "Selected Operator does not have email address."
             )

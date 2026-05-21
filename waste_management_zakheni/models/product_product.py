@@ -1,6 +1,6 @@
 # models/product_template.py
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ProductTemplate(models.Model):
@@ -13,6 +13,243 @@ class ProductTemplate(models.Model):
         default=lambda self: self.env.company,
         index=True
     )
+
+    # ---------------------------------------------------------
+    # TRANSPORT SERVICE
+    # ---------------------------------------------------------
+    is_transport_service = fields.Boolean(
+        string="Transport Service"
+    )
+
+    # ---------------------------------------------------------
+    # TRANSPORT RATE TYPE
+    # ---------------------------------------------------------
+    transport_rate_type = fields.Selection([
+
+        ('flat_single', 'Flat Rate - Single Bin'),
+        ('flat_multiple', 'Flat Rate - Multiple Bins'),
+
+        ('per_bin_single', 'Per Bin - Single Bin'),
+        ('per_bin_multiple', 'Per Bin - Multiple Bins'),
+
+        ('per_trip', 'Per Trip'),
+
+        ('per_bin_per_km_single', 'Per Bin Per KM - Single Bin'),
+        ('per_bin_per_km_multiple', 'Per Bin Per KM - Multiple Bins'),
+
+        ('per_trip_per_km', 'Per Trip Per KM'),
+
+        ('tier_bin_1', 'Tiered By Bin Count - 1 Bin'),
+        ('tier_bin_2_3', 'Tiered By Bin Count - 2 To 3 Bins'),
+        ('tier_bin_4_plus', 'Tiered By Bin Count - 4+ Bins'),
+
+        ('tier_distance_0_10', 'Tiered By Distance - 0 To 10 KM'),
+        ('tier_distance_11_30', 'Tiered By Distance - 11 To 30 KM'),
+        ('tier_distance_31_plus', 'Tiered By Distance - 31+ KM'),
+
+        ('hybrid_bin_trip', 'Hybrid - Per Bin + Flat Trip'),
+        ('hybrid_trip_km', 'Hybrid - Trip + KM'),
+
+    ],
+        string="Transport Rate Type",
+    )
+
+    # # ---------------------------------------------------------
+    # # AUTO POPULATE PRICING
+    # # ---------------------------------------------------------
+    # @api.onchange('transport_rate_type')
+    # def _onchange_transport_rate_type(self):
+    #
+    #     for rec in self:
+    #
+    #         if not rec.transport_rate_type:
+    #             continue
+    #
+    #         tariff = self.env[
+    #             'waste.transport.tariff'
+    #         ].search([
+    #             ('code', '=', rec.transport_rate_type),
+    #             ('company_id', '=', rec.company_id.id),
+    #             ('active', '=', True),
+    #         ], limit=1)
+    #
+    #         if not tariff:
+    #             raise ValidationError(_(
+    #                 "No active transport tariff found for:\n"
+    #                 "- %s",
+    #                 rec.transport_rate_type
+    #             ))
+    #
+    #         # -------------------------------------------------
+    #         # FLAT RATES
+    #         # -------------------------------------------------
+    #         if rec.transport_rate_type == 'flat_single':
+    #
+    #             rec.list_price = tariff.single_bin_price
+    #
+    #         elif rec.transport_rate_type == 'flat_multiple':
+    #
+    #             rec.list_price = tariff.multiple_bin_price
+    #
+    #         # -------------------------------------------------
+    #         # PER BIN
+    #         # -------------------------------------------------
+    #         elif rec.transport_rate_type in (
+    #                 'per_bin_single',
+    #                 'per_bin_multiple',
+    #         ):
+    #
+    #             rec.list_price = tariff.per_bin_rate
+    #
+    #         # -------------------------------------------------
+    #         # PER TRIP
+    #         # -------------------------------------------------
+    #         elif rec.transport_rate_type == 'per_trip':
+    #
+    #             rec.list_price = tariff.per_trip_rate
+    #
+    #         # -------------------------------------------------
+    #         # PER KM
+    #         # -------------------------------------------------
+    #         elif rec.transport_rate_type in (
+    #                 'per_bin_per_km_single',
+    #                 'per_bin_per_km_multiple',
+    #                 'per_trip_per_km',
+    #         ):
+    #
+    #             rec.list_price = tariff.per_km_rate
+    #
+    #         # -------------------------------------------------
+    #         # HYBRID
+    #         # -------------------------------------------------
+    #         elif rec.transport_rate_type in (
+    #                 'hybrid_bin_trip',
+    #                 'hybrid_trip_km',
+    #         ):
+    #
+    #             rec.list_price = tariff.base_rate
+    #
+    #         # -------------------------------------------------
+    #         # TIERED
+    #         # -------------------------------------------------
+    #         else:
+    #
+    #             rec.list_price = tariff.rate
+
+    # ---------------------------------------------------------
+    # AUTO POPULATE PRICING
+    # ---------------------------------------------------------
+    @api.onchange('transport_rate_type')
+    def _onchange_transport_rate_type(self):
+
+        for rec in self:
+
+            if not rec.transport_rate_type:
+                continue
+
+            tariff = self.env[
+                'waste.transport.tariff'
+            ].search([
+                ('code', '=', rec.transport_rate_type),
+                ('company_id', '=', rec.company_id.id),
+                ('active', '=', True),
+            ], limit=1)
+
+            if not tariff:
+                raise ValidationError(_(
+                    "No active transport tariff found for:\n"
+                    "- %s",
+                    rec.transport_rate_type
+                ))
+
+            # Reset default
+            rec.list_price = 0.0
+
+            # -------------------------------------------------
+            # FLAT RATE - SINGLE BIN
+            # -------------------------------------------------
+            if rec.transport_rate_type == 'flat_single':
+
+                rec.list_price = tariff.single_bin_price
+
+            # -------------------------------------------------
+            # FLAT RATE - MULTIPLE BINS
+            # -------------------------------------------------
+            elif rec.transport_rate_type == 'flat_multiple':
+
+                rec.list_price = tariff.multiple_bin_price
+
+            # -------------------------------------------------
+            # PER BIN
+            # -------------------------------------------------
+            elif rec.transport_rate_type in (
+                    'per_bin_single',
+                    'per_bin_multiple',
+            ):
+
+                rec.list_price = tariff.per_bin_rate
+
+            # -------------------------------------------------
+            # PER TRIP
+            # -------------------------------------------------
+            elif rec.transport_rate_type == 'per_trip':
+
+                rec.list_price = tariff.per_trip_rate
+
+            # -------------------------------------------------
+            # PER BIN PER KM
+            # Base KM rate
+            # -------------------------------------------------
+            elif rec.transport_rate_type in (
+                    'per_bin_per_km_single',
+                    'per_bin_per_km_multiple',
+            ):
+
+                rec.list_price = tariff.per_km_rate
+
+            # -------------------------------------------------
+            # PER TRIP PER KM
+            # Base KM rate
+            # -------------------------------------------------
+            elif rec.transport_rate_type == 'per_trip_per_km':
+
+                rec.list_price = tariff.per_km_rate
+
+            # -------------------------------------------------
+            # TIERED BIN COUNT
+            # -------------------------------------------------
+            elif rec.transport_rate_type in (
+                    'tier_bin_1',
+                    'tier_bin_2_3',
+                    'tier_bin_4_plus',
+            ):
+
+                rec.list_price = tariff.rate
+
+            # -------------------------------------------------
+            # TIERED DISTANCE
+            # -------------------------------------------------
+            elif rec.transport_rate_type in (
+                    'tier_distance_0_10',
+                    'tier_distance_11_30',
+                    'tier_distance_31_plus',
+            ):
+
+                rec.list_price = tariff.rate
+
+            # -------------------------------------------------
+            # HYBRID - PER BIN + FLAT TRIP
+            # -------------------------------------------------
+            elif rec.transport_rate_type == 'hybrid_bin_trip':
+
+                rec.list_price = tariff.base_rate
+
+            # -------------------------------------------------
+            # HYBRID - TRIP + KM
+            # -------------------------------------------------
+            elif rec.transport_rate_type == 'hybrid_trip_km':
+
+                rec.list_price = tariff.base_rate
 
     waste_qty = fields.Float(
         string="Waste Request Qty",

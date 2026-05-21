@@ -19,11 +19,20 @@
               parent="menu_vehicle_inspection_root"
               action="vehicle_inspection.action_inspection_item"/>
 
-<!--    <menuitem id="menu_vehicle_inspection_dashboard"-->
-<!--              name="Dashboard"-->
-<!--              parent="menu_vehicle_inspection_root"-->
-<!--              action="action_vehicle_inspection_dashboard"-->
-<!--              sequence="1"/>-->
+<!--    <menuitem id="menu_configuration"-->
+<!--              name="Configuration "-->
+<!--              parent="menu_vehicle_inspection_root"/>-->
+
+<!--    <menuitem id="menu_configuration_history"-->
+<!--              name="Vehicle Inspection History"-->
+<!--              parent="menu_configuration"-->
+<!--              action="vehicle_inspection.action_vehicle_inspection_history"/>-->
+
+    <!--    <menuitem id="menu_vehicle_inspection_dashboard"-->
+    <!--              name="Dashboard"-->
+    <!--              parent="menu_vehicle_inspection_root"-->
+    <!--              action="action_vehicle_inspection_dashboard"-->
+    <!--              sequence="1"/>-->
 
 
 </odoo>

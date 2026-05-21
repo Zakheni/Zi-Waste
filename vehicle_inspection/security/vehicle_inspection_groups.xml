@@ -14,7 +14,7 @@
     <!-- INSPECTION USER -->
     <!-- ============================= -->
     <record id="group_vehicle_inspection_user" model="res.groups">
-        <field name="name">Inspection User</field>
+        <field name="name">Fleet User</field>
         <field name="category_id" ref="vehicle_inspection.module_category_vehicle_inspection"/>
     </record>
 
@@ -22,7 +22,7 @@
     <!-- INSPECTION MANAGER -->
     <!-- ============================= -->
     <record id="group_vehicle_inspection_manager" model="res.groups">
-        <field name="name">Inspection Manager</field>
+        <field name="name">Fleet Manager</field>
         <field name="category_id" ref="vehicle_inspection.module_category_vehicle_inspection"/>
         <field name="implied_ids" eval="[(4, ref('vehicle_inspection.group_vehicle_inspection_user'))]"/>
     </record>
