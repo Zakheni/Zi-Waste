@@ -39,7 +39,13 @@ class VehicleInspectionLine(models.Model):
         'vehicle.inspection.image',
         'line_id',
         string='Photos',
-        required=True,
+        # required=True,
+    )
+
+    # ADD IT HERE
+    photo_button = fields.Char(
+        string="Action",
+        default=" "
     )
 
     require_photo = fields.Boolean(
@@ -54,6 +60,67 @@ class VehicleInspectionLine(models.Model):
         store=True,
         readonly=True
     )
+
+    photo_count = fields.Integer(
+        compute="_compute_photo_count",
+        string="Photos"
+    )
+
+    @api.depends('photo_ids')
+    def _compute_photo_count(self):
+        for rec in self:
+            rec.photo_count = len(rec.photo_ids)
+
+    # @api.constrains('result', 'require_photo', 'photo_ids')
+    # def _check_fault_photo_required(self):
+    #
+    #     for rec in self:
+    #
+    #         if rec.display_type == 'line_section':
+    #             continue
+    #
+    #         if (
+    #                 rec.result == 'fault'
+    #                 and rec.require_photo
+    #                 and len(rec.photo_ids) == 0
+    #         ):
+    #             raise ValidationError(
+    #                 f"Please upload at least one photo for '{rec.item_id.name}'."
+    #             )
+
+    # @api.constrains('line_ids.result', 'line_ids.photo_ids')
+    # def _check_required_photos(self):
+    #
+    #     for inspection in self:
+    #
+    #         for line in inspection.line_ids:
+    #
+    #             if (
+    #                     line.display_type != 'line_section'
+    #                     and line.result == 'fault'
+    #                     and line.require_photo
+    #                     and len(line.photo_ids) == 0
+    #             ):
+    #                 raise ValidationError(
+    #                     f"Please upload at least one photo for '{line.item_id.name}'."
+    #                 )
+
+    @api.constrains('line_ids')
+    def _check_required_photos(self):
+
+        for inspection in self:
+
+            for line in inspection.line_ids:
+
+                if (
+                        line.display_type != 'line_section'
+                        and line.result == 'fault'
+                        and line.require_photo
+                        and not line.photo_ids
+                ):
+                    raise ValidationError(
+                        f"Please upload at least one photo for '{line.item_id.name}'."
+                    )
 
     def action_open_photos(self):
 
@@ -81,126 +148,113 @@ class VehicleInspectionLine(models.Model):
 
     ]
 
-    @api.constrains(
-        'display_type',
-        'item_id',
-        'result',
-        'photo_ids',
-        'require_photo'
-    )
-    def _check_normal_lines(self):
-
-        for rec in self:
-
-            # Skip section rows
-            if rec.display_type == 'line_section':
-                continue
-
-            if not rec.item_id:
-                raise ValidationError(
-                    "Inspection item is required."
-                )
-
-
-            # PHOTO REQUIRED VALIDATION
-            if (
-                    rec.require_photo
-                    and rec.result == 'fault'
-                    and not rec.photo_ids
-            ):
-                raise ValidationError(
-                    "Please upload photo(s) for: %s"
-                    % rec.item_id.name
-                )
-
-    # @api.model_create_multi
-    # def create(self, vals_list):
+    # @api.constrains(
+    #     'display_type',
+    #     'item_id',
+    #     'result',
+    #     'photo_ids',
+    #     'require_photo'
+    # )
+    # def _check_normal_lines(self):
     #
-    #     records = super().create(vals_list)
+    #     for rec in self:
     #
-    #     records.mapped(
-    #         'inspection_id'
-    #     )._update_state_from_lines()
-    #
-    #     return records
-
-    # def write(self, vals):
-    #     res = super().write(vals)
-    #
-    #     self.mapped(
-    #         'inspection_id'
-    #     )._update_state_from_lines()
-    #
-    #     return res
-
-    # def write(self, vals):
-    #
-    #     res = super().write(vals)
-    #
-    #     self.mapped(
-    #         'inspection_id'
-    #     )._update_state_from_lines()
-    #
-    #     # Trigger wizard when fault selected
-    #     if vals.get('result') == 'fault':
-    #         return self._open_fault_wizard()
-    #
-    #     return res
-
-    # def write(self, vals):
-    #
-    #     res = super().write(vals)
-    #
-    #     self.mapped(
-    #         'inspection_id'
-    #     )._update_state_from_lines()
-    #
-    #     return res
-
-    # @api.constrains("photo_ids", "require_photo", "result")
-    # def _check_required_photo(self):
-    #
-    #     for line in self:
-    #
-    #         # Skip unsaved/new records
-    #         if not line._origin.id:
+    #         # Skip section rows
+    #         if rec.display_type == 'line_section':
     #             continue
     #
+    #         if not rec.item_id:
+    #             raise ValidationError(
+    #                 "Inspection item is required."
+    #             )
+    #
+    #
+    #         # PHOTO REQUIRED VALIDATION
     #         if (
-    #                 line.require_photo
-    #                 and line.result == "fault"
-    #                 and not line.photo_ids
+    #                 rec.require_photo
+    #                 and rec.result == 'fault'
+    #                 and not rec.photo_ids
     #         ):
     #             raise ValidationError(
-    #                 "Photos are required for item: %s"
-    #                 % line.item_id.name
+    #                 "Please upload photo(s) for: %s"
+    #                 % rec.item_id.name
     #             )
 
-    def _open_fault_wizard(self):
+    # def _open_fault_wizard(self):
+    #
+    #     self.ensure_one()
+    #
+    #     return {
+    #         'type': 'ir.actions.act_window',
+    #         'name': 'Fault Notification',
+    #         'res_model': 'vehicle.fault.wizard',
+    #         'view_mode': 'form',
+    #         'target': 'new',
+    #         'context': {
+    #             'default_inspection_id': self.inspection_id.id,
+    #         }
+    #     }
+    #
+    # def action_open_photo_popup(self):
+    #     self.ensure_one()
+    #
+    #     return {
+    #         'type': 'ir.actions.act_window',
+    #         'name': 'Inspection Line',
+    #         'res_model': 'vehicle.inspection.line',
+    #         'view_mode': 'form',
+    #         'res_id': self.id,
+    #         'target': 'new',
+    #     }
 
+    # @api.constrains(
+    #     'display_type',
+    #     'item_id',
+    #     'result',
+    #     'photo_ids',
+    #     'require_photo'
+    # )
+    # def _check_photo_required(self):
+    #
+    #     for rec in self:
+    #
+    #         if rec.display_type == 'line_section':
+    #             continue
+    #
+    #         if not rec.item_id:
+    #             raise ValidationError(
+    #                 "Inspection item is required."
+    #             )
+    #
+    #         if (
+    #                 rec.require_photo
+    #                 and rec.result == 'fault'
+    #                 and not rec.photo_ids
+    #         ):
+    #             raise ValidationError(
+    #                 "Photo is required for this fault."
+    #             )
+
+    # def action_open_photo_popup(self):
+    #     self.ensure_one()
+    #
+    #     return {
+    #         'type': 'ir.actions.act_window',
+    #         'name': 'Inspection Line',
+    #         'res_model': 'vehicle.inspection.line',
+    #         'view_mode': 'form',
+    #         'res_id': self.id,
+    #         'target': 'new',
+    #     }
+
+    def action_open_photo_popup(self):
         self.ensure_one()
 
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Fault Notification',
-            'res_model': 'vehicle.fault.wizard',
+            'name': 'Inspection Line',
+            'res_model': 'vehicle.inspection.line',
             'view_mode': 'form',
+            'res_id': self.id,
             'target': 'new',
-            'context': {
-                'default_inspection_id': self.inspection_id.id,
-            }
         }
-
-    # @api.onchange('result')
-    # def _onchange_result(self):
-    #
-    #     if self.result == 'fault':
-    #         return {
-    #             'warning': {
-    #                 'title': 'Fault Detected',
-    #                 'message': (
-    #                     'Please notify the Reporting '
-    #                     'Manager.'
-    #                 )
-    #             }
-    #         }

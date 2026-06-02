@@ -7,10 +7,6 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='uom_po_id']" position="after">
 
-                <!--                    <field name="partner_id"/>-->
-                <!--                    <field name="pickup_point_id" />-->
-                <!--                    <field name="waste_container_ids" widget="many2many_tags"/>-->
-
 
                 <field name="is_transport_service" widget="boolean_toggle" string="Transport Tariff"/>
 
@@ -24,17 +20,6 @@
                 <attribute name="placeholder">Waste Rate</attribute>
             </xpath>
 
-<!--              <xpath expr="//field[@name='image_1920']"-->
-<!--                   position="after">-->
-<!--                <group>-->
-<!--                    <field name="is_transport_service"-->
-<!--                           widget="boolean_toggle"-->
-<!--                           readonly="1"/>-->
-
-<!--                </group>-->
-
-
-<!--            </xpath>-->
 
 
         </field>

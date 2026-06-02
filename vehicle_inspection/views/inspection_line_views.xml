@@ -13,18 +13,19 @@
                 <sheet>
                     <field name="require_photo" invisible="1"/>
 
-
                     <group>
-                        <field name="category_id" readonly="1"/>
-                        <field name="item_id" readonly="0"/>
-                    </group>
-                    <group>
-                        <field name="result" widget="radio"
-                               options="{'horizontal': True}"/>
-                        <field name="note"/>
-                    </group>
 
+                        <group>
+                            <field name="category_id" readonly="1"/>
+                            <field name="item_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="result" widget="radio"
+                                   options="{'horizontal': True}"/>
+                            <field name="note"/>
+                        </group>
 
+                    </group>
                     <notebook>
                         <page string="Photos">
                             <field name="photo_ids" nolabel="1">

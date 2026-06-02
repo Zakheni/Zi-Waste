@@ -5,15 +5,27 @@
         <field name="model">waste.worksheet</field>
         <field name="arch" type="xml">
             <tree default_order="create_date desc">
-                <field name="name" string="Reference"/>
-                <field name="arrival_time"/>
-                <field name="kilometers"/>
-                <field name="return_date"/>
-                <field name="unit_of_measure"/>
-                <field name="quantity_collected"/>
-                <field name="driver_id" widget="many2one_avatar_user"/>
+                <field name="name" string="Reference" decoration-bf="1"/>
+                <field name="arrival_time" optional="show"/>
+                <field name="return_date" optional="show"/>
+                <field name="kilometers" optional="hide"/>
+                <field name="unit_of_measure" optional="hide"/>
+                <field name="quantity_collected" optional="hide"/>
+                <field name="trip_taken" optional="hide"/>
+<!--                <field name="driver_id" optional="hide" widget="many2one_avatar_user"/>-->
+                       <field name="driver_id"
+                              optional="show"
+                                   widget="many2one_avatar_user"/>
+
+                            <field name="provider_id"
+                                   optional="show"
+                                   invisible="driver_id != False"/>
+
                 <field name="service_request_id"/>
-                <field name="state" widget="badge"/>
+                   <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-warning="state == 'draft'"/>
             </tree>
         </field>
     </record>
@@ -130,12 +142,18 @@
                             <field name="unit_of_measure"
                                    readonly="state in ('draft','done')"/>
                             <field name="return_date" readonly="state in ('draft','done')"/>
-                            <field name="quantity_collected"/>
-                            <separator/>
+                            <field name="is_collection_qty" widget="boolean_toggle"/>
+                            <field name="quantity_collected" invisible="is_collection_qty == False"/>
+                            <field name="is_trip" widget="boolean_toggle"/>
+                            <field name="trip_taken" invisible="is_trip == False"/>
+
+                            <separator string="signatures"/>
                             <field name="driver_signature" widget="signature" required="state == 'in_progress'"
                                    readonly="state in ('draft','done')"/>
                             <field name="service_provider_signature" string="Customer Signature" widget="signature"
                                    required="state == 'in_progress'" readonly="state in ('draft','done')"/>
+
+
                             <!--                            <field name="employee_id" widget="many2one_avatar_user" required="1"/>-->
                             <!--                            <field name="manager_email" readonly="1"/>-->
                         </group>
@@ -212,7 +230,7 @@
                             <field name="hide_service_placement" invisible="1"/>
                             <field name="hide_disposal_site" invisible="1"/>
                             <field name="qty_updated_from_worksheet" invisible="1"/>
-
+                            <separator string="Bins / Tank"/>
                             <field name="pickup_point_bins_summary" readonly="1" class="text-muted"
                                    style="font-size:10px;"
                                    placeholder="No bins assigned yet." decoration-info="1" decoration-bf="1"/>
@@ -314,7 +332,14 @@
                             <field name="billing_amount" readonly="1"
                                    invisible="(not hide_general and not hide_tank_volume)
                                               or hide_bin"/>
-                            <field name="driver_id" widget="many2one_avatar_user"/>
+
+                            <separator string="Driver / sevice provider"/>
+                            <field name="driver_id"
+                                   widget="many2one_avatar_user"
+                                   invisible="provider_id != False"/>
+
+                            <field name="provider_id"
+                                   invisible="driver_id != False"/>
 
 
                         </group>

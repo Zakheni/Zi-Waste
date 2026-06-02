@@ -8,19 +8,29 @@
         <field name="model">vehicle.inspection</field>
         <field name="priority">999</field>
         <field name="arch" type="xml">
-            <tree string="Inspection History" create="0">
+            <tree default_order="create_date desc"  string="Inspection History" create="0">
 
-                <field name="name"/>
+                <field name="name" decoration-bf="1"/>
+                <field name="inspection_type" optional="hide"/>
                 <field name="vehicle_id" widget="many2one_avatar_user"/>
+                <field name="partner_id" optional="hide"/>
                 <field name="driver_id" widget="many2one_avatar_user"/>
+                <field name="comment" optional="hide"/>
+                <field name="km_open" optional="hide"/>
                 <field name="inspection_date"/>
+                <field name="vehicle_description" optional="hide"/>
+                <field name="km_close" optional="hide"/>
+                <field name="inspection_date" optional="hide"/>
+                <field name="next_inspection_date" optional="hide"/>
                 <field name="inspector_id" widget="many2one_avatar_user"/>
                 <field name="state" widget="badge"
+                       decoration-primary="state == 'draft'"
                        decoration-danger="state == 'faulty'"
                        decoration-warning="state == 'not_running'"
                        decoration-info="state == 'resolved'"
                        decoration-success="state == 'done'"
                 />
+
 
 
             </tree>
@@ -38,40 +48,298 @@
         <field name="priority">999</field>
         <field name="arch" type="xml">
 
-            <form string="Inspection History" create="0">
+             <form create="0">
+                <field name="show_notify_button" invisible="1"/>
+                <field name="show_resolved_button" invisible="1"/>
+                <header>
+
+
+                    <button name="action_draft"
+                            type="object"
+                            string="Draft"
+                            class="btn-dark"
+                            invisible="state in ('draft', 'done')"/>
+
+                    <button name="action_open_fault_wizard"
+                            type="object"
+                            string="Faulty"
+                            class="btn-danger"
+                            invisible="state != 'draft' or show_notify_button == False"
+
+                    />
+
+                    <!--                    <button name="action_open_fault_wizard"-->
+                    <!--                            type="object"-->
+                    <!--                            string="Notify Manager"-->
+                    <!--                            class="btn-danger"-->
+                    <!--                            invisible="show_notify_button == False"/>-->
+
+                    <button name="action_open_not_running_wizard"
+                            type="object"
+                            string="Not Running"
+                            class="btn-warning"
+                            invisible="state != 'draft' or show_notify_button == False"/>
+
+                    <!--                            invisible="state not in ('draft','faulty')" />-->
+
+
+                    <!--                    <button name="action_open_resolved_wizard"-->
+                    <!--                            type="object"-->
+                    <!--                            string="Resolved"-->
+                    <!--                            class="btn-success"-->
+                    <!--                            invisible="show_resolved_button == False or state in ('draft','resolved','done')"/>-->
+
+                    <button name="action_open_resolved_not_running_wizard"
+                            type="object"
+                            string="Resolved"
+                            class="btn-success"
+                            invisible="state in ('resolved','done') or show_resolved_button == True"/>
+
+                    <button name="action_done"
+                            type="object"
+                            string="Done"
+                            class="btn-primary"
+                            invisible="state != 'resolved'"/>
+
+                    <button name="action_print_inspection_report"
+                            type="object"
+                            string="Print Inspection Report"
+                            class="btn-primary"
+                            invisible="state != 'done'"
+                    />
+
+
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft, faulty, not_running, resolved, done"/>
+
+                </header>
+
 
                 <sheet>
-
                     <group>
-
+                        <!--                        <field name="vehicle_available"/>-->
+                        <!--                        <field name="is_vehicle_available"/>-->
+                    </group>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+                    <group string="Vehicle information">
                         <group>
-                            <field name="name"/>
-                            <field name="vehicle_id"/>
-                            <field name="driver_id"/>
-                        </group>
+                            <!--                            <field name="inspection_type" readonly="state != 'draft'"/>-->
+                            <field name="vehicle_id" widget="many2one_avatar_user" readonly="state != 'draft'"/>
+                            <!--                            <field name="partner_id" readonly="state != 'draft'"/>-->
+                            <field name="driver_id" string="Driver" widget="many2one_avatar_user"
+                                   readonly="1"/>
+                            <field name="inspection_date" readonly="state != 'draft'"/>
 
+
+                            <field name="comment" readonly="state != 'draft'"/>
+                        </group>
                         <group>
-                            <field name="inspection_date"/>
-                            <field name="state"/>
-                            <field name="inspector_id"/>
-                        </group>
+                            <field name="km_open" readonly="state != 'draft'"/>
+                            <field name="km_close" readonly="state != 'draft'"/>
 
+
+                            <!--                            <field name="inspector_id" widget="many2one_avatar_user" readonly="state != 'draft'"/>-->
+                            <!--                            <field name="next_inspection_date" readonly="state != 'draft'"/>-->
+                            <field name="vehicle_description" readonly="state != 'draft'"/>
+
+
+                        </group>
                     </group>
 
-                    <notebook>
+                    <field name="used_item_ids" invisible="1"/>
 
-                        <page string="Comments">
-                            <field name="comment"/>
+                    <notebook invisible="id == False">
+
+
+                        <page string="Checklist">
+
+
+                            <field name="line_ids"
+                                   readonly="state != 'draft'"
+                                   force_save="1">
+
+                                <tree editable="bottom" delete="0">
+
+                                    <field name="display_type" column_invisible="1"/>
+
+                                    <field name="name"
+                                           readonly="1"
+                                           class="fw-bold text-uppercase text-primary"
+                                           width="80"/>
+
+                                    <field name="category_id"
+                                           invisible="display_type == 'line_section'"
+                                           width="80"/>
+
+                                    <field name="item_id"
+                                           invisible="display_type == 'line_section'"
+                                           width="80"/>
+
+                                    <field name="result"
+                                           invisible="display_type == 'line_section'"
+                                           widget="radio"
+                                           options="{'horizontal': True}"
+                                           width="70"/>
+
+
+                                    <field name="require_photo"
+                                           invisible="display_type == 'line_section' or result != 'fault'"
+                                           readonly="1"
+                                           width="80"/>
+
+
+                                    <button name="action_open_photo_popup"
+                                            type="object"
+                                            icon="fa-camera"
+                                            string="Upload"
+                                            invisible="display_type == 'line_section' or result != 'fault'"
+                                            width="80"/>
+
+                                    <field name="photo_count"
+                                           readonly="1"
+                                           invisible="result != 'fault'"
+                                           decoration-info="1"
+                                           decoration-bf="1"
+                                    />
+
+                                    <!--                                    <field name="photo_button"-->
+                                    <!--                                           invisible="display_type == 'line_section' or result != 'fault'"-->
+                                    <!--                                           readonly="1"-->
+                                    <!--                                           width="80"/>-->
+
+
+                                </tree>
+
+                                     <form>
+
+                                    <sheet>
+
+                                        <group>
+
+                                            <group>
+
+                                                <field name="display_type" invisible="1"/>
+
+                                                <field name="name"
+                                                       invisible="display_type != 'line_section'"
+                                                       class="fw-bold text-primary"
+                                                       readonly="1"/>
+
+                                                <field name="category_id"
+                                                       invisible="display_type == 'line_section'"
+                                                       readonly="1"/>
+
+                                                <field name="item_id"
+                                                       invisible="display_type == 'line_section'"  readonly="1"/>
+
+                                                <field name="result"
+                                                       invisible="display_type == 'line_section'"
+                                                       widget="radio"
+                                                       options="{'horizontal': True}"/>
+
+
+
+                                            </group>
+
+                                            <group>
+
+                                                <field name="note"
+                                                       invisible="display_type == 'line_section'"/>
+                                                <field name="require_photo"
+                                                       invisible="display_type == 'line_section'"
+                                                       readonly="1"/>
+
+                                            </group>
+
+
+                                            <!-- PHOTO SECTION -->
+
+
+
+                                                <field name="photo_ids" invisible="result != 'fault' or display_type == 'line_section'">
+
+                                                    <tree editable="bottom">
+
+                                                        <field name="image"
+                                                               widget="image"/>
+
+                                                        <field name="name" required="1"/>
+
+                                                    </tree>
+
+                                                    <form>
+
+                                                        <sheet>
+
+                                                            <group>
+
+                                                                <field name="image"
+                                                                       widget="image"
+                                                                       required="1"/>
+
+                                                                <field name="name"
+                                                                       required="1"/>
+
+                                                            </group>
+
+                                                        </sheet>
+
+                                                    </form>
+
+                                                </field>
+
+                                        </group>
+
+                                    </sheet>
+
+                                </form>
+
+                            </field>
+
+                        </page>
+                        <page string="Photos">
+                            <field name="image_ids" mode="kanban">
+                                <kanban>
+                                    <field name="image"/>
+                                    <field name="name"/>
+
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_kanban_card oe_kanban_global_click">
+                                                <img t-att-src="kanban_image(
+                            'vehicle.inspection.image',
+                            'image',
+                            record.id.value
+                        )"
+                                                     style="width:100%; height:220px; object-fit:cover;"/>
+                                                <div class="oe_kanban_details">
+                                                    <strong>
+                                                        <field name="name"/>
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
                         </page>
 
-                        <page string="Inspection Lines">
-                            <field name="line_ids"/>
-                        </page>
 
+                        <page string="Signature">
+                            <field name="signature" widget="signature" readonly="state != 'draft'"/>
+                        </page>
                     </notebook>
-
                 </sheet>
-
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
 
         </field>

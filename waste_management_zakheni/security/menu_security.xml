@@ -12,17 +12,6 @@
         </record>
 
 
-        <!--        <record id="contacts.menu_contacts" model="ir.ui.menu">-->
-        <!--            <field name="groups_id"-->
-        <!--                   eval="[(6, 0, [-->
-        <!--                        ref('waste_management_zakheni.group_wmz_admin'),-->
-        <!--                        ref('waste_management_zakheni.group_wmz_manager'),-->
-        <!--                        ref('waste_management_zakheni.group_wmz_admin_clerk'),-->
-        <!--                        ref('waste_management_zakheni.group_company_admin'),-->
-        <!--                        ref('base.group_system')-->
-        <!--                   ])]"/>-->
-        <!--        </record>-->
-
 
         <record id="utm.menu_link_tracker_root" model="ir.ui.menu">
             <field name="groups_id"
@@ -49,10 +38,7 @@
                    eval="[(6, 0, [ref('hr.group_hr_manager')])]"/>
         </record>
 
-        <!--        <record id="web.menu_home" model="ir.ui.menu">-->
-        <!--            <field name="groups_id"-->
-        <!--                   eval="[(6, 0, [ref('base.group_system')])]"/>-->
-        <!--        </record>-->
+
 
         <!-- =========================
        SALES MODULE
@@ -78,17 +64,6 @@
                       ])]"/>
         </record>
 
-        <!-- If your DB uses a separate invoicing root (some setups do), uncomment: -->
-
-        <!--        <record id="account.menu_invoicing" model="ir.ui.menu">-->
-        <!--            <field name="groups_id"-->
-        <!--                   eval="[(6, 0, [-->
-        <!--               ref('waste_management_zakheni.group_wmz_admin'),-->
-        <!--               ref('waste_management_zakheni.group_wmz_admin_clerk'),-->
-        <!--               ref('waste_management_zakheni.group_wmz_finance'),-->
-        <!--               ref('waste_management_zakheni.group_wmz_manager')-->
-        <!--           ])]"/>-->
-        <!--        </record>-->
 
 
         <!-- =========================
@@ -106,7 +81,8 @@
         <record id="fleet.menu_root" model="ir.ui.menu">
             <field name="groups_id" eval="[(6,0,[
                         ref('waste_management_zakheni.group_wmz_admin'),
-                        ref('waste_management_zakheni.group_wmz_manager')
+                        ref('waste_management_zakheni.group_wmz_manager'),
+                         ref('waste_management_zakheni.group_wmz_driver')
                       ])]"/>
         </record>
 
@@ -220,13 +196,6 @@
 
                 ])]"/>
         </record>
-
-<!--        <record id="menu_waste_root" model="ir.ui.menu">-->
-<!--            <field name="groups_id" eval="[(6,0,[-->
-<!--        ref('waste_management_zakheni.group_wmz_driver'),-->
-<!--        ref('waste_management_zakheni.group_wmz_manager'),-->
-<!--    ])]"/>-->
-<!--        </record>-->
 
     </data>
 </odoo>

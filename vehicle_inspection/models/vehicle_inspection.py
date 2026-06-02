@@ -122,7 +122,6 @@ class VehicleInspection(models.Model):
         ("customer", "Customer / Garage")
     ], default="fleet", required=True)
 
-
     vehicle_id = fields.Many2one(
         "fleet.vehicle",
         required=True,
@@ -166,17 +165,6 @@ class VehicleInspection(models.Model):
         ("done", "Done")
     ], default="draft", tracking=True)
 
-    # vehicle_available = fields.Boolean(
-    #     related='vehicle_id.vehicle_available',
-    #     store=True,
-    #     readonly=True
-    # )
-    #
-    # is_vehicle_available = fields.Boolean(
-    #     related='vehicle_id.vehicle_available',
-    #     readonly=True
-    # )
-
     @api.onchange('state')
     def _onchange_state_update_vehicle_availability(self):
 
@@ -193,8 +181,6 @@ class VehicleInspection(models.Model):
 
                 rec.vehicle_id.is_vehicle_available = True
 
-
-
     @api.depends("line_ids.result")
     def _compute_has_issue(self):
         for rec in self:
@@ -202,27 +188,6 @@ class VehicleInspection(models.Model):
                 line.result == "fault"
                 for line in rec.line_ids
             )
-
-    # @api.onchange("inspection_type")
-    # def _onchange_inspection_type(self):
-    #
-    #     if self.line_ids:
-    #         return
-    #
-    #     items = self.env[
-    #         "vehicle.inspection.item"
-    #     ].search([
-    #         ("active", "=", True)
-    #     ])
-    #
-    #     self.line_ids = [
-    #         (0, 0, {
-    #             "item_id": item.id,
-    #         })
-    #         for item in items
-    #     ]
-
-
 
     def action_draft(self):
         self.state = "draft"
@@ -265,17 +230,6 @@ class VehicleInspection(models.Model):
 
         return True
 
-    # def action_done(self):
-    #
-    #     for rec in self:
-    #         rec.state = "done"
-    #
-    #         rec.message_post(
-    #             body="✅ Inspection completed."
-    #         )
-    #
-    #     return True
-
     def action_done(self):
 
         for rec in self:
@@ -288,6 +242,17 @@ class VehicleInspection(models.Model):
             rec.message_post(
                 body="✅ Inspection completed."
             )
+
+            for line in self.line_ids:
+
+                if (
+                        line.result == 'fault'
+                        and line.require_photo
+                        and len(line.photo_ids) == 0
+                ):
+                    raise ValidationError(
+                        f"Please upload at least one photo for '{line.item_id.name}'."
+                    )
 
         return True
 
@@ -426,7 +391,6 @@ class VehicleInspection(models.Model):
 
 
 
-
     show_fault_button = fields.Boolean(
         compute="_compute_show_fault_button"
     )
@@ -493,6 +457,59 @@ class VehicleInspectionImage(models.Model):
         attachment=True,
     )
 
+    @api.constrains('name', 'image')
+    def _check_photo_and_description(self):
+
+        for rec in self:
+
+            if not rec.image:
+                raise ValidationError(
+                    "Please upload a photo."
+                )
+
+            if not rec.name:
+                raise ValidationError(
+                    "Please enter a photo description."
+                )
+
+    def write(self, vals):
+
+        for rec in self:
+            if rec.line_id.inspection_id.state == 'done':
+                raise ValidationError(
+                    "You cannot modify photos on a completed inspection."
+                )
+
+        return super().write(vals)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+
+        for vals in vals_list:
+
+            if vals.get('line_id'):
+
+                line = self.env['vehicle.inspection.line'].browse(
+                    vals['line_id']
+                )
+
+                if line.inspection_id.state == 'done':
+                    raise ValidationError(
+                        "You cannot add photos to a completed inspection."
+                    )
+
+        return super().create(vals_list)
+
+    def unlink(self):
+
+        for rec in self:
+
+            if rec.line_id.inspection_id.state == 'done':
+                raise ValidationError(
+                    "You cannot delete photos from a completed inspection."
+                )
+
+        return super().unlink()
 
 
 

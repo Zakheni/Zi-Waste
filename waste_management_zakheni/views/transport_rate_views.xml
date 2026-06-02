@@ -4,20 +4,16 @@
     <!-- ================================================== -->
     <!-- TREE VIEW -->
     <!-- ================================================== -->
-    <record id="view_waste_transport_tariff_tree"
-            model="ir.ui.view">
-
+    <record id="view_waste_transport_tariff_tree" model="ir.ui.view">
         <field name="name">waste.transport.tariff.tree</field>
-
         <field name="model">waste.transport.tariff</field>
-
         <field name="arch" type="xml">
 
             <tree string="Transport Tariffs">
 
                 <field name="name"/>
 
-                <field name="code"/>
+                <field name="rate_type"/>
 
                 <field name="company_id"/>
 
@@ -36,13 +32,9 @@
     <!-- ================================================== -->
     <!-- FORM VIEW -->
     <!-- ================================================== -->
-    <record id="view_waste_transport_tariff_form"
-            model="ir.ui.view">
-
+    <record id="view_waste_transport_tariff_form" model="ir.ui.view">
         <field name="name">waste.transport.tariff.form</field>
-
         <field name="model">waste.transport.tariff</field>
-
         <field name="arch" type="xml">
 
             <form string="Transport Tariff">
@@ -58,7 +50,7 @@
 
                             <field name="name"/>
 
-                            <field name="code"/>
+                            <field name="rate_type"/>
 
                             <field name="company_id"/>
 
@@ -81,48 +73,33 @@
                         <!-- ================================== -->
                         <!-- STANDARD PRICING -->
                         <!-- ================================== -->
-                        <page string="Standard Pricing">
+                        <page string="Pricing">
 
                             <group>
 
                                 <group>
 
-                                    <field name="rate"/>
+                                    <field name="rate"
+                                           invisible="rate_type not in ('tier_bin','tier_distance')"/>
 
-                                    <field name="base_rate"/>
+                                    <field name="base_rate"
+                                           invisible="rate_type not in ('flat','hybrid_bin_trip','hybrid_trip_km')"/>
 
-                                    <field name="per_km_rate"/>
-
-                                </group>
-
-                                <group>
-
-                                    <field name="per_bin_rate"/>
-
-                                    <field name="per_trip_rate"/>
-
-                                </group>
-
-                            </group>
-
-                        </page>
-
-                        <!-- ================================== -->
-                        <!-- FLAT RATE -->
-                        <!-- ================================== -->
-                        <page string="Flat Rates">
-
-                            <group>
-
-                                <group>
-
-                                    <field name="single_bin_price"/>
+                                    <field name="increment_rate"
+                                           invisible="rate_type != 'flat'"/>
 
                                 </group>
 
                                 <group>
 
-                                    <field name="multiple_bin_price"/>
+                                    <field name="per_bin_rate"
+                                           invisible="rate_type not in ('per_bin','hybrid_bin_trip')"/>
+
+                                    <field name="per_trip_rate"
+                                           invisible="rate_type != 'per_trip'"/>
+
+                                    <field name="per_km_rate"
+                                           invisible="rate_type not in ('per_bin_km','per_trip_km','hybrid_trip_km')"/>
 
                                 </group>
 
@@ -133,11 +110,12 @@
                         <!-- ================================== -->
                         <!-- TIERING -->
                         <!-- ================================== -->
-                        <page string="Tiering">
+                        <page string="Tiering"
+                              invisible="rate_type not in ('tier_bin','tier_distance')">
 
                             <group>
 
-                                <group>
+                                <group invisible="rate_type != 'tier_bin'">
 
                                     <field name="min_bin_qty"/>
 
@@ -145,7 +123,7 @@
 
                                 </group>
 
-                                <group>
+                                <group invisible="rate_type != 'tier_distance'">
 
                                     <field name="min_distance"/>
 
@@ -175,30 +153,27 @@
     <!-- ================================================== -->
     <!-- SEARCH VIEW -->
     <!-- ================================================== -->
-    <record id="view_waste_transport_tariff_search"
-            model="ir.ui.view">
-
+    <record id="view_waste_transport_tariff_search" model="ir.ui.view">
         <field name="name">waste.transport.tariff.search</field>
-
         <field name="model">waste.transport.tariff</field>
-
         <field name="arch" type="xml">
 
             <search string="Search Transport Tariffs">
 
                 <field name="name"/>
 
-                <field name="code"/>
+                <field name="rate_type"/>
 
                 <field name="company_id"/>
 
                 <field name="active"/>
 
-                <group expand="0" string="Group By">
+                <group expand="0"
+                       string="Group By">
 
-                    <filter string="Tariff Type"
-                            name="group_by_code"
-                            context="{'group_by':'code'}"/>
+                    <filter string="Rate Type"
+                            name="group_by_rate_type"
+                            context="{'group_by':'rate_type'}"/>
 
                     <filter string="Company"
                             name="group_by_company"
@@ -215,20 +190,13 @@
     <!-- ================================================== -->
     <!-- ACTION -->
     <!-- ================================================== -->
-    <record id="action_waste_transport_tariff"
-            model="ir.actions.act_window">
-
+    <record id="action_waste_transport_tariff" model="ir.actions.act_window">
         <field name="name">Transport Tariffs</field>
-
         <field name="res_model">waste.transport.tariff</field>
-
         <field name="view_mode">tree,form</field>
-
-        <field name="search_view_id"
-               ref="view_waste_transport_tariff_search"/>
+        <field name="search_view_id" ref="view_waste_transport_tariff_search"/>
 
     </record>
 
-
-
 </odoo>
+

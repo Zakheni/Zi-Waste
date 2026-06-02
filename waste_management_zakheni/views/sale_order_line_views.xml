@@ -51,7 +51,7 @@
 <!--            <field name="transport_tariff_id"-->
 <!--                   optional="show"/>-->
 
-            <field name="number_of_bins"
+            <field name="number_of_bins" string="Bins"
                    optional="show"/>
 
             <field name="distance_km"
@@ -59,6 +59,8 @@
 
             <field name="number_of_trips"
                    optional="show"/>
+
+
 
         </xpath>
 
@@ -74,7 +76,7 @@
 
 <!--                    <field name="transport_tariff_id"/>-->
 
-                    <field name="number_of_bins"/>
+                    <field name="number_of_bins" string="Bins"/>
 
                 </group>
 
