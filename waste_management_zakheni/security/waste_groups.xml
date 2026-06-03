@@ -102,7 +102,7 @@
     </record>
 
     <record id="group_wmz_customer_access" model="res.groups">
-        <field name="name">Customer Access</field>
+        <field name="name">Company Access</field>
         <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
     </record>
 

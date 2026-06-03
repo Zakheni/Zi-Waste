@@ -432,6 +432,7 @@
                             <field name="product_uom_qty" string="No. of Bins" readonly="1"
                                    invisible="not partner_id or  hide_bin == False"/>
 
+
                             <field name="planned_date" string="Planned Date"
                                    readonly="state != 'draft' and state != 'cancelled' and state != 'generated'
                                              and state != 'cancelled'

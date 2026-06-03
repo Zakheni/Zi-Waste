@@ -182,33 +182,41 @@
         <field name="groups" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
+    <record id="waste_transport_tariff_company_rule" model="ir.rule">
+        <field name="name">Transport Tariff Multi Company</field>
+        <field name="model_id" ref="model_waste_transport_tariff"/>
+        <field name="domain_force">
+            [('company_id', 'in', company_ids)]
+        </field>
+    </record>
+
 
     <!--    <record id="wmz_res_partner_multi_company_rule" model="ir.rule">-->
     <!--    <field name="name">WMZ Contacts - Multi Company Safe</field>-->
     <!--    <field name="model_id" ref="base.model_res_partner"/>-->
     <!--    <field name="global" eval="True"/>-->
-<!--    <record id="wmz_res_partner_multi_company_rule" model="ir.rule">-->
-<!--        <field name="name">WMZ Contacts - Multi Company Safe</field>-->
-<!--        <field name="model_id" ref="base.model_res_partner"/>-->
-<!--        <field name="groups" eval="[(4, ref('base.group_user'))]"/>-->
-<!--        <field name="global" eval="False"/>-->
-<!--        <field name="domain_force">-->
-<!--            ['|',-->
-<!--            ('company_id', '=', False),-->
-<!--            ('company_id', 'in', user.company_ids.ids)-->
-<!--            ]-->
-<!--        </field>-->
-<!--    </record>-->
+    <!--    <record id="wmz_res_partner_multi_company_rule" model="ir.rule">-->
+    <!--        <field name="name">WMZ Contacts - Multi Company Safe</field>-->
+    <!--        <field name="model_id" ref="base.model_res_partner"/>-->
+    <!--        <field name="groups" eval="[(4, ref('base.group_user'))]"/>-->
+    <!--        <field name="global" eval="False"/>-->
+    <!--        <field name="domain_force">-->
+    <!--            ['|',-->
+    <!--            ('company_id', '=', False),-->
+    <!--            ('company_id', 'in', user.company_ids.ids)-->
+    <!--            ]-->
+    <!--        </field>-->
+    <!--    </record>-->
 
-<!--    <record id="access_res_partner_user_wmz" model="ir.model.access">-->
-<!--        <field name="name">res.partner wmz user access</field>-->
-<!--        <field name="model_id" ref="base.model_res_partner"/>-->
-<!--        <field name="group_id" ref="base.group_user"/>-->
-<!--        <field name="perm_read" eval="1"/>-->
-<!--        <field name="perm_write" eval="0"/>-->
-<!--        <field name="perm_create" eval="0"/>-->
-<!--        <field name="perm_unlink" eval="0"/>-->
-<!--    </record>-->
+    <!--    <record id="access_res_partner_user_wmz" model="ir.model.access">-->
+    <!--        <field name="name">res.partner wmz user access</field>-->
+    <!--        <field name="model_id" ref="base.model_res_partner"/>-->
+    <!--        <field name="group_id" ref="base.group_user"/>-->
+    <!--        <field name="perm_read" eval="1"/>-->
+    <!--        <field name="perm_write" eval="0"/>-->
+    <!--        <field name="perm_create" eval="0"/>-->
+    <!--        <field name="perm_unlink" eval="0"/>-->
+    <!--    </record>-->
 
 
     <!--        Users: own company only-->
@@ -259,21 +267,20 @@
     </record>
 
 
-
     <record id="rule_company_branch_wmz" model="ir.rule">
-    <field name="name">WMZ Company Branch Rule</field>
-    <field name="model_id" ref="base.model_res_company"/>
-    <field name="groups" eval="[
+        <field name="name">WMZ Company Branch Rule</field>
+        <field name="model_id" ref="base.model_res_company"/>
+        <field name="groups" eval="[
         (4, ref('waste_management_zakheni.group_wmz_admin')),
         (4, ref('waste_management_zakheni.group_wmz_admin_clerk'))
     ]"/>
-    <field name="domain_force">
-        ['|',
+        <field name="domain_force">
+            ['|',
             ('id', '=', user.company_id.id),
             ('parent_id', '=', user.company_id.id)
-        ]
-    </field>
-</record>
+            ]
+        </field>
+    </record>
 
 
 </odoo>

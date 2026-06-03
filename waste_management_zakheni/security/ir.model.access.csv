@@ -152,4 +152,6 @@ access_ir_actions_act_window_view_driver,ir.actions.act.window.view driver,base.
 
 access_waste_transport_tariff,waste.transport.tariff.user,model_waste_transport_tariff,base.group_user,1,1,1,1
 
+access_fleet_vehicle_driver,fleet.vehicle.driver,fleet.model_fleet_vehicle,waste_management_zakheni.group_wmz_driver,1,0,0,0
+
 

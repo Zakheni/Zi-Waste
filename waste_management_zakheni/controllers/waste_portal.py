@@ -180,9 +180,18 @@ class WasteClientPortal(CustomerPortal):
         commercial_partner = partner.commercial_partner_id
         company = user.company_id.sudo()
 
+        # admin_clerck_email = request.env['hr.employee'].sudo().search([
+        #     ('user_id.groups_id', 'in',
+        #      request.env.ref('waste_management_zakheni.group_wmz_admin_clerk').ids)
+        # ])
+
         admin_clerck_email = request.env['hr.employee'].sudo().search([
+            ('company_id', '=', company.id),
+            ('work_email', '!=', False),
             ('user_id.groups_id', 'in',
-             request.env.ref('waste_management_zakheni.group_wmz_admin_clerk').ids)
+             request.env.ref(
+                 'waste_management_zakheni.group_wmz_admin_clerk'
+             ).ids)
         ])
 
         values = {
@@ -378,13 +387,46 @@ class WasteClientPortal(CustomerPortal):
             company.id,
         )
 
+        # # ------------------------------------------------------------
+        # # ✅ SEND EMAIL TO SELECTED ADMIN CLERK
+        # # ------------------------------------------------------------
+        # if post.get('employee_id'):
+        #     try:
+        #         employee_id = int(post.get('employee_id'))
+        #         employee = env['hr.employee'].sudo().browse(employee_id)
+        #
+        #         if employee and employee.work_email:
+        #             template = env.ref(
+        #                 "waste_management_zakheni.mail_tmpl_service_request_portal_completion",
+        #                 raise_if_not_found=False
+        #             )
+        #
+        #             if template:
+        #                 email_values = {
+        #                     'email_to': employee.work_email
+        #                 }
+        #
+        #                 template.sudo().send_mail(
+        #                     wsr.id,
+        #                     force_send=True,
+        #                     raise_exception=False,
+        #                     email_values=email_values
+        #                 )
+        #
+        #     except Exception as e:
+        #         _logger.warning("Manager email failed: %s", e)
+
         # ------------------------------------------------------------
         # ✅ SEND EMAIL TO SELECTED ADMIN CLERK
         # ------------------------------------------------------------
         if post.get('employee_id'):
             try:
                 employee_id = int(post.get('employee_id'))
-                employee = env['hr.employee'].sudo().browse(employee_id)
+
+                employee = env['hr.employee'].sudo().search([
+                    ('id', '=', employee_id),
+                    ('company_id', '=', wsr.company_id.id),
+                ], limit=1)
 
                 if employee and employee.work_email:
                     template = env.ref(
@@ -631,9 +673,18 @@ class WasteClientPortal(CustomerPortal):
         product_uom_qty = getattr(ws, "product_uom_qty", 0.0) or 0.0
 
         # ✅ ADD THIS BLOCK HERE
+        # managers = request.env['hr.employee'].sudo().search([
+        #     ('user_id.groups_id', 'in',
+        #      request.env.ref('waste_management_zakheni.group_wmz_manager').ids)
+        # ])
+
         managers = request.env['hr.employee'].sudo().search([
+            ('company_id', '=', user.company_id.id),
+            ('work_email', '!=', False),
             ('user_id.groups_id', 'in',
-             request.env.ref('waste_management_zakheni.group_wmz_manager').ids)
+             request.env.ref(
+                 'waste_management_zakheni.group_wmz_manager'
+             ).ids)
         ])
 
         # managers = request.env['hr.employee'].sudo().search([])

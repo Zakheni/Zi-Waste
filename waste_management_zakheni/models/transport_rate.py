@@ -26,10 +26,19 @@ class WasteTransportTariff(models.Model):
     #     index=True,
     # )
 
+    # company_id = fields.Many2one(
+    #     "res.company",
+    #     string="Company",
+    #     required=False,
+    #     tracking=True,
+    #     index=True,
+    # )
+
     company_id = fields.Many2one(
         "res.company",
         string="Company",
         required=False,
+        default=lambda self: self.env.company,
         tracking=True,
         index=True,
     )
@@ -81,7 +90,12 @@ class WasteTransportTariff(models.Model):
     date_to = fields.Date(
         string="Effective To",
         tracking=True,
-        help="Leave empty for open-ended tariff"
+        help="""Help: This is the date the rate expires. 
+        e.g if the rate was effective from 2026/01/01 and effective to
+         2026/12/01, then the rate will no longer be applied after 2026/12/01. 
+         A new current or future date should be set for the rate to apply. (This field can also be left blank to 
+         have the rate continue without an expiration date.)
+        """
     )
 
     # --------------------------------------------------
@@ -96,55 +110,111 @@ class WasteTransportTariff(models.Model):
     base_rate = fields.Float(
         string="Base Rate",
         tracking=True,
-        help="Starting/base amount."
+        help="""Help: This is a fixed rate. A rate you will charge for a service irrespective of the km's, bins or trips."""
     )
 
     increment_rate = fields.Float(
         string="Increment Rate",
         tracking=True,
-        help="Additional amount added when quantity increases."
+        help="""Help: This is an increment amount added per bin. e.g Base Rate = R200 and Increment Rate = R100. The base rate will be R200 for 1 bin, then increment by R100 for each bin added thereafter (R200 + (2 bins x R100) = R400)."""
     )
 
     per_bin_rate = fields.Float(
         string="Per Bin Rate",
         tracking=True,
-        help="Rate charged per bin."
+        help="Help: Rate charged per bin."
     )
 
     per_km_rate = fields.Float(
         string="Per KM Rate",
         tracking=True,
-        help="Rate charged per kilometer."
+        help="Help: Rate charged per kilometer."
     )
 
     per_trip_rate = fields.Float(
         string="Per Trip Rate",
         tracking=True,
-        help="Rate charged per trip."
+        help="Help: Rate charged per trip."
     )
 
     # --------------------------------------------------
     # TIERING
     # --------------------------------------------------
+
     min_bin_qty = fields.Integer(
         string="Minimum Bin Quantity",
         tracking=True,
+        help="""
+    Minimum number of bins required before this tariff applies.
+
+    Example:
+    If Minimum = 2 and Maximum = 3,
+    this tariff will be used when the customer has
+    2 or 3 bins.
+    """
     )
 
     max_bin_qty = fields.Integer(
         string="Maximum Bin Quantity",
         tracking=True,
+        help="""
+    Maximum number of bins allowed for this tariff.
+
+    Leave empty if there is no upper limit.
+
+    Example:
+    Minimum = 4 and Maximum = empty
+    means this tariff applies to 4 or more bins.
+    """
     )
 
     min_distance = fields.Float(
-        string="Minimum Distance",
+        string="Minimum Distance (KM)",
         tracking=True,
+        help="""
+    Minimum travel distance required before this tariff applies.
+
+    Example:
+    If Minimum = 11 and Maximum = 30,
+    this tariff applies to trips between
+    11 KM and 30 KM.
+    """
     )
 
     max_distance = fields.Float(
-        string="Maximum Distance",
+        string="Maximum Distance (KM)",
         tracking=True,
+        help="""
+    Maximum travel distance allowed for this tariff.
+
+    Leave empty if there is no upper limit.
+
+    Example:
+    Minimum = 31 and Maximum = empty
+    means this tariff applies to all trips
+    greater than or equal to 31 KM.
+    """
     )
+
+    # min_bin_qty = fields.Integer(
+    #     string="Minimum Bin Quantity",
+    #     tracking=True,
+    # )
+    #
+    # max_bin_qty = fields.Integer(
+    #     string="Maximum Bin Quantity",
+    #     tracking=True,
+    # )
+    #
+    # min_distance = fields.Float(
+    #     string="Minimum Distance",
+    #     tracking=True,
+    # )
+    #
+    # max_distance = fields.Float(
+    #     string="Maximum Distance",
+    #     tracking=True,
+    # )
 
     # --------------------------------------------------
     # VALIDATIONS
@@ -155,7 +225,6 @@ class WasteTransportTariff(models.Model):
         for rec in self:
 
             if rec.date_to and rec.date_to < rec.date_from:
-
                 raise ValidationError(_(
                     "Effective To date cannot be earlier than Effective From date."
                 ))
@@ -226,4 +295,3 @@ class WasteTransportTariff(models.Model):
 
                     rate=rec.rate_type,
                 ))
-

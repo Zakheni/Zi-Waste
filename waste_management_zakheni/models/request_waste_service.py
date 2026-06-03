@@ -913,6 +913,7 @@ class WasteServiceRequest(models.Model):
                 # For non-tank jobs you can keep it 0 or leave manual if you want
                 rec.liters_collected = rec.liters_collected or 0.0
 
+
     qty_updated_from_worksheet = fields.Boolean(
         string="Quantity Updated from Worksheet",
         default=False,
@@ -1453,10 +1454,10 @@ class WasteServiceRequest(models.Model):
             # --------------------------------------------------------
             # NORMAL BIN JOB: keep existing qty-only sync
             # --------------------------------------------------------
-            qty = rec.product_uom_qty or 0.0
-            line.with_context(skip_waste_sync=True).write({
-                'product_uom_qty': qty
-            })
+           # sync qty = rec.product_uom_qty or 0.0
+           #  line.with_context(skip_waste_sync=True).write({
+           #      'product_uom_qty': qty
+           #  })
 
             rec.order_line_id = line
 

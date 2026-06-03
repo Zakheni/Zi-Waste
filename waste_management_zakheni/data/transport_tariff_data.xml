@@ -145,7 +145,7 @@
 
         <field name="max_bin_qty">1</field>
 
-        <field name="rate">300</field>
+        <field name="base_rate">300</field>
 
         <field name="active">True</field>
 
@@ -170,7 +170,7 @@
 
         <field name="max_bin_qty">3</field>
 
-        <field name="rate">550</field>
+        <field name="base_rate">550</field>
 
         <field name="active">True</field>
 
@@ -193,7 +193,7 @@
 
         <field name="min_bin_qty">4</field>
 
-        <field name="rate">800</field>
+        <field name="base_rate">800</field>
 
         <field name="active">True</field>
 
@@ -218,7 +218,7 @@
 
         <field name="max_distance">10</field>
 
-        <field name="rate">300</field>
+        <field name="base_rate">300</field>
 
         <field name="active">True</field>
 
@@ -243,7 +243,7 @@
 
         <field name="max_distance">30</field>
 
-        <field name="rate">600</field>
+        <field name="base_rate">600</field>
 
         <field name="active">True</field>
 
@@ -266,7 +266,7 @@
 
         <field name="min_distance">31</field>
 
-        <field name="rate">1000</field>
+        <field name="base_rate">1000</field>
 
         <field name="active">True</field>
 

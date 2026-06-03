@@ -212,7 +212,7 @@ class SaleOrderLine(models.Model):
                 ], limit=1)
 
                 if tariff:
-                    amount = tariff.rate
+                    amount = tariff.base_rate
 
             # =================================================
             # TIERED BY DISTANCE
@@ -238,7 +238,7 @@ class SaleOrderLine(models.Model):
                 ], limit=1)
 
                 if tariff:
-                    amount = tariff.rate
+                    amount = tariff.base_rate
 
             # =================================================
             # HYBRID - BIN + TRIP
