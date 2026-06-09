@@ -34,12 +34,12 @@
                            widget="html"
                            options="{'sanitize': False}"/>
 
-<!--                    &lt;!&ndash; Link &ndash;&gt;-->
-<!--                    <div style="margin-top: 5px;">-->
-<!--                        <strong>Direct Link:</strong>-->
-<!--                        <br/>-->
-<!--                        <field name="invite_url" readonly="1"/>-->
-<!--                    </div>-->
+                    <!--                    &lt;!&ndash; Link &ndash;&gt;-->
+                    <!--                    <div style="margin-top: 5px;">-->
+                    <!--                        <strong>Direct Link:</strong>-->
+                    <!--                        <br/>-->
+                    <!--                        <field name="invite_url" readonly="1"/>-->
+                    <!--                    </div>-->
 
 
                 </div>
@@ -49,6 +49,7 @@
             <field name="category_id" position="after">
 
                 <field name="company_id"
+                       required="1"
                        options="{'no_create': True}"
                        groups="base.group_multi_company"/>
 
@@ -63,59 +64,55 @@
 
             </field>
 
-            <!-- ✅ NOTEBOOK PAGES -->
-            <xpath expr="//notebook" position="inside">
+            <!--            &lt;!&ndash; ✅ NOTEBOOK PAGES &ndash;&gt;-->
+            <!--            <xpath expr="//notebook" position="inside">-->
 
-                <page string="Pickup Points">
-                    <field name="pickup_point_ids"
-                           widget="many2many_tags"
-                           readonly="1"/>
-                </page>
+            <!--&lt;!&ndash;                <page string="Pickup Points">&ndash;&gt;-->
+            <!--&lt;!&ndash;                    <field name="pickup_point_ids"&ndash;&gt;-->
+            <!--&lt;!&ndash;                           widget="many2many_tags"&ndash;&gt;-->
+            <!--&lt;!&ndash;                           readonly="1"/>&ndash;&gt;-->
+            <!--&lt;!&ndash;                </page>&ndash;&gt;-->
 
-            </xpath>
-
-
+            <!--            </xpath>-->
 
 
+            <!--            <xpath expr="//notebook" position="inside">-->
+            <!--&lt;!&ndash;                <page string="Pickup Points">&ndash;&gt;-->
+            <!--&lt;!&ndash;                    <field name="pickup_point_ids" widget="many2many_tags" readonly="1"/>&ndash;&gt;-->
+            <!--&lt;!&ndash;                    &lt;!&ndash;                        <tree editable="bottom">&ndash;&gt;&ndash;&gt;-->
+            <!--&lt;!&ndash;                    &lt;!&ndash;                            <field name="name"/>&ndash;&gt;&ndash;&gt;-->
+            <!--&lt;!&ndash;                    &lt;!&ndash;                        </tree>&ndash;&gt;&ndash;&gt;-->
+            <!--&lt;!&ndash;                    &lt;!&ndash;                    </field>&ndash;&gt;&ndash;&gt;-->
+            <!--&lt;!&ndash;                </page>&ndash;&gt;-->
+            <!--            </xpath>-->
+            <!--            <xpath expr="//notebook" position="inside">-->
+            <!--                <page string="Waste Management" name="wmz_waste_management"-->
+            <!--                      invisible="'is_company' == False">-->
 
+            <!--                    <group string="Service Configuration" col="2">-->
 
-            <xpath expr="//notebook" position="inside">
-                <page string="Pickup Points">
-                    <field name="pickup_point_ids" widget="many2many_tags" readonly="1"/>
-                    <!--                        <tree editable="bottom">-->
-                    <!--                            <field name="name"/>-->
-                    <!--                        </tree>-->
-                    <!--                    </field>-->
-                </page>
-            </xpath>
-            <xpath expr="//notebook" position="inside">
-                <page string="Waste Management" name="wmz_waste_management"
-                      invisible="'is_company' == False">
+            <!--                        <field name="wmz_use_company_config"/>-->
+            <!--                        <field name="wmz_service_ids"-->
+            <!--                               widget="many2many_tags"-->
+            <!--                               options="{'no_create_edit': True}"-->
+            <!--                               placeholder="Select services for this company..."-->
+            <!--                               string="Waste Services for Company"/>-->
 
-                    <group string="Service Configuration" col="2">
+            <!--                        <field name="wmz_container_type_ids"-->
+            <!--                               widget="many2many_tags"-->
+            <!--                               options="{'no_create_edit': True}"-->
+            <!--                               placeholder="Select container types for this company..."-->
+            <!--                               string="Container Types for Company"/>-->
 
-                        <field name="wmz_use_company_config"/>
-                        <field name="wmz_service_ids"
-                               widget="many2many_tags"
-                               options="{'no_create_edit': True}"
-                               placeholder="Select services for this company..."
-                               string="Waste Services for Company"/>
+            <!--                        <field name="wmz_waste_type_ids"-->
+            <!--                               widget="many2many_tags"-->
+            <!--                               options="{'no_create_edit': True}"-->
+            <!--                               placeholder="Select waste types for this company..."-->
+            <!--                               string="Waste Types for Company"/>-->
+            <!--                    </group>-->
 
-                        <field name="wmz_container_type_ids"
-                               widget="many2many_tags"
-                               options="{'no_create_edit': True}"
-                               placeholder="Select container types for this company..."
-                               string="Container Types for Company"/>
-
-                        <field name="wmz_waste_type_ids"
-                               widget="many2many_tags"
-                               options="{'no_create_edit': True}"
-                               placeholder="Select waste types for this company..."
-                               string="Waste Types for Company"/>
-                    </group>
-
-                </page>
-            </xpath>
+            <!--                </page>-->
+            <!--            </xpath>-->
             <!-- Example: put it near the name -->
             <xpath expr="//field[@name='vat']" position="after">
                 <!--                <group>-->
@@ -134,7 +131,7 @@
                 <sheet>
                     <group>
                         <field name="name"/>
-                        <field name="partner_id" />
+                        <field name="partner_id"/>
                     </group>
                     <group string="Waste Containers">
                         <!--                        <field name="container_ids" widget="many2many_tags" context="{'default_pickup_point_id': active_id}" domain="[('pickup_point_id', '=', False), ('pickup_point_id', '=', id)]" />-->

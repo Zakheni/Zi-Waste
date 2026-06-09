@@ -45,7 +45,7 @@
                             class="btn-info"
                             invisible="state != 'generated' or is_service_provider and provider_name == False"
                             groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk"/>
-                    />
+                    <!--                    />-->
 
                     <!--                    &lt;!&ndash; NEW: Assign &ndash;&gt;-->
                     <!--                    <button string="Assign"-->
@@ -430,7 +430,12 @@
 
 
                             <field name="product_uom_qty" string="No. of Bins" readonly="1"
-                                   invisible="not partner_id or  hide_bin == False"/>
+                                   invisible="not partner_id or  hide_bin == False or bin_line_count == 0"/>
+
+                            <field name="number_of_bins" string="No. of Bins" readonly="1"
+                                   invisible="not partner_id or number_of_bins_o == True or sale_order_id"  />
+                            <field name="number_of_bins_o" string="No. of Bins" readonly="1"
+                                   invisible="not partner_id or sale_order_id == False or bin_line_count != 0" />
 
 
                             <field name="planned_date" string="Planned Date"
@@ -438,18 +443,18 @@
                                              and state != 'cancelled'
                                              and state != 'generated'"/>
 
-<!--                            <field name="disposal_site_ids"-->
-<!--                                   string="Disposal Site"-->
-<!--                                   widget="many2many_tags"-->
-<!--                                   invisible="hide_droppoff_container_ids_placement-->
-<!--                                              or (not hide_droppoff_container_ids_collection-->
-<!--                                                  and not hide_lifted_bin_ids_swap-->
-<!--                                                  and not hide_shunt_container_ids-->
-<!--                                                  and not hide_droppoff_container_ids_removal)"-->
-<!--                                   readonly="state != 'draft' and state != 'cancelled'"-->
-<!--                            />-->
+                            <!--                            <field name="disposal_site_ids"-->
+                            <!--                                   string="Disposal Site"-->
+                            <!--                                   widget="many2many_tags"-->
+                            <!--                                   invisible="hide_droppoff_container_ids_placement-->
+                            <!--                                              or (not hide_droppoff_container_ids_collection-->
+                            <!--                                                  and not hide_lifted_bin_ids_swap-->
+                            <!--                                                  and not hide_shunt_container_ids-->
+                            <!--                                                  and not hide_droppoff_container_ids_removal)"-->
+                            <!--                                   readonly="state != 'draft' and state != 'cancelled'"-->
+                            <!--                            />-->
 
- <field name="allowed_disposal_site_ids" invisible="1"/>
+                            <field name="allowed_disposal_site_ids" invisible="1"/>
                             <field name="disposal_site_id"
                                    string="Disposal Site"
                                    invisible="hide_droppoff_container_ids_placement

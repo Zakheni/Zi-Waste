@@ -1,6 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
+import logging
+_logger = logging.getLogger(__name__)
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
@@ -269,7 +271,7 @@ class SaleOrderLine(models.Model):
                 )
 
                 amount = (
-                    (trips * tariff.base_rate)
+                    tariff.base_rate
                     +
                     (
                         trips *
@@ -300,6 +302,21 @@ class SaleOrderLine(models.Model):
         })
 
         return res
+
+    import logging
+    _logger = logging.getLogger(__name__)
+
+    def write(self, vals):
+
+        if 'number_of_bins' in vals:
+            _logger.warning(
+                "NUMBER OF BINS CHANGED -> Line=%s Old=%s New=%s",
+                self.ids,
+                self.mapped('number_of_bins'),
+                vals.get('number_of_bins')
+            )
+
+        return super().write(vals)
 
 
     # from odoo import models, fields, api, _

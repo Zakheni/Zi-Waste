@@ -73,6 +73,7 @@ class WasteContainer(models.Model):
 
     hide_tank = fields.Boolean(compute='_compute_hide_container')
     hide_bin = fields.Boolean(compute='_compute_hide_container')
+    active = fields.Boolean(default=True, tracking=True)
 
     # hide_hazardous = fields.Boolean(compute='_compute_hide_waste_type')
 

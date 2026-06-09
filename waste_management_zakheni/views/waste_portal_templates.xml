@@ -538,7 +538,7 @@
                                     <!-- Waste Type -->
                                     <div class="mb-3">
                                         <label class="form-label">Waste Type</label>
-                                        <select name="waste_type_id" class="form-select">
+                                        <select name="waste_type_id" class="form-select" required="required">
                                             <option value="">Select waste type</option>
                                             <t t-foreach="waste_types" t-as="wt">
                                                 <option t-att-value="wt.id">
@@ -554,7 +554,7 @@
                                     <!-- Waste Details -->
                                     <div class="mb-3">
                                         <label class="form-label">Waste Details</label>
-                                        <select name="waste_details_id" class="form-select">
+                                        <select name="waste_details_id" class="form-select" required="required">
                                             <option value="">Select waste details</option>
                                             <t t-foreach="waste_details" t-as="wd">
                                                 <option t-att-value="wd.id">
@@ -568,7 +568,7 @@
 
                                     <div class="mb-3">
                                         <label class="form-label d-flex justify-content-between align-items-center">
-                                            <span>Collection address</span>
+                                            <span>Collection/Placement address</span>
 
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-primary"
@@ -610,37 +610,54 @@
                                             </t>
                                         </select>
                                     </div>
-
-
                                 </div>
-                            </div>
+                                <div class="mb-3">
+                                    <!-- Container Size when Bin (bin_type_id) -->
+
+                                    <div class="mb-3 d-none" id="bin_type_group">
+                                        <label class="form-label">Container Size (Bin)</label>
+                                        <select name="bin_type_id" class="form-select">
+                                            <option value="">Select bin size</option>
+                                            <t t-foreach="bin_types" t-as="bt">
+                                                <option t-att-value="bt.id">
+                                                    <t t-esc="bt.display_name"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+
+                                    <!-- Container Size when Tank (tank_volume_id) -->
+                                    <div class="mb-3 d-none" id="tank_volume_group">
+                                        <label class="form-label">Container Size (Tank volume)</label>
+                                        <select name="tank_volume_id" class="form-select">
+                                            <option value="">Select tank volume</option>
+                                            <t t-foreach="tank_volumes" t-as="tv">
+                                                <option t-att-value="tv.id">
+                                                    <t t-esc="tv.display_name"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
 
 
-                            <!-- Container Size when Bin (bin_type_id) -->
-                            <div class="mb-3 d-none" id="bin_type_group">
-                                <label class="form-label">Container Size (Bin)</label>
-                                <select name="bin_type_id" class="form-select">
-                                    <option value="">Select bin size</option>
-                                    <t t-foreach="bin_types" t-as="bt">
-                                        <option t-att-value="bt.id">
-                                            <t t-esc="bt.display_name"/>
-                                        </option>
-                                    </t>
-                                </select>
+                                    <div class="mb-3">
+                                        <label class="form-label">Number of Bins</label>
+
+                                        <input type="number"
+                                               name="number_of_bins"
+                                               class="form-control"
+                                               min="1"
+                                               value="1"
+                                               required="required"/>
+
+                                        <div class="form-text">
+                                            Enter the number of bins requiring service.
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
 
-                            <!-- Container Size when Tank (tank_volume_id) -->
-                            <div class="mb-3 d-none" id="tank_volume_group">
-                                <label class="form-label">Container Size (Tank volume)</label>
-                                <select name="tank_volume_id" class="form-select">
-                                    <option value="">Select tank volume</option>
-                                    <t t-foreach="tank_volumes" t-as="tv">
-                                        <option t-att-value="tv.id">
-                                            <t t-esc="tv.display_name"/>
-                                        </option>
-                                    </t>
-                                </select>
-                            </div>
 
                             <!-- Description -->
                             <div class="mb-3">

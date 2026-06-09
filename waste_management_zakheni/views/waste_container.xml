@@ -62,6 +62,7 @@
                                    invisible="1 "/>
 
                              <field name="reserved_request_id"/>
+                            <field name="active" widget="boolean_toggle" string="Active"/>
 
 
                         </group>

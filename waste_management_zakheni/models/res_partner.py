@@ -10,7 +10,6 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
 
-
     pickup_point_ids = fields.One2many(
         'pickup.point', 'partner_id', string='Pickup Points'
     )
@@ -383,10 +382,10 @@ class ResBank(models.Model):
         return super().unlink()
 
 
-class ResPartnerBank(models.Model):
-    _inherit = "res.partner.bank"
-
-    def unlink(self):
-        if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
-            raise UserError(_("You are not allowed to delete partner bank."))
-        return super().unlink()
+# class ResPartnerBank(models.Model):
+#     _inherit = "res.partner.bank"
+#
+#     def unlink(self):
+#         if self.env.user.has_group('waste_management_zakheni.group_company_admin'):
+#             raise UserError(_("You are not allowed to delete partner bank."))
+#         return super().unlink()

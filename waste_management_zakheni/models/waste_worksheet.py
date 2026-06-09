@@ -1210,9 +1210,13 @@ class WasteWorksheet(models.Model):
             # -----------------------------------------------------
             # TOTAL BINS
             # -----------------------------------------------------
-            total_bins = int(
-                rec.quantity_collected or 0
+            total_bins = (
+                    len(rec.bin_lifted_ids)
+                    + len(rec.bin_dropped_ids)
             )
+            # total_bins = int(
+            #     rec.quantity_collected or 0
+            # )
 
             # -----------------------------------------------------
             # TRANSPORT LINES ONLY
@@ -1224,21 +1228,49 @@ class WasteWorksheet(models.Model):
                 and l.product_id.product_tmpl_id.is_transport_service
             )
 
+            # for line in transport_lines:
+            #     # -------------------------------------------------
+            #     # KM
+            #     # -------------------------------------------------
+            #     line.distance_km = rec.kilometers or 0
+            #
+            #     # -------------------------------------------------
+            #     # BINS
+            #     # -------------------------------------------------
+            #     line.number_of_bins = total_bins
+            #
+            #     # -------------------------------------------------
+            #     # TRIPS
+            #     # -------------------------------------------------
+            #     line.number_of_trips = rec.trip_taken or 1
+            #
+            #     # -------------------------------------------------
+            #     # RECALCULATE PRICING
+            #     # -------------------------------------------------
+            #     line._compute_transport_amount()
+
             for line in transport_lines:
+
                 # -------------------------------------------------
                 # KM
+                # Only update if worksheet has a value
                 # -------------------------------------------------
-                line.distance_km = rec.kilometers or 0
+                if rec.kilometers and rec.kilometers > 0:
+                    line.distance_km = rec.kilometers
 
                 # -------------------------------------------------
                 # BINS
+                # Only update if worksheet has bins
                 # -------------------------------------------------
-                line.number_of_bins = total_bins
+                if total_bins > 0:
+                    line.number_of_bins = total_bins
 
                 # -------------------------------------------------
                 # TRIPS
+                # Only update if worksheet has trips
                 # -------------------------------------------------
-                line.number_of_trips = rec.trip_taken or 1
+                if rec.trip_taken and rec.trip_taken > 0:
+                    line.number_of_trips = rec.trip_taken
 
                 # -------------------------------------------------
                 # RECALCULATE PRICING

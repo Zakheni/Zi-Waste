@@ -348,6 +348,9 @@ class WasteClientPortal(CustomerPortal):
             'company_id': company.id,
             'ticket_type': post.get('ticket_type') or 'pickup',
             'service_description': post.get('service_description'),
+            'number_of_bins': int(
+                post.get('number_of_bins') or 1
+            ),
             'pickup_point_ids': [(6, 0, pickup_point_ids)],
             'container_type_id': container_type_id or False,
             'waste_type_id': waste_type_id or False,

@@ -19,14 +19,29 @@
         ]"/>
     </record>
 
-    <!-- SUPER ADMIN -->
+<!--    &lt;!&ndash; SUPER ADMIN &ndash;&gt;-->
+<!--    <record id="group_wmz_admin" model="res.groups">-->
+<!--        <field name="name">Super Admin</field>-->
+<!--        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>-->
+<!--        <field name="implied_ids" eval="[-->
+<!--            (4, ref('waste_management_zakheni.group_wmz_user'))-->
+<!--        ]"/>-->
+<!--    </record>-->
     <record id="group_wmz_admin" model="res.groups">
-        <field name="name">Super Admin</field>
-        <field name="category_id" ref="waste_management_zakheni.module_category_waste_management"/>
-        <field name="implied_ids" eval="[
-            (4, ref('waste_management_zakheni.group_wmz_user'))
-        ]"/>
-    </record>
+    <field name="name">Super Admin</field>
+    <field name="category_id"
+           ref="waste_management_zakheni.module_category_waste_management"/>
+
+    <field name="implied_ids" eval="[
+        (4, ref('waste_management_zakheni.group_wmz_user')),
+        (4, ref('waste_management_zakheni.group_wmz_admin_clerk')),
+        (4, ref('waste_management_zakheni.group_wmz_manager')),
+        (4, ref('waste_management_zakheni.group_wmz_finance')),
+        (4, ref('waste_management_zakheni.group_wmz_driver')),
+        (4, ref('waste_management_zakheni.group_wmz_user_manager')),
+        (4, ref('waste_management_zakheni.group_company_admin'))
+    ]"/>
+</record>
 
     <!-- MANAGER -->
     <record id="group_wmz_manager" model="res.groups">

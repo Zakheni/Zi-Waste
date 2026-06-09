@@ -96,6 +96,18 @@ class WasteServiceRequest(models.Model):
     driver_id = fields.Many2one(string="Driver", related="vehicle_id.driver_id", store=True)
     assistance_id = fields.Many2one(string="Driver Assistance", related="vehicle_id.future_driver_id")
     trailer_id = fields.Many2one("fleet.vehicle", string="Trailer Registration Number")
+    number_of_bins = fields.Integer(
+        string="Number of Bins",
+        default=1,
+        tracking=True,
+    )
+
+    number_of_bins_o = fields.Integer(
+        related='order_line_id.number_of_bins',
+        store=False,
+        readonly=False,
+    )
+
     work_sheet_id = fields.Many2one(
         "waste.worksheet",
         string="Work Sheet",
@@ -1261,6 +1273,7 @@ class WasteServiceRequest(models.Model):
         help="The sale order line that this service request should update."
     )
 
+
     # REPLACE your old product_uom_qty field with this one
     product_uom_qty = fields.Float(
         string="Quantity",
@@ -1689,48 +1702,255 @@ class WasteServiceRequest(models.Model):
             rec.state = 'generated'
 
 
+    # def action_set_scheduled(self):
+    #     Worksheet = self.env['waste.worksheet'].sudo()
+    #
+    #     for rec in self:
+    #         # 1️⃣ Change state
+    #         rec.state = 'scheduled'
+    #
+    #         # # 2️⃣ Create worksheet if not exists
+    #         # existing_ws = Worksheet.search([
+    #         #     ('service_request_id', '=', rec.id)
+    #         # ], limit=1)
+    #         #
+    #         # if not existing_ws:
+    #         #     Worksheet.create({
+    #         #         'service_request_id': rec.id,
+    #         #         'company_id': rec.company_id.id,
+    #         #     })
+    #
+    #         # --------------------------------------------------
+    #         # DEBUG BEFORE
+    #         # --------------------------------------------------
+    #         if rec.sale_order_id:
+    #
+    #             transport_lines = rec.sale_order_id.order_line.filtered(
+    #                 lambda l:
+    #                 l.product_id
+    #                 and l.product_id.product_tmpl_id.is_transport_service
+    #             )
+    #
+    #             for line in transport_lines:
+    #                 _logger.warning(
+    #                     "BEFORE SCHEDULE -> SO=%s Product=%s Bins=%s Price=%s",
+    #                     rec.sale_order_id.name,
+    #                     line.product_id.display_name,
+    #                     line.number_of_bins,
+    #                     line.price_unit,
+    #                 )
+    #                 _logger.warning(
+    #                     "SERVICE REQUEST BINS BEFORE WS CREATE -> lifted=%s dropped=%s",
+    #                     len(rec.bin_lifted_ids),
+    #                     len(rec.bin_dropped_ids),
+    #                 )
+    #
+    #         # --------------------------------------------------
+    #         # CREATE WORKSHEET
+    #         # --------------------------------------------------
+    #         existing_ws = Worksheet.search([
+    #             ('service_request_id', '=', rec.id)
+    #         ], limit=1)
+    #
+    #         if not existing_ws:
+    #             Worksheet.create({
+    #                 'service_request_id': rec.id,
+    #                 'company_id': rec.company_id.id,
+    #             })
+    #
+    #         # --------------------------------------------------
+    #         # DEBUG AFTER
+    #         # --------------------------------------------------
+    #         if rec.sale_order_id:
+    #
+    #             transport_lines = rec.sale_order_id.order_line.filtered(
+    #                 lambda l:
+    #                 l.product_id
+    #                 and l.product_id.product_tmpl_id.is_transport_service
+    #             )
+    #
+    #             for line in transport_lines:
+    #                 _logger.warning(
+    #                     "AFTER SCHEDULE -> SO=%s Product=%s Bins=%s Price=%s",
+    #                     rec.sale_order_id.name,
+    #                     line.product_id.display_name,
+    #                     line.number_of_bins,
+    #                     line.price_unit,
+    #                 )
+    #
+    #         # 3️⃣ SEND EMAIL ✅
+    #         if rec.is_service_provider:
+    #             template = rec.env.ref(
+    #                 "waste_management_zakheni.mail_tmpl_service_request_service_provide_invitation",
+    #                 raise_if_not_found=False,
+    #             )
+    #             print("Provider Email: ", rec.provider_email)
+    #
+    #         else:
+    #             template = rec.env.ref(
+    #                 "waste_management_zakheni.mail_tmpl_service_request_driver_invitation",
+    #                 raise_if_not_found=False,
+    #             )
+    #             print("Driver Email: ", rec.driver_work_email)
+    #
+    #
+    #         # 🚨 IMPORTANT CHECKS
+    #         if template:
+    #             if rec.is_service_provider:
+    #                 if rec.provider_email:
+    #                     template.sudo().send_mail(rec.id, force_send=True)
+    #             else:
+    #                 if rec.driver_work_email:
+    #                     template.sudo().send_mail(rec.id, force_send=True)
+    #
+    #     return True
+
     def action_set_scheduled(self):
+
         Worksheet = self.env['waste.worksheet'].sudo()
 
         for rec in self:
-            # 1️⃣ Change state
+
+            # --------------------------------------------------
+            # CHANGE STATE
+            # --------------------------------------------------
             rec.state = 'scheduled'
 
-            # 2️⃣ Create worksheet if not exists
+            # --------------------------------------------------
+            # DEBUG BEFORE
+            # --------------------------------------------------
+            if rec.sale_order_id:
+
+                transport_lines = rec.sale_order_id.order_line.filtered(
+                    lambda l:
+                    l.product_id
+                    and l.product_id.product_tmpl_id.is_transport_service
+                )
+
+                for line in transport_lines:
+                    _logger.warning(
+                        "BEFORE SCHEDULE -> SO=%s Product=%s Bins=%s Price=%s",
+                        rec.sale_order_id.name,
+                        line.product_id.display_name,
+                        line.number_of_bins,
+                        line.price_unit,
+                    )
+
+            _logger.warning(
+                "SERVICE REQUEST BINS BEFORE WS CREATE -> lifted=%s dropped=%s",
+                len(rec.bin_lifted_ids),
+                len(rec.bin_dropped_ids),
+            )
+
+            # --------------------------------------------------
+            # CHECK EXISTING WORKSHEET
+            # --------------------------------------------------
             existing_ws = Worksheet.search([
                 ('service_request_id', '=', rec.id)
             ], limit=1)
 
+            _logger.warning(
+                "WORKSHEET EXISTS -> %s",
+                bool(existing_ws)
+            )
+
+            # --------------------------------------------------
+            # CREATE WORKSHEET
+            # --------------------------------------------------
             if not existing_ws:
-                Worksheet.create({
+
+                ws = Worksheet.create({
                     'service_request_id': rec.id,
                     'company_id': rec.company_id.id,
                 })
 
-            # 3️⃣ SEND EMAIL ✅
+                _logger.warning(
+                    "WORKSHEET CREATED -> ID=%s quantity=%s lifted=%s dropped=%s",
+                    ws.id,
+                    ws.quantity_collected,
+                    len(ws.bin_lifted_ids),
+                    len(ws.bin_dropped_ids),
+                )
+
+            else:
+
+                ws = existing_ws
+
+                _logger.warning(
+                    "EXISTING WORKSHEET -> ID=%s quantity=%s lifted=%s dropped=%s",
+                    ws.id,
+                    ws.quantity_collected,
+                    len(ws.bin_lifted_ids),
+                    len(ws.bin_dropped_ids),
+                )
+
+            # --------------------------------------------------
+            # DEBUG AFTER
+            # --------------------------------------------------
+            if rec.sale_order_id:
+
+                transport_lines = rec.sale_order_id.order_line.filtered(
+                    lambda l:
+                    l.product_id
+                    and l.product_id.product_tmpl_id.is_transport_service
+                )
+
+                for line in transport_lines:
+                    _logger.warning(
+                        "AFTER SCHEDULE -> SO=%s Product=%s Bins=%s Price=%s",
+                        rec.sale_order_id.name,
+                        line.product_id.display_name,
+                        line.number_of_bins,
+                        line.price_unit,
+                    )
+
+            # --------------------------------------------------
+            # EMAILS
+            # --------------------------------------------------
             if rec.is_service_provider:
+
                 template = rec.env.ref(
                     "waste_management_zakheni.mail_tmpl_service_request_service_provide_invitation",
                     raise_if_not_found=False,
                 )
-                print("Provider Email: ", rec.provider_email)
+
+                _logger.warning(
+                    "PROVIDER EMAIL -> %s",
+                    rec.provider_email
+                )
 
             else:
+
                 template = rec.env.ref(
                     "waste_management_zakheni.mail_tmpl_service_request_driver_invitation",
                     raise_if_not_found=False,
                 )
-                print("Driver Email: ", rec.driver_work_email)
 
+                _logger.warning(
+                    "DRIVER EMAIL -> %s",
+                    rec.driver_work_email
+                )
 
-            # 🚨 IMPORTANT CHECKS
+            # --------------------------------------------------
+            # SEND EMAIL
+            # --------------------------------------------------
             if template:
+
                 if rec.is_service_provider:
+
                     if rec.provider_email:
-                        template.sudo().send_mail(rec.id, force_send=True)
+                        template.sudo().send_mail(
+                            rec.id,
+                            force_send=True
+                        )
+
                 else:
+
                     if rec.driver_work_email:
-                        template.sudo().send_mail(rec.id, force_send=True)
+                        template.sudo().send_mail(
+                            rec.id,
+                            force_send=True
+                        )
 
         return True
 
