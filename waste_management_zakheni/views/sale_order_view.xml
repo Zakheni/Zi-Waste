@@ -80,12 +80,12 @@
 
             </xpath>
 
-            <!-- Hide first invoice button -->
-            <xpath expr="//button[@id='create_invoice']" position="attributes">
-                <attribute name="groups">
-                    !waste_management_zakheni.group_wmz_manager,!waste_management_zakheni.group_wmz_admin_clerk
-                </attribute>
-            </xpath>
+<!--             Hide first invoice button-->
+<!--            <xpath expr="//button[@id='create_invoice']" position="attributes">-->
+<!--                <attribute name="groups">-->
+<!--                    !waste_management_zakheni.group_wmz_manager,!waste_management_zakheni.group_wmz_admin_clerk,!waste_management_zakheni.group_wmz_admin-->
+<!--                </attribute>-->
+<!--            </xpath>-->
 
             <!-- Hide percentage invoice button -->
             <xpath expr="//button[@id='create_invoice_percentage']" position="attributes">

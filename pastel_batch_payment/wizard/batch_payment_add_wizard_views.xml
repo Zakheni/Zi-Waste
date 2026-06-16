@@ -10,28 +10,30 @@
                     <!-- m2m list with checkboxes comes for free in list view -->
 
                     <field name="payment_ids"
-       widget="many2many_tags"
-       domain="[
-           ('state', '=', 'posted'),
-           ('company_id','=', context.get('bp_company_id')),
-           ('in_exported_batch', '=', False),
+                           widget="many2many_tags"
+                           domain="[
+    ('state', '=', 'posted'),
+    ('company_id', '=', context.get('bp_company_id')),
+    ('in_exported_batch', '=', False),
+    ('batch_payment_state', 'not in', ['draft', 'validated', 'exported', 'paid']),
+
+    '&amp;',
+        ('batch_invoice_id', '!=', False),
 
 
-           ('batch_invoice_id', '!=', False),
+    '|',
+        ('journal_id', '=', context.get('bp_journal_id')),
+        ('journal_id', '!=', False),
 
 
-           ('batch_invoice_id.batch_payment_state', '=', 'not_paid'),
+    ('partner_id', '=', context.get('bp_partner_id')),
 
-           '|',
-               ('journal_id','=', context.get('bp_journal_id')),
-               ('journal_id', '!=', False),
+    '|',
+        ('journal_id', '=', context.get('bp_journal_id')),
+        ('journal_id', '!=', False),
 
-           '|', '&amp;',
-               ('partner_id','=', context.get('bp_partner_id')),
-               ('partner_id', '!=', False),
-               ('partner_id', '=', False)
-       ]"/>
 
+]"/>
 
 
                 </group>

@@ -31,10 +31,12 @@
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="batch_state" optional="hide" widget="badge"
+
                        decoration-success="batch_state == 'exported'"
                        decoration-info="batch_state == 'draft'"
                        decoration-warning="batch_state == 'validated'"/>
                 <field name="in_exported_batch" optional="hide" invisible="0"/>
+                <field name="batch_payment_state" optional="hide" invisible="0"/>
 
                 <!-- NEW: show the invoice link on list -->
                 <!--                <field name="batch_invoice_id" optional="hide"/>-->

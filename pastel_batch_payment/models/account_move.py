@@ -39,6 +39,54 @@ class AccountMove(models.Model):
         store=False
     )
 
+    has_batch_payment = fields.Boolean(
+        string="Has Batch Payment",
+        default=False,
+        copy=False,
+    )
+
+    hide_payment_buttons = fields.Boolean(
+        compute="_compute_hide_payment_buttons",
+        store=False,
+    )
+
+    def _compute_hide_payment_buttons(self):
+        for invoice in self:
+
+            invoice.hide_payment_buttons = False
+
+            payments = self.env['account.payment'].search([
+                ('batch_invoice_id', '=', invoice.id)
+            ])
+
+            if not payments:
+                continue
+
+            lines = self.env['batch.payment.line'].search([
+                ('payment_id', 'in', payments.ids)
+            ])
+
+            states = lines.mapped('batch_id.state')
+
+            if 'draft' in states or 'validated' in states:
+                invoice.hide_payment_buttons = True
+
+
+    # has_batch_payment = fields.Boolean(
+    #     compute="_compute_has_batch_payment",
+    #     store=False,
+    # )
+    #
+    # def _compute_has_batch_payment(self):
+    #     Payment = self.env['account.payment']
+    #
+    #     for invoice in self:
+    #         invoice.has_batch_payment = bool(
+    #             Payment.search_count([
+    #                 ('batch_invoice_id', '=', invoice.id)
+    #             ])
+    #         )
+
     def _compute_is_paid_via_batch(self):
         for move in self:
             move.is_paid_via_batch = (

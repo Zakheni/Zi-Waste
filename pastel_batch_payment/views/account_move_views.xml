@@ -16,7 +16,10 @@
                         invisible="move_type not in ('out_invoice','in_invoice') or state != 'posted'"/>
 
             </xpath>
+
+
             <xpath expr="//sheet" position="inside">
+                <field name="hide_payment_buttons" invisible="1"/>
                 <field name="is_paid_via_batch" invisible="1"/>
             </xpath>
 
@@ -37,6 +40,11 @@
                        invisible="payment_state != 'paid'"
                        decoration-success="batch_payment_state == 'paid'"
                        decoration-danger="batch_payment_state == 'not_paid'"/>
+
+                <field name="has_batch_payment" readonly="1" invisible="1"/>
+                <field name="has_batch_payment" readonly="1" invisible="0"/>
+
+
             </xpath>
 
 

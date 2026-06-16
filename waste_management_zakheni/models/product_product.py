@@ -31,6 +31,10 @@ class ProductTemplate(models.Model):
 
         ('per_trip', 'Per Trip'),
 
+        ('per_ton', 'Per Ton'),
+
+        ('per_kg', 'Per KG'),
+
         ('per_bin_km', 'Per Bin Per KM'),
 
         ('per_trip_km', 'Per Trip Per KM'),
@@ -99,7 +103,6 @@ class ProductTemplate(models.Model):
                 ], limit=1)
 
             if not tariff:
-
                 raise ValidationError(_(
                     "No active transport tariff found for:\n"
                     "- %s",
@@ -131,6 +134,20 @@ class ProductTemplate(models.Model):
             elif rec.transport_rate_type == 'per_trip':
 
                 rec.list_price = tariff.per_trip_rate
+
+            # =================================================
+            # PER TON
+            # =================================================
+            elif rec.transport_rate_type == 'per_ton':
+
+                rec.list_price = tariff.per_ton_rate
+
+            # =================================================
+            # PER KG
+            # =================================================
+            elif rec.transport_rate_type == 'per_kg':
+
+                rec.list_price = tariff.per_kg_rate
 
             # =================================================
             # PER BIN PER KM
@@ -251,7 +268,6 @@ class ProductTemplate(models.Model):
                     'price_unit': product.lst_price,
                 })
         return False
-
 
     def action_waste_add_one(self):
         return self._update_waste_request_line(1)

@@ -18,3 +18,11 @@ class AccountMoveLine(models.Model):
         string="Trips",
         default=0,
     )
+
+    weight_kg = fields.Float(
+        string="Weight (KG)",
+    )
+
+    weight_ton = fields.Float(
+        string="Weight (Ton)",
+    )

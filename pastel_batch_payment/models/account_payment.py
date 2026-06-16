@@ -15,12 +15,53 @@ class AccountPayment(models.Model):
     #     string="Batch Invoice",
     #     help="If the payment was registered in Batch mode, store the originating invoice here."
     # )
+    # batch_invoice_id = fields.Many2one(
+    #     "account.move",
+    #     string="Batch Invoice",
+    #     domain="[('move_type', 'in', ('out_invoice', 'in_invoice')), ('state', '=', 'posted'), ('payment_state', '!=', 'paid')]",
+    #     help="If the payment was registered in Batch mode, store the originating invoice here."
+    # )
+
     batch_invoice_id = fields.Many2one(
         "account.move",
         string="Batch Invoice",
-        domain="[('move_type', 'in', ('out_invoice', 'in_invoice')), ('state', '=', 'posted'), ('payment_state', '!=', 'paid')]",
-        help="If the payment was registered in Batch mode, store the originating invoice here."
+        domain=[
+            ('move_type', 'in', ('out_invoice', 'in_invoice')),
+            ('state', '=', 'posted'),
+            ('payment_state', '!=', 'paid'),
+            ('payment_state', '!=', 'partial'),
+            ('has_batch_payment', '=', False),
+        ]
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        payments = super().create(vals_list)
+
+        for payment in payments:
+            if payment.batch_invoice_id:
+                payment.batch_invoice_id.has_batch_payment = True
+
+        return payments
+
+    def write(self, vals):
+        res = super().write(vals)
+
+        for payment in self:
+            if payment.batch_invoice_id:
+                payment.batch_invoice_id.has_batch_payment = True
+
+        return res
+    # batch_invoice_id = fields.Many2one(
+    #     "account.move",
+    #     string="Batch Invoice",
+    #     domain=[
+    #         ('move_type', 'in', ('out_invoice', 'in_invoice')),
+    #         ('state', '=', 'posted'),
+    #         ('payment_state', '!=', 'paid'),
+    #         ('has_batch_payment', '=', False),
+    #     ]
+    # )
 
     def action_create_payments(self):
         res = super().action_create_payments()
@@ -43,23 +84,49 @@ class AccountPayment(models.Model):
             if res.get("res_model") == "account.payment" and res.get("res_id"):
                 payments = self.env["account.payment"].browse(res["res_id"]).exists()
 
+        # if payments:
+        #     payments.write({
+        #         "batch_invoice_id": invoice.id
+        #     })
+        #     _logger.info("Batch invoice auto-set on payment(s): %s", payments.ids)
+
         if payments:
             payments.write({
                 "batch_invoice_id": invoice.id
             })
-            _logger.info("Batch invoice auto-set on payment(s): %s", payments.ids)
+
+            invoice.write({
+                "has_batch_payment": True
+            })
 
         return res
 
     _logger.info("BATCH REGISTER PAYMENT OVERRIDE LOADED")
 
     batch_state = fields.Selection(
-        selection=[('draft', 'Draft'), ('validated', 'Validated'), ('exported', 'Exported'), ('paid', 'Paid')],
-        string="Batch State",
+        selection=[
+            ('draft', 'Draft'),
+            ('validated', 'Validated'),
+            ('exported', 'Exported'),
+            ('paid', 'Paid')
+        ],
         compute="_compute_batch_state",
         search="_search_batch_state",
         store=False,
     )
+
+    batch_payment_state = fields.Selection(
+        [
+            ('draft', 'Draft'),
+            ('validated', 'Validated'),
+            ('exported', 'Exported'),
+            ('paid', 'Paid'),
+        ],
+        string="Batch Payment State",
+        copy=False,
+        index=True,
+    )
+
     in_exported_batch = fields.Boolean(
         string="In Exported Batch",
         compute="_compute_in_exported",

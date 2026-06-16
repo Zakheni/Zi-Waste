@@ -73,39 +73,240 @@
                         <!-- ================================== -->
                         <!-- STANDARD PRICING -->
                         <!-- ================================== -->
+<!--                        <page string="Pricing">-->
+
+<!--                            &lt;!&ndash;                            <group>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                <group>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                    <field name="rate"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                           invisible="rate_type not in ('tier_bin','tier_distance')"/>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                    <field name="base_rate"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                           invisible="rate_type not in ('flat','hybrid_bin_trip','hybrid_trip_km')"/>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                    <field name="increment_rate"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                           invisible="rate_type != 'flat'"/>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                </group>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                <group>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                    <field name="display_per_bin_rate"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                           readonly="1"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                           invisible="rate_type != 'per_bin_km'"/>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                    &lt;!&ndash;                                    <field name="per_bin_rate"&ndash;&gt;&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                    &lt;!&ndash;                                           invisible="rate_type not in ('per_bin','hybrid_bin_trip')"/>&ndash;&gt;&ndash;&gt;-->
+
+
+<!--                            &lt;!&ndash;                                    <field name="per_bin_rate"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                           invisible="rate_type not in ('per_bin','hybrid_bin_trip')"/>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                    <field name="per_trip_rate"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                           invisible="rate_type not in ('per_trip')"/>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                    &lt;!&ndash;                                    <field name="per_trip_rate"&ndash;&gt;&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                    &lt;!&ndash;                                           invisible="rate_type != 'per_trip'"/>&ndash;&gt;&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                    <field name="per_trip_rate"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                           invisible="rate_type not in ('per_trip','per_trip_km')"/>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                    <field name="per_km_rate"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                           invisible="rate_type not in ('per_bin_km','per_trip_km','hybrid_trip_km')"/>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                                </group>&ndash;&gt;-->
+
+<!--                            &lt;!&ndash;                            </group>&ndash;&gt;-->
+<!--                            <group>-->
+
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                &lt;!&ndash; MIRROR OF PER BIN TARIFF &ndash;&gt;-->
+<!--                                &lt;!&ndash; Visible only on PER BIN PER KM &ndash;&gt;-->
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                <field name="display_per_bin_rate"-->
+<!--                                       readonly="1"-->
+<!--                                       invisible="rate_type != 'per_bin_km'"/>-->
+
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                &lt;!&ndash; PER BIN RATE &ndash;&gt;-->
+<!--                                &lt;!&ndash; Only editable on PER BIN and HYBRID &ndash;&gt;-->
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                <field name="per_bin_rate"-->
+<!--                                       invisible="rate_type not in ('per_bin',-->
+<!--                                        'hybrid_bin_trip')"/>-->
+
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                &lt;!&ndash; MIRROR OF PER TRIP TARIFF &ndash;&gt;-->
+<!--                                &lt;!&ndash; Visible only on PER TRIP PER KM &ndash;&gt;-->
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                <field name="display_per_trip_rate"-->
+<!--                                       readonly="1"-->
+<!--                                       invisible="rate_type != 'per_trip_km'"/>-->
+
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                &lt;!&ndash; PER TRIP RATE &ndash;&gt;-->
+<!--                                &lt;!&ndash; Only editable on PER TRIP &ndash;&gt;-->
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                <field name="per_trip_rate"-->
+<!--                                       invisible="rate_type != 'per_trip'"/>-->
+
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                &lt;!&ndash; PER KM RATE &ndash;&gt;-->
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                <field name="per_km_rate"-->
+<!--                                       invisible="rate_type not in ('per_bin_km',-->
+<!--                                        'per_trip_km',-->
+<!--                                        'hybrid_trip_km')"/>-->
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                &lt;!&ndash; PER TON RATE &ndash;&gt;-->
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+
+<!--                                <field name="per_ton_rate"-->
+<!--                                       invisible="rate_type != 'per_ton'"/>-->
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--                                &lt;!&ndash; PER KG RATE &ndash;&gt;-->
+<!--                                &lt;!&ndash; ===================================== &ndash;&gt;-->
+
+<!--                                <field name="per_kg_rate"-->
+<!--                                       invisible="rate_type != 'per_kg'"/>-->
+
+<!--                            </group>-->
+
+<!--                        </page>-->
+
                         <page string="Pricing">
 
-                            <group>
+    <group>
 
-                                <group>
+        <!-- LEFT SIDE -->
+        <group>
 
-                                    <field name="rate"
-                                           invisible="rate_type not in ('tier_bin','tier_distance')"/>
+            <field name="rate"
+                   invisible="rate_type not in ('tier_bin','tier_distance')"/>
 
-                                    <field name="base_rate"
-                                           invisible="rate_type not in ('flat','hybrid_bin_trip','hybrid_trip_km')"/>
+            <field name="base_rate"
+                   invisible="rate_type not in ('flat',
+                                                'hybrid_bin_trip',
+                                                'hybrid_trip_km')"/>
 
-                                    <field name="increment_rate"
-                                           invisible="rate_type != 'flat'"/>
+            <field name="increment_rate"
+                   invisible="rate_type != 'flat'"/>
 
-                                </group>
+        </group>
 
-                                <group>
+        <!-- RIGHT SIDE -->
+<!--        <group>-->
 
-                                    <field name="per_bin_rate"
-                                           invisible="rate_type not in ('per_bin','hybrid_bin_trip')"/>
+<!--&lt;!&ndash;            <field name="display_per_bin_rate"&ndash;&gt;-->
+<!--&lt;!&ndash;                   readonly="1"&ndash;&gt;-->
+<!--&lt;!&ndash;                   invisible="rate_type != 'per_bin_km'"/>&ndash;&gt;-->
 
-                                    <field name="per_trip_rate"
-                                           invisible="rate_type != 'per_trip'"/>
+<!--&lt;!&ndash;            <field name="per_bin_rate"&ndash;&gt;-->
+<!--&lt;!&ndash;                   invisible="rate_type not in ('per_bin',&ndash;&gt;-->
+<!--&lt;!&ndash;                                                'hybrid_bin_trip')"/>&ndash;&gt;-->
 
-                                    <field name="per_km_rate"
-                                           invisible="rate_type not in ('per_bin_km','per_trip_km','hybrid_trip_km')"/>
+<!--           <field name="display_per_bin_rate"-->
+<!--       string="Master Per Bin Rate"-->
+<!--       readonly="1"-->
+<!--       invisible="rate_type != 'per_bin_km'"/>-->
 
-                                </group>
+<!--<field name="per_bin_rate"-->
+<!--       string="Per Bin Rate Used For This Tariff"-->
+<!--       invisible="rate_type not in ('per_bin',-->
+<!--                                    'hybrid_bin_trip',-->
+<!--                                    'per_bin_km')"/>-->
 
-                            </group>
+<!--&lt;!&ndash;            <field name="display_per_trip_rate"&ndash;&gt;-->
+<!--&lt;!&ndash;                   readonly="1"&ndash;&gt;-->
+<!--&lt;!&ndash;                   invisible="rate_type != 'per_trip_km'"/>&ndash;&gt;-->
 
-                        </page>
+<!--&lt;!&ndash;            <field name="per_trip_rate"&ndash;&gt;-->
+<!--&lt;!&ndash;                   invisible="rate_type != 'per_trip'"/>&ndash;&gt;-->
+
+<!--            <field name="display_per_trip_rate"-->
+<!--       string="Master Per Trip Rate"-->
+<!--       readonly="1"-->
+<!--       invisible="rate_type != 'per_trip_km'"/>-->
+
+<!--<field name="per_trip_rate"-->
+<!--       string="Per Trip Rate Used For This Tariff"-->
+<!--       invisible="rate_type not in ('per_trip',-->
+<!--                                    'per_trip_km')"/>-->
+
+<!--            <field name="per_km_rate"-->
+<!--                   invisible="rate_type not in ('per_bin_km',-->
+<!--                                                'per_trip_km',-->
+<!--                                                'hybrid_trip_km')"/>-->
+
+<!--            <field name="per_ton_rate"-->
+<!--                   invisible="rate_type != 'per_ton'"/>-->
+
+<!--            <field name="per_kg_rate"-->
+<!--                   invisible="rate_type != 'per_kg'"/>-->
+
+<!--        </group>-->
+
+        <group>
+
+    <!-- ===================================== -->
+    <!-- MASTER PER BIN RATE (READ ONLY) -->
+    <!-- ===================================== -->
+    <field name="display_per_bin_rate"
+           string="Master Per Bin Rate"
+           readonly="1"
+           invisible="rate_type != 'per_bin_km'"/>
+
+    <!-- ===================================== -->
+    <!-- PER BIN RATE -->
+    <!-- ===================================== -->
+    <field name="per_bin_rate"
+           string="Per Bin Rate"
+           invisible="rate_type not in ('per_bin',
+                                        'hybrid_bin_trip',
+                                        'per_bin_km')"/>
+
+    <!-- ===================================== -->
+    <!-- MASTER PER TRIP RATE (READ ONLY) -->
+    <!-- ===================================== -->
+    <field name="display_per_trip_rate"
+           string="Master Per Trip Rate"
+           readonly="1"
+           invisible="rate_type != 'per_trip_km'"/>
+
+    <!-- ===================================== -->
+    <!-- PER TRIP RATE -->
+    <!-- ===================================== -->
+    <field name="per_trip_rate"
+           string="Per Trip Rate"
+           invisible="rate_type not in ('per_trip',
+                                        'per_trip_km')"/>
+
+    <!-- ===================================== -->
+    <!-- PER KM RATE -->
+    <!-- ===================================== -->
+    <field name="per_km_rate"
+           invisible="rate_type not in ('per_bin_km',
+                                        'per_trip_km',
+                                        'hybrid_trip_km')"/>
+
+    <!-- ===================================== -->
+    <!-- PER TON RATE -->
+    <!-- ===================================== -->
+    <field name="per_ton_rate"
+           invisible="rate_type != 'per_ton'"/>
+
+    <!-- ===================================== -->
+    <!-- PER KG RATE -->
+    <!-- ===================================== -->
+    <field name="per_kg_rate"
+           invisible="rate_type != 'per_kg'"/>
+
+</group>
+
+    </group>
+
+</page>
 
                         <!-- ================================== -->
                         <!-- TIERING -->

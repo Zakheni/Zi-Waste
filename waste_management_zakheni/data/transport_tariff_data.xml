@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
+<odoo noupdate="0">
 
     <!-- ================================================== -->
     <!-- FLAT RATE -->
@@ -81,9 +81,107 @@
     </record>
 
     <!-- ================================================== -->
+    <!-- PER TON -->
+    <!-- Formula:
+         ton × per_ton_rate
+    -->
+    <!-- ================================================== -->
+
+    <record id="transport_tariff_per_ton_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Per Ton</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">per_ton</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="per_ton_rate">850</field>
+
+        <field name="active">True</field>
+
+    </record>
+    <!-- ================================================== -->
+    <!-- PER KG -->
+    <!-- Formula:
+         kg × per_kg_rate
+    -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_per_kg_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Per KG</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">per_kg</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="per_kg_rate">1.50</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!--    &lt;!&ndash; ================================================== &ndash;&gt;-->
+    <!--    &lt;!&ndash; PER BIN PER KM &ndash;&gt;-->
+    <!--    &lt;!&ndash; Formula:-->
+    <!--         bins × km × per_km_rate-->
+    <!--    &ndash;&gt;-->
+    <!--    &lt;!&ndash; ================================================== &ndash;&gt;-->
+    <!--    <record id="transport_tariff_per_bin_km_initial"-->
+    <!--            model="waste.transport.tariff">-->
+
+    <!--        <field name="name">Per Bin Per KM</field>-->
+
+    <!--        <field name="company_id" ref="base.main_company"/>-->
+
+    <!--        <field name="rate_type">per_bin_km</field>-->
+
+    <!--        <field name="date_from">2025-01-01</field>-->
+
+    <!--        <field name="per_km_rate">5</field>-->
+
+    <!--        <field name="active">True</field>-->
+
+    <!--    </record>-->
+
+    <!--    &lt;!&ndash; ================================================== &ndash;&gt;-->
+    <!--    &lt;!&ndash; PER TRIP PER KM &ndash;&gt;-->
+    <!--    &lt;!&ndash; Formula:-->
+    <!--         trips × km × per_km_rate-->
+    <!--    &ndash;&gt;-->
+    <!--    &lt;!&ndash; ================================================== &ndash;&gt;-->
+    <!--    <record id="transport_tariff_per_trip_per_km_initial"-->
+    <!--            model="waste.transport.tariff">-->
+
+    <!--        <field name="name">Per Trip Per KM</field>-->
+
+    <!--        <field name="company_id" ref="base.main_company"/>-->
+
+    <!--        <field name="rate_type">per_trip_km</field>-->
+
+    <!--        <field name="date_from">2025-01-01</field>-->
+
+    <!--        <field name="per_km_rate">10</field>-->
+
+    <!--        <field name="active">True</field>-->
+
+    <!--    </record>-->
+
+    <!-- ================================================== -->
     <!-- PER BIN PER KM -->
     <!-- Formula:
-         bins × km × per_km_rate
+         (bins × per_bin_rate)
+         + (bins × km × per_km_rate)
+    -->
+    <!-- Example:
+         2 bins × 300 = 600
+         2 bins × 10 km × 5 = 100
+         Total = 700
     -->
     <!-- ================================================== -->
     <record id="transport_tariff_per_bin_km_initial"
@@ -97,6 +195,9 @@
 
         <field name="date_from">2025-01-01</field>
 
+        <!-- NEW -->
+        <field name="per_bin_rate">300</field>
+
         <field name="per_km_rate">5</field>
 
         <field name="active">True</field>
@@ -106,7 +207,13 @@
     <!-- ================================================== -->
     <!-- PER TRIP PER KM -->
     <!-- Formula:
-         trips × km × per_km_rate
+         (trips × per_trip_rate)
+         + (trips × km × per_km_rate)
+    -->
+    <!-- Example:
+         2 trips × 700 = 1400
+         2 trips × 10 km × 10 = 200
+         Total = 1600
     -->
     <!-- ================================================== -->
     <record id="transport_tariff_per_trip_per_km_initial"
@@ -119,6 +226,9 @@
         <field name="rate_type">per_trip_km</field>
 
         <field name="date_from">2025-01-01</field>
+
+        <!-- NEW -->
+        <field name="per_trip_rate">700</field>
 
         <field name="per_km_rate">10</field>
 

@@ -28,16 +28,38 @@
         <field name="arch" type="xml">
             <form string="Batch Payment">
                 <header>
-                    <button name="action_validate" type="object" string="Validate" invisible="state != 'draft'"
+                    <!--                    <button name="action_validate" type="object" string="Validate" invisible="state != 'draft'"-->
+                    <!--                            class="btn-primary"/>-->
+
+                    <button name="action_validate"
+                            type="object"
+                            string="Validate"
+                            groups="pastel_batch_payment.group_finance_clerk,pastel_batch_payment.group_finance_manager"
+                            invisible="state != 'draft'"
                             class="btn-primary"/>
-                    <button name="action_export_sage" type="object" string="Export to Sage"
-                            invisible="state != 'validated'" class="oe_highlight"/>
-                    <button name="action_pay_batch" type="object" string="Pay Batch"
-                            invisible="state not in ('validated',)" class="btn-primary"/>
+
+                    <!--                    <button name="action_export_sage" type="object" string="Export to Sage"-->
+                    <!--                            invisible="state != 'validated'" class="oe_highlight"/>-->
+
+                    <button name="action_export_sage"
+                            type="object"
+                            string="Export to Sage"
+                            groups="pastel_batch_payment.group_finance_manager"
+                            invisible="state != 'validated'"
+                            class="oe_highlight"/>
+
+                    <!--                    <button name="action_pay_batch" type="object" string="Pay Batch"-->
+                    <!--                            invisible="state not in ('validated',)" class="btn-primary"/>-->
+                    <button name="action_pay_batch"
+                            type="object"
+                            string="Pay Batch"
+                            groups="pastel_batch_payment.group_finance_manager"
+                            invisible="state not in ('validated','exported')"
+                            class="btn-primary"/>
 
 
                     <!--                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid"/>-->
-                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid"/>
 
                 </header>
                 <sheet>
@@ -95,7 +117,7 @@
                                              'bp_pml_id': payment_method_line_id,
                                              'bp_partner_id': partner_id
                                            }"
-                                   readonly="state != 'draft'">
+                                   readonly="1">
                                 <tree editable="bottom" multi_edit="True">
 
                                     <!-- Use context.get(...) instead of parent.* so the filter actually applies -->
@@ -145,25 +167,25 @@
 
 
                         </page>
-<!--                        <page string="Invoices">-->
-<!--                            <group>-->
-<!--                                <field name="invoice_ids"-->
-<!--                                       domain="[('state','=','posted'),-->
-<!--                                                    ('move_type','in',('out_invoice','in_invoice')),-->
-<!--                                                    ('batch_payment_state','=','not_paid')]"-->
+                        <!--                        <page string="Invoices">-->
+                        <!--                            <group>-->
+                        <!--                                <field name="invoice_ids"-->
+                        <!--                                       domain="[('state','=','posted'),-->
+                        <!--                                                    ('move_type','in',('out_invoice','in_invoice')),-->
+                        <!--                                                    ('batch_payment_state','=','not_paid')]"-->
 
-<!--                                       widget="many2many_tags"-->
-<!--                                       options="{'no_create': True}"/>-->
-<!--                            </group>-->
+                        <!--                                       widget="many2many_tags"-->
+                        <!--                                       options="{'no_create': True}"/>-->
+                        <!--                            </group>-->
 
-<!--                        </page>-->
-<!--                        <page string="Invoices">-->
-<!--                            <group>-->
-<!--                                <field name="invoice_ids"-->
-<!--                                       widget="many2many_tags"-->
-<!--                                       readonly="1"/>-->
-<!--                            </group>-->
-<!--                        </page>-->
+                        <!--                        </page>-->
+                        <!--                        <page string="Invoices">-->
+                        <!--                            <group>-->
+                        <!--                                <field name="invoice_ids"-->
+                        <!--                                       widget="many2many_tags"-->
+                        <!--                                       readonly="1"/>-->
+                        <!--                            </group>-->
+                        <!--                        </page>-->
                         <page string="Export History">
                             <field name="export_history_ids" readonly="1">
                                 <tree>

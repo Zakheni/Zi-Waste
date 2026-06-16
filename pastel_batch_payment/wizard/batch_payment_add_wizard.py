@@ -7,7 +7,7 @@ class BatchPaymentAddWizard(models.TransientModel):
     _name = "batch.payment.add.wizard"
     _description = "Select Posted Payments to Add"
 
-    batch_id = fields.Many2one("batch.payment", required=True)
+    batch_id = fields.Many2one("batch.payment", requFired=True)
 
     payment_ids = fields.Many2many(
         "account.payment",

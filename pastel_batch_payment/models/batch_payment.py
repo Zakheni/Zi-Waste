@@ -270,6 +270,10 @@ class BatchPayment(models.Model):
                 rec.name = rec.env["ir.sequence"].next_by_code("batch.payment") or f"BATCH/{rec.id}"
             rec.state = "validated"
 
+            rec.line_ids.mapped('payment_id').write({
+                'batch_payment_state': 'validated'
+            })
+
     # ----------------------------------------------------------------
     # Export to Sage
     # ----------------------------------------------------------------
@@ -454,6 +458,9 @@ class BatchPayment(models.Model):
                 # ---------------------------------------
                 rec.state = "exported"
 
+                rec.line_ids.mapped('payment_id').write({
+                    'batch_payment_state': 'exported'
+                })
 
 
 
@@ -467,7 +474,6 @@ class BatchPayment(models.Model):
                 })
 
                 raise UserError(_("Sage export failed: %s") % e)
-
 
     def action_pay_batch(self):
         for batch in self:
@@ -503,6 +509,10 @@ class BatchPayment(models.Model):
                 })
 
             batch.state = "paid"
+
+            batch.line_ids.mapped('payment_id').write({
+                'batch_payment_state': 'paid'
+            })
 
         return {"type": "ir.actions.client", "tag": "reload"}
 

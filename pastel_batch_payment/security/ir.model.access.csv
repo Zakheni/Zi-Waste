@@ -1,5 +1,13 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_batch_payment_user,batch.payment user,model_batch_payment,base.group_user,1,1,1,1
-access_batch_payment_line_user,batch.payment.line user,model_batch_payment_line,base.group_user,1,1,1,1
-access_batch_payment_add_wizard_user,batch.payment.add.wizard user,model_batch_payment_add_wizard,base.group_user,1,1,1,1
-access_batch_payment_export_history_user,batch.payment.export.history user,model_batch_payment_export_history,base.group_user,1,1,1,1
+
+access_batch_payment_clerk,batch.payment clerk,model_batch_payment,pastel_batch_payment.group_finance_clerk,1,1,1,0
+access_batch_payment_line_clerk,batch.payment.line clerk,model_batch_payment_line,pastel_batch_payment.group_finance_clerk,1,1,1,0
+access_batch_payment_export_history_clerk,batch.payment.export.history clerk,model_batch_payment_export_history,pastel_batch_payment.group_finance_clerk,1,0,0,0
+
+access_batch_payment_manager,batch.payment manager,model_batch_payment,pastel_batch_payment.group_finance_manager,1,1,1,1
+access_batch_payment_line_manager,batch.payment.line manager,model_batch_payment_line,pastel_batch_payment.group_finance_manager,1,1,1,1
+access_batch_payment_export_history_manager,batch.payment.export.history manager,model_batch_payment_export_history,pastel_batch_payment.group_finance_manager,1,1,1,1
+
+access_batch_payment_add_wizard_clerk,batch.payment.add.wizard clerk,model_batch_payment_add_wizard,pastel_batch_payment.group_finance_clerk,1,1,1,0
+
+access_batch_payment_add_wizard_manager,batch.payment.add.wizard manager,model_batch_payment_add_wizard,pastel_batch_payment.group_finance_manager,1,1,1,1

@@ -5,6 +5,7 @@
     "summary": "Create & export batch payments to Sage Pastel via bridge",
     "depends": ["account"],
     "data": [
+        "security/security.xml",
         "security/ir.model.access.csv",
         "data/sequence.xml",
         "views/account_move_views.xml",

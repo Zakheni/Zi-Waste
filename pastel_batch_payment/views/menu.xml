@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+<!--    <menuitem id="menu_batch_payment_root"-->
+<!--              name="Batch Payments"-->
+<!--              parent="account.menu_finance"-->
+<!--              sequence="80"/>-->
+
     <menuitem id="menu_batch_payment_root"
-              name="Batch Payments"
-              parent="account.menu_finance"
-              sequence="80"/>
+          name="Batch Payments"
+          parent="account.menu_finance"
+          sequence="80"
+          groups="pastel_batch_payment.group_finance_clerk,pastel_batch_payment.group_finance_manager"/>
 
     <menuitem id="menu_batch_payment"
               name="Batches"

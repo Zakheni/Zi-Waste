@@ -806,71 +806,82 @@ class WasteServiceRequest(models.Model):
         self.pickup_point_ids = False
         self.dropoff_point_ids = False
 
-    # ---------------------------------------------------------
-    # Check pickup point and Bins.
-    # ---------------------------------------------------------
-    @api.constrains('partner_id', 'pickup_point_ids', 'dropoff_point_ids', 'bin_lifted_ids')
-    def _check_pickup_points_and_bins(self):
-        for rec in self:
-            # If no customer, nothing to validate
-            if not rec.partner_id:
-                continue
-
-            # --------------------------------------------------
-            # 1) Pickup points must belong to the same customer
-            # --------------------------------------------------
-            for pp in rec.pickup_point_ids:
-                if pp.partner_id and pp.partner_id != rec.partner_id:
-                    raise ValidationError(_(
-                        "Pickup point '%(pp)s' belongs to customer '%(c_pp)s', "
-                        "but this request is for customer '%(c_req)s'.",
-                        pp=pp.display_name,
-                        c_pp=pp.partner_id.display_name,
-                        c_req=rec.partner_id.display_name,
-                    ))
-
-            # --------------------------------------------------
-            # 2) Drop-off points must also belong to same customer
-            # --------------------------------------------------
-            for pp in rec.dropoff_point_ids:
-                if pp.partner_id and pp.partner_id != rec.partner_id:
-                    raise ValidationError(_(
-                        "Drop-off point '%(pp)s' belongs to customer '%(c_pp)s', "
-                        "but this request is for customer '%(c_req)s'.",
-                        pp=pp.display_name,
-                        c_pp=pp.partner_id.display_name,
-                        c_req=rec.partner_id.display_name,
-                    ))
-
-            # --------------------------------------------------
-            # 3) Bins must belong to the same customer AND
-            #    be linked to one of the selected pickup points
-            # --------------------------------------------------
-            if not rec.pickup_point_ids or not rec.bin_lifted_ids:
-                # No pickup points or no bins -> nothing more to validate
-                continue
-
-            allowed_pp_ids = set(rec.pickup_point_ids.ids)
-
-            for cont in rec.bin_lifted_ids:
-                # 3.1) Check bin's customer
-                if cont.partner_id and cont.partner_id != rec.partner_id:
-                    raise ValidationError(_(
-                        "Bin %(bin)s belongs to customer %(c_bin)s, "
-                        "but this request is for customer %(c_req)s.",
-                        bin=cont.display_name,
-                        c_bin=cont.partner_id.display_name,
-                        c_req=rec.partner_id.display_name,
-                    ))
-
-                # 3.2) Check bin's pickup point is in selected pickup points
-                if cont.pickup_point_id and cont.pickup_point_id.id not in allowed_pp_ids:
-                    raise ValidationError(_(
-                        "Bin %(bin)s is linked to pickup point %(pp_bin)s, "
-                        "which is not in the selected pickup points for this request.",
-                        bin=cont.display_name,
-                        pp_bin=cont.pickup_point_id.display_name,
-                    ))
+    # # ---------------------------------------------------------
+    # # Check pickup point and Bins.
+    # # ---------------------------------------------------------
+    # @api.constrains('partner_id', 'pickup_point_ids', 'dropoff_point_ids', 'bin_lifted_ids')
+    # def _check_pickup_points_and_bins(self):
+    #     for rec in self:
+    #         # If no customer, nothing to validate
+    #         if not rec.partner_id:
+    #             continue
+    #
+    #         # --------------------------------------------------
+    #         # 1) Pickup points must belong to the same customer
+    #         # --------------------------------------------------
+    #
+    #         for pp in rec.pickup_point_ids:
+    #
+    #             if pp.partner_id and pp.partner_id != rec.partner_id:
+    #                 raise ValidationError(_(
+    #                     "Pickup point '%(pp)s' belongs to customer '%(c_pp)s', "
+    #                     "but this request is for customer '%(c_req)s'.",
+    #                     pp=pp.display_name,
+    #                     c_pp=pp.partner_id.display_name,
+    #                     c_req=rec.partner_id.display_name,
+    #                 ))
+    #
+    #         # --------------------------------------------------
+    #         # 2) Drop-off points must also belong to same customer
+    #         # --------------------------------------------------
+    #         for pp in rec.dropoff_point_ids:
+    #             if pp.partner_id and pp.partner_id != rec.partner_id:
+    #                 raise ValidationError(_(
+    #                     "Drop-off point '%(pp)s' belongs to customer '%(c_pp)s', "
+    #                     "but this request is for customer '%(c_req)s'.",
+    #                     pp=pp.display_name,
+    #                     c_pp=pp.partner_id.display_name,
+    #                     c_req=rec.partner_id.display_name,
+    #                 ))
+    #
+    #         # --------------------------------------------------
+    #         # 3) Bins must belong to the same customer AND
+    #         #    be linked to one of the selected pickup points
+    #         # --------------------------------------------------
+    #         if not rec.pickup_point_ids or not rec.bin_lifted_ids:
+    #             # No pickup points or no bins -> nothing more to validate
+    #             continue
+    #
+    #         allowed_pp_ids = set(rec.pickup_point_ids.ids)
+    #
+    #
+    #
+    #         for cont in rec.bin_lifted_ids:
+    #
+    #             _logger.warning(
+    #                 "BIN=%s PICKUP=%s ALLOWED=%s",
+    #                 cont.display_name,
+    #                 cont.pickup_point_id.display_name if cont.pickup_point_id else "None",
+    #                 rec.pickup_point_ids.ids
+    #             )
+    #             # 3.1) Check bin's customer
+    #             if cont.partner_id and cont.partner_id != rec.partner_id:
+    #                 raise ValidationError(_(
+    #                     "Bin %(bin)s belongs to customer %(c_bin)s, "
+    #                     "but this request is for customer %(c_req)s.",
+    #                     bin=cont.display_name,
+    #                     c_bin=cont.partner_id.display_name,
+    #                     c_req=rec.partner_id.display_name,
+    #                 ))
+    #
+    #             # 3.2) Check bin's pickup point is in selected pickup points
+    #             if cont.pickup_point_id and cont.pickup_point_id.id not in allowed_pp_ids:
+    #                 raise ValidationError(_(
+    #                     "Bin %(bin)s is linked to pickup point %(pp_bin)s, "
+    #                     "which is not in the selected pickup points for this request.",
+    #                     bin=cont.display_name,
+    #                     pp_bin=cont.pickup_point_id.display_name,
+    #                 ))
 
 
     condition = fields.Selection([
@@ -1859,30 +1870,38 @@ class WasteServiceRequest(models.Model):
             # --------------------------------------------------
             if not existing_ws:
 
-                ws = Worksheet.create({
+                # ws = Worksheet.create({
+                #     'service_request_id': rec.id,
+                #     'company_id': rec.company_id.id,
+                # })
+
+                ws = Worksheet.with_context(
+                    skip_transport_sync=True
+                ).create({
                     'service_request_id': rec.id,
                     'company_id': rec.company_id.id,
                 })
 
-                _logger.warning(
-                    "WORKSHEET CREATED -> ID=%s quantity=%s lifted=%s dropped=%s",
-                    ws.id,
-                    ws.quantity_collected,
-                    len(ws.bin_lifted_ids),
-                    len(ws.bin_dropped_ids),
-                )
+                # _logger.warning(
+                #     "WORKSHEET CREATED -> ID=%s quantity=%s lifted=%s dropped=%s",
+                #     ws.id,
+                #     ws.quantity_collected,
+                #     len(ws.bin_lifted_ids),
+                #     len(ws.bin_dropped_ids),
+                # )
 
             else:
 
                 ws = existing_ws
 
-                _logger.warning(
-                    "EXISTING WORKSHEET -> ID=%s quantity=%s lifted=%s dropped=%s",
-                    ws.id,
-                    ws.quantity_collected,
-                    len(ws.bin_lifted_ids),
-                    len(ws.bin_dropped_ids),
-                )
+                # _logger.warning(
+                #     "EXISTING WORKSHEET -> ID=%s quantity=%s lifted=%s dropped=%s",
+                #     ws.id,
+                #     ws.quantity_collected,
+                #     len(ws.bin_lifted_ids),
+                #     len(ws.bin_dropped_ids),
+                #
+                # )
 
             # --------------------------------------------------
             # DEBUG AFTER
@@ -2460,8 +2479,8 @@ class WasteServiceRequest(models.Model):
     latest_worksheet_unit_of_measure = fields.Many2one('uom.uom', string='Units of Measure',
                                                        compute="_compute_latest_worksheet",
                                                        store=True)
-    latest_worksheet_quantity_collected = fields.Float(string='Quantity Collected', compute="_compute_latest_worksheet",
-                                                       store=True)
+    # latest_worksheet_quantity_collected = fields.Float(string='Quantity Collected', compute="_compute_latest_worksheet",
+    #                                                    store=True)
     latest_worksheet_driver_signature = fields.Binary(string="Signature", compute="_compute_latest_worksheet",
                                                       store=True)
     latest_worksheet_manifest_document = fields.Binary("Manifests Document", compute="_compute_latest_worksheet",
@@ -2496,7 +2515,7 @@ class WasteServiceRequest(models.Model):
                 rec.latest_worksheet_kilometers = latest.kilometers
                 rec.latest_worksheet_return_date = latest.return_date
                 rec.latest_worksheet_unit_of_measure = latest.unit_of_measure
-                rec.latest_worksheet_quantity_collected = latest.quantity_collected
+                # rec.latest_worksheet_quantity_collected = latest.quantity_collected
                 rec.latest_worksheet_driver_signature = latest.driver_signature
                 rec.latest_worksheet_manifest_document = latest.manifest_document
                 rec.latest_worksheet_weighbridge_slip = latest.weighbridge_slip
@@ -2508,7 +2527,7 @@ class WasteServiceRequest(models.Model):
                 rec.latest_worksheet_kilometers = False
                 rec.latest_worksheet_return_date = False
                 rec.latest_worksheet_unit_of_measure = False
-                rec.latest_worksheet_quantity_collected = False
+                # rec.latest_worksheet_quantity_collected = False
                 rec.latest_worksheet_driver_signature = False
                 rec.latest_worksheet_manifest_document = False
                 rec.latest_worksheet_weighbridge_slip = False

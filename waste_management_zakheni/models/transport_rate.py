@@ -59,6 +59,10 @@ class WasteTransportTariff(models.Model):
 
         ('per_trip', 'Per Trip'),
 
+        ('per_ton', 'Per Ton'),
+
+        ('per_kg', 'Per KG'),
+
         ('per_bin_km', 'Per Bin Per KM'),
 
         ('per_trip_km', 'Per Trip Per KM'),
@@ -137,6 +141,25 @@ class WasteTransportTariff(models.Model):
         help="Help: Rate charged per trip."
     )
 
+    per_ton_rate = fields.Float(
+        string="Per Ton Rate",
+        tracking=True,
+    )
+
+    per_kg_rate = fields.Float(
+        string="Per KG Rate",
+        tracking=True,
+    )
+
+    display_per_bin_rate = fields.Float(
+        string="Current Per Bin Rate",
+        compute="_compute_display_rates"
+    )
+
+    display_per_trip_rate = fields.Float(
+        string="Current Per Trip Rate",
+        compute="_compute_display_rates"
+    )
     # --------------------------------------------------
     # TIERING
     # --------------------------------------------------
@@ -215,6 +238,34 @@ class WasteTransportTariff(models.Model):
     #     string="Maximum Distance",
     #     tracking=True,
     # )
+
+    @api.depends('company_id')
+    def _compute_display_rates(self):
+
+        Tariff = self.env['waste.transport.tariff'].sudo()
+
+        for rec in self:
+
+            rec.display_per_bin_rate = 0
+            rec.display_per_trip_rate = 0
+
+            per_bin = Tariff.search([
+                ('company_id', '=', rec.company_id.id),
+                ('rate_type', '=', 'per_bin'),
+                ('active', '=', True),
+            ], limit=1)
+
+            if per_bin:
+                rec.display_per_bin_rate = per_bin.per_bin_rate
+
+            per_trip = Tariff.search([
+                ('company_id', '=', rec.company_id.id),
+                ('rate_type', '=', 'per_trip'),
+                ('active', '=', True),
+            ], limit=1)
+
+            if per_trip:
+                rec.display_per_trip_rate = per_trip.per_trip_rate
 
     # --------------------------------------------------
     # VALIDATIONS

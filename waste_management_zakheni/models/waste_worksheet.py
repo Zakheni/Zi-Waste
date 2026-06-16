@@ -38,9 +38,30 @@ class WasteWorksheet(models.Model):
     return_date = fields.Datetime(string='Return Date', tracking=True)
     unit_of_measure = fields.Many2one('uom.uom', string='Units of Measure', tracking=True)
     kilometers = fields.Integer(string='Kilometers', tracking=True)
-    # quantity_collected = fields.Float(string='Quantity Collected')
-    quantity_collected = fields.Float(
-        string='Quantity Collected',
+    quantity_collected = fields.Float(string='Quantity Collected')
+    is_trip = fields.Boolean(
+        string="Is Trip Required",
+        Help="Make the Trip Integer Field to be visible for the user to enter the How many Trip taken")
+
+    is_collection_qty = fields.Boolean(
+        string="Is Quantity Collection",
+        Help="Make the Quantity Integer Field to be visible for the user to enter the  quantity collected")
+
+    show_ton_qty = fields.Boolean(
+        compute="_compute_show_quantity_fields"
+    )
+
+    show_kg_qty = fields.Boolean(
+        compute="_compute_show_quantity_fields"
+    )
+
+    quantity_collected_ton = fields.Float(
+        string='Enter Ton',
+        default=0.0,
+        tracking=True,
+    )
+    quantity_collected_kg = fields.Float(
+        string='Enter Kg',
         default=0.0,
         tracking=True,
     )
@@ -49,6 +70,25 @@ class WasteWorksheet(models.Model):
         default=1,
         tracking=True,
     )
+
+    @api.depends('unit_of_measure')
+    def _compute_show_quantity_fields(self):
+        for rec in self:
+
+            rec.show_ton_qty = False
+            rec.show_kg_qty = False
+
+            if not rec.unit_of_measure:
+                continue
+
+            uom_name = (rec.unit_of_measure.name or '').lower()
+
+            if uom_name in ('t', 'ton', 'tons', 'tonne', 'tonnes'):
+                rec.show_ton_qty = True
+
+            elif uom_name in ('kg', 'kilogram', 'kilograms'):
+                rec.show_kg_qty = True
+
     # quantity_collected = fields.Float(
     #     string='Quantity Collected',
     #     compute='_compute_quantity_collected',
@@ -155,13 +195,6 @@ class WasteWorksheet(models.Model):
         readonly=True,
     )
 
-    is_collection_qty = fields.Boolean(
-        string="Is Quantity Collection",
-        Help="Make the Quantity Integer Field to be visible for the user to enter the  quantity collected")
-
-    is_trip = fields.Boolean(
-        string="Is Trip Required",
-        Help="Make the Trip Integer Field to be visible for the user to enter the How many Trip taken")
 
     driver_work_email = fields.Char(string="Driver Work email",  store=True)
 
@@ -776,356 +809,14 @@ class WasteWorksheet(models.Model):
 
         return recs
 
-    # def write(self, vals):
-    #     # self = self.sudo()
-    #     # We want the context 'from_worksheet' when product_uom_qty is written
-    #     # so that WasteServiceRequest.write can know where the change came from.
-    #     ws = self.with_context(from_worksheet=True)
-    #     # res = super(WasteWorksheet, ws).write(vals)
-    #     res = super(WasteWorksheet, ws.sudo()).write(vals)
-    #
-    #     # If you removed worksheet SO sync, you can delete the block below.
-    #     # If you kept it and still want it, you can leave this:
-    #     if any(k in vals for k in [
-    #         'product_uom_qty',
-    #         'service_requested_id',
-    #         'bin_lifted_ids',
-    #         'bin_dropped_ids',
-    #     ]):
-    #         self._sync_sale_order_qty()
-    #
-    #     return res
-
-    # def write(self, vals):
-    #
-    #     # ---------------------------------------------------------
-    #     # CONTEXT
-    #     # ---------------------------------------------------------
-    #     ws = self.with_context(
-    #         from_worksheet=True
-    #     )
-    #
-    #     # ---------------------------------------------------------
-    #     # WRITE
-    #     # ---------------------------------------------------------
-    #     res = super(
-    #         WasteWorksheet,
-    #         ws.sudo()
-    #     ).write(vals)
-    #
-    #     # ---------------------------------------------------------
-    #     # SYNC SALE ORDER QUANTITY
-    #     # ---------------------------------------------------------
-    #     if any(k in vals for k in [
-    #
-    #         'product_uom_qty',
-    #
-    #         'service_requested_id',
-    #
-    #         'bin_lifted_ids',
-    #
-    #         'bin_dropped_ids',
-    #
-    #     ]):
-    #         self._sync_sale_order_qty()
-    #
-    #     # ---------------------------------------------------------
-    #     # SYNC KILOMETERS TO SO LINE
-    #     # ---------------------------------------------------------
-    #     if 'kilometers' in vals:
-    #
-    #         for rec in self:
-    #
-    #             if not rec.service_request_id:
-    #                 continue
-    #
-    #             sale_order = rec.service_request_id.sale_order_id
-    #
-    #             if not sale_order:
-    #                 continue
-    #
-    #             # ---------------------------------------------
-    #             # TRANSPORT LINES ONLY
-    #             # ---------------------------------------------
-    #             transport_lines = sale_order.order_line.filtered(
-    #
-    #                 lambda l:
-    #                 l.product_id
-    #                 and l.product_id.product_tmpl_id.is_transport_service
-    #             )
-    #
-    #             for line in transport_lines:
-    #                 line.distance_km = rec.kilometers
-    #
-    #                 # ---------------------------------------------------------
-    #                 # SYNC KILOMETERS TO SO LINE
-    #                 # ---------------------------------------------------------
-    #                 # if 'kilometers' in vals:
-    #                 #
-    #                 #     for rec in self:
-    #                 #
-    #                 #         if not rec.service_request_id:
-    #                 #             continue
-    #                 #
-    #                 #         sale_order = rec.service_request_id.sale_order_id
-    #                 #
-    #                 #         if not sale_order:
-    #                 #             continue
-    #                 #
-    #                 #         # ---------------------------------------------
-    #                 #         # TRANSPORT LINES ONLY
-    #                 #         # ---------------------------------------------
-    #                 #         transport_lines = sale_order.order_line.filtered(
-    #                 #
-    #                 #             lambda l:
-    #                 #             l.product_id
-    #                 #             and l.product_id.product_tmpl_id.is_transport_service
-    #                 #         )
-    #                 #
-    #                 #         for line in transport_lines:
-    #                 #             line.distance_km = rec.kilometers
-    #                 #
-    #                 #             # -----------------------------------------
-    #                 #             # RECALCULATE TRANSPORT PRICE
-    #                 #             # -----------------------------------------
-    #                 #             line._compute_transport_amount()
-    #
-    #                 # ---------------------------------------------------------
-    #                 # SYNC WORKSHEET TO SO LINE
-    #                 # ---------------------------------------------------------
-    #                 if any(k in vals for k in [
-    #
-    #                     'kilometers',
-    #
-    #                     'bin_lifted_ids',
-    #
-    #                     'bin_dropped_ids',
-    #
-    #                     'quantity_collected',
-    #
-    #                 ]):
-    #
-    #                     for rec in self:
-    #
-    #                         if not rec.service_request_id:
-    #                             continue
-    #
-    #                         sale_order = rec.service_request_id.sale_order_id
-    #
-    #                         if not sale_order:
-    #                             continue
-    #
-    #                         # ---------------------------------------------
-    #                         # TRANSPORT LINES ONLY
-    #                         # ---------------------------------------------
-    #                         transport_lines = sale_order.order_line.filtered(
-    #
-    #                             lambda l:
-    #                             l.product_id
-    #                             and l.product_id.product_tmpl_id.is_transport_service
-    #                         )
-    #
-    #                         for line in transport_lines:
-    #                             # -----------------------------------------
-    #                             # KM
-    #                             # -----------------------------------------
-    #                             line.distance_km = rec.kilometers or 0
-    #
-    #                             # -----------------------------------------
-    #                             # TOTAL BINS
-    #                             # -----------------------------------------
-    #                             line.number_of_bins = int(
-    #                                 rec.quantity_collected or 0
-    #                             )
-    #
-    #                             # -----------------------------------------
-    #                             # RECALCULATE PRICING
-    #                             # -----------------------------------------
-    #                             line._compute_transport_amount()
-    #
-    #     return res
-
-    # def write(self, vals):
-    #
-    #     # ---------------------------------------------------------
-    #     # CONTEXT
-    #     # ---------------------------------------------------------
-    #     ws = self.with_context(
-    #         from_worksheet=True
-    #     )
-    #
-    #     # ---------------------------------------------------------
-    #     # WRITE
-    #     # ---------------------------------------------------------
-    #     res = super(
-    #         WasteWorksheet,
-    #         ws.sudo()
-    #     ).write(vals)
-    #
-    #     # ---------------------------------------------------------
-    #     # SYNC SALE ORDER QUANTITY
-    #     # ---------------------------------------------------------
-    #     if any(k in vals for k in [
-    #
-    #         'product_uom_qty',
-    #
-    #         'service_requested_id',
-    #
-    #         'bin_lifted_ids',
-    #
-    #         'bin_dropped_ids',
-    #
-    #     ]):
-    #         self._sync_sale_order_qty()
-    #
-    #     # ---------------------------------------------------------
-    #     # SYNC WORKSHEET TO SO LINE
-    #     # ---------------------------------------------------------
-    #     if any(k in vals for k in [
-    #
-    #         'kilometers',
-    #
-    #         'bin_lifted_ids',
-    #
-    #         'bin_dropped_ids',
-    #
-    #     ]):
-    #
-    #         for rec in self:
-    #
-    #             if not rec.service_request_id:
-    #                 continue
-    #
-    #             sale_order = rec.service_request_id.sale_order_id
-    #
-    #             if not sale_order:
-    #                 continue
-    #
-    #             # ---------------------------------------------
-    #             # TOTAL COLLECTED BINS
-    #             # ---------------------------------------------
-    #             total_bins = len(
-    #                 rec.bin_lifted_ids
-    #             )
-    #
-    #             # ---------------------------------------------
-    #             # TRANSPORT LINES ONLY
-    #             # ---------------------------------------------
-    #             transport_lines = sale_order.order_line.filtered(
-    #
-    #                 lambda l:
-    #                 l.product_id
-    #                 and l.product_id.product_tmpl_id.is_transport_service
-    #             )
-    #
-    #             for line in transport_lines:
-    #                 # -----------------------------------------
-    #                 # KM
-    #                 # -----------------------------------------
-    #                 line.distance_km = rec.kilometers or 0
-    #
-    #                 # -----------------------------------------
-    #                 # BINS
-    #                 # -----------------------------------------
-    #                 line.number_of_bins = total_bins
-    #
-    #                 # -----------------------------------------
-    #                 # RECALCULATE PRICE
-    #                 # -----------------------------------------
-    #                 line._compute_transport_amount()
-    #
-    #     return res
-
-    # def write(self, vals):
-    #
-    #     # ---------------------------------------------------------
-    #     # CONTEXT
-    #     # ---------------------------------------------------------
-    #     ws = self.with_context(
-    #         from_worksheet=True
-    #     )
-    #
-    #     # ---------------------------------------------------------
-    #     # WRITE
-    #     # ---------------------------------------------------------
-    #     res = super(
-    #         WasteWorksheet,
-    #         ws.sudo()
-    #     ).write(vals)
-    #
-    #     # ---------------------------------------------------------
-    #     # OPTIONAL EXISTING SYNC
-    #     # ---------------------------------------------------------
-    #     if any(k in vals for k in [
-    #
-    #         'product_uom_qty',
-    #
-    #         'service_requested_id',
-    #
-    #         'bin_lifted_ids',
-    #
-    #         'bin_dropped_ids',
-    #
-    #     ]):
-    #         self._sync_sale_order_qty()
-    #
-    #     # ---------------------------------------------------------
-    #     # UPDATE QUANTITY COLLECTED
-    #     # ---------------------------------------------------------
-    #     for rec in self:
-    #         rec.quantity_collected = len(
-    #             rec.bin_lifted_ids.ids
-    #         )
-    #
-    #     # ---------------------------------------------------------
-    #     # SYNC WORKSHEET TO SALE ORDER
-    #     # ---------------------------------------------------------
-    #     for rec in self:
-    #
-    #         if not rec.service_request_id:
-    #             continue
-    #
-    #         sale_order = rec.service_request_id.sale_order_id
-    #
-    #         if not sale_order:
-    #             continue
-    #
-    #         # -----------------------------------------------------
-    #         # TOTAL BINS
-    #         # -----------------------------------------------------
-    #         total_bins = int(
-    #             rec.quantity_collected or 0
-    #         )
-    #
-    #         # -----------------------------------------------------
-    #         # TRANSPORT LINES ONLY
-    #         # -----------------------------------------------------
-    #         transport_lines = sale_order.order_line.filtered(
-    #
-    #             lambda l:
-    #             l.product_id
-    #             and l.product_id.product_tmpl_id.is_transport_service
-    #         )
-    #
-    #         for line in transport_lines:
-    #             # -------------------------------------------------
-    #             # KM
-    #             # -------------------------------------------------
-    #             line.distance_km = rec.kilometers or 0
-    #
-    #             # -------------------------------------------------
-    #             # BINS
-    #             # -------------------------------------------------
-    #             line.number_of_bins = total_bins
-    #
-    #             # -------------------------------------------------
-    #             # RECALCULATE PRICING
-    #             # -------------------------------------------------
-    #             line._compute_transport_amount()
-    #
-    #     return res
 
     def write(self, vals):
+
+        # ----------------------------------
+        # SKIP TRANSPORT SYNC
+        # ----------------------------------
+        if self.env.context.get('skip_transport_sync'):
+            return super(WasteWorksheet, self).write(vals)
 
         # ---------------------------------------------------------
         # AUTO UPDATE QUANTITY COLLECTED
@@ -1194,6 +885,88 @@ class WasteWorksheet(models.Model):
         ]):
             self._sync_sale_order_qty()
 
+        # # ---------------------------------------------------------
+        # # SYNC WORKSHEET TO SALE ORDER
+        # # ---------------------------------------------------------
+        # for rec in self:
+        #
+        #     if not rec.service_request_id:
+        #         continue
+        #
+        #     sale_order = rec.service_request_id.sale_order_id
+        #
+        #     if not sale_order:
+        #         continue
+        #
+        #     # -----------------------------------------------------
+        #     # TOTAL BINS
+        #     # -----------------------------------------------------
+        #     total_bins = (
+        #             len(rec.bin_lifted_ids)
+        #             + len(rec.bin_dropped_ids)
+        #     )
+        #     # total_bins = int(
+        #     #     rec.quantity_collected or 0
+        #     # )
+        #
+        #     # -----------------------------------------------------
+        #     # TRANSPORT LINES ONLY
+        #     # -----------------------------------------------------
+        #     transport_lines = sale_order.order_line.filtered(
+        #
+        #         lambda l:
+        #         l.product_id
+        #         and l.product_id.product_tmpl_id.is_transport_service
+        #     )
+        #
+        #     # for line in transport_lines:
+        #     #     # -------------------------------------------------
+        #     #     # KM
+        #     #     # -------------------------------------------------
+        #     #     line.distance_km = rec.kilometers or 0
+        #     #
+        #     #     # -------------------------------------------------
+        #     #     # BINS
+        #     #     # -------------------------------------------------
+        #     #     line.number_of_bins = total_bins
+        #     #
+        #     #     # -------------------------------------------------
+        #     #     # TRIPS
+        #     #     # -------------------------------------------------
+        #     #     line.number_of_trips = rec.trip_taken or 1
+        #     #
+        #     #     # -------------------------------------------------
+        #     #     # RECALCULATE PRICING
+        #     #     # -------------------------------------------------
+        #     #     line._compute_transport_amount()
+        #
+        #     for line in transport_lines:
+        #
+        #         # -------------------------------------------------
+        #         # KM
+        #         # Only update if worksheet has a value
+        #         # -------------------------------------------------
+        #         if rec.kilometers and rec.kilometers > 0:
+        #             line.distance_km = rec.kilometers
+        #
+        #         # -------------------------------------------------
+        #         # BINS
+        #         # Only update if worksheet has bins
+        #         # -------------------------------------------------
+        #         if total_bins > 0:
+        #             line.number_of_bins = total_bins
+        #
+        #         # -------------------------------------------------
+        #         # TRIPS
+        #         # Only update if worksheet has trips
+        #         # -------------------------------------------------
+        #         if rec.trip_taken and rec.trip_taken > 0:
+        #             line.number_of_trips = rec.trip_taken
+        #
+        #         # -------------------------------------------------
+        #         # RECALCULATE PRICING
+        #         # -------------------------------------------------
+        #         line._compute_transport_amount()
         # ---------------------------------------------------------
         # SYNC WORKSHEET TO SALE ORDER
         # ---------------------------------------------------------
@@ -1208,72 +981,78 @@ class WasteWorksheet(models.Model):
                 continue
 
             # -----------------------------------------------------
+            # ONLY SYNC IF USER ACTUALLY CHANGED THESE FIELDS
+            # -----------------------------------------------------
+            sync_transport = any(
+                field in vals
+                for field in [
+                    'kilometers',
+                    'quantity_collected',
+                    'trip_taken',
+                    'quantity_collected_ton',
+                    'quantity_collected_kg',
+
+                ]
+            )
+
+            if not sync_transport:
+                continue
+
+            # -----------------------------------------------------
             # TOTAL BINS
             # -----------------------------------------------------
             total_bins = (
                     len(rec.bin_lifted_ids)
                     + len(rec.bin_dropped_ids)
             )
-            # total_bins = int(
-            #     rec.quantity_collected or 0
-            # )
 
             # -----------------------------------------------------
             # TRANSPORT LINES ONLY
             # -----------------------------------------------------
             transport_lines = sale_order.order_line.filtered(
-
                 lambda l:
                 l.product_id
                 and l.product_id.product_tmpl_id.is_transport_service
             )
 
-            # for line in transport_lines:
-            #     # -------------------------------------------------
-            #     # KM
-            #     # -------------------------------------------------
-            #     line.distance_km = rec.kilometers or 0
-            #
-            #     # -------------------------------------------------
-            #     # BINS
-            #     # -------------------------------------------------
-            #     line.number_of_bins = total_bins
-            #
-            #     # -------------------------------------------------
-            #     # TRIPS
-            #     # -------------------------------------------------
-            #     line.number_of_trips = rec.trip_taken or 1
-            #
-            #     # -------------------------------------------------
-            #     # RECALCULATE PRICING
-            #     # -------------------------------------------------
-            #     line._compute_transport_amount()
-
             for line in transport_lines:
 
                 # -------------------------------------------------
                 # KM
-                # Only update if worksheet has a value
                 # -------------------------------------------------
-                if rec.kilometers and rec.kilometers > 0:
-                    line.distance_km = rec.kilometers
+                if 'kilometers' in vals:
+                    line.distance_km = rec.kilometers or 0
 
                 # -------------------------------------------------
                 # BINS
-                # Only update if worksheet has bins
                 # -------------------------------------------------
-                if total_bins > 0:
+                if (
+                        'quantity_collected' in vals
+                        or 'bin_lifted_ids' in vals
+                        or 'bin_dropped_ids' in vals
+                ):
                     line.number_of_bins = total_bins
 
                 # -------------------------------------------------
                 # TRIPS
-                # Only update if worksheet has trips
                 # -------------------------------------------------
-                if rec.trip_taken and rec.trip_taken > 0:
-                    line.number_of_trips = rec.trip_taken
+                if 'trip_taken' in vals:
+                    line.number_of_trips = rec.trip_taken or 0
 
                 # -------------------------------------------------
-                # RECALCULATE PRICING
+                # TONS
+                # -------------------------------------------------
+                if 'quantity_collected_ton' in vals:
+                    line.weight_ton = rec.quantity_collected_ton or 0
+
+                # -------------------------------------------------
+                # KG
+                # -------------------------------------------------
+                if 'quantity_collected_kg' in vals:
+                    line.weight_kg = rec.quantity_collected_kg or 0
+
+                # -------------------------------------------------
+                # RECALCULATE
                 # -------------------------------------------------
                 line._compute_transport_amount()
 
