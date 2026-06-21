@@ -1,4 +1,4 @@
-from odoo import models,fields
+from odoo import models, fields, api
 
 
 class AccountMove(models.Model):
@@ -15,17 +15,25 @@ class AccountMove(models.Model):
     #     tracking=True,
     # )
 
-    batch_payment_state = fields.Selection(
-        [
-            ("not_paid", "Not Paid (Batch)"),
-            ("exported", "Exported to Sage"),  # ✅ ADD THIS
-            ("paid", "Paid via Batch"),
-        ],
-        string="Batch Payment Status",
-        default="not_paid",
-        copy=False,
-        tracking=True,
-    )
+    # batch_payment_state = fields.Selection(
+    #     [
+    #         ("not_paid", "Not Paid (Batch)"),
+    #         ("exported", "Exported to Sage"),  # ✅ ADD THIS
+    #         ("paid", "Paid via Batch"),
+    #     ],
+    #     string="Batch Payment Status",
+    #     default="not_paid",
+    #     copy=False,
+    #     tracking=True,
+    # )
+
+    batch_payment_state = fields.Selection([
+        ('not_paid', 'Not Paid'),
+        ('validated', 'Validated'),
+        ('exported', 'Exported'),
+        ('partial', 'Partial Paid'),
+        ('paid', 'Paid'),
+    ], default='not_paid', tracking=True)
 
     batch_payment_id = fields.Many2one(
         "batch.payment",
@@ -48,6 +56,20 @@ class AccountMove(models.Model):
     hide_payment_buttons = fields.Boolean(
         compute="_compute_hide_payment_buttons",
         store=False,
+    )
+    #=======================partial=================
+    amount_paid_batch = fields.Monetary(
+        string="Batch Amount Paid",
+        currency_field="currency_id",
+        copy=False,
+        default=0.0,
+    )
+
+    amount_outstanding_batch = fields.Monetary(
+        string="Batch Outstanding",
+        currency_field="currency_id",
+        copy=False,
+        default=0.0,
     )
 
     def _compute_hide_payment_buttons(self):
@@ -72,21 +94,6 @@ class AccountMove(models.Model):
                 invoice.hide_payment_buttons = True
 
 
-    # has_batch_payment = fields.Boolean(
-    #     compute="_compute_has_batch_payment",
-    #     store=False,
-    # )
-    #
-    # def _compute_has_batch_payment(self):
-    #     Payment = self.env['account.payment']
-    #
-    #     for invoice in self:
-    #         invoice.has_batch_payment = bool(
-    #             Payment.search_count([
-    #                 ('batch_invoice_id', '=', invoice.id)
-    #             ])
-    #         )
-
     def _compute_is_paid_via_batch(self):
         for move in self:
             move.is_paid_via_batch = (
@@ -102,4 +109,30 @@ class AccountMove(models.Model):
         action["context"] = ctx
         return action
 
+    remaining_batch_amount = fields.Monetary(
+        string="Remaining Batch Amount",
+        compute="_compute_remaining_batch_amount",
+        currency_field="currency_id",
+        store=True,
+    )
 
+    @api.depends(
+        "amount_total",
+        "amount_paid_batch",
+        "amount_outstanding_batch"
+    )
+    def _compute_remaining_batch_amount(self):
+
+        for rec in self:
+
+            if rec.batch_payment_state == "partial":
+
+                rec.remaining_batch_amount = (
+                    rec.amount_outstanding_batch
+                )
+
+            else:
+
+                rec.remaining_batch_amount = (
+                    rec.amount_total
+                )

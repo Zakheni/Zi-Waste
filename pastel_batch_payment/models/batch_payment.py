@@ -47,11 +47,20 @@ class BatchPayment(models.Model):
 
     name = fields.Char(default="/", readonly=True)
 
+    # state = fields.Selection([
+    #     ("draft", "Draft"),
+    #     ("validated", "Validated"),
+    #     ("exported", "Exported"),
+    #     ("paid", "Paid"),
+    # ], default="draft", tracking=True)
+
     state = fields.Selection([
         ("draft", "Draft"),
         ("validated", "Validated"),
         ("exported", "Exported"),
+        ("partial", "Partial Paid"),
         ("paid", "Paid"),
+        ('cancelled', 'Cancelled'),
     ], default="draft", tracking=True)
 
     invoice_ids = fields.Many2many(
@@ -107,6 +116,75 @@ class BatchPayment(models.Model):
         string="Export History",
     )
 
+
+    #============================================================
+    #BATCH WIZARD
+    #============================================================
+    amount_due = fields.Monetary(
+        string="Amount Due",
+        currency_field="currency_id",
+        compute="_compute_amount_due",
+        store=True,
+    )
+
+    amount_received = fields.Monetary(
+        string="Amount Received",
+        currency_field="currency_id",
+        copy=False,
+    )
+
+    payment_difference = fields.Monetary(
+        string="Difference",
+        currency_field="currency_id",
+        copy=False,
+    )
+
+    @api.depends("line_ids.amount")
+    def _compute_amount_due(self):
+        for rec in self:
+            rec.amount_due = sum(rec.line_ids.mapped("amount"))
+
+    def action_open_receive_payment(self):
+
+        self.ensure_one()
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Receive Payment",
+            "res_model": "batch.payment.receive.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_batch_id": self.id,
+            }
+        }
+
+    credit_balance_before = fields.Monetary(
+        string="Credit Before",
+        currency_field="currency_id",
+        readonly=True,
+    )
+
+    credit_applied = fields.Monetary(
+        string="Credit Applied",
+        currency_field="currency_id",
+        readonly=True,
+    )
+
+    credit_balance_after = fields.Monetary(
+        string="Credit After",
+        currency_field="currency_id",
+        readonly=True,
+    )
+
+    amount_due_after_credit = fields.Monetary(
+        string="Amount Due After Credit",
+        currency_field="currency_id",
+        readonly=True,
+    )
+
+    #============================================END================================
+
     @api.depends("line_ids.amount")
     def _compute_amounts(self):
         for rec in self:
@@ -120,11 +198,17 @@ class BatchPayment(models.Model):
         if self.state != "draft":
             raise UserError(_("Only draft batches can load lines"))
 
+        # dom = [
+        #     ("move_id.state", "=", "posted"),
+        #     ("reconciled", "=", False),
+        #     ("company_id", "=", self.company_id.id),
+        # ]
+
         dom = [
             ("move_id.state", "=", "posted"),
-            ("reconciled", "=", False),
             ("company_id", "=", self.company_id.id),
         ]
+
         if self.partner_type == "customer":
             dom += [("account_id.account_type", "=", "asset_receivable")]
         else:
@@ -135,15 +219,72 @@ class BatchPayment(models.Model):
             raise UserError(_("No open items found."))
 
         new_lines = []
+
+        # for aml in items:
+        #     residual = aml.amount_residual if aml.currency_id != aml.company_currency_id else aml.amount_residual
+        #     amount = abs(residual)
+        #     if amount <= 0:
+        #         continue
+        #     new_lines.append((0, 0, {
+        #         "move_id": aml.move_id.id,
+        #         "move_line_id": aml.id,
+        #         "communication": aml.move_id.name or aml.ref or "",
+        #         "amount": amount,
+        #     }))
+        # for aml in items:
+        #
+        #     invoice = aml.move_id
+        #
+        #     # -----------------------------------------
+        #     # PARTIAL BATCH INVOICE
+        #     # -----------------------------------------
+        #     if (
+        #             invoice.batch_payment_state == "partial"
+        #             and invoice.amount_outstanding_batch > 0
+        #     ):
+        #
+        #         amount = invoice.amount_outstanding_batch
+        #
+        #     else:
+        #
+        #         residual = aml.amount_residual
+        #         amount = abs(residual)
+        #
+        #     if amount <= 0:
+        #         continue
+        #
+        #     new_lines.append((0, 0, {
+        #         "move_id": invoice.id,
+        #         "move_line_id": aml.id,
+        #         "communication": invoice.name or aml.ref or "",
+        #         "amount": amount,
+        #     }))
+
         for aml in items:
-            residual = aml.amount_residual if aml.currency_id != aml.company_currency_id else aml.amount_residual
-            amount = abs(residual)
+
+            invoice = aml.move_id
+
+            if invoice.batch_payment_state == "paid":
+                continue
+
+            if (
+                    invoice.batch_payment_state == "partial"
+                    and invoice.amount_outstanding_batch > 0
+            ):
+
+                amount = invoice.amount_outstanding_batch
+
+            else:
+
+                amount = abs(aml.amount_residual)
+
             if amount <= 0:
                 continue
+
             new_lines.append((0, 0, {
-                "move_id": aml.move_id.id,
+                "move_id": invoice.id,
                 "move_line_id": aml.id,
-                "communication": aml.move_id.name or aml.ref or "",
+                "communication": invoice.name or aml.ref or "",
                 "amount": amount,
             }))
 
@@ -205,10 +346,92 @@ class BatchPayment(models.Model):
     # ----------------------------------------------------------------
     def action_validate(self):
         for rec in self:
+
             if rec.state != "draft":
                 raise UserError(_("Only draft batches can be validated."))
+
             if not rec.line_ids:
                 raise UserError(_("No lines."))
+
+            # ==========================================
+            # APPLY CUSTOMER CREDIT
+            # ==========================================
+
+            first_invoice = rec.line_ids[:1].move_id
+
+            if first_invoice:
+
+                partner = first_invoice.partner_id
+
+                credits = self.env["customer.credit"].search([
+                    ("partner_id", "=", partner.id),
+                    ("state", "=", "open")
+                ], order="create_date asc")
+
+                available_credit = sum(
+                    credits.mapped("balance")
+                )
+
+                rec.credit_balance_before = available_credit
+
+                remaining_due = rec.amount_due
+                applied_credit = 0.0
+
+                for credit in credits:
+
+                    if remaining_due <= 0:
+                        break
+
+                    apply_amount = min(
+                        credit.balance,
+                        remaining_due
+                    )
+
+                    self.env["customer.credit.usage"].create({
+                        "credit_id": credit.id,
+                        "source_batch_id": credit.batch_id.id,
+                        "applied_batch_id": rec.id,
+                        "amount": apply_amount,
+                        "currency_id": rec.currency_id.id,
+                    })
+
+                    credit.balance -= apply_amount
+
+                    if float_is_zero(
+                            credit.balance,
+                            precision_rounding=rec.currency_id.rounding
+                    ):
+                        credit.state = "used"
+
+                    remaining_due -= apply_amount
+                    applied_credit += apply_amount
+
+                rec.credit_applied = applied_credit
+
+                rec.credit_balance_after = sum(
+                    credits.mapped("balance")
+                )
+
+                rec.amount_due_after_credit = remaining_due
+
+                _logger.warning(
+                    "FIRST INVOICE: %s",
+                    first_invoice
+                )
+
+                _logger.warning(
+                    "PARTNER: %s",
+                    partner.display_name if partner else "NONE"
+                )
+
+                _logger.warning(
+                    "CREDITS FOUND: %s",
+                    len(credits)
+                )
+
+            # ==========================================
+            # EXISTING VALIDATION LOGIC
+            # =========================================
 
             for ln in rec.line_ids:
                 # A) already linked to a posted payment
@@ -220,20 +443,98 @@ class BatchPayment(models.Model):
                         ln.move_id = ln.payment_id.batch_invoice_id.id
                     continue
 
-                # B) create payment using the official wizard (like UI)
-                invoice = ln.move_id or (ln.move_line_id.move_id if ln.move_line_id else False)
+                invoice = ln.move_id or (
+                    ln.move_line_id.move_id
+                    if ln.move_line_id else False
+                )
+
                 if not invoice:
-                    raise UserError(_("Line has no invoice/open item to create a payment from."))
+                    raise UserError(
+                        _("Line has no invoice.")
+                    )
+
+                # ==================================================
+                # OUTSTANDING BALANCE INVOICE
+                # ==================================================
+
+                if (
+                        invoice.batch_payment_state == "partial"
+                        and invoice.amount_outstanding_batch > 0
+                ):
+
+
+                    payment_vals = {
+                        "payment_type": "inbound",
+                        "partner_type": "customer",
+                        "partner_id": invoice.partner_id.id,
+                        "amount": ln.amount,
+                        "date": rec.payment_date,
+                        "journal_id": rec.journal_id.id,
+                        "company_id": invoice.company_id.id,
+                        "currency_id": invoice.currency_id.id,
+                        "ref": invoice.name,
+                        "batch_invoice_id": invoice.id,
+                    }
+
+                    payment = self.env[
+                        "account.payment"
+                    ].create(payment_vals)
+
+                    payment.action_post()
+
+                    ln.payment_id = payment.id
+                    ln.move_id = invoice.id
+
+                    # -------------------------------------------------
+                    # Refresh Batch Status After Recovery Payment
+                    # -------------------------------------------------
+
+                    invoice.invalidate_recordset()
+
+                    if invoice.amount_residual <= 0:
+
+                        invoice.write({
+                            "batch_payment_state": "paid",
+                            "amount_paid_batch": invoice.amount_total,
+                            "amount_outstanding_batch": 0.0,
+                        })
+
+                    else:
+
+                        invoice.write({
+                            "batch_payment_state": "partial",
+                            "amount_paid_batch": (
+                                    invoice.amount_total
+                                    - invoice.amount_residual
+                            ),
+                            "amount_outstanding_batch": (
+                                invoice.amount_residual
+                            ),
+                        })
+
+                    _logger.warning(
+                        "OUTSTANDING PAYMENT CREATED %s -> %s",
+                        invoice.name,
+                        payment.name
+                    )
+
+                    continue
+
+                # ==================================================
+                # NORMAL INVOICE
+                # ==================================================
 
                 if invoice.state != "posted":
-                    raise UserError(_("Invoice %s must be posted before validating the batch.") % invoice.display_name)
+                    raise UserError(
+                        _("Invoice %s must be posted.")
+                        % invoice.display_name
+                    )
 
                 ctx = dict(self.env.context or {})
                 ctx.update({
                     "active_model": "account.move",
                     "active_ids": [invoice.id],
                     "active_id": invoice.id,
-                    # important: do NOT auto reconcile at register-payment time
                     "batch_skip_reconcile": True,
                 })
 
@@ -242,37 +543,78 @@ class BatchPayment(models.Model):
                     "payment_date": rec.payment_date,
                     "journal_id": rec.journal_id.id,
                 }
-                if rec.payment_method_line_id:
-                    wizard_vals["payment_method_line_id"] = rec.payment_method_line_id.id
 
-                pay_wizard = self.env["account.payment.register"].with_context(ctx).create(wizard_vals)
+                if rec.payment_method_line_id:
+                    wizard_vals["payment_method_line_id"] = (
+                        rec.payment_method_line_id.id
+                    )
+
+                pay_wizard = self.env[
+                    "account.payment.register"
+                ].with_context(ctx).create(
+                    wizard_vals
+                )
+
                 action_res = pay_wizard.action_create_payments()
 
                 payments = pay_wizard.payment_id
+
                 if not payments and isinstance(action_res, dict):
-                    if action_res.get("res_model") == "account.payment" and action_res.get("res_id"):
-                        payments = self.env["account.payment"].browse(action_res["res_id"]).exists()
+                    if (
+                            action_res.get("res_model")
+                            == "account.payment"
+                            and action_res.get("res_id")
+                    ):
+                        payments = self.env[
+                            "account.payment"
+                        ].browse(
+                            action_res["res_id"]
+                        ).exists()
 
                 if not payments:
-                    raise UserError(_("No payment was created for invoice %s.") % invoice.display_name)
+                    raise UserError(
+                        _("No payment was created for invoice %s.")
+                        % invoice.display_name
+                    )
 
                 payment = payments[0]
-                if payment.state != "posted":
-                    raise UserError(_("Created payment %s is not posted.") % payment.display_name)
 
-                if hasattr(payment, "batch_invoice_id") and not payment.batch_invoice_id:
+                if payment.state != "posted":
+                    raise UserError(
+                        _("Created payment %s is not posted.")
+                        % payment.display_name
+                    )
+
+                if not payment.batch_invoice_id:
                     payment.batch_invoice_id = invoice.id
 
                 ln.payment_id = payment.id
                 ln.move_id = invoice.id
 
-            if rec.name == "/":
-                rec.name = rec.env["ir.sequence"].next_by_code("batch.payment") or f"BATCH/{rec.id}"
-            rec.state = "validated"
+                payment.batch_payment_state = "validated"
 
-            rec.line_ids.mapped('payment_id').write({
-                'batch_payment_state': 'validated'
-            })
+                invoice.write({
+                    "batch_payment_state": "validated",
+                    "amount_paid_batch": 0.0,
+                    "amount_outstanding_batch": invoice.amount_total,
+                })
+
+            # if rec.name == "/":
+            #     rec.name = rec.env["ir.sequence"].next_by_code("batch.payment") or f"BATCH/{rec.id}"
+            # rec.state = "validated"
+            #
+            # rec.line_ids.mapped('payment_id').write({
+            #     'batch_payment_state': 'validated'
+            # })
+
+            if rec.name == "/":
+                rec.name = (
+                        rec.env["ir.sequence"]
+                        .next_by_code("batch.payment")
+                        or f"BATCH/{rec.id}"
+                )
+
+            rec.state = "validated"
 
     # ----------------------------------------------------------------
     # Export to Sage
@@ -537,8 +879,255 @@ class BatchPayment(models.Model):
             if len(to_keep) != len(rec.line_ids):
                 rec.line_ids = [(6, 0, to_keep.ids)]
 
+    # def action_cancel(self):
+    #
+    #     for rec in self:
+    #
+    #         if rec.state == "paid":
+    #             raise UserError(
+    #                 _("You cannot cancel a paid batch.")
+    #             )
+    #
+    #         usages = self.env["customer.credit.usage"].search([
+    #             ("applied_batch_id", "=", rec.id)
+    #         ])
+    #
+    #         for usage in usages:
+    #
+    #             credit = usage.credit_id
+    #
+    #             credit.balance += usage.amount
+    #
+    #             if credit.balance > 0:
+    #                 credit.state = "open"
+    #
+    #         usages.unlink()
+    #
+    #         for line in rec.line_ids:
+    #
+    #             if line.move_id:
+    #                 line.move_id.write({
+    #                     "batch_payment_state": "not_paid",
+    #                     "amount_paid_batch": 0.0,
+    #                     "amount_outstanding_batch": line.amount,
+    #                 })
+    #
+    #         rec.line_ids.mapped("payment_id").write({
+    #             "batch_payment_state": "not_paid"
+    #         })
+    #
+    #
+    #
+    #         rec.credit_applied = 0.0
+    #         rec.credit_balance_after = rec.credit_balance_before
+    #         rec.amount_due_after_credit = rec.amount_due
+    #
+    #         rec.message_post(
+    #             body=_(
+    #                 "Credit allocations restored because batch was cancelled."
+    #             )
+    #         )
+    #
+    #         rec.state = "cancelled"
+    #
+    #     return True
 
-# -------------------------------------------------------------------
+    def action_cancel(self):
+
+        for rec in self:
+
+            if rec.state in ("paid", "exported"):
+                raise UserError(
+                    _("You cannot cancel an exported or paid batch.")
+                )
+
+            usages = self.env["customer.credit.usage"].search([
+                ("applied_batch_id", "=", rec.id)
+            ])
+
+            for usage in usages:
+
+                credit = usage.credit_id
+
+                credit.balance += usage.amount
+
+                if credit.balance > 0:
+                    credit.state = "open"
+
+            usages.unlink()
+
+            for line in rec.line_ids:
+
+                if line.move_id:
+                    line.move_id.write({
+                        "batch_payment_state": "not_paid",
+                        "amount_paid_batch": 0.0,
+                        "amount_outstanding_batch": line.amount,
+                    })
+
+            rec.line_ids.mapped("payment_id").write({
+                "batch_payment_state": "not_paid"
+            })
+
+            rec.credit_applied = 0.0
+            rec.credit_balance_after = rec.credit_balance_before
+            rec.amount_due_after_credit = rec.amount_due
+
+            rec.message_post(
+                body=_(
+                    "Credit allocations restored because batch was cancelled."
+                )
+            )
+
+            rec.state = "cancelled"
+
+        return True
+
+    # def action_load_outstanding_invoices(self):
+    #
+    #     self.ensure_one()
+    #
+    #     # invoices = self.env["account.move"].search([
+    #     #     ("move_type", "=", "out_invoice"),
+    #     #     ("state", "=", "posted"),
+    #     #     ("batch_payment_state", "=", "partial"),
+    #     #     ("amount_outstanding_batch", ">", 0),
+    #     # ])
+    #
+    #     invoices = self.env["account.move"].search([
+    #         ("move_type", "=", "out_invoice"),
+    #         ("state", "=", "posted"),
+    #         ("company_id", "=", self.company_id.id),
+    #         ("amount_outstanding_batch", ">", 0),
+    #         ("has_batch_payment", "=", True),
+    #     ])
+    #     invoices = invoices.filtered(
+    #         lambda inv: self.env["account.payment"].search_count([
+    #             ("batch_invoice_id", "=", inv.id)
+    #         ]) > 0
+    #     )
+    #
+    #     existing_invoice_ids = self.line_ids.mapped("move_id").ids
+    #
+    #     for invoice in invoices:
+    #
+    #         if invoice.id in existing_invoice_ids:
+    #             continue
+    #
+    #         self.line_ids = [(0, 0, {
+    #             "move_id": invoice.id,
+    #             "communication": (
+    #                 f"{invoice.name} "
+    #                 f"(Outstanding Balance)"
+    #             ),
+    #             "amount": invoice.amount_outstanding_batch,
+    #         })]
+    #
+    #     return True
+
+    def action_load_outstanding_invoices(self):
+
+        self.ensure_one()
+
+        partial_batches = self.env["batch.payment"].search([
+            ("state", "=", "partial"),
+            ("company_id", "=", self.company_id.id),
+        ])
+
+        invoices = partial_batches.mapped(
+            "line_ids.payment_id.batch_invoice_id"
+        ).filtered(
+            lambda inv:
+            inv
+            and inv.amount_outstanding_batch > 0
+        )
+
+        existing_invoice_ids = self.line_ids.mapped("move_id").ids
+
+        new_lines = []
+
+        # if invoices:
+        #     new_lines.append((0, 0, {
+        #         "display_type": "line_section",
+        #         "communication": "Outstanding Invoices From Partial Batches",
+        #     }))
+
+        for invoice in invoices:
+
+            if invoice.id in existing_invoice_ids:
+                continue
+
+            payment = self.env["account.payment"].search([
+                ("batch_invoice_id", "=", invoice.id),
+            ], order="create_date desc,id desc", limit=1)
+
+            status = dict(
+                invoice._fields["batch_payment_state"].selection
+            ).get(invoice.batch_payment_state)
+
+            _logger.warning(
+                "ADDING OUTSTANDING INVOICE %s | STATE=%s | OUTSTANDING=%s",
+                invoice.name,
+                invoice.batch_payment_state,
+                invoice.amount_outstanding_batch,
+            )
+
+            # new_lines.append((0, 0, {
+            #     "payment_id": payment.id if payment else False,
+            #     "move_id": invoice.id,
+            #     "communication": f"{invoice.name} ({status})",
+            #     "amount": invoice.amount_outstanding_batch,
+            # }))
+            # new_lines.append((0, 0, {
+            #     "payment_id": payment.id if payment else False,
+            #     "move_id": invoice.id,
+            #     "source_batch_id": invoice.batch_payment_id.id if hasattr(invoice, 'batch_payment_id') else False,
+            #     "communication": f"{invoice.name} ({status})",
+            #     # "amount": invoice.amount_outstanding_batch,
+            #     "amount": invoice.amount_outstanding_batch,
+            # }))
+
+            new_lines.append((0, 0, {
+                "payment_id": payment.id if payment else False,
+                "move_id": invoice.id,
+                "amount": invoice.amount_outstanding_batch,
+                "communication": f"{invoice.name} ({status})",
+            }))
+
+        if new_lines:
+            self.write({
+                "line_ids": new_lines
+            })
+
+        return True
+
+    def _recompute_batch_state(self):
+
+        for batch in self:
+
+            lines = batch.line_ids.filtered(
+                lambda l: l.move_id
+            )
+
+            if not lines:
+                continue
+
+            unpaid = lines.filtered(
+                lambda l:
+                l.move_id.batch_payment_state != "paid"
+            )
+
+            if unpaid:
+                batch.state = "partial"
+            else:
+                batch.state = "paid"
+
+            _logger.warning(
+                "BATCH %s RECALCULATED -> %s",
+                batch.name,
+                batch.state
+            )
+
 # Lines
 # -------------------------------------------------------------------
 class BatchPaymentLine(models.Model):
@@ -558,20 +1147,95 @@ class BatchPaymentLine(models.Model):
         related="payment_id.payment_method_line_id",
         store=True,
     )
+
+    manual_amount = fields.Monetary(
+        currency_field="currency_id"
+    )
+
+    # IMPORTANT
+    amount = fields.Monetary(
+        string="Amount",
+        currency_field="currency_id",
+        required=True,
+        default=0.0,
+    )
+
     partner_id = fields.Many2one("res.partner", related="payment_id.partner_id", store=True, string="Customer/Supplier")
     status = fields.Selection(related="payment_id.state", store=True, string="Status")
 
-    amount = fields.Monetary(currency_field="currency_id", compute="_compute_amount_from_payment", store=True)
+    # amount = fields.Monetary(currency_field="currency_id", compute="_compute_amount_from_payment", store=True)
+    # amount = fields.Monetary(
+    #     string="Amount",
+    #     currency_field="currency_id",
+    # )
     currency_id = fields.Many2one(related="batch_id.currency_id", store=True)
 
     move_id = fields.Many2one("account.move", string="Invoice/Bill")
     move_line_id = fields.Many2one("account.move.line", string="Open Item")
     communication = fields.Char()
+    source_batch_id = fields.Many2one(
+        "batch.payment",
+        string="Source Batch",
+        compute="_compute_source_batch",
+    )
 
-    @api.depends("payment_id.amount", "payment_id.currency_id")
-    def _compute_amount_from_payment(self):
-        for ln in self:
-            ln.amount = abs(ln.payment_id.amount) if ln.payment_id else (ln.amount or 0.0)
+    # display_type = fields.Selection([
+    #     ('line_section', 'Section'),
+    #     ('line_note', 'Note'),
+    # ], default=False)
+
+    @api.depends("move_id")
+    def _compute_source_batch(self):
+
+        for line in self:
+
+            line.source_batch_id = False
+
+            if not line.move_id:
+                continue
+
+            source_line = self.env[
+                "batch.payment.line"
+            ].search([
+                ("move_id", "=", line.move_id.id),
+                ("batch_id.state", "=", "partial"),
+            ], order="id asc", limit=1)
+
+            line.source_batch_id = source_line.batch_id
+
+    # def _compute_source_batch(self):
+    #     for line in self:
+    #         source_line = self.env["batch.payment.line"].search([
+    #             ("move_id", "=", line.move_id.id),
+    #             ("batch_id.state", "=", "partial"),
+    #         ], order="id asc", limit=1)
+    #
+    #         line.source_batch_id = source_line.batch_id
+
+    # @api.depends("payment_id.amount", "payment_id.currency_id")
+    # def _compute_amount_from_payment(self):
+    #     for ln in self:
+    #         ln.amount = abs(ln.payment_id.amount) if ln.payment_id else (ln.amount or 0.0)
+
+    # @api.depends(
+    #     "payment_id.amount",
+    #     "manual_amount"
+    # )
+    # def _compute_amount_from_payment(self):
+    #
+    #     for ln in self:
+    #
+    #         if ln.payment_id:
+    #
+    #             ln.amount = abs(
+    #                 ln.payment_id.amount
+    #             )
+    #
+    #         else:
+    #
+    #             ln.amount = (
+    #                     ln.manual_amount or 0.0
+    #             )
 
     def _check_payment_matches_header(self):
         """

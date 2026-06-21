@@ -17,6 +17,33 @@
 
             </xpath>
 
+<!--            <xpath expr="//field[@name='payment_state']" position="after">-->
+
+<!--                <field name="batch_payment_state"-->
+<!--                       widget="badge"-->
+<!--                       optional="show"/>-->
+
+
+<!--            </xpath>-->
+
+<!--            <xpath expr="//field[@name='partner_id']" position="after">-->
+
+<!--    <group string="Batch Payment Information">-->
+
+<!--        <field name="amount_paid_batch"-->
+<!--               readonly="1"-->
+<!--               widget="monetary"-->
+<!--               options="{'currency_field':'currency_id'}"/>-->
+
+<!--        <field name="amount_outstanding_batch"-->
+<!--               readonly="1"-->
+<!--               widget="monetary"-->
+<!--               options="{'currency_field':'currency_id'}"/>-->
+
+<!--    </group>-->
+
+<!--</xpath>-->
+
 
             <xpath expr="//sheet" position="inside">
                 <field name="hide_payment_buttons" invisible="1"/>
@@ -37,12 +64,18 @@
             <xpath expr="//field[@name='payment_state']" position="after">
                 <field name="batch_payment_state"
                        widget="badge"
-                       invisible="payment_state != 'paid'"
                        decoration-success="batch_payment_state == 'paid'"
+                       decoration-infor="batch_payment_state == 'partial'"
                        decoration-danger="batch_payment_state == 'not_paid'"/>
 
+<!--                 <field name="batch_payment_state"-->
+<!--                       widget="badge"-->
+<!--                       optional="show"/>-->
+
+
+
                 <field name="has_batch_payment" readonly="1" invisible="1"/>
-                <field name="has_batch_payment" readonly="1" invisible="0"/>
+                <field name="has_batch_payment" readonly="1" invisible="1"/>
 
 
             </xpath>
@@ -66,10 +99,12 @@
                 <field name="batch_payment_state"
                        string="Batch State"
                        widget="badge"
-                       invisible="payment_state != 'paid'"
                        decoration-success="batch_payment_state == 'paid'"
                        decoration-warning="batch_payment_state == 'exported'"
                        decoration-danger="batch_payment_state == 'not_paid'"/>
+
+                  <field name="amount_paid_batch"  optional="hide"/>
+                <field name="amount_outstanding_batch" optional="hide"/>
 
             </xpath>
 

@@ -15,7 +15,7 @@
     ('state', '=', 'posted'),
     ('company_id', '=', context.get('bp_company_id')),
     ('in_exported_batch', '=', False),
-    ('batch_payment_state', 'not in', ['draft', 'validated', 'exported', 'paid']),
+    ('batch_payment_state', 'not in', ['not_paid', 'validated', 'exported', 'partial', 'paid']),
 
     '&amp;',
         ('batch_invoice_id', '!=', False),

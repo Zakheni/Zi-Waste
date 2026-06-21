@@ -115,16 +115,30 @@ class AccountPayment(models.Model):
         store=False,
     )
 
-    batch_payment_state = fields.Selection(
-        [
-            ('draft', 'Draft'),
-            ('validated', 'Validated'),
-            ('exported', 'Exported'),
-            ('paid', 'Paid'),
-        ],
+    # batch_payment_state = fields.Selection(
+    #     [
+    #         ('draft', 'Draft'),
+    #         ('validated', 'Validated'),
+    #         ('exported', 'Exported'),
+    #         ('paid', 'Paid'),
+    #     ],
+    #     string="Batch Payment State",
+    #     copy=False,
+    #     index=True,
+    # )
+
+    batch_payment_state = fields.Selection([
+        ('draft', 'Draft'),
+        ('not_paid', 'Not Paid'),
+        ('validated', 'Validated'),
+        ('exported', 'Exported'),
+        ('partial', 'Partial Paid'),
+        ('paid', 'Paid'),
+    ],
+        default='draft',
         string="Batch Payment State",
         copy=False,
-        index=True,
+        index=True
     )
 
     in_exported_batch = fields.Boolean(

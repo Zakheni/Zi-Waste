@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_batch_payment_statement" model="ir.actions.report">
+
+            <field name="name">Batch Payment Statement</field>
+            <field name="model">batch.payment</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">pastel_batch_payment.batch_payment_statement</field>
+            <field name="report_file">pastel_batch_payment.batch_payment_statement</field>
+
+
+        </record>
+    </data>
+</odoo>

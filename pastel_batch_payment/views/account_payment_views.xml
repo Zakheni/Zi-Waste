@@ -61,7 +61,7 @@
 
             <!-- Place it near partner -->
             <xpath expr="//field[@name='partner_id']" position="after">
-                <field name="batch_invoice_id"
+                <field name="batch_invoice_id" required="1"
                        options="{'no_create': True, 'no_open': False}"
                        string="Batch Invoice"/>
             </xpath>

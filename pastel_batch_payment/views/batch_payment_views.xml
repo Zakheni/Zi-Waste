@@ -50,16 +50,36 @@
 
                     <!--                    <button name="action_pay_batch" type="object" string="Pay Batch"-->
                     <!--                            invisible="state not in ('validated',)" class="btn-primary"/>-->
-                    <button name="action_pay_batch"
+                    <!--                    <button name="action_pay_batch"-->
+                    <!--                            type="object"-->
+                    <!--                            string="Pay Batch"-->
+                    <!--                            groups="pastel_batch_payment.group_finance_manager"-->
+                    <!--                            invisible="state not in ('validated','exported')"-->
+                    <!--                            class="btn-primary"/>-->
+                    <button name="action_open_receive_payment"
                             type="object"
-                            string="Pay Batch"
+                            string="Receive Payment"
                             groups="pastel_batch_payment.group_finance_manager"
                             invisible="state not in ('validated','exported')"
                             class="btn-primary"/>
 
+                    <button name="action_cancel"
+                            string="Cancel Batch"
+                            type="object"
+                            class="btn-danger"
+                            invisible="state in ('draft','cancelled','paid')"/>
 
-                    <!--                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid"/>-->
-                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,exported,paid"/>
+                    <button
+                            name="%(action_batch_payment_statement)d"
+                            type="action"
+                            string="Print Statement"
+                            class="btn-primary" invisible="state not in ('partial','paid')"/>
+
+
+<!--                    <field name="state" options="{'clickable': True}" widget="statusbar"-->
+<!--                           statusbar_visible="draft,validated,exported,partial,paid,cancelled"/>-->
+                      <field name="state"  widget="statusbar"
+                           statusbar_visible="draft,validated,exported,partial,paid,cancelled"/>
 
                 </header>
                 <sheet>
@@ -88,9 +108,33 @@
                             <field name="currency_id" readonly="state != 'draft'"/>
                             <field name="amount_total" readonly="1"/>
                             <field name="exported_ref" readonly="1"/>
+
+
                         </group>
 
+
                     </group>
+
+                    <group string="Credit Information" invisible="credit_balance_before == 0">
+                        <group>
+
+                            <field name="credit_balance_before"
+                                   readonly="1"/>
+
+                            <field name="credit_applied"
+                                   readonly="1"/>
+
+                        </group>
+                        <group>
+
+                            <field name="credit_balance_after"
+                                   readonly="1"/>
+
+                            <field name="amount_due_after_credit"
+                                   readonly="1"/>
+                        </group>
+                    </group>
+
 
                     <notebook>
                         <page string="Lines">
@@ -108,6 +152,12 @@
                                               'bp_partner_id': partner_id
                                             }"/>
 
+                            <button name="action_load_outstanding_invoices"
+                                    type="object"
+                                    string="Load Outstanding Invoices"
+                                    class="btn-secondary ms-2"
+                                    invisible="state != 'draft'"/>
+
                             <!-- IMPORTANT: pass header fields into the context of the x2many itself -->
                             <field name="line_ids"
                                    context="{
@@ -117,7 +167,7 @@
                                              'bp_pml_id': payment_method_line_id,
                                              'bp_partner_id': partner_id
                                            }"
-                                   readonly="1">
+                                   readonly="state != 'draft'">
                                 <tree editable="bottom" multi_edit="True">
 
                                     <!-- Use context.get(...) instead of parent.* so the filter actually applies -->
@@ -151,6 +201,7 @@
                                     <field name="date"/>
                                     <field name="journal_id"/>
                                     <field name="company_id"/>
+                                    <field name="source_batch_id"/>
                                     <field name="payment_method_line_id"/>
                                     <field name="partner_id"/>
                                     <field name="currency_id"/>
@@ -165,27 +216,39 @@
                                 </tree>
                             </field>
 
+                            <div class="clearfix"/>
+
+                            <group class="oe_subtotal_footer oe_right">
+
+                                <field name="currency_id" invisible="1"/>
+
+                                <field name="amount_due"
+                                       string="Batch Total"
+                                       readonly="1"
+                                       widget="monetary"
+                                       class="fw-bold"
+                                       options="{'currency_field': 'currency_id'}"/>
+
+                                <field name="amount_received"
+                                       string="Amount Received"
+                                       readonly="1"
+                                       widget="monetary"
+                                       class="fw-bold"
+                                       options="{'currency_field': 'currency_id'}"/>
+
+                                <div class="clearfix"/>
+                                <field name="payment_difference"
+                                       string="Balance Outstanding"
+                                       readonly="1"
+                                       widget="monetary"
+                                       class="text-danger fw-bold"
+                                       options="{'currency_field':'currency_id'}"/>
+
+                            </group>
+
 
                         </page>
-                        <!--                        <page string="Invoices">-->
-                        <!--                            <group>-->
-                        <!--                                <field name="invoice_ids"-->
-                        <!--                                       domain="[('state','=','posted'),-->
-                        <!--                                                    ('move_type','in',('out_invoice','in_invoice')),-->
-                        <!--                                                    ('batch_payment_state','=','not_paid')]"-->
 
-                        <!--                                       widget="many2many_tags"-->
-                        <!--                                       options="{'no_create': True}"/>-->
-                        <!--                            </group>-->
-
-                        <!--                        </page>-->
-                        <!--                        <page string="Invoices">-->
-                        <!--                            <group>-->
-                        <!--                                <field name="invoice_ids"-->
-                        <!--                                       widget="many2many_tags"-->
-                        <!--                                       readonly="1"/>-->
-                        <!--                            </group>-->
-                        <!--                        </page>-->
                         <page string="Export History">
                             <field name="export_history_ids" readonly="1">
                                 <tree>

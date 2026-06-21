@@ -37,10 +37,23 @@ class BatchPaymentAddWizard(models.TransientModel):
             if pay.id in existing:
                 continue
 
+            # to_create.append((0, 0, {
+            #     "payment_id": pay.id,
+            #     "communication": pay.ref or pay.name or batch.name or "",
+            #     "move_id": pay.batch_invoice_id.id if getattr(pay, "batch_invoice_id", False) else False,
+            # }))
+
+            # to_create.append((0, 0, {
+            #     "payment_id": pay.id,
+            #     "communication": pay.ref or pay.name or batch.name or "",
+            #     "move_id": pay.batch_invoice_id.id if pay.batch_invoice_id else False,
+            #     "amount": abs(pay.amount),
+            # }))
             to_create.append((0, 0, {
                 "payment_id": pay.id,
-                "communication": pay.ref or pay.name or batch.name or "",
-                "move_id": pay.batch_invoice_id.id if getattr(pay, "batch_invoice_id", False) else False,
+                "move_id": pay.batch_invoice_id.id if pay.batch_invoice_id else False,
+                "amount": pay.amount,
+                "communication": pay.ref or pay.name,
             }))
 
         if not to_create:

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_partner_form_credit" model="ir.ui.view">
+        <field name="name">res.partner.form.credit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='image_1920']"
+                   position="after">
+
+
+                <div class="oe_title">
+                    <h1>
+                        <field name="customer_reference" readonly="0"/>
+                    </h1>
+                </div>
+
+
+            </xpath>
+
+
+        </field>
+
+
+    </record>
+
+
+    <record id="res_partner_form_credit_tab" model="ir.ui.view">
+        <field name="name">res.partner.form.credit.tab</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+
+            <xpath expr="//notebook"
+                   position="inside">
+
+                <page string="Credits">
+
+                    <field name="credit_ids">
+
+                        <tree create="0" edit="0" delete="0">
+                            <field name="create_date"/>
+                            <field name="batch_id"/>
+                            <field name="amount"
+                                   widget="monetary"
+                                   options="{'currency_field': 'currency_id'}"
+                                   sum="Total Used"/>
+
+                            <field name="currency_id" optional="hide"
+                                   invisible="1"/>
+                            <field name="balance"/>
+
+                            <field name="create_uid" widget="many2one_avatar_user" optional="hide"/>
+                            <field name="write_uid" widget="many2one_avatar_user" optional="hide"/>
+
+                            <field name="state"/>
+                        </tree>
+
+                    </field>
+
+                </page>
+
+            </xpath>
+
+        </field>
+
+    </record>
+
+    <record id="res_partner_credit_button" model="ir.ui.view">
+        <field name="name">res.partner.credit.button</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[contains(@class,'oe_button_box')]"
+                   position="inside">
+
+                <button name="%(action_customer_credit)d"
+                        type="action"
+                        class="oe_stat_button"
+                        icon="fa-money">
+
+                    <field name="credit_count"
+                           widget="statinfo"
+                           string="Credits"/>
+
+                </button>
+
+            </xpath>
+
+        </field>
+
+    </record>
+
+    <record id="view_partner_tree_customer_reference" model="ir.ui.view">
+        <field name="name">res.partner.tree.customer.reference</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='complete_name']"
+                   position="after">
+
+                <field name="customer_reference" optional="show"/>
+
+            </xpath>
+
+        </field>
+
+    </record>
+
+    <record id="view_partner_kanban_customer_reference" model="ir.ui.view">
+        <field name="name">res.partner.kanban.customer.reference</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id"
+               ref="base.res_partner_kanban_view"/>
+
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='display_name']"
+                   position="after">
+
+                <field name="customer_reference" optional="show"/>
+
+            </xpath>
+
+        </field>
+
+    </record>
+
+
+</odoo>
+
