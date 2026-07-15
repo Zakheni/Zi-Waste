@@ -34,14 +34,6 @@
                            widget="html"
                            options="{'sanitize': False}"/>
 
-                    <!--                    &lt;!&ndash; Link &ndash;&gt;-->
-                    <!--                    <div style="margin-top: 5px;">-->
-                    <!--                        <strong>Direct Link:</strong>-->
-                    <!--                        <br/>-->
-                    <!--                        <field name="invite_url" readonly="1"/>-->
-                    <!--                    </div>-->
-
-
                 </div>
             </xpath>
 
@@ -64,12 +56,6 @@
 
             </field>
 
-            <xpath expr="//field[@name='vat']" position="after">
-                <!--                <group>-->
-                <!--                    <field name="company_id"/>-->
-                <!--                </group>-->
-
-            </xpath>
         </field>
     </record>
 

@@ -1,4 +1,7 @@
 from odoo import models, fields, api, _
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ResPartner(models.Model):
@@ -7,22 +10,29 @@ class ResPartner(models.Model):
     customer_reference = fields.Char(
         string="Customer Reference",
         required=True,
-        # copy=False,
+        copy=False,
         index=True,
-        default='/'
+        default="/",
     )
 
     @api.model_create_multi
     def create(self, vals_list):
 
+        seq = self.env["ir.sequence"]
+
         for vals in vals_list:
 
-            if not vals.get("customer_reference"):
-                vals["customer_reference"] = self.env[
-                    "ir.sequence"
-                ].next_by_code("customer.reference")
+            _logger.warning("BEFORE: %s", vals)
+
+            if vals.get("customer_reference") in (False, "", "/"):
+                vals["customer_reference"] = seq.next_by_code(
+                    "customer.reference"
+                )
+
+            _logger.warning("AFTER: %s", vals)
 
         return super().create(vals_list)
+
     credit_ids = fields.One2many(
         "customer.credit",
         "partner_id",

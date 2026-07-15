@@ -50,6 +50,15 @@ class SaleOrder(models.Model):
 
     container_ids = fields.One2many('waste.container', 'sale_order_id', string="Waste Containers")
 
+    service_request_name = fields.Char(
+        compute="_compute_service_request_name"
+    )
+
+    @api.depends("service_request_id")
+    def _compute_service_request_name(self):
+        for order in self:
+            order.service_request_name = order.service_request_id.name or ""
+
     service_request_count = fields.Integer(
         compute='_compute_service_request_count'
     )
@@ -74,3 +83,5 @@ class SaleOrder(models.Model):
         for rec in self:
             if rec.partner_id == rec.company_id.partner_id:
                 raise ValidationError("You cannot invoice your own company.")
+
+

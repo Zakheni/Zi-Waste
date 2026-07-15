@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="portal_sale_order_manifest"
+              inherit_id="sale.sale_order_portal_content">
+
+        <xpath expr="//div[contains(@class, 'row')][1]" position="inside">
+
+            <div class="col-lg-3 col-md-6 mb-3">
+                <strong>Manifest</strong><br/>
+                <span t-if="sale_order.service_request_id"
+                      t-field="sale_order.service_request_id"/>
+                <span t-else="">-</span>
+            </div>
+
+        </xpath>
+
+    </template>
+
+</odoo>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="portal_my_invoices_manifest"
+              inherit_id="account.portal_my_invoices">
+
+        <!-- Add Manifest header -->
+        <xpath expr="//thead/tr/th[1]" position="after">
+            <th>Manifest</th>
+        </xpath>
+
+        <!-- Add Manifest value -->
+        <xpath expr="//tr/td[1]" position="after">
+
+            <td>
+
+                <t t-set="sale_order"
+                   t-value="request.env['sale.order'].sudo().search([('name', '=', invoice.invoice_origin)], limit=1)"/>
+
+                <span t-if="sale_order and sale_order.service_request_id"
+                      t-out="sale_order.service_request_id.display_name"/>
+
+                <span t-else="">-</span>
+
+            </td>
+
+        </xpath>
+
+    </template>
+
+</odoo>

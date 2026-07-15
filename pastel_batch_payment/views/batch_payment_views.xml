@@ -8,6 +8,7 @@
                 <field name="name"/>
                 <field name="payment_date"/>
                 <field name="partner_type"/>
+                <field name="company_id" optional="hide"/>
                 <field name="journal_id"/>
                 <field name="currency_id"/>
                 <field name="amount_total" widget="monetary"

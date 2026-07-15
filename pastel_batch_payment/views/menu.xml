@@ -22,4 +22,5 @@
               action="action_batch_payment_export_history"
               sequence="20"/>
 
+
 </odoo>

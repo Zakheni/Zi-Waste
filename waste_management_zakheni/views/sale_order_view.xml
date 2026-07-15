@@ -22,15 +22,8 @@
         <field name="arch" type="xml">
             <!-- Place under Customer -->
             <xpath expr="//field[@name='sale_order_template_id']" position="after">
-                <field name="service_request_id" invisible="state not in ('sale')"
+                <field name="service_request_id" invisible="1"
                        context="{'default_service_request_id': active_id}" readonly="1"/>
-                <!--                <field name="planned_date"/>-->
-                <!--                <field name="pickup_point_id"/>-->
-                <!--                <field name="pickup_point_ids" widget="many2many_tags" invisible="partner_id == False"  required="0"/>-->
-                <!--                <field name="container_ids" widget="many2many_tags" context="{'default_sale_order_id': active_id}"-->
-                <!--                       />-->
-
-
             </xpath>
         </field>
     </record>
@@ -47,18 +40,20 @@
                 <!--                    class="btn btn-secondary btn-sm"/>-->
             </xpath>
 
-            <xpath expr="//sheet" position="inside">
-                <div name="button_box" class="oe_button_box">
-                    <button
-                            name="action_open_service_request"
-                            type="object"
-                            class="oe_stat_button"
-                            icon="fa-recycle"
-                            invisible="service_request_id ==  False"
-                    >
-                        <field name="service_request_count" widget="statinfo"/>
-                    </button>
-                </div>
+            <xpath expr="//div[@name='button_box']" position="inside">
+
+                <button name="action_open_service_request"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-external-link"
+                        invisible="not service_request_id">
+
+                    <field name="service_request_name"
+                           widget="statinfo"
+                           string="Manifest"/>
+
+                </button>
+
             </xpath>
             <xpath expr="//field[@name='partner_id']" position="attributes">
                 <!--                <attribute name="domain">-->
@@ -80,12 +75,12 @@
 
             </xpath>
 
-<!--             Hide first invoice button-->
-<!--            <xpath expr="//button[@id='create_invoice']" position="attributes">-->
-<!--                <attribute name="groups">-->
-<!--                    !waste_management_zakheni.group_wmz_manager,!waste_management_zakheni.group_wmz_admin_clerk,!waste_management_zakheni.group_wmz_admin-->
-<!--                </attribute>-->
-<!--            </xpath>-->
+            <!--             Hide first invoice button-->
+            <!--            <xpath expr="//button[@id='create_invoice']" position="attributes">-->
+            <!--                <attribute name="groups">-->
+            <!--                    !waste_management_zakheni.group_wmz_manager,!waste_management_zakheni.group_wmz_admin_clerk,!waste_management_zakheni.group_wmz_admin-->
+            <!--                </attribute>-->
+            <!--            </xpath>-->
 
             <!-- Hide percentage invoice button -->
             <xpath expr="//button[@id='create_invoice_percentage']" position="attributes">

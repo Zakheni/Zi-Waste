@@ -102,7 +102,7 @@ class BatchPayment(models.Model):
     )
 
     currency_id = fields.Many2one("res.currency", default=lambda s: s.env.company.currency_id)
-    company_id = fields.Many2one("res.company", default=lambda s: s.env.company, required=True)
+    company_id = fields.Many2one("res.company", required=False, default=lambda s: s.env.company, index=True,)
 
     line_ids = fields.One2many("batch.payment.line", "batch_id", string="Lines")
 

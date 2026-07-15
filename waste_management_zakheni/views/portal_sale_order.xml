@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="portal_my_orders_manifest"
+              inherit_id="sale.portal_my_orders">
+
+        <!-- Add header after Sales Order -->
+        <xpath expr="//thead/tr/th[1]" position="after">
+            <th>Manifest</th>
+        </xpath>
+
+        <!-- Add value after Sales Order Number -->
+        <xpath expr="//tr/td[1]" position="after">
+            <td>
+                <t t-if="order.service_request_id">
+                    <t t-out="order.service_request_id.display_name"/>
+                </t>
+                <t t-else="">-</t>
+            </td>
+        </xpath>
+
+    </template>
+
+
+</odoo>

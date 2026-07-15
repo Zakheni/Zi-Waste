@@ -38,6 +38,11 @@
         # "views/portal_validation.xml",
         "views/portal_validation_template.xml",
         "views/waste_portal_templates.xml",
+        "views/report_invoice_inherit.xml",
+        "views/portal_sale_order.xml",
+        "views/sale_portal_templates.xml",
+        "views/account_portal_templates.xml",
+        "views/account_portal_invoice_list.xml",
         # "views/hide_cards_for_agent_group_temp.xml",
 
         "views/res_user_view.xml",
