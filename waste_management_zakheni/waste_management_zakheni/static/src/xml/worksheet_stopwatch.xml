@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="waste_management_zakheni.WorksheetStopwatch">
+        <div class="o_wmz_ws_stopwatch" t-att-class="{'o_wmz_ws_stopwatch_running': state.running}">
+            <span class="o_wmz_ws_stopwatch_icon" title="Elapsed time">
+                <i class="fa fa-clock-o"/>
+            </span>
+            <div class="o_wmz_ws_stopwatch_text">
+                <span class="o_wmz_ws_stopwatch_label">
+                    <t t-if="state.running">Job in progress</t>
+                    <t t-else="">Total time</t>
+                </span>
+                <span class="o_wmz_ws_stopwatch_value" t-esc="state.elapsed"/>
+            </div>
+            <span t-if="state.running" class="o_wmz_ws_stopwatch_pulse" title="Running"/>
+        </div>
+    </t>
+
+</templates>

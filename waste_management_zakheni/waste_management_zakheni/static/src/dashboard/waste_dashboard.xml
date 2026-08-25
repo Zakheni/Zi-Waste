@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+  <t t-name="waste_management_zakheni.WasteDashboard">
+    <div class="o_wmz_dashboard o_waste_scroll">
+
+      <t t-if="state.loading">
+        <div class="o_wmz_dash_loading">
+          <div class="o_wmz_dash_loading_inner">
+            <i class="fa fa-spinner fa-spin me-2" title="Loading"/>
+            Loading dashboard…
+          </div>
+        </div>
+      </t>
+
+      <!-- Header -->
+      <div class="o_wmz_dash_hero">
+        <div class="o_wmz_dash_hero_text">
+          <span class="o_wmz_dash_eyebrow">Operations</span>
+          <h1 class="o_wmz_dash_title">Waste Management Dashboard</h1>
+          <p class="o_wmz_dash_subtitle">
+            Track manifests, today's schedule, and billing in one place.
+          </p>
+        </div>
+        <div class="o_wmz_dash_hero_actions">
+          <button class="btn btn-sm btn-light" t-on-click="onRefresh" title="Refresh">
+            <i class="fa fa-refresh"/>
+          </button>
+          <button class="btn btn-sm btn-light" t-on-click="printDashboard">
+            <i class="fa fa-print me-1"/> PDF
+          </button>
+          <button class="btn btn-sm btn-light" t-on-click="exportDashboardXlsx">
+            <i class="fa fa-file-excel-o me-1"/> Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters (collapsible) -->
+      <div class="o_wmz_dash_filters card">
+        <div class="o_wmz_dash_filters_head" t-on-click="toggleFilters">
+          <span>
+            <i class="fa fa-filter me-2" title="Filters"/>
+            <strong>Filters</strong>
+            <span class="o_wmz_dash_filter_hint text-muted ms-2">Date, company, customer, references</span>
+          </span>
+          <i t-attf-class="fa #{state.filtersOpen ? 'fa-chevron-up' : 'fa-chevron-down'}" title="Toggle filters"/>
+        </div>
+
+        <div class="o_wmz_dash_filters_body" t-if="state.filtersOpen">
+          <div class="o_wmz_dash_presets mb-2">
+            <span class="text-muted small me-2">Quick range:</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" t-on-click="() => setDatePreset('today')">Today</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" t-on-click="() => setDatePreset('month')">This month</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" t-on-click="() => setDatePreset('30d')">Last 30 days</button>
+          </div>
+
+          <div class="o_wmz_dash_filters_grid">
+            <div>
+              <label class="form-label small mb-1">From</label>
+              <input class="form-control form-control-sm" type="date" t-model="state.filters.date_from"/>
+            </div>
+            <div>
+              <label class="form-label small mb-1">To</label>
+              <input class="form-control form-control-sm" type="date" t-model="state.filters.date_to"/>
+            </div>
+            <div>
+              <label class="form-label small mb-1">Company</label>
+              <select class="form-select form-select-sm" t-model="state.filters.company_id">
+                <option t-att-value="false">All companies</option>
+                <t t-foreach="(state.companies || [])" t-as="co" t-key="co.id">
+                  <option t-att-value="co.id"><t t-esc="co.name"/></option>
+                </t>
+              </select>
+            </div>
+            <div>
+              <label class="form-label small mb-1">Customer</label>
+              <select class="form-select form-select-sm" t-model="state.filters.partner_id">
+                <option t-att-value="false">All customers</option>
+                <t t-foreach="(state.customers || [])" t-as="c" t-key="c.id">
+                  <option t-att-value="c.id"><t t-esc="c.name"/></option>
+                </t>
+              </select>
+            </div>
+            <div>
+              <label class="form-label small mb-1">Manifest</label>
+              <input class="form-control form-control-sm" placeholder="RQWS-0001" t-model="state.filters.manifest_number"/>
+            </div>
+            <div>
+              <label class="form-label small mb-1">Sales order</label>
+              <input class="form-control form-control-sm" placeholder="SO…" t-model="state.filters.sale_order_number"/>
+            </div>
+            <div>
+              <label class="form-label small mb-1">Invoice</label>
+              <input class="form-control form-control-sm" placeholder="INV/…" t-model="state.filters.invoice_number"/>
+            </div>
+            <div class="o_wmz_dash_filter_actions">
+              <button class="btn btn-sm btn-primary" t-on-click="onApplyFilters">
+                <i class="fa fa-check me-1"/> Apply
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" t-on-click="onClearFilters">
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section tabs -->
+      <ul class="nav nav-pills o_wmz_dash_tabs mb-3">
+        <li class="nav-item">
+          <button type="button" class="nav-link"
+                  t-att-class="{'active': state.activeSection === 'overview'}"
+                  t-on-click="() => setSection('overview')">Overview</button>
+        </li>
+        <li class="nav-item">
+          <button type="button" class="nav-link"
+                  t-att-class="{'active': state.activeSection === 'operations'}"
+                  t-on-click="() => setSection('operations')">Operations</button>
+        </li>
+        <li class="nav-item">
+          <button type="button" class="nav-link"
+                  t-att-class="{'active': state.activeSection === 'finance'}"
+                  t-on-click="() => setSection('finance')">Finance</button>
+        </li>
+        <li class="nav-item" t-if="state.mode and (state.mode.show_bins or state.mode.show_tanks)">
+          <button type="button" class="nav-link"
+                  t-att-class="{'active': state.activeSection === 'assets'}"
+                  t-on-click="() => setSection('assets')">Bins &amp; Tanks</button>
+        </li>
+      </ul>
+
+      <t t-set="chartBodyStyle" t-value="'min-height:280px; height:280px;'"/>
+
+      <!-- KPI cards — always visible on every tab -->
+      <div class="o_wmz_dash_kpis mb-3">
+        <div class="o_wmz_kpi o_wmz_kpi_primary" t-on-click="openOpenClick">
+          <span class="o_wmz_kpi_label">Active manifests</span>
+          <span class="o_wmz_kpi_value"><t t-esc="state.kpis.open_requests"/></span>
+          <span class="o_wmz_kpi_hint">Not yet authorised</span>
+        </div>
+        <div class="o_wmz_kpi o_wmz_kpi_info" t-on-click="openScheduledClick">
+          <span class="o_wmz_kpi_label">Scheduled</span>
+          <span class="o_wmz_kpi_value"><t t-esc="state.kpis.scheduled_count"/></span>
+          <span class="o_wmz_kpi_hint">Planned jobs</span>
+        </div>
+        <div class="o_wmz_kpi o_wmz_kpi_warning" t-on-click="openInProgressClick">
+          <span class="o_wmz_kpi_label">On site</span>
+          <span class="o_wmz_kpi_value"><t t-esc="state.kpis.in_progress"/></span>
+          <span class="o_wmz_kpi_hint">Dispatched / delivered</span>
+        </div>
+        <div class="o_wmz_kpi o_wmz_kpi_success" t-on-click="openDoneClick">
+          <span class="o_wmz_kpi_label">Authorised</span>
+          <span class="o_wmz_kpi_value"><t t-esc="state.kpis.done_count"/></span>
+          <span class="o_wmz_kpi_hint">Completed</span>
+        </div>
+        <div class="o_wmz_kpi o_wmz_kpi_danger" t-on-click="openRejectedClick">
+          <span class="o_wmz_kpi_label">Rejected</span>
+          <span class="o_wmz_kpi_value"><t t-esc="state.kpis.rejected_count"/></span>
+          <span class="o_wmz_kpi_hint">Cancelled manifests</span>
+        </div>
+      </div>
+
+      <!-- ========== OVERVIEW ========== -->
+      <t t-if="state.activeSection === 'overview'">
+
+        <div class="row g-3 mb-3" t-if="state.visibility.todays">
+          <div class="col-12">
+            <div class="card o_wmz_dash_card h-100">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Today's schedule</span>
+                <button class="btn btn-sm btn-link" t-on-click="openTodayListClick">View all</button>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover m-0 align-middle o_wmz_dash_table">
+                    <thead>
+                      <tr>
+                        <th>Manifest</th>
+                        <th>Customer</th>
+                        <th>Planned</th>
+                        <th>Driver</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <t t-foreach="(state.todays || [])" t-as="r" t-key="r.id">
+                        <tr class="o_wmz_dash_row_click" t-on-click="() => openTodayRowClick(r)">
+                          <td class="fw-semibold"><t t-esc="r.name"/></td>
+                          <td><t t-esc="r.partner_id ? r.partner_id[1] : ''"/></td>
+                          <td class="text-nowrap"><t t-esc="r.planned_date || ''"/></td>
+                          <td><t t-esc="r.driver_id ? r.driver_id[1] : ''"/></td>
+                          <td><span class="badge text-bg-light"><t t-esc="r.state"/></span></td>
+                        </tr>
+                      </t>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3" t-if="state.visibility.serviceChart or state.visibility.topCustomersChart">
+          <div t-if="state.visibility.serviceChart" t-attf-class="col-12 #{state.visibility.topCustomersChart ? 'col-lg-6' : ''}">
+            <div class="card o_wmz_dash_card">
+              <div class="card-header">By service type</div>
+              <div class="card-body" t-att-style="chartBodyStyle">
+                <canvas t-ref="serviceCanvas"/>
+              </div>
+            </div>
+          </div>
+          <div t-if="state.visibility.topCustomersChart" t-attf-class="col-12 #{state.visibility.serviceChart ? 'col-lg-6' : ''}">
+            <div class="card o_wmz_dash_card">
+              <div class="card-header">Top customers</div>
+              <div class="card-body" t-att-style="chartBodyStyle">
+                <canvas t-ref="topCustomersCanvas"/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3" t-if="state.visibility.statusChart">
+          <div class="col-12">
+            <div class="card o_wmz_dash_card">
+              <div class="card-header">Manifests by status</div>
+              <div class="card-body" t-att-style="chartBodyStyle">
+                <canvas t-ref="statusCanvas"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </t>
+
+      <!-- ========== OPERATIONS ========== -->
+      <t t-if="state.activeSection === 'operations'">
+
+        <div class="row g-3 mb-3" t-if="state.visibility.driverTripsChart or state.visibility.assignmentPieChart">
+          <div t-if="state.visibility.driverTripsChart" t-attf-class="col-12 #{state.visibility.assignmentPieChart ? 'col-lg-6' : ''}">
+            <div class="card o_wmz_dash_card">
+              <div class="card-header">Driver trips</div>
+              <div class="card-body" t-att-style="chartBodyStyle">
+                <canvas t-ref="driverTripsCanvas"/>
+              </div>
+            </div>
+          </div>
+          <div t-if="state.visibility.assignmentPieChart" t-attf-class="col-12 #{state.visibility.driverTripsChart ? 'col-lg-6' : ''}">
+            <div class="card o_wmz_dash_card">
+              <div class="card-header">Jobs today: driver vs service provider</div>
+              <div class="card-body" t-att-style="chartBodyStyle">
+                <canvas t-ref="assignmentPieCanvas"/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card o_wmz_dash_card" t-if="state.visibility.manifestSummary">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Recent manifests</span>
+            <button class="btn btn-sm btn-link" t-on-click="openManifestList">View all</button>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover m-0 align-middle o_wmz_dash_table">
+                <thead>
+                  <tr>
+                    <th>Manifest</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <t t-if="state.mode and state.mode.show_bins">
+                      <th class="text-end">Bins</th>
+                    </t>
+                  </tr>
+                </thead>
+                <tbody>
+                  <t t-foreach="(state.manifest_summary || [])" t-as="m" t-key="m.id">
+                    <tr class="o_wmz_dash_row_click" t-on-click="() => openManifestRowClick(m)">
+                      <td class="fw-semibold"><t t-esc="m.name || ''"/></td>
+                      <td><t t-esc="m.partner || (m.partner_id ? m.partner_id[1] : '')"/></td>
+                      <td class="text-nowrap"><t t-esc="m.date || m.service_request_date || ''"/></td>
+                      <t t-if="state.mode and state.mode.show_bins">
+                        <td class="text-end"><t t-esc="m.bin_count || 0"/></td>
+                      </t>
+                    </tr>
+                  </t>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </t>
+
+      <!-- ========== FINANCE ========== -->
+      <t t-if="state.activeSection === 'finance'">
+
+        <div class="o_wmz_dash_finance_banner mb-3" t-if="state.visibility.financeBanner">
+          <div>
+            <span class="o_wmz_dash_finance_label">Billing this month</span>
+            <span class="o_wmz_dash_finance_amount">R <t t-esc="(state.kpis.billing_amount_month || 0).toFixed(2)"/></span>
+            <t t-if="state.mode and state.mode.show_tanks">
+              <span class="o_wmz_dash_finance_sub ms-3">Tank volume: <t t-esc="(state.kpis.tank_kl_month || 0).toFixed(2)"/> kL</span>
+            </t>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3" t-if="state.visibility.revenueChart or state.visibility.revenueCompanyChart">
+          <div t-if="state.visibility.revenueChart" t-attf-class="col-12 #{state.visibility.revenueCompanyChart ? 'col-lg-6' : ''}">
+            <div class="card o_wmz_dash_card">
+              <div class="card-header">Revenue by customer</div>
+              <div class="card-body" t-att-style="chartBodyStyle">
+                <canvas t-ref="revenueCanvas"/>
+              </div>
+            </div>
+          </div>
+          <div t-if="state.visibility.revenueCompanyChart" t-attf-class="col-12 #{state.visibility.revenueChart ? 'col-lg-6' : ''}">
+            <div class="card o_wmz_dash_card">
+              <div class="card-header">Revenue by company</div>
+              <div class="card-body" t-att-style="chartBodyStyle">
+                <canvas t-ref="revenueCompanyCanvas"/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card o_wmz_dash_card" t-if="state.visibility.soInvoiceTotals">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Sales orders &amp; invoices</span>
+            <button class="btn btn-sm btn-link" t-on-click="openInvoiceTotalsList">View invoices</button>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover m-0 align-middle o_wmz_dash_table">
+                <thead>
+                  <tr>
+                    <th>Sales order</th>
+                    <th>Invoice</th>
+                    <th class="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <t t-foreach="(state.so_invoice_totals || [])" t-as="x" t-key="x.key || x.id">
+                    <tr class="o_wmz_dash_row_click" t-on-click="() => openInvoiceTotalsRowClick(x)">
+                      <td><t t-esc="x.sale_order || (x.sale_order_id ? x.sale_order_id[1] : '')"/></td>
+                      <td><t t-esc="x.invoice || (x.invoice_id ? x.invoice_id[1] : '')"/></td>
+                      <td class="text-end fw-semibold">R <t t-esc="((x.total || x.amount_total || 0) * 1).toFixed(2)"/></td>
+                    </tr>
+                  </t>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </t>
+
+      <!-- ========== BINS & TANKS ========== -->
+      <t t-if="state.activeSection === 'assets'">
+
+        <div class="row g-3 mb-3" t-if="(state.mode.show_tanks and state.visibility.tankChart) or (state.mode.show_bins and state.visibility.binChart)">
+          <t t-if="state.mode and state.mode.show_tanks and state.visibility.tankChart">
+            <div t-attf-class="col-12 #{state.mode.show_bins and state.visibility.binChart ? 'col-lg-6' : ''}">
+              <div class="card o_wmz_dash_card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <span>Tank volume by customer (kL)</span>
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary" t-on-click="onTankDay">Day</button>
+                    <button type="button" class="btn btn-outline-secondary" t-on-click="onTankWeek">Week</button>
+                  </div>
+                </div>
+                <div class="card-body" t-att-style="chartBodyStyle">
+                  <canvas t-ref="tankCanvas"/>
+                </div>
+              </div>
+            </div>
+          </t>
+          <t t-if="state.mode and state.mode.show_bins and state.visibility.binChart">
+            <div t-attf-class="col-12 #{state.mode.show_tanks and state.visibility.tankChart ? 'col-lg-6' : ''}">
+              <div class="card o_wmz_dash_card">
+                <div class="card-header">Bin activity</div>
+                <div class="card-body" t-att-style="chartBodyStyle">
+                  <canvas t-ref="binCanvas"/>
+                </div>
+              </div>
+            </div>
+          </t>
+        </div>
+
+        <t t-if="state.mode and state.mode.show_bins and (state.visibility.binRevenueChart or state.visibility.binReport)">
+          <div class="row g-3">
+            <div t-if="state.visibility.binRevenueChart" t-attf-class="col-12 #{state.visibility.binReport ? 'col-lg-6' : ''}">
+              <div class="card o_wmz_dash_card">
+                <div class="card-header">Top bin revenue</div>
+                <div class="card-body" t-att-style="chartBodyStyle">
+                  <canvas t-ref="binRevenueCanvas"/>
+                </div>
+              </div>
+            </div>
+            <div t-if="state.visibility.binReport" t-attf-class="col-12 #{state.visibility.binRevenueChart ? 'col-lg-6' : ''}">
+              <div class="card o_wmz_dash_card">
+                <div class="card-header">Recent bin drops</div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-hover m-0 align-middle o_wmz_dash_table">
+                      <thead>
+                        <tr>
+                          <th>Manifest</th>
+                          <th>Bin</th>
+                          <th>Site</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <t t-foreach="(state.bin_report || [])" t-as="b" t-key="b.key || b.id">
+                          <tr class="o_wmz_dash_row_click" t-on-click="() => openBinReportRowClick(b)">
+                            <td><t t-esc="b.manifest || (b.request_id ? b.request_id[1] : '')"/></td>
+                            <td><t t-esc="b.bin || (b.container_id ? b.container_id[1] : '')"/></td>
+                            <td><t t-esc="b.dropoff_point || b.pickup_point || ''"/></td>
+                            <td class="text-nowrap"><t t-esc="b.date || ''"/></td>
+                          </tr>
+                        </t>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </t>
+      </t>
+
+    </div>
+  </t>
+
+</templates>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vehicle Inspection - Security Groups
+    Defines Fleet User and Fleet Manager groups for the module.
+-->
+<odoo>
+
+    <!-- ============================= -->
+    <!-- CATEGORY -->
+    <!-- ============================= -->
+    <record id="module_category_vehicle_inspection" model="ir.module.category">
+        <field name="name">Vehicle Inspection</field>
+        <field name="description">Manage Vehicle Inspections</field>
+<!--        <field name="sequence">25</field>-->
+    </record>
+
+    <!-- ============================= -->
+    <!-- INSPECTION USER -->
+    <!-- ============================= -->
+    <record id="group_vehicle_inspection_user" model="res.groups">
+        <field name="name">Fleet User</field>
+        <field name="category_id" ref="vehicle_inspection.module_category_vehicle_inspection"/>
+    </record>
+
+    <!-- ============================= -->
+    <!-- INSPECTION MANAGER -->
+    <!-- ============================= -->
+    <record id="group_vehicle_inspection_manager" model="res.groups">
+        <field name="name">Fleet Manager</field>
+        <field name="category_id" ref="vehicle_inspection.module_category_vehicle_inspection"/>
+        <field name="implied_ids" eval="[(4, ref('vehicle_inspection.group_vehicle_inspection_user'))]"/>
+    </record>
+
+</odoo>

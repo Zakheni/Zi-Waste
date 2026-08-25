@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Views — Service Provider Views -->
+<odoo>
+    <record id="view_wms_service_provider_tree" model="ir.ui.view">
+        <field name="name">wms.service.provider.tree</field>
+        <field name="model">wms.service.provider</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="full_address" string="Location"/>
+                <field name="geo_synced" string="Mapped" widget="boolean"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <field name="number_of_fleet" optional="hide"/>
+                <field name="fleet_category_list" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_wms_service_provider_form" model="ir.ui.view">
+        <field name="name">wms.service.provider.form</field>
+        <field name="model">wms.service.provider</field>
+        <field name="arch" type="xml">
+            <form string="Service Provider">
+                <header>
+                    <button name="action_geocode_address"
+                            type="object"
+                            string="Locate on map"
+                            class="oe_highlight"
+                            icon="fa-map-marker"/>
+                    <field name="geo_synced" widget="boolean" readonly="1"
+                           invisible="geo_synced == False"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Service provider name"/></h1>
+                    </div>
+
+                    <group string="Location">
+                        <field name="full_address" nolabel="1" colspan="2"
+                               placeholder="5 Dwerg St, Denver, Johannesburg, 2094, South Africa"/>
+                        <group colspan="2">
+                            <field name="latitude" readonly="1"/>
+                            <field name="longitude" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Contact">
+                            <field name="phone" required="1" widget="phone"/>
+                            <field name="mobile" widget="phone"/>
+                            <field name="email" widget="email"/>
+                            <field name="agent" widget="many2one_avatar_user"/>
+                        </group>
+                        <group string="Fleet">
+                            <field name="number_of_fleet"/>
+                            <field name="fleet_category_ids" widget="many2many_tags"
+                                   placeholder="Select fleet categories"/>
+                            <field name="fleet_category_list" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <group string="Parsed address (auto-filled)" groups="base.group_no_one">
+                        <field name="street" readonly="1"/>
+                        <field name="suburb" readonly="1"/>
+                        <field name="city" readonly="1"/>
+                        <field name="province" readonly="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_wms_service_provider_kanban" model="ir.ui.view">
+        <field name="name">wms.service.provider.kanban</field>
+        <field name="model">wms.service.provider</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="province"
+                    default_order="name asc"
+                    class="o_wmz_provider_kanban"
+                    quick_create="false"
+                    group_create="false">
+                <field name="name"/>
+                <field name="full_address"/>
+                <field name="city"/>
+                <field name="province"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <field name="number_of_fleet"/>
+                <field name="fleet_category_list"/>
+                <field name="geo_synced"/>
+                <field name="latitude"/>
+                <field name="longitude"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click oe_kanban_card o_wmz_sp_card">
+                            <div t-attf-class="o_wmz_sp_banner o_wmz_sp_banner_#{record.province.raw_value or 'none'}">
+                                <span class="o_wmz_sp_banner_icon">
+                                    <i class="fa fa-truck" title="Service provider"/>
+                                </span>
+                                <div>
+                                    <div class="o_wmz_sp_name"><field name="name"/></div>
+                                    <div t-if="record.city.value" class="o_wmz_sp_city">
+                                        <field name="city"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_wmz_sp_body">
+                                <div t-if="record.full_address.value" class="o_wmz_sp_row">
+                                    <i class="fa fa-map-marker" title="Location"/>
+                                    <span t-esc="record.full_address.value"/>
+                                </div>
+                                <div t-if="record.phone.value" class="o_wmz_sp_row">
+                                    <i class="fa fa-phone" title="Phone"/>
+                                    <span t-esc="record.phone.value"/>
+                                </div>
+                                <div t-if="record.email.value" class="o_wmz_sp_row">
+                                    <i class="fa fa-envelope-o" title="Email"/>
+                                    <span t-esc="record.email.value"/>
+                                </div>
+                                <div t-if="record.fleet_category_list.value" class="o_wmz_sp_row">
+                                    <i class="fa fa-tags" title="Fleet"/>
+                                    <span t-esc="record.fleet_category_list.value"/>
+                                </div>
+                            </div>
+                            <div class="o_wmz_sp_footer">
+                                <span t-if="record.geo_synced.raw_value" class="o_wmz_sp_tag o_wmz_sp_tag_mapped">
+                                    <i class="fa fa-map-pin" title="On map"/> On map
+                                </span>
+                                <span t-if="record.number_of_fleet.raw_value" class="o_wmz_sp_tag o_wmz_sp_tag_fleet">
+                                    <i class="fa fa-truck" title="Fleet"/> <field name="number_of_fleet"/> fleet
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_wms_service_provider_search" model="ir.ui.view">
+        <field name="name">wms.service.provider.search</field>
+        <field name="model">wms.service.provider</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="full_address" string="Location"/>
+                <field name="city"/>
+                <filter name="geocoded" string="On map" domain="[('latitude','!=',0)]"/>
+                <filter name="province_wc" string="Western Cape" domain="[('province','=','WC')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_province" string="Province" context="{'group_by':'province'}"/>
+                    <filter name="group_city" string="City/Town" context="{'group_by':'city'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_wms_service_provider" model="ir.actions.act_window">
+        <field name="name">Service Providers</field>
+        <field name="res_model">wms.service.provider</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_wms_service_provider_search"/>
+    </record>
+
+
+</odoo>

@@ -1,0 +1,83 @@
+<!-- Portal — Mail Client Portal Request Completion -->
+<odoo>
+    <data noupdate="1">
+
+        <!-- Styled Onboarding Welcome Email Template -->
+        <!-- Views / records -->
+    <record id="mail_tmpl_service_request_portal_completion" model="mail.template">
+            <field name="name">Request Portal Completion</field>
+            <field name="model_id" ref="waste_management_zakheni.model_waste_service_request"/>
+            <field name="subject">Service Request Logged – {{ object.name or '' }}</field>
+            <field name="email_from">{{user.email}}</field>
+            <field name="email_to">{{object.admin_clerck_email}}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+                <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff;
+                                border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+
+                        <div style="background-color: #ffffff; padding: 20px;text-align: center;">
+                            <table style="border-collapse: collapse;">
+                                <tr>
+                                    <!-- Logo Left -->
+
+                                    <td valign="middle" align="right"
+                                        t-if="not object.company_id.uses_default_logo">
+                                        <img t-attf-src="/logo.png?company={{object.company_id.id}}"
+                                             style="padding: 0px; margin: 0px; height: auto; width: 80px;"
+                                             t-att-alt="object.company_id.name"/>
+
+                                    </td>
+                                    <!-- Title Right here -->
+
+                                </tr>
+                            </table>
+
+                        </div>
+
+                        <!--                         Body-->
+                        <div style="background-color: #ffffff; padding: 20px; color: #333333; line-height: 1.6;">
+                            <p>Dear Admin,
+                            </p>
+
+                            <p>The Service Request has been completed and requires your attention</p>
+                            <p>
+                                Service request Reference:
+                                <strong>
+                                    <t t-out="object.name"></t>
+                                </strong>
+
+                            </p>
+
+                            <p>Login for more details:</p>
+
+                            <p>
+                                <a href="https://dwmis.co.za/web/login"
+                                   style="padding:10px 15px;background:#004080;color:white;text-decoration:none;">
+                                    Login
+                                </a>
+
+                            </p>
+
+
+                            <p>Thank you,</p>
+                            <p>Customer</p>
+                        </div>
+
+
+                        <!-- Footer -->
+                        <div style="background-color: #ffffff; color: #c1c1c1; text-align: center; padding: 10px; font-size: 12px;">
+
+                            <p class="mb-0">
+                                ©
+                                <span t-esc="time.strftime('%Y')"/>
+                                <span t-esc="object.company_id.display_name"/>. All rights reserved.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </field>
+        </record>
+
+    </data>
+</odoo>

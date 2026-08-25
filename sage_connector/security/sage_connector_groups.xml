@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_sage_connector" model="ir.module.category">
+        <field name="name">Sage Connector</field>
+        <field name="description">Sage 50 Pastel Partner integration</field>
+    </record>
+    <record id="group_sage_user" model="res.groups">
+        <field name="name">Sage User</field>
+        <field name="category_id" ref="module_category_sage_connector"/>
+    </record>
+    <record id="group_sage_manager" model="res.groups">
+        <field name="name">Sage Manager</field>
+        <field name="category_id" ref="module_category_sage_connector"/>
+        <field name="implied_ids" eval="[(4, ref('group_sage_user'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+</odoo>

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    Module: pastel_batch_payment
+    File: account_move_views.xml
+    Description: Invoice batch payment state and actions.
+-->
+<odoo>
+
+    <!-- Add "Register Payment (Batch)" button after standard Register Payment -->
+    <!-- View/action record: Account move form inherit register payment batch -->
+    <record id="account_move_form_inherit_register_payment_batch" model="ir.ui.view">
+        <field name="name">account.move.form.register.payment.batch</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//header/button[@name='action_register_payment']" position="after">
+                <button name="action_register_payment_batch"
+                        type="object"
+                        string="Register Payment (Batch)"
+                        class="btn-secondary"
+                        invisible="move_type not in ('out_invoice','in_invoice') or state != 'posted'"/>
+
+            </xpath>
+
+<!--            <xpath expr="//field[@name='payment_state']" position="after">-->
+
+<!--                <field name="batch_payment_state"-->
+<!--                       widget="badge"-->
+<!--                       optional="show"/>-->
+
+
+<!--            </xpath>-->
+
+<!--            <xpath expr="//field[@name='partner_id']" position="after">-->
+
+<!--    <group string="Batch Payment Information">-->
+
+<!--        <field name="amount_paid_batch"-->
+<!--               readonly="1"-->
+<!--               widget="monetary"-->
+<!--               options="{'currency_field':'currency_id'}"/>-->
+
+<!--        <field name="amount_outstanding_batch"-->
+<!--               readonly="1"-->
+<!--               widget="monetary"-->
+<!--               options="{'currency_field':'currency_id'}"/>-->
+
+<!--    </group>-->
+
+<!--</xpath>-->
+
+
+            <xpath expr="//sheet" position="inside">
+                <field name="hide_payment_buttons" invisible="1"/>
+                <field name="is_paid_via_batch" invisible="1"/>
+            </xpath>
+
+
+            <xpath expr="//sheet" position="inside">
+
+                <div class="batch-paid-ribbon"
+                     invisible="is_paid_via_batch == False">
+                    <span>PAID</span>
+                </div>
+
+            </xpath>
+
+
+            <xpath expr="//field[@name='payment_state']" position="after">
+                <field name="batch_payment_state"
+                       widget="badge"
+                       decoration-success="batch_payment_state == 'paid'"
+                       decoration-infor="batch_payment_state == 'partial'"
+                       decoration-danger="batch_payment_state == 'not_paid'"/>
+
+<!--                 <field name="batch_payment_state"-->
+<!--                       widget="badge"-->
+<!--                       optional="show"/>-->
+
+
+
+                <field name="has_batch_payment" readonly="1" invisible="1"/>
+                <field name="has_batch_payment" readonly="1" invisible="1"/>
+
+
+            </xpath>
+
+
+        </field>
+    </record>
+
+
+    <!-- View/action record: View invoice tree inherit batch payment state -->
+
+
+    <record id="view_invoice_tree_inherit_batch_payment_state" model="ir.ui.view">
+        <field name="name">account.move.invoice.tree.inherit.batch.payment</field>
+        <field name="model">account.move</field>
+
+        <!-- IMPORTANT: inherit the INVOICE tree, not move tree -->
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+
+        <field name="arch" type="xml">
+
+            <!-- Insert Batch Payment State BEFORE payment_state -->
+            <xpath expr="//field[@name='payment_state']" position="before">
+                <field name="batch_payment_state"
+                       string="Batch State"
+                       widget="badge"
+                       decoration-success="batch_payment_state == 'paid'"
+                       decoration-warning="batch_payment_state == 'exported'"
+                       decoration-danger="batch_payment_state == 'not_paid'"/>
+
+                  <field name="amount_paid_batch"  optional="hide"/>
+                <field name="amount_outstanding_batch" optional="hide"/>
+
+            </xpath>
+
+            <xpath expr="//field[@name='invoice_date_due']" position="attributes">
+                <attribute name="invisible">
+                    batch_payment_state == 'paid' or payment_state == 'paid'
+                </attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- WMZ security on batch payment button (pastel loads after waste_management_zakheni) -->
+    <record id="account_move_form_limit_register_payment_batch" model="ir.ui.view">
+        <field name="name">account.move.form.limit.register.payment.batch</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="pastel_batch_payment.account_move_form_inherit_register_payment_batch"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_register_payment_batch']" position="attributes">
+                <attribute name="groups">
+                    waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance
+                </attribute>
+                <attribute name="invisible">
+                    payment_state == 'paid' or state != 'posted' or batch_payment_state == 'paid'
+                </attribute>
+                <attribute name="string">Register Receipts (Batch)</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="account_move_invoice_tree_hide_due_date_batch_paid" model="ir.ui.view">
+        <field name="name">account.move.invoice.tree.hide.due.date.batch.paid</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <attribute name="create">0</attribute>
+                <attribute name="edit">0</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_date_due']" position="attributes">
+                <attribute name="invisible">
+                    batch_payment_state == 'paid' or payment_state == 'paid'
+                </attribute>
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>

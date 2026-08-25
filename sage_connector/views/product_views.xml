@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_product_template_form_sage_code" model="ir.ui.view">
+        <field name="name">product.template.form.sage.code</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Sage" name="sage_connector" groups="sage_connector.group_sage_user">
+                    <group class="o_sage_product_tab">
+                        <group string="Sage 50 Pastel">
+                            <div class="o_sage_code_highlight">
+                                <label for="sage_code"/>
+                                <field name="sage_code" placeholder="Inventory item code in Sage"/>
+                            </div>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

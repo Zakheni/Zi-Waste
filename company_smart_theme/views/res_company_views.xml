@@ -1,0 +1,33 @@
+<!--
+    Module: company_smart_theme
+    File: res_company_views.xml
+    Description: Company form theme color and palette settings.
+-->
+<odoo>
+    <!-- View/action record: View company form inherit theme -->
+    <record id="view_company_form_inherit_theme" model="ir.ui.view">
+        <field name="name">res.company.form.inherit.theme</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Backend Theme">
+                    <group>
+<!--                        <field name="use_auto_theme_color"/>-->
+<!--                        <field name="auto_theme_color" readonly="1"/>-->
+<!--                        <field name="theme_color" invisible="use_auto_theme_color == True"/>-->
+                        <field name="auto_theme_from_logo"/>
+                        <field name="theme_palette" invisible="1"/>
+                        <label for="theme_color" string="Theme Color (click a circle to apply)"/>
+                        <field name="theme_color" widget="theme_palette_picker" nolabel="1"/>
+                        <button name="action_refresh_theme_from_logo"
+                                type="object"
+                                string="Refresh from Logo"
+                                class="btn-secondary"
+                                invisible="not auto_theme_from_logo"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sage_backend_list" model="ir.ui.view">
+        <field name="name">sage.backend.list</field>
+        <field name="model">sage.backend</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <tree decoration-success="last_health_ok"
+                  decoration-danger="circuit_open"
+                  decoration-muted="not active">
+                <field name="name" decoration-bf="1"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="last_health_ok" string="Connected" widget="boolean"/>
+                <field name="circuit_open" string="Paused" widget="boolean" optional="show"/>
+                <field name="base_url"/>
+                <field name="adapter_name"/>
+                <field name="write_mode"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sage_backend_search" model="ir.ui.view">
+        <field name="name">sage.backend.search</field>
+        <field name="model">sage.backend</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="base_url"/>
+                <filter name="active" string="Active" domain="[('active','=',True)]"/>
+                <filter name="connected" string="Connected" domain="[('last_health_ok','=',True)]"/>
+                <filter name="errors" string="Needs attention" domain="['|',('circuit_open','=',True),('last_health_ok','=',False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sage_backend_form" model="ir.ui.view">
+        <field name="name">sage.backend.form</field>
+        <field name="model">sage.backend</field>
+        <field name="arch" type="xml">
+            <form string="Sage Backend" class="o_sage_backend_form">
+                <header>
+                    <button name="action_test_connection" type="object" string="Test Connection" class="btn-primary" icon="fa-plug"/>
+                </header>
+                <sheet>
+                    <field name="active" invisible="1"/>
+                    <field name="last_health" invisible="1"/>
+                    <field name="circuit_open" invisible="1"/>
+                    <field name="circuit_failures" invisible="1"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_jobs" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <div class="o_stat_info"><span class="o_stat_text">Jobs</span></div>
+                        </button>
+                        <button name="action_open_logs" type="object" class="oe_stat_button" icon="fa-list-alt">
+                            <div class="o_stat_info"><span class="o_stat_text">Logs</span></div>
+                        </button>
+                        <button name="action_open_tax_maps" type="object" class="oe_stat_button" icon="fa-percent" groups="sage_connector.group_sage_manager">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Tax Maps</span>
+                            </div>
+                        </button>
+                        <button name="action_open_journal_maps" type="object" class="oe_stat_button" icon="fa-book" groups="sage_connector.group_sage_manager">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Journal Maps</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+
+                    <div class="alert o_sage_alert d-flex align-items-start mb-4" role="status">
+                        <i class="fa fa-exchange fa-2x me-3 mt-1" title="Sage Bridge"/>
+                        <div>
+                            <div class="fw-bold">Sage 50 Pastel Bridge</div>
+                            <div>URL, API key, and adapter for this company. Click Test Connection, then import masters from the Transfer menu.</div>
+                        </div>
+                    </div>
+
+                    <div class="o_sage_header">
+                        <span class="o_sage_icon" title="Sage Bridge"><i class="fa fa-exchange"/></span>
+                        <div class="o_sage_title_text">
+                            <span class="o_sage_eyebrow">Sage 50 Pastel Bridge</span>
+                            <div class="oe_title">
+                                <h1><field name="name" placeholder="Sage Bridge"/></h1>
+                            </div>
+                            <div class="o_sage_meta">
+                                <span class="o_sage_meta_item">
+                                    <i class="fa fa-building" title="Company"/>
+                                    <field name="company_id" groups="base.group_multi_company" readonly="1" nolabel="1"/>
+                                </span>
+                                <span class="o_sage_meta_item">
+                                    <i class="fa fa-cogs" title="Adapter"/>
+                                    <field name="adapter_name" readonly="1" nolabel="1"/>
+                                </span>
+                                <span class="o_sage_meta_item" invisible="not write_mode">
+                                    <i class="fa fa-pencil" title="Write mode"/>
+                                    <field name="write_mode" readonly="1" nolabel="1"/>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="o_sage_summary">
+                            <div class="o_sage_summary_item">
+                                <span class="o_sage_summary_label">Bridge URL</span>
+                                <span class="o_sage_summary_value"><field name="base_url" nolabel="1" readonly="1"/></span>
+                            </div>
+                            <div class="o_sage_summary_item">
+                                <span class="o_sage_summary_label">Circuit breaker</span>
+                                <span class="o_sage_summary_value">
+                                    <field name="circuit_open" readonly="1" nolabel="1" widget="boolean"/>
+                                    <span invisible="not circuit_failures"> · <field name="circuit_failures" readonly="1" nolabel="1"/> failures</span>
+                                </span>
+                            </div>
+                            <div class="o_sage_summary_item">
+                                <span class="o_sage_summary_label">Last test</span>
+                                <span class="o_sage_summary_value">
+                                    <field name="last_health_ok" readonly="1" nolabel="1" widget="boolean"/>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <notebook>
+                        <page string="Connection" name="connection">
+                            <div class="o_sage_panel">
+                                <div class="o_sage_panel_title">Bridge endpoint</div>
+                                <group>
+                                    <group>
+                                        <field name="base_url" placeholder="http://127.0.0.1:8788"/>
+                                        <field name="api_key" password="True"/>
+                                        <field name="adapter_name"/>
+                                        <field name="timeout"/>
+                                    </group>
+                                    <group>
+                                        <field name="company_id" groups="base.group_multi_company"/>
+                                        <field name="active" widget="boolean_toggle"/>
+                                    </group>
+                                </group>
+                            </div>
+                        </page>
+                        <page string="Sync options" name="sync_options">
+                            <div class="o_sage_panel">
+                                <div class="o_sage_panel_title">Automatic imports (hourly cron)</div>
+                                <group>
+                                    <group>
+                                        <field name="import_customers" widget="boolean_toggle"/>
+                                        <field name="import_suppliers" widget="boolean_toggle"/>
+                                    </group>
+                                    <group>
+                                        <field name="import_products" widget="boolean_toggle"/>
+                                        <field name="import_invoices" widget="boolean_toggle"/>
+                                        <field name="push_masters" widget="boolean_toggle"/>
+                                    </group>
+                                </group>
+                            </div>
+                            <group string="Incremental cursors" groups="base.group_no_one">
+                                <group>
+                                    <field name="last_customer_since"/>
+                                    <field name="last_supplier_since"/>
+                                </group>
+                                <group>
+                                    <field name="last_product_since"/>
+                                    <field name="last_invoice_since"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Health &amp; capabilities" name="health">
+                            <group>
+                                <field name="last_health_ok" widget="boolean"/>
+                                <field name="write_mode"/>
+                            </group>
+                            <notebook>
+                                <page string="Last health payload">
+                                    <field name="last_health" widget="text" nolabel="1"/>
+                                </page>
+                                <page string="Capabilities">
+                                    <field name="capabilities_json" widget="text" nolabel="1"/>
+                                </page>
+                            </notebook>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sage_backend_kanban" model="ir.ui.view">
+        <field name="name">sage.backend.kanban</field>
+        <field name="model">sage.backend</field>
+        <field name="arch" type="xml">
+            <kanban class="o_sage_backend_kanban" sample="1" create="1">
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="base_url"/>
+                <field name="adapter_name"/>
+                <field name="write_mode"/>
+                <field name="active"/>
+                <field name="last_health_ok"/>
+                <field name="circuit_open"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click oe_kanban_card o_sage_backend_card">
+                            <div t-attf-class="o_sage_backend_banner #{record.circuit_open.raw_value ? 'o_sage_backend_banner_circuit' : (record.last_health_ok.raw_value ? 'o_sage_backend_banner_ok' : (record.active.raw_value ? 'o_sage_backend_banner_unknown' : 'o_sage_backend_banner_fail'))}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="fw-bold fs-5"><field name="name"/></div>
+                                        <div class="opacity-75" t-if="record.company_id.value">
+                                            <i class="fa fa-building me-1"/>
+                                            <field name="company_id"/>
+                                        </div>
+                                    </div>
+                                    <span class="badge text-bg-light text-dark"
+                                          t-if="record.circuit_open.raw_value">Paused</span>
+                                    <span class="badge text-bg-light text-dark"
+                                          t-elif="record.last_health_ok.raw_value">Connected</span>
+                                    <span class="badge text-bg-light text-dark"
+                                          t-elif="record.active.raw_value">Not tested</span>
+                                    <span class="badge text-bg-light text-dark"
+                                          t-else="">Inactive</span>
+                                </div>
+                            </div>
+                            <div class="o_sage_backend_body">
+                                <div class="mb-1 text-muted">
+                                    <i class="fa fa-link me-1"/>
+                                    <field name="base_url"/>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span>
+                                        <i class="fa fa-cogs me-1"/>
+                                        <field name="adapter_name"/>
+                                    </span>
+                                    <span t-if="record.write_mode.value" class="badge o_sage_backend_mode_badge">
+                                        <field name="write_mode"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_sage_backend" model="ir.actions.act_window">
+        <field name="name">Sage Backends</field>
+        <field name="res_model">sage.backend</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="mobile_view_mode">kanban</field>
+        <field name="search_view_id" ref="view_sage_backend_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+    <record id="action_sage_backend_view_kanban" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_sage_backend_kanban"/>
+        <field name="act_window_id" ref="action_sage_backend"/>
+    </record>
+    <record id="action_sage_backend_view_tree" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_sage_backend_list"/>
+        <field name="act_window_id" ref="action_sage_backend"/>
+    </record>
+    <record id="action_sage_backend_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="3"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_sage_backend_form"/>
+        <field name="act_window_id" ref="action_sage_backend"/>
+    </record>
+</odoo>

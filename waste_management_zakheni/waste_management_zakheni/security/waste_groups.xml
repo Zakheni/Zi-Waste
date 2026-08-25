@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Security — Waste Management groups and categories for the user access-rights form -->
+<odoo>
+
+    <!-- ================================================================== -->
+    <!-- APPLICATION: Waste Management (parent section on user form)        -->
+    <!-- ================================================================== -->
+    <record id="module_category_waste_management" model="ir.module.category">
+        <field name="name">Waste Management</field>
+        <field name="description">Waste Management permissions are split in two: Operations (waste work rights) and Company Governance (administrator rights). Assign both sections when a user must run waste operations and administer their company.</field>
+        <field name="visible" eval="True"/>
+        <field name="sequence">25</field>
+    </record>
+
+    <!-- Operations — waste management work rights (combine as needed) -->
+    <record id="module_category_wmz_operations" model="ir.module.category">
+        <field name="name">Operations</field>
+        <field name="description">Waste management rights: manifests, containers, worksheets, configuration, and related operational access. Combine roles as needed (e.g. Manager + Finance). Super Admin includes every operational role and also implies Company Administrator.</field>
+        <field name="parent_id" ref="waste_management_zakheni.module_category_waste_management"/>
+        <field name="sequence">10</field>
+    </record>
+
+    <!-- Company Governance — administrator rights (pick ONE level) -->
+    <record id="module_category_wmz_company_governance" model="ir.module.category">
+        <field name="name">Company Governance</field>
+        <field name="description">Administrator rights: company contacts, company records, and user creation within allowed companies. Select only one level. Pair with Operations roles when the user also performs waste work (or assign Super Admin under Operations, which already implies Company Administrator).</field>
+        <field name="parent_id" ref="waste_management_zakheni.module_category_waste_management"/>
+        <field name="exclusive" eval="True"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- Hidden base role — implied automatically, not shown on the user form -->
+    <record id="group_wmz_user" model="res.groups">
+        <field name="name">WMZ Backend User</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="comment">Technical base role. Grants internal (backend) login. Automatically included with any Waste Management role — do not assign manually.</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- OPERATIONS — waste management work rights                          -->
+    <!-- ================================================================== -->
+
+    <record id="group_wmz_manager" model="res.groups">
+        <field name="name">Operations Manager</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_operations"/>
+        <field name="comment">Operations: manage waste service requests, schedules, worksheets, fleet, and operational workflows for the assigned company.</field>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_user')),
+            (4, ref('fleet.fleet_group_user')),
+        ]"/>
+    </record>
+
+    <record id="group_wmz_admin_clerk" model="res.groups">
+        <field name="name">Admin Clerk</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_operations"/>
+        <field name="comment">Operations: service requests, containers, pickup points, configuration clerical work, and related waste-management tasks.</field>
+        <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user'))]"/>
+    </record>
+
+    <record id="group_wmz_driver" model="res.groups">
+        <field name="name">Driver</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_operations"/>
+        <field name="comment">Operations: field driver access for assigned manifests, worksheets, and mobile/driver workflows. Pair with Vehicle Inspection → Inspection User on the user form (applied automatically when Driver is selected).</field>
+        <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user'))]"/>
+    </record>
+
+    <record id="group_wmz_finance" model="res.groups">
+        <field name="name">Finance</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_operations"/>
+        <field name="comment">Operations: billing, invoicing, tariffs, and financial records linked to waste services.</field>
+        <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user'))]"/>
+    </record>
+
+    <record id="group_wmz_provider" model="res.groups">
+        <field name="name">Service Provider</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_operations"/>
+        <field name="comment">Operations: external or internal service provider managing assigned waste operations.</field>
+        <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user'))]"/>
+    </record>
+
+    <record id="group_wmz_user_manager" model="res.groups">
+        <field name="name">User Manager</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_operations"/>
+        <field name="comment">Operations: create and manage backend users via Waste Management → Users. Usually combined with Company Administrator under Company Governance, or included automatically via Super Admin.</field>
+        <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user'))]"/>
+    </record>
+
+    <record id="group_wmz_admin" model="res.groups">
+        <field name="name">Super Admin</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_operations"/>
+        <field name="comment">Operations: full waste-management rights — all operational roles, configuration menus, and Company Administrator (via implied groups). Use for a company manager who runs the full waste operation and administers their own company. Restrict Allowed Companies to one company for customer organisations (POPIA).</field>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_user')),
+            (4, ref('waste_management_zakheni.group_wmz_admin_clerk')),
+            (4, ref('waste_management_zakheni.group_wmz_manager')),
+            (4, ref('waste_management_zakheni.group_wmz_finance')),
+            (4, ref('waste_management_zakheni.group_wmz_driver')),
+            (4, ref('waste_management_zakheni.group_wmz_user_manager')),
+            (4, ref('waste_management_zakheni.group_company_admin')),
+            (4, ref('fleet.fleet_group_manager')),
+            (4, ref('vehicle_inspection.group_vehicle_inspection_manager')),
+        ]"/>
+    </record>
+
+    <!-- ================================================================== -->
+    <!-- COMPANY GOVERNANCE — administrator rights (exclusive — pick one) -->
+    <!-- ================================================================== -->
+
+    <record id="group_wmz_customer_access" model="res.groups">
+        <field name="name">Company Backend Access</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_company_governance"/>
+        <field name="comment">Governance: basic backend access for one company — view and edit company-scoped contacts and records within allowed companies. Does not include full operational or Contacts app menus on its own.</field>
+        <field name="implied_ids" eval="[(4, ref('waste_management_zakheni.group_wmz_user'))]"/>
+    </record>
+
+    <record id="group_company_admin" model="res.groups">
+        <field name="name">Company Administrator</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_company_governance"/>
+        <field name="comment">Governance: administer one customer company — create branches, manage backend users (roles, passwords, logins), Contacts, and company records within their own company only. Pair with Operations roles when the user also performs waste work, or assign Super Admin under Operations which already implies this role.</field>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_customer_access')),
+            (4, ref('waste_management_zakheni.group_wmz_user_manager'))
+        ]"/>
+    </record>
+
+    <record id="group_central_admin" model="res.groups">
+        <field name="name">Central Administrator</field>
+        <field name="category_id" ref="waste_management_zakheni.module_category_wmz_company_governance"/>
+        <field name="comment">Governance: multi-company administrator for Zakheni head-office staff overseeing several customer companies. Assign only the companies they may access under Allowed Companies.</field>
+        <field name="implied_ids" eval="[
+            (4, ref('waste_management_zakheni.group_wmz_customer_access')),
+            (4, ref('waste_management_zakheni.group_company_admin'))
+        ]"/>
+    </record>
+
+</odoo>

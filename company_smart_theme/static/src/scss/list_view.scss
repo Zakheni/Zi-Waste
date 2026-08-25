@@ -1,0 +1,82 @@
+/* List / tree views — company theme (light + dark) */
+
+.o_list_view .o_list_renderer {
+    --ListRenderer-thead-bg-color: var(--company-list-header-bg, transparent);
+    --ListRenderer-thead-border-end-color: var(--company-list-border, #dee2e6);
+    --ListRenderer-tfoot-bg-color: var(--company-list-header-bg, transparent);
+}
+
+.o_list_view .o_list_table {
+    --table-bg: var(--company-list-bg, transparent);
+    --bs-table-bg: var(--company-list-bg, transparent);
+    --bs-table-color: var(--company-list-text, inherit);
+    --bs-table-striped-bg: var(--company-list-stripe-bg, rgba(0, 0, 0, 0.04));
+    --bs-table-striped-color: var(--company-list-text, inherit);
+    --bs-table-hover-bg: var(--company-list-hover-bg, rgba(0, 0, 0, 0.06));
+    --bs-table-hover-color: var(--company-list-text, inherit);
+    --bs-table-active-bg: var(--company-list-selected-bg, rgba(0, 0, 0, 0.08));
+    --bs-table-active-color: var(--company-list-text, inherit);
+    border-color: var(--company-list-border, #dee2e6) !important;
+    color: var(--company-list-text, inherit);
+}
+
+.o_list_view .o_list_table thead th {
+    color: var(--company-list-header-text, inherit) !important;
+    border-color: var(--company-list-border, #dee2e6) !important;
+}
+
+.o_list_view .o_list_table .o_data_row {
+    border-color: var(--company-list-border, #dee2e6) !important;
+}
+
+.o_list_view .o_list_table .o_data_cell,
+.o_list_view .o_list_table .o_data_cell .o_field_widget {
+    color: var(--company-list-text, inherit);
+}
+
+.o_list_view .o_list_table.o_keyboard_navigation th:focus-within,
+.o_list_view .o_list_table.o_keyboard_navigation td:focus-within {
+    --bs-table-accent-bg: transparent !important;
+    background-color: var(--company-list-focus-bg, #f3f4f6) !important;
+    color: var(--company-list-text, inherit) !important;
+}
+
+.o_list_view .o_list_table .o_data_row:not(.o_selected_row):not(.o_data_row_selected):focus-within > * {
+    --bs-table-accent-bg: var(--company-list-hover-bg, rgba(0, 0, 0, 0.06)) !important;
+}
+
+.o_list_view .o_list_table.table-hover > tbody > tr:hover > * {
+    --bs-table-accent-bg: var(--company-list-hover-bg, rgba(0, 0, 0, 0.06)) !important;
+    color: var(--company-list-text, inherit) !important;
+}
+
+.o_list_view .o_list_table .o_data_row.o_data_row_selected > .o_data_cell {
+    --bs-table-accent-bg: var(--company-list-selected-bg, rgba(0, 0, 0, 0.08)) !important;
+}
+
+.o_list_view .o_list_table tbody > tr.o_group_header > th,
+.o_list_view .o_list_table tbody > tr.o_group_header > td {
+    background-color: var(--company-list-header-bg, transparent) !important;
+    color: var(--company-list-header-text, inherit) !important;
+}
+
+html[data-company-color-scheme="dark"] .o_list_view .o_list_table .text-success {
+    color: #4ade80 !important;
+}
+
+html[data-company-color-scheme="dark"] .o_list_view .o_list_table .text-info {
+    color: #60a5fa !important;
+}
+
+html[data-company-color-scheme="dark"] .o_list_view .o_list_table .text-warning {
+    color: #fbbf24 !important;
+}
+
+html[data-company-color-scheme="dark"] .o_list_view .o_list_table .text-danger {
+    color: #f87171 !important;
+}
+
+html[data-company-color-scheme="dark"] .o_list_view .o_list_table .o_selected_row th:focus-within,
+html[data-company-color-scheme="dark"] .o_list_view .o_list_table .o_selected_row td:focus-within {
+    background-color: var(--company-list-bg, #1f2937) !important;
+}

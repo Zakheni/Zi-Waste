@@ -1,0 +1,158 @@
+/* Chatter / mail thread — themed for company smart theme (light + dark) */
+
+.o-mail-Form-chatter,
+.o-mail-ChatterContainer {
+    background-color: var(--company-chatter-bg, transparent) !important;
+}
+
+.o-mail-Chatter-top {
+    background-color: var(--company-chatter-topbar-bg, var(--company-chatter-bg, transparent)) !important;
+}
+
+.o-mail-Chatter-top.shadow-sm {
+    background-image: none !important;
+}
+
+.o-mail-Chatter .o-mail-Chatter-logNote.btn-secondary,
+.o-mail-Chatter .o-mail-Chatter-activity.btn-secondary,
+.o-mail-Chatter .btn-secondary {
+    background-color: var(--company-chatter-btn-bg, #f8f9fa) !important;
+    border-color: var(--company-chatter-btn-border, #dee2e6) !important;
+    color: var(--company-chatter-btn-color, #374151) !important;
+}
+
+.o-mail-Chatter .btn-link.text-action,
+.o-mail-Chatter .o-mail-Followers-button {
+    color: var(--company-chatter-muted, #6b7280) !important;
+}
+
+.o-mail-Chatter .btn-link.text-action:hover,
+.o-mail-Chatter .o-mail-Followers-button:hover {
+    color: var(--company-chatter-text, #111827) !important;
+}
+
+.o-mail-NotificationMessage {
+    color: var(--company-chatter-muted, #6b7280) !important;
+}
+
+.o-mail-NotificationMessage a,
+.o-mail-NotificationMessage .o_mail_redirect {
+    color: var(--company-theme-color, #714b67) !important;
+}
+
+.o-mail-Message-author strong,
+.o-mail-Message-body,
+.o-mail-Message-body p {
+    color: var(--company-chatter-text, inherit) !important;
+}
+
+.o-mail-Message-date.text-muted,
+.o-mail-Message .text-muted,
+.o-mail-Message .text-500,
+.o-mail-Message .text-600 {
+    color: var(--company-chatter-muted, #6b7280) !important;
+}
+
+.o-mail-Message-body em,
+.o-mail-Message .fst-italic.text-muted {
+    color: var(--company-chatter-muted, #6b7280) !important;
+}
+
+.o-mail-Message-bubble.bg-info-light {
+    background-color: var(--company-chatter-bubble-in, rgba(59, 130, 246, 0.12)) !important;
+    border-color: var(--company-chatter-bubble-in-border, rgba(59, 130, 246, 0.35)) !important;
+    opacity: 1 !important;
+}
+
+.o-mail-Message-bubble.bg-success-light {
+    background-color: var(--company-chatter-bubble-out, rgba(34, 197, 94, 0.12)) !important;
+    border-color: var(--company-chatter-bubble-out-border, rgba(34, 197, 94, 0.35)) !important;
+    opacity: 1 !important;
+}
+
+.o-mail-Message-bubble.bg-warning-light {
+    background-color: var(--company-chatter-bubble-mention, rgba(245, 158, 11, 0.14)) !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+    opacity: 1 !important;
+}
+
+.o-mail-Message-actions .bg-view,
+.o-mail-Composer-input,
+.o-mail-Composer .o-mail-Composer-input {
+    background-color: var(--company-chatter-input-bg, #ffffff) !important;
+    color: var(--company-chatter-text, inherit) !important;
+    border-color: var(--company-chatter-input-border, #d1d5db) !important;
+}
+
+.o-mail-Message-actions button:hover,
+.o-mail-Composer-actions button:hover {
+    background-color: var(--company-chatter-btn-hover, rgba(0, 0, 0, 0.06)) !important;
+}
+
+.o-mail-ActivityList .fw-bolder,
+.o-mail-AttachmentBox .fw-bold {
+    color: var(--company-chatter-text, inherit) !important;
+}
+
+.o-mail-Thread hr,
+.o-mail-ActivityList hr,
+.o-mail-AttachmentBox hr {
+    border-color: var(--company-chatter-border, #e5e7eb) !important;
+    opacity: 1 !important;
+}
+
+/* Strip hardcoded light email-template backgrounds in message HTML */
+html[data-company-color-scheme="dark"] .o-mail-Message-body div,
+html[data-company-color-scheme="dark"] .o-mail-Message-body table,
+html[data-company-color-scheme="dark"] .o-mail-Message-body td,
+html[data-company-color-scheme="dark"] .o-mail-Message-body th,
+html[data-company-color-scheme="dark"] .o-mail-Message-body p,
+html[data-company-color-scheme="dark"] .o-mail-Message-body span:not(.o_mail_redirect) {
+    background-color: transparent !important;
+    color: inherit !important;
+}
+
+html[data-company-color-scheme="dark"] .o-mail-Message-body a {
+    color: var(--company-theme-color, #60a5fa) !important;
+}
+
+html[data-company-color-scheme="dark"] .o-mail-Form-chatter,
+html[data-company-color-scheme="dark"] .o-mail-ChatterContainer {
+    background-color: var(--company-chatter-bg, #1f1f1f) !important;
+}
+
+html[data-company-color-scheme="dark"] .o-mail-Chatter-top {
+    background-color: var(--company-chatter-topbar-bg, #262626) !important;
+}
+
+html[data-company-color-scheme="dark"] .o-mail-NotificationMessage {
+    color: #9ca3af !important;
+}
+
+html[data-company-color-scheme="dark"] .o-mail-Message-author strong,
+html[data-company-color-scheme="dark"] .o-mail-Message-body {
+    color: #e5e7eb !important;
+}
+
+html[data-company-color-scheme="dark"] .o-mail-Message .o-mail-Message-bubble.bg-info-light,
+html[data-company-color-scheme="dark"] .o-mail-Message .o-mail-Message-bubble.bg-success-light,
+html[data-company-color-scheme="dark"] .o-mail-Message .o-mail-Message-bubble.bg-warning-light {
+    background-color: var(--company-chatter-bubble-in, #2a2a2a) !important;
+    background-image: none !important;
+    border-color: var(--company-chatter-bubble-in-border, #404040) !important;
+    opacity: 1 !important;
+}
+
+html[data-company-color-scheme="dark"] .o-mail-Chatter .btn-secondary {
+    color: #e5e7eb !important;
+}
+
+html[data-company-color-scheme="dark"] .o-mail-Message-body em {
+    color: #9ca3af !important;
+}
+
+html[data-company-color-scheme="dark"] .o-mail-Composer-input {
+    background-color: #374151 !important;
+    color: #f3f4f6 !important;
+    border-color: #4b5563 !important;
+}

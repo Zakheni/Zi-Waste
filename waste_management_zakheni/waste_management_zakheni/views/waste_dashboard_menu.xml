@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Views — Waste Dashboard Menu -->
+<odoo>
+    <!-- Client Action -->
+    <!-- Views / records -->
+    <record id="action_waste_dashboard" model="ir.actions.client">
+        <field name="name">Waste Dashboard</field>
+        <field name="tag">waste_management_zakheni.waste_dashboard</field>
+    </record>
+
+    <!-- Menu — hidden from Driver (and other operational roles without analytics access) -->
+    <menuitem id="menu_waste_root"
+              name="Waste Dashboard"
+              sequence="1"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance"/>
+
+    <menuitem id="menu_waste_dashboard"
+              name="Dashboard"
+              parent="menu_waste_root"
+              action="action_waste_dashboard"
+              sequence="1"
+              groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance"/>
+
+</odoo>

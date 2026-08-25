@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vehicle Inspection - Main Views
+    Kanban, tree, form, search, and action for vehicle inspection records.
+-->
+<odoo>
+
+    <!-- ============================= -->
+    <!-- SEARCH VIEW -->
+    <!-- ============================= -->
+    <record id="view_vehicle_inspection_search" model="ir.ui.view">
+        <field name="name">vehicle.inspection.search</field>
+        <field name="model">vehicle.inspection</field>
+        <field name="arch" type="xml">
+            <search string="Vehicle Inspections">
+                <field name="name" string="Reference"/>
+                <field name="vehicle_id"/>
+                <field name="driver_id"/>
+                <field name="inspector_id"/>
+                <field name="comment"/>
+                <separator/>
+                <filter name="filter_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_faulty" string="Faulty" domain="[('state', '=', 'faulty')]"/>
+                <filter name="filter_not_running" string="Not Running" domain="[('state', '=', 'not_running')]"/>
+                <filter name="filter_resolved" string="Resolved" domain="[('state', '=', 'resolved')]"/>
+                <filter name="filter_done" string="Done" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="filter_has_faults" string="Has checklist faults"
+                        domain="[('has_issue', '=', True)]"/>
+                <separator/>
+                <filter name="filter_inspection_date" string="Inspection date" date="inspection_date"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_vehicle" string="Vehicle" context="{'group_by': 'vehicle_id'}"/>
+                    <filter name="group_driver" string="Driver" context="{'group_by': 'driver_id'}"/>
+                    <filter name="group_inspection_date" string="Inspection date"
+                              context="{'group_by': 'inspection_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================= -->
+    <!-- KANBAN VIEW -->
+    <!-- ============================= -->
+    <record id="view_vehicle_inspection_kanban" model="ir.ui.view">
+        <field name="name">vehicle.inspection.kanban</field>
+        <field name="model">vehicle.inspection</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state"
+                    default_order="inspection_date desc, id desc"
+                    class="o_vi_inspection_kanban"
+                    quick_create="false"
+                    group_create="false">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="vehicle_id"/>
+                <field name="driver_id"/>
+                <field name="inspection_date"/>
+                <field name="checklist_progress"/>
+                <field name="checklist_fault_count"/>
+                <field name="checklist_clear_count"/>
+                <field name="checklist_pending_count"/>
+                <field name="km_open"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click oe_kanban_card o_vi_card">
+                            <div t-attf-class="o_vi_card_banner o_vi_card_banner_#{record.state.raw_value or 'draft'}">
+                                <span class="o_vi_card_ref"><field name="name"/></span>
+                                <field name="state" widget="label_selection"
+                                       options="{'classes': {
+                                           'draft': 'primary',
+                                           'faulty': 'danger',
+                                           'not_running': 'warning',
+                                           'resolved': 'info',
+                                           'done': 'success'
+                                       }}"/>
+                            </div>
+                            <div class="o_vi_card_body">
+                                <div class="o_vi_card_row">
+                                    <i class="fa fa-truck" title="Vehicle"/>
+                                    <span><field name="vehicle_id"/></span>
+                                </div>
+                                <div t-if="record.driver_id.value" class="o_vi_card_row">
+                                    <i class="fa fa-user" title="Driver"/>
+                                    <span><field name="driver_id"/></span>
+                                </div>
+                                <div t-if="record.inspection_date.value" class="o_vi_card_row">
+                                    <i class="fa fa-calendar" title="Date"/>
+                                    <span><field name="inspection_date"/></span>
+                                </div>
+                                <div t-if="record.km_open.raw_value" class="o_vi_card_row">
+                                    <i class="fa fa-tachometer" title="KM"/>
+                                    <span><field name="km_open"/> km</span>
+                                </div>
+                            </div>
+                            <div class="o_vi_card_footer">
+                                <span t-if="record.checklist_fault_count.raw_value"
+                                      class="o_vi_tag o_vi_tag_fault">
+                                    <i class="fa fa-exclamation-triangle"/>
+                                    <t t-esc="record.checklist_fault_count.value"/> fault(s)
+                                </span>
+                                <span t-if="record.checklist_clear_count.raw_value"
+                                      class="o_vi_tag o_vi_tag_clear">
+                                    <i class="fa fa-check"/>
+                                    <t t-esc="record.checklist_progress.value"/>%
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============================= -->
+    <!-- INSPECTION TREE VIEW -->
+    <!-- ============================= -->
+    <record id="view_vehicle_inspection_tree" model="ir.ui.view">
+        <field name="name">vehicle.inspection.tree</field>
+        <field name="model">vehicle.inspection</field>
+        <field name="arch" type="xml">
+            <tree default_order="inspection_date desc, id desc">
+                <field name="name" decoration-bf="1"/>
+                <field name="vehicle_id"/>
+                <field name="driver_id" optional="show"/>
+                <field name="inspection_date"/>
+                <field name="checklist_progress" string="Progress %" optional="show"/>
+                <field name="checklist_fault_count" string="Faults" optional="show"
+                       decoration-danger="checklist_fault_count > 0"/>
+                <field name="km_open" optional="hide"/>
+                <field name="km_close" optional="hide"/>
+                <field name="inspector_id" optional="hide"/>
+                <field name="next_inspection_date" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-primary="state == 'draft'"
+                       decoration-danger="state == 'faulty'"
+                       decoration-warning="state == 'not_running'"
+                       decoration-info="state == 'resolved'"
+                       decoration-success="state == 'done'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================= -->
+    <!-- INSPECTION FORM VIEW -->
+    <!-- ============================= -->
+    <record id="view_vehicle_inspection_form" model="ir.ui.view">
+        <field name="name">vehicle.inspection.form</field>
+        <field name="model">vehicle.inspection</field>
+        <field name="arch" type="xml">
+            <form class="o_vi_inspection_form">
+                <field name="show_notify_button" invisible="1"/>
+                <field name="show_resolved_button" invisible="1"/>
+                <field name="checklist_total" invisible="1"/>
+                <header>
+                    <button name="action_draft"
+                            type="object"
+                            string="Reset to Draft"
+                            class="btn-secondary"
+                            invisible="state in ('draft', 'done')"/>
+
+                    <button name="action_open_fault_wizard"
+                            type="object"
+                            string="Mark Faulty"
+                            class="btn-danger"
+                            invisible="state != 'draft' or show_notify_button == False"/>
+
+                    <button name="action_open_not_running_wizard"
+                            type="object"
+                            string="Not Running"
+                            class="btn-warning"
+                            invisible="state not in ('draft', 'faulty') or show_notify_button == False"/>
+
+                    <button name="action_open_resolved_not_running_wizard"
+                            type="object"
+                            string="Mark Resolved"
+                            class="btn-success"
+                            invisible="state in ('resolved', 'done') or show_resolved_button == True"/>
+
+                    <button name="action_done"
+                            type="object"
+                            string="Complete Inspection"
+                            class="btn-primary"
+                            invisible="state != 'resolved'"/>
+
+                    <button name="action_print_inspection_report"
+                            type="object"
+                            string="Print Report"
+                            class="btn-secondary"
+                            icon="fa-print"
+                            invisible="state != 'done'"/>
+
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="draft,faulty,not_running,resolved,done"/>
+                </header>
+
+                <sheet>
+                    <widget name="web_ribbon" title="Faulty" bg_color="text-bg-danger"
+                            invisible="state != 'faulty'"/>
+                    <widget name="web_ribbon" title="Not Running" bg_color="text-bg-warning"
+                            invisible="state != 'not_running'"/>
+                    <widget name="web_ribbon" title="Completed" bg_color="text-bg-success"
+                            invisible="state != 'done'"/>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" readonly="state != 'draft'"/></h1>
+                    </div>
+
+                    <group string="Vehicle &amp; inspection details">
+                        <group>
+                            <field name="vehicle_id" readonly="state != 'draft'"/>
+                            <field name="driver_id" string="Driver" readonly="1"/>
+                            <field name="inspection_date" readonly="state != 'draft'"/>
+                            <field name="inspector_id" widget="many2one_avatar_user"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="km_open" readonly="state != 'draft'"/>
+                            <field name="km_close" readonly="state != 'draft'"/>
+                            <field name="next_inspection_date" readonly="state != 'draft'"/>
+                            <field name="inspection_type" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <group string="Notes">
+                        <field name="vehicle_description" nolabel="1" colspan="2"
+                               placeholder="Vehicle condition notes..."
+                               readonly="state != 'draft'"/>
+                        <field name="comment" nolabel="1" colspan="2"
+                               placeholder="General comments..."
+                               readonly="state != 'draft'"/>
+                    </group>
+
+                    <group string="Checklist summary" invisible="id == False" colspan="2">
+                        <group>
+                            <field name="checklist_progress" string="Progress" widget="progressbar"/>
+                        </group>
+                        <group>
+                            <field name="checklist_clear_count" readonly="1"/>
+                            <field name="checklist_fault_count" readonly="1"/>
+                            <field name="checklist_pending_count" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <field name="used_item_ids" invisible="1"/>
+
+                    <notebook invisible="id == False">
+                        <page string="Checklist" name="checklist">
+                            <field name="line_ids"
+                                   readonly="state != 'draft'"
+                                   force_save="1">
+                                <tree editable="bottom" delete="0"
+                                      decoration-success="result == 'clear'"
+                                      decoration-danger="result == 'fault'"
+                                      class="o_vi_checklist_tree">
+                                    <field name="display_type" column_invisible="1"/>
+                                    <field name="name"
+                                           readonly="1"
+                                           string="Section"
+                                           optional="hide"/>
+                                    <field name="item_id"
+                                           invisible="display_type == 'line_section'"
+                                           readonly="1"
+                                           string="Check item"/>
+                                    <field name="category_id" column_invisible="1"/>
+                                    <field name="result"
+                                           invisible="display_type == 'line_section'"
+                                           widget="radio"
+                                           options="{'horizontal': true}"/>
+                                    <field name="note"
+                                           invisible="display_type == 'line_section'"
+                                           optional="show"/>
+                                    <field name="require_photo"
+                                           invisible="display_type == 'line_section' or result != 'fault'"
+                                           readonly="1"
+                                           optional="hide"/>
+                                    <button name="action_open_photo_popup"
+                                            type="object"
+                                            icon="fa-camera"
+                                            title="Upload photos"
+                                            invisible="display_type == 'line_section' or result != 'fault'"/>
+                                    <field name="photo_count"
+                                           readonly="1"
+                                           invisible="display_type == 'line_section' or result != 'fault'"
+                                           string="Photos"/>
+                                </tree>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="display_type" invisible="1"/>
+                                                <field name="name"
+                                                       invisible="display_type != 'line_section'"
+                                                       readonly="1"/>
+                                                <field name="item_id"
+                                                       invisible="display_type == 'line_section'"
+                                                       readonly="1"/>
+                                                <field name="result"
+                                                       invisible="display_type == 'line_section'"
+                                                       widget="radio"
+                                                       options="{'horizontal': true}"/>
+                                            </group>
+                                            <group>
+                                                <field name="note"
+                                                       invisible="display_type == 'line_section'"/>
+                                                <field name="require_photo"
+                                                       invisible="display_type == 'line_section'"
+                                                       readonly="1"/>
+                                            </group>
+                                            <field name="photo_ids"
+                                                   invisible="result != 'fault' or display_type == 'line_section'">
+                                                <tree editable="bottom">
+                                                    <field name="image" widget="image"/>
+                                                    <field name="name" required="1"/>
+                                                </tree>
+                                                <form>
+                                                    <sheet>
+                                                        <group>
+                                                            <field name="image" widget="image" required="1"/>
+                                                            <field name="name" required="1"/>
+                                                        </group>
+                                                    </sheet>
+                                                </form>
+                                            </field>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+                        <page string="Photos" name="photos">
+                            <field name="image_ids" mode="kanban">
+                                <kanban create="0" delete="0">
+                                    <field name="image"/>
+                                    <field name="name"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_kanban_global_click o_vi_photo_card">
+                                                <img alt="Inspection photo"
+                                                     t-att-src="kanban_image(
+                                                    'vehicle.inspection.image',
+                                                    'image',
+                                                    record.id.raw_value
+                                                )"/>
+                                                <div class="o_vi_photo_caption">
+                                                    <strong><field name="name"/></strong>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </page>
+
+                        <page string="Signature" name="signature">
+                            <group>
+                                <field name="signature" widget="signature"
+                                       readonly="state != 'draft'"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================= -->
+    <!-- INSPECTION ACTION -->
+    <!-- ============================= -->
+    <record id="action_vehicle_inspection" model="ir.actions.act_window">
+        <field name="name">Vehicle Inspections</field>
+        <field name="res_model">vehicle.inspection</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_vehicle_inspection_search"/>
+        <field name="context">{'search_default_filter_draft': 0}</field>
+    </record>
+</odoo>

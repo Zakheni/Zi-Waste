@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Views — Waste Container -->
+<odoo>
+
+    <record id="view_waste_container_search" model="ir.ui.view">
+        <field name="name">waste.container.search</field>
+        <field name="model">waste.container</field>
+        <field name="arch" type="xml">
+            <search string="Waste Containers">
+                <field name="name" string="Bin / Tank No."/>
+                <field name="serial_no"/>
+                <field name="partner_id" string="Customer"/>
+                <field name="pickup_point_id"/>
+                <field name="bin_type_id"/>
+                <field name="container_type_id"/>
+                <field name="reserved_request_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <separator/>
+                <filter string="Active" name="filter_active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="filter_archived" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="In use" name="filter_in_use" domain="[('inUse', '=', True)]"/>
+                <filter string="Available" name="filter_available" domain="[('inUse', '=', False), ('status', '=', 'intact')]"/>
+                <filter string="Reserved" name="filter_reserved" domain="[('reserved_request_id', '!=', False)]"/>
+                <separator/>
+                <filter string="Intact" name="filter_intact" domain="[('status', '=', 'intact')]"/>
+                <filter string="InUse" name="filter_status_in_use" domain="[('status', '=', 'in_use')]"/>
+                <filter string="Broken" name="filter_broken" domain="[('status', '=', 'broken')]"/>
+                <filter string="Missing" name="filter_missing" domain="[('status', '=', 'missing')]"/>
+                <filter string="UnUse" name="filter_un_use" domain="[('status', '=', 'un_use')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Condition" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Customer" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Pickup point" name="group_pickup_point" context="{'group_by': 'pickup_point_id'}"/>
+                    <filter string="Bin type" name="group_bin_type" context="{'group_by': 'bin_type_id'}"/>
+                    <filter string="Container type" name="group_container_type" context="{'group_by': 'container_type_id'}"/>
+                    <filter string="Company" name="group_company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_waste_container_tree" model="ir.ui.view">
+        <field name="name">waste.container.tree</field>
+        <field name="model">waste.container</field>
+        <field name="arch" type="xml">
+            <tree default_order="name asc" decoration-muted="active == False">
+                <field name="name" decoration-bf="1"/>
+                <field name="image" widget="image" class="oe_avatar" optional="show"
+                       options="{'size': [30, 30]}"/>
+                <field name="container_type_id" optional="show"/>
+                <field name="display_info" string="Type / Volume" optional="show"/>
+                <field name="bin_type_id" optional="hide"/>
+                <field name="partner_id"/>
+                <field name="pickup_point_id" optional="show"/>
+                <field name="inUse" widget="boolean_toggle" optional="show"/>
+                <field name="reserved_request_id" optional="hide"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'intact'"
+                       decoration-warning="status == 'un_use'"
+                       decoration-danger="status in ('in_use', 'missing')"
+                       decoration-info="status == 'broken'"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="active" column_invisible="True"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_waste_container_kanban" model="ir.ui.view">
+        <field name="name">waste.container.kanban</field>
+        <field name="model">waste.container</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="status"
+                    default_order="name asc"
+                    class="o_wmz_container_kanban"
+                    quick_create="false"
+                    group_create="false">
+                <field name="name"/>
+                <field name="status"/>
+                <field name="status_label"/>
+                <field name="image"/>
+                <field name="container_type_id"/>
+                <field name="display_info"/>
+                <field name="bin_type_id"/>
+                <field name="partner_id"/>
+                <field name="pickup_point_id"/>
+                <field name="inUse"/>
+                <field name="reserved_request_id"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_wmz_wc_card"
+                             t-att-class="{'o_wmz_wc_card_archived': !record.active.raw_value}">
+                            <div t-attf-class="o_wmz_wc_banner o_wmz_wc_banner_#{record.status.raw_value or 'intact'}">
+                                <span class="o_wmz_wc_banner_icon">
+                                    <img t-if="record.image.raw_value"
+                                         t-att-src="kanban_image('waste.container', 'image', record.id.value)"
+                                         class="o_wmz_wc_banner_img"
+                                         alt="Container"/>
+                                    <i t-else="" class="fa fa-cube" title="Container"/>
+                                </span>
+                                <div>
+                                    <div class="o_wmz_wc_ref"><field name="name"/></div>
+                                    <span class="o_wmz_wc_status"><field name="status_label"/></span>
+                                </div>
+                            </div>
+                            <div class="o_wmz_wc_body">
+                                <div t-if="record.display_info.value" class="o_wmz_wc_row">
+                                    <i class="fa fa-tag" title="Type"/>
+                                    <span t-esc="record.display_info.value"/>
+                                </div>
+                                <div t-if="record.partner_id.value" class="o_wmz_wc_row">
+                                    <i class="fa fa-building-o" title="Customer"/>
+                                    <span t-esc="record.partner_id.value"/>
+                                </div>
+                                <div t-if="record.pickup_point_id.value" class="o_wmz_wc_row">
+                                    <i class="fa fa-map-marker" title="Pickup point"/>
+                                    <span t-esc="record.pickup_point_id.value"/>
+                                </div>
+                            </div>
+                            <div class="o_wmz_wc_footer">
+                                <span t-if="record.inUse.raw_value" class="o_wmz_wc_tag o_wmz_wc_tag_inuse">
+                                    <i class="fa fa-check-circle" title="In use"/> In use
+                                </span>
+                                <span t-if="record.reserved_request_id.value" class="o_wmz_wc_tag o_wmz_wc_tag_reserved">
+                                    <i class="fa fa-lock" title="Reserved"/> Reserved
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_waste_container_form" model="ir.ui.view">
+        <field name="name">waste.container.form</field>
+        <field name="model">waste.container</field>
+        <field name="arch" type="xml">
+            <form string="Waste Container" class="o_wmz_container_form">
+                <header>
+                    <field name="status" options="{'clickable': True}" widget="statusbar"
+                           statusbar_visible="intact,in_use,un_use,broken,missing"/>
+                </header>
+                <sheet>
+                    <field name="company_id" invisible="1"/>
+                    <field name="hide_tank" invisible="1"/>
+                    <field name="hide_bin" invisible="1"/>
+
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object"
+                                class="oe_stat_button"
+                                icon="fa-file-text-o"
+                                name="action_open_reserved_request"
+                                invisible="reserved_request_id == False">
+                            <field name="reserved_request_id" widget="statinfo" string="Reserved for"/>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+
+                    <div class="o_wmz_wc_header">
+                        <div class="o_wmz_wc_image_block">
+                            <field name="image" widget="image" class="o_wmz_wc_image" options="{'preview_image': 'image'}"/>
+                        </div>
+                        <div class="o_wmz_wc_title_block">
+                            <span class="o_wmz_wc_icon" title="Waste container">
+                                <i class="fa fa-cube"/>
+                            </span>
+                            <div class="o_wmz_wc_title_text">
+                                <span class="o_wmz_wc_eyebrow">Waste container</span>
+                                <h1 class="o_wmz_wc_name_field">
+                                    <field name="name" readonly="1"/>
+                                </h1>
+                                <div class="o_wmz_wc_meta">
+                                    <span class="o_wmz_wc_meta_item" invisible="not display_info">
+                                        <i class="fa fa-tag" title="Type"/>
+                                        <field name="display_info" readonly="1" nolabel="1"/>
+                                    </span>
+                                    <span class="o_wmz_wc_meta_item o_wmz_wc_meta_inuse" invisible="not inUse">
+                                        <i class="fa fa-check-circle" title="In use"/> In use
+                                    </span>
+                                    <span class="o_wmz_wc_meta_item o_wmz_wc_meta_reserved" invisible="not reserved_request_id">
+                                        <i class="fa fa-lock" title="Reserved"/> Reserved
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="o_wmz_wc_summary" invisible="not partner_id and not pickup_point_id">
+                            <div class="o_wmz_wc_summary_item" invisible="not partner_id">
+                                <span class="o_wmz_wc_summary_label">Customer</span>
+                                <span class="o_wmz_wc_summary_value">
+                                    <field name="partner_id" readonly="1" nolabel="1"/>
+                                </span>
+                            </div>
+                            <div class="o_wmz_wc_summary_item" invisible="not pickup_point_id">
+                                <span class="o_wmz_wc_summary_label">Pickup point</span>
+                                <span class="o_wmz_wc_summary_value">
+                                    <field name="pickup_point_id" readonly="1" nolabel="1"/>
+                                </span>
+                            </div>
+                            <div class="o_wmz_wc_summary_item">
+                                <span class="o_wmz_wc_summary_label">Condition</span>
+                                <span class="o_wmz_wc_summary_value">
+                                    <field name="status" readonly="1" nolabel="1" widget="badge"/>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <group string="Container type" class="o_wmz_wc_details">
+                        <group>
+                            <field name="container_type_id" widget="radio" options="{'horizontal': True}"/>
+                            <field name="bin_type_id" invisible="hide_bin == False"/>
+                            <field name="tank_volume_id" invisible="hide_tank == False"/>
+                            <field name="serial_no" placeholder="Optional serial number..."/>
+                        </group>
+                        <group>
+                            <field name="inUse" widget="boolean_toggle"/>
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <group string="Location &amp; assignment" class="o_wmz_wc_details">
+                        <group>
+                            <field name="partner_id"
+                                   widget="res_partner_many2one"
+                                   options="{'no_open': True}"
+                                   context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}"
+                                   placeholder="Select customer company..."/>
+                            <field name="pickup_point_id"
+                                   options="{'no_open': True}"
+                                   domain="[('partner_id', '=', partner_id)]"/>
+                            <field name="dropoff_point_id"
+                                   options="{'no_open': True}"
+                                   domain="[('partner_id', '=', partner_id)]"/>
+                        </group>
+                        <group>
+                            <field name="reserved_request_id" readonly="1"/>
+                            <field name="sale_order_id" readonly="1" groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance"/>
+                        </group>
+                    </group>
+
+                    <group string="Tank capacity" class="o_wmz_wc_details" invisible="hide_tank == False">
+                        <group>
+                            <field name="liters_collected"/>
+                            <field name="liters_remaining" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_waste_container" model="ir.actions.act_window">
+        <field name="name">Bins &amp; Tanks</field>
+        <field name="res_model">waste.container</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_waste_container_search"/>
+        <field name="context">{'search_default_filter_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Register your first waste container
+            </p>
+            <p>
+                Track bins and tanks by condition, customer site, and reservation status.
+                Use the kanban board to see availability at a glance.
+            </p>
+        </field>
+    </record>
+
+</odoo>

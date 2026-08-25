@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- POPIA — strict multi-company isolation (overrides Odoo base global rules) -->
+<odoo>
+    <!--
+        Override Odoo base res.partner rule: remove the partner_share=False exception
+        that exposes every internal-user contact across all companies.
+        Users may always read their own partner record (profile).
+    -->
+    <record id="base.res_partner_rule" model="ir.rule">
+        <field name="name">res.partner company (POPIA strict)</field>
+        <field name="domain_force">
+            ['|', '|',
+                ('id', '=', user.partner_id.id),
+                ('company_id', 'in', company_ids),
+                ('company_id', '=', False),
+            ]
+        </field>
+    </record>
+
+    <!--
+        Override Odoo base res.users rule: remove the share=False exception
+        that exposes every internal user across all companies.
+    -->
+    <record id="base.res_users_rule" model="ir.rule">
+        <field name="name">user rule (POPIA strict)</field>
+        <field name="domain_force">
+            ['|', '|',
+                ('id', '=', user.id),
+                ('company_id', 'in', company_ids),
+                ('company_id', '=', False),
+            ]
+        </field>
+    </record>
+
+    <!-- WMZ reinforcement for res.users (group_user) — aligned with base override -->
+    <record id="res_users_company_rule" model="ir.rule">
+        <field name="name">Users: own company only (POPIA)</field>
+        <field name="model_id" ref="base.model_res_users"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">
+            ['|', '|',
+                ('id', '=', user.id),
+                ('company_id', 'in', user.company_ids.ids),
+                ('company_id', '=', False),
+            ]
+        </field>
+    </record>
+
+    <!-- Strict contact access for all backend users -->
+    <record id="wmz_res_partner_company_rule" model="ir.rule">
+        <field name="name">WMZ Contacts — company isolation (POPIA)</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="global" eval="False"/>
+        <field name="domain_force">
+            ['|', '|',
+                ('id', '=', user.partner_id.id),
+                ('company_id', 'in', user.company_ids.ids),
+                ('company_id', '=', False),
+            ]
+        </field>
+    </record>
+
+    <!-- Replace leaky company-admin partner rule with strict POPIA domain -->
+    <record id="partner_company_rule" model="ir.rule">
+        <field name="name">Partners by Company (POPIA strict)</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="groups" eval="[
+            (4, ref('waste_management_zakheni.group_company_admin')),
+            (4, ref('waste_management_zakheni.group_wmz_customer_access'))
+        ]"/>
+        <field name="domain_force">
+            ['|', '|',
+                ('id', '=', user.partner_id.id),
+                ('company_id', 'in', company_ids),
+                ('company_id', '=', False),
+            ]
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,15 @@
+<odoo>
+
+    <!-- ============================= -->
+    <!-- Multi Company Rule - User -->
+    <!-- ============================= -->
+    <record id="pastel_multi_company_rule_user" model="ir.rule">
+        <field name="name">Pastel Multi Company User</field>
+        <field name="model_id" ref="model_pastel_sync"/>
+        <field name="groups" eval="[(4, ref('pastel_connector.group_pastel_connector_user'))]"/>
+        <field name="domain_force">
+            ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+        </field>
+    </record>
+
+</odoo>

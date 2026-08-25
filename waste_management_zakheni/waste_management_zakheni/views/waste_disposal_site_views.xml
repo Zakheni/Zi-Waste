@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Views — Waste Disposal Site Views -->
+<odoo>
+    <record id="view_tree_disposal_site" model="ir.ui.view">
+        <field name="name">waste.disposal.site.tree</field>
+        <field name="model">waste.disposal.site</field>
+        <field name="arch" type="xml">
+            <tree string="Disposal Sites">
+                <field name="site_code"/>
+                <field name="name"/>
+                <field name="waste_type"/>
+                <field name="full_address" string="Location"/>
+                <field name="geo_synced" string="Mapped" widget="boolean"/>
+                <field name="capacity_tons"/>
+                <field name="current_load"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_form_disposal_site" model="ir.ui.view">
+        <field name="name">waste.disposal.site.form</field>
+        <field name="model">waste.disposal.site</field>
+        <field name="arch" type="xml">
+            <form string="Disposal Site">
+                <header>
+                    <button name="action_geocode_address"
+                            type="object"
+                            string="Locate on map"
+                            class="oe_highlight"
+                            icon="fa-map-marker"/>
+                    <field name="geo_synced" widget="boolean" readonly="1"
+                           invisible="geo_synced == False"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="site_code"/>
+                        <h1><field name="site_code" placeholder="Site code"/></h1>
+                        <field name="name" readonly="1" class="text-muted"/>
+                    </div>
+
+                    <group string="Location">
+                        <field name="full_address" nolabel="1" colspan="2"
+                               placeholder="Landfill Rd, Germiston, 1401, South Africa"/>
+                        <group colspan="2">
+                            <field name="latitude" readonly="1"/>
+                            <field name="longitude" readonly="1"/>
+                        </group>
+                        <field name="map_preview_json" widget="provider_map" nolabel="1" colspan="2"
+                               readonly="1" invisible="geo_synced == False"/>
+                    </group>
+
+                    <group>
+                        <group string="Site details">
+                            <field name="waste_type"/>
+                            <field name="capacity_tons"/>
+                            <field name="current_load"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Contact">
+                            <field name="contact_person"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="email" widget="email"/>
+                        </group>
+                    </group>
+
+                    <group string="Licensing">
+                        <field name="license_number"/>
+                        <field name="inspection_date"/>
+                        <field name="next_inspection_date"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Notes">
+                            <field name="notes" widget="html"/>
+                        </page>
+                    </notebook>
+
+                    <field name="location" invisible="1"/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kanban_disposal_site" model="ir.ui.view">
+        <field name="name">waste.disposal.site.kanban</field>
+        <field name="model">waste.disposal.site</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="waste_type"
+                    default_order="site_code asc"
+                    class="o_wmz_disposal_kanban"
+                    quick_create="false"
+                    group_create="false">
+                <field name="site_code"/>
+                <field name="name"/>
+                <field name="full_address"/>
+                <field name="waste_type"/>
+                <field name="capacity_tons"/>
+                <field name="current_load"/>
+                <field name="geo_synced"/>
+                <field name="latitude"/>
+                <field name="longitude"/>
+                <field name="contact_person"/>
+                <field name="phone"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click oe_kanban_card o_wmz_ds_card">
+                            <div t-attf-class="o_wmz_ds_banner o_wmz_ds_banner_#{record.waste_type.raw_value or 'none'}">
+                                <span class="o_wmz_ds_banner_icon">
+                                    <i class="fa fa-industry" title="Disposal site"/>
+                                </span>
+                                <div>
+                                    <div class="o_wmz_ds_name"><field name="site_code"/></div>
+                                    <div t-if="record.waste_type.value" class="o_wmz_ds_type">
+                                        <field name="waste_type"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_wmz_ds_body">
+                                <div t-if="record.full_address.value" class="o_wmz_ds_row">
+                                    <i class="fa fa-map-marker" title="Location"/>
+                                    <span t-esc="record.full_address.value"/>
+                                </div>
+                                <div t-if="record.capacity_tons.raw_value" class="o_wmz_ds_row">
+                                    <i class="fa fa-balance-scale" title="Capacity"/>
+                                    <span><field name="capacity_tons"/> t capacity</span>
+                                    <span t-if="record.current_load.raw_value"> / <field name="current_load"/> t load</span>
+                                </div>
+                                <div t-if="record.contact_person.value" class="o_wmz_ds_row">
+                                    <i class="fa fa-user" title="Contact"/>
+                                    <span t-esc="record.contact_person.value"/>
+                                </div>
+                                <div t-if="record.phone.value" class="o_wmz_ds_row">
+                                    <i class="fa fa-phone" title="Phone"/>
+                                    <span t-esc="record.phone.value"/>
+                                </div>
+                            </div>
+                            <div class="o_wmz_ds_footer">
+                                <span t-if="record.geo_synced.raw_value" class="o_wmz_ds_tag o_wmz_ds_tag_mapped">
+                                    <i class="fa fa-map-pin" title="On map"/> On map
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_search_disposal_site" model="ir.ui.view">
+        <field name="name">waste.disposal.site.search</field>
+        <field name="model">waste.disposal.site</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="site_code"/>
+                <field name="name"/>
+                <field name="full_address" string="Location"/>
+                <field name="waste_type"/>
+                <filter name="geocoded" string="On map" domain="[('latitude','!=',0)]"/>
+                <filter name="hazardous" string="Hazardous" domain="[('waste_type','=','hazardous')]"/>
+                <filter name="general_compactable" string="General Compactable"
+                        domain="[('waste_type','=','general_compactable')]"/>
+                <filter name="general_non_compactable" string="General Non-Compactable"
+                        domain="[('waste_type','=','general_non-compactable')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_waste_type" string="Waste Type" context="{'group_by':'waste_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_disposal_site" model="ir.actions.act_window">
+        <field name="name">Disposal Sites</field>
+        <field name="res_model">waste.disposal.site</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_search_disposal_site"/>
+    </record>
+</odoo>

@@ -1,0 +1,164 @@
+<!-- Views — Account Move View -->
+<odoo>
+    <record id="view_move_form_inherit_waste_so_manifest" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.waste.so.manifest</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+
+            <!--            <xpath expr="//div[@name='button_box']" position="inside">-->
+
+            <!--                <button name="action_open_service_request"-->
+            <!--                        type="object"-->
+            <!--                        class="oe_stat_button"-->
+            <!--                        icon="fa-truck"-->
+            <!--                        invisible="service_request_count == 0">-->
+
+            <!--                    <field name="service_request_count"-->
+            <!--                           widget="statinfo"-->
+            <!--                           />-->
+
+            <!--                </button>-->
+
+            <!--            </xpath>-->
+            <xpath expr="//div[@name='button_box']" position="inside">
+
+                <button name="action_open_service_request"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-external-link"
+                        invisible="not service_request_id">
+
+                    <field name="service_request_name"
+                           widget="statinfo"
+                           string="Manifest"/>
+
+                </button>
+
+            </xpath>
+            <xpath expr="//form" position="attributes">
+                <attribute name="create">1</attribute>
+                <attribute name="edit">1</attribute>
+
+            </xpath>
+
+
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="domain">
+                    ['|',
+                    ('company_id', '=', False),
+                    ('company_id', '=', company_id)
+                    ]
+                </attribute>
+            </xpath>
+
+            <xpath expr="//page[@name='other_info']/group" position="inside">
+                <group>
+                    <field name="sale_order_id" options="{'no_create': True}"/>
+                    <field name="service_request_id"
+                           options="{'no_create': True}"
+                           domain="[('sale_order_id', '=', sale_order_id)]"/>
+                </group>
+
+
+            </xpath>
+
+
+            <xpath expr="//button[@name='action_register_payment']" position="attributes">
+                <!-- Only these groups can see it -->
+                <attribute name="groups">
+                    waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_finance
+                </attribute>
+                <attribute name="invisible">payment_state == 'paid' or state != 'posted'
+                </attribute>
+
+
+                <attribute name="string">
+                    Register Receipts
+                </attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_move_form_change_outstanding_message" model="ir.ui.view">
+        <field name="name">account.move.form.change.outstanding.message</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[contains(text(), 'You have') and contains(., 'outstanding credits')]"
+                   position="attributes">
+
+                <!--                <div groups="account.group_account_invoice,account.group_account_readonly"-->
+                <!--                     class="alert alert-info text-center"-->
+                <!--                     role="alert"-->
+                <!--                     invisible="move_type not in ('out_invoice', 'out_receipt') or not invoice_has_outstanding or payment_state not in ('not_paid', 'partial')">-->
+
+                <!--                    <i>Please note: there are invoices that have not yet been paid.</i>-->
+
+                <!--                </div>-->
+
+                <attribute name="invisible">1</attribute>
+
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_move_form_hide_outstanding_buttons" model="ir.ui.view">
+        <field name="name">account.move.form.hide.outstanding.buttons</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='invoice_outstanding_credits_debits_widget']"
+                   position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ================================================== -->
+    <!-- INVOICE LINE -->
+    <!-- ================================================== -->
+    <record id="view_move_form_transport_fields" model="ir.ui.view">
+        <field name="name">account.move.transport.fields</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='invoice_line_ids']/tree//field[@name='quantity']"
+                   position="before">
+
+                <field name="number_of_bins"
+                       optional="show"/>
+
+                <field name="distance_km"
+                       optional="show"/>
+
+                <field name="number_of_trips"
+                       optional="show"/>
+
+                <field name="weight_ton" string="Ton"
+                       optional="show"/>
+
+                <field name="weight_kg" string="kg"
+                       optional="show"/>
+
+
+            </xpath>
+
+        </field>
+
+    </record>
+
+
+</odoo>
+
+
+
+
+
+

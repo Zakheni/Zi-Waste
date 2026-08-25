@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    Module: pastel_connector
+    File: pastel_partner_inherit_views.xml
+    Description: Partner form fields for Sage customer metadata.
+-->
+<odoo>
+    <!-- View/action record: View res partner form sage -->
+    <record id="view_res_partner_form_sage" model="ir.ui.view">
+        <field name="name">res.partner.form.sage</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Sage">
+                    <group>
+                        <field name="x_pastel_code"/>
+                        <field name="x_pastel_tax_code"/>
+                        <field name="x_pastel_category"/>
+                        <field name="x_pastel_currency_code"/>
+                        <field name="x_pastel_open_item"/>
+                        <field name="x_pastel_credit_limit"/>
+                        <field name="x_pastel_balance" readonly="1"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

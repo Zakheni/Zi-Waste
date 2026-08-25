@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vehicle Inspection - Mail Templates
+    Email sent when a not-running vehicle inspection is resolved.
+-->
+<odoo>
+    <data noupdate="1">
+
+        <!-- ============================= -->
+        <!-- RESOLVED (NOT RUNNING) NOTIFICATION -->
+        <!-- ============================= -->
+        <record id="mail_template_vehicle_resolved_not_running" model="mail.template">
+            <field name="name">Vehicle Resolved and not Running Notification</field>
+            <field name="model_id" ref="vehicle_inspection.model_vehicle_resolved_not_running_wizard"/>
+            <field name="subject">Vehicle Resolved and not Running - {{object.inspection_id.name}}</field>
+            <field name="email_from">{{user.email}}</field>
+            <field name="email_to">{{object.manager_email}}</field>
+            <field name="auto_delete" eval="False"/>
+
+            <field name="body_html" type="html">
+
+                <div style="font-family: Arial, sans-serif;
+                            background-color: #f4f4f4;
+                            padding: 20px;">
+
+                    <div style="max-width: 600px;
+                                margin: 0 auto;
+                                background: #ffffff;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+
+                        <!-- Header -->
+                        <div style="background-color: #ffffff;
+                                    padding: 20px;
+                                    text-align: center;">
+
+                            <img t-attf-src="/logo.png?company={{object.inspection_id.company_id.id}}"
+                                 style="height:auto;
+                                        width:80px;"/>
+
+                            <h2 style="color:#d9534f;">
+                                Vehicle Resolved
+                            </h2>
+
+                        </div>
+
+                        <!-- Body -->
+                        <div style="padding:20px;
+                                    background-color: #ffffff;
+                                    color:#333333;
+                                    line-height:1.6;">
+
+                            <p>
+                                Dear Reporting Manager,
+                            </p>
+
+                            <p>
+                                A vehicle has been marked as
+                                <strong>Resolved</strong>.
+                            </p>
+
+                            <table style="width:100%;
+                                          border-collapse: collapse;">
+
+                                <tr>
+                                    <td style="padding:8px;
+                                               border:1px solid #ddd;">
+                                        <strong>Vehicle</strong>
+                                    </td>
+
+                                    <td style="padding:8px;
+                                               border:1px solid #ddd;">
+
+                                        <t t-out="object.inspection_id.vehicle_id.display_name"/>
+
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:8px;
+                                               border:1px solid #ddd;">
+                                        <strong>Inspection</strong>
+                                    </td>
+
+                                    <td style="padding:8px;
+                                               border:1px solid #ddd;">
+
+                                        <t t-out="object.inspection_id.name"/>
+
+                                    </td>
+                                </tr>
+
+
+                                    <td style="padding:8px;
+                                               border:1px solid #ddd;">
+                                        <strong>Comment</strong>
+                                    </td>
+
+                                    <td style="padding:8px;
+                                               border:1px solid #ddd;">
+
+                                        <t t-out="object.comment"/>
+
+                                    </td>
+
+
+                            </table>
+
+                            <br/>
+
+                            <p>
+                                Thank you,
+                            </p>
+
+                            <p>
+                                Vehicle Management System
+                            </p>
+
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="background-color:#ffffff;
+                                    color:#c1c1c1;
+                                    text-align:center;
+                                    padding:10px;
+                                    font-size:12px;">
+
+                            <p class="mb-0">
+
+                                ©
+                                <span t-esc="time.strftime('%Y')"/>
+
+                                <span t-esc="object.inspection_id.company_id.display_name"/>.
+
+                                All rights reserved.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </field>
+
+        </record>
+
+    </data>
+</odoo>

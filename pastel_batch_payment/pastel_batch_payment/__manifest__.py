@@ -1,0 +1,33 @@
+{
+    "name": "Pastel Batch Payment",
+    "version": "17.0.1.13",
+    "category": "Accounting",
+    "summary": "Create & export batch payments to Sage Pastel via sage_connector",
+    "depends": ["account", "pastel_connector", "sage_connector", "waste_management_zakheni", "company_smart_theme"],
+    "data": [
+        "security/security.xml",
+        "security/ir.model.access.csv",
+        "data/sequence.xml",
+        "reports/batch_payment_statement_report.xml",
+        "reports/batch_payment_statement_template.xml",
+        "views/account_move_views.xml",
+        "views/batch_payment_export_history_view.xml",
+        "views/batch_export_form_view.xml",
+        "views/account_payment_views.xml",
+        "wizard/batch_payment_add_wizard_views.xml",
+        "wizard/batch_payment_receive_wizard_view.xml",
+        "views/res_config_settings_views.xml",
+        "views/batch_payment_views.xml",
+        "views/customer_credit_views.xml",
+        "views/res_partner_views.xml",
+        "views/menu.xml",
+    ],
+    "application": False,
+    "installable": True,
+    "license": "LGPL-3",
+    "assets": {
+        "web.assets_backend": [
+            "pastel_batch_payment/static/src/css/batch_payment.css",
+        ],
+    },
+}

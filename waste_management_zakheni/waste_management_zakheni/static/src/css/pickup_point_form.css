@@ -1,0 +1,184 @@
+/* Pickup point form & kanban */
+
+.o_wmz_pickup_point_form .o_form_sheet {
+    padding: 24px 32px !important;
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_header {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_title_block {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 14px;
+    width: 100%;
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_title_text {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(
+        135deg,
+        var(--company-theme-color, #714b67) 0%,
+        var(--company-theme-accent-soft, #714b67) 100%
+    );
+    color: #fff;
+    font-size: 22px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--company-theme-color, #714b67) 35%, transparent);
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_eyebrow {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--wmz-summary-label, #64748b);
+    margin-bottom: 4px;
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_title_text h1,
+.o_wmz_pickup_point_form .o_wmz_pp_name_field {
+    margin: 0;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--wmz-summary-value, #1e293b);
+    width: 100%;
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_name_field .o_field_widget,
+.o_wmz_pickup_point_form .o_wmz_pp_name_field .o_input {
+    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    background: var(--wmz-summary-bg, linear-gradient(90deg, #f0fdf4 0%, #ecfdf5 100%));
+    border: 1px solid var(--wmz-summary-border, #bbf7d0);
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_summary_label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--wmz-summary-label, #64748b);
+    margin-bottom: 2px;
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_summary_value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wmz-summary-value, #1e293b);
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_details > label,
+.o_wmz_pickup_point_form .o_wmz_pp_containers > label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--wmz-summary-label, #64748b);
+}
+
+.o_wmz_pickup_point_form .o_wmz_pp_containers {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--wmz-summary-border, #e2e8f0);
+}
+
+/* Kanban cards */
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card {
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card:hover {
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+    transform: translateY(-1px);
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card_archived {
+    opacity: 0.65;
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card_banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: linear-gradient(
+        90deg,
+        var(--company-theme-color, #714b67) 0%,
+        var(--company-theme-accent-soft, #714b67) 100%
+    );
+    color: #fff;
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card_icon {
+    font-size: 18px;
+    opacity: 0.95;
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card_title strong {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card_body {
+    padding: 12px 14px 14px;
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card_row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #334155;
+    margin-bottom: 8px;
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card_row .fa-building-o {
+    color: var(--company-theme-color, #714b67);
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card_stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    background: #f1f5f9;
+    border-radius: 999px;
+    padding: 4px 10px;
+}
+
+.o_kanban_view.o_wmz_pickup_point_kanban .o_wmz_pp_card_stat .fa-cube {
+    color: #546e7a;
+}

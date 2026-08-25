@@ -1,0 +1,195 @@
+/* Waste worksheet form */
+
+.o_wmz_worksheet_form .o_form_sheet {
+    padding: 24px 32px !important;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_draft_banner {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid #bfdbfe;
+    background: linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%);
+    color: #1e3a8a;
+    font-size: 13px;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_title_block {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    flex: 1 1 320px;
+    min-width: 0;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(
+        135deg,
+        var(--company-theme-color, #714b67) 0%,
+        var(--company-theme-accent-soft, #714b67) 100%
+    );
+    color: #fff;
+    font-size: 22px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--company-theme-color, #714b67) 35%, transparent);
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_title_text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_eyebrow {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--wmz-summary-label, #64748b);
+    margin-bottom: 4px;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_title_text h1 {
+    margin: 0 0 8px;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--wmz-summary-value, #1e293b);
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    font-size: 13px;
+    color: #475569;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_meta_item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    font-weight: 600;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_meta_item .fa {
+    color: var(--company-theme-color, #714b67);
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_stopwatch_panel {
+    flex: 0 1 280px;
+    min-width: 240px;
+}
+
+.o_wmz_ws_stopwatch {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+.o_wmz_ws_stopwatch_running {
+    border-color: #22d3ee;
+    background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+    box-shadow: 0 4px 16px rgba(6, 182, 212, 0.18);
+}
+
+.o_wmz_ws_stopwatch_icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--company-theme-color, #714b67);
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.o_wmz_ws_stopwatch_running .o_wmz_ws_stopwatch_icon {
+    color: #0891b2;
+}
+
+.o_wmz_ws_stopwatch_text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.o_wmz_ws_stopwatch_label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.o_wmz_ws_stopwatch_running .o_wmz_ws_stopwatch_label {
+    color: #0e7490;
+}
+
+.o_wmz_ws_stopwatch_value {
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: #0f172a;
+}
+
+.o_wmz_ws_stopwatch_running .o_wmz_ws_stopwatch_value {
+    color: #155e75;
+}
+
+.o_wmz_ws_stopwatch_pulse {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #06b6d4;
+    margin-left: auto;
+    flex-shrink: 0;
+    animation: o_wmz_ws_pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes o_wmz_ws_pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.85); }
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_section {
+    margin-bottom: 8px;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_upload_block {
+    padding: 12px 0 4px;
+}
+
+.o_wmz_worksheet_form .o_wmz_ws_upload_row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}

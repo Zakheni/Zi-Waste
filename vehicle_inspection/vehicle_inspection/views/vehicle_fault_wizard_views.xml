@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vehicle Inspection - Fault Wizard View
+    Popup form for sending fault notification emails.
+-->
+<odoo>
+
+    <!-- ============================= -->
+    <!-- FAULT WIZARD FORM -->
+    <!-- ============================= -->
+    <record id="view_vehicle_fault_wizard_form" model="ir.ui.view">
+        <field name="name">vehicle.fault.wizard.form</field>
+        <field name="model">vehicle.fault.wizard</field>
+        <field name="arch" type="xml">
+
+            <form string="Send Fault Notification">
+
+                <sheet>
+
+                    <group>
+
+                        <field name="reporting_manager_id" widget="many2one_avatar_user" string="Fleet Manager"/>
+                        <field name="manager_email" string="Mail To"
+                               readonly="1"/>
+                        <field name="comment"/>
+
+
+                    </group>
+
+                </sheet>
+
+                <footer>
+
+                    <button name="action_send_fault_email"
+                            type="object"
+                            string="Send Email"
+                            class="btn-primary"/>
+
+                    <button string="Cancel"
+                            special="cancel"/>
+
+                </footer>
+
+            </form>
+
+        </field>
+
+    </record>
+
+</odoo>

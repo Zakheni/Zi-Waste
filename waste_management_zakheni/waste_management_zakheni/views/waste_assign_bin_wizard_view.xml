@@ -1,0 +1,153 @@
+<!-- Wizard / popup — Waste Assign Bin Wizard View -->
+<odoo>
+    <!-- Assign bins wizard: form and action -->
+    <record id="view_waste_assign_bin_wizard_form"
+            model="ir.ui.view">
+        <field name="name">waste.request.assign.bin.wizard.form</field>
+        <field name="model">waste.request.assign.bin.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Assign Bins to Pickup Points">
+                <sheet>
+                    <div class="alert alert-info d-flex align-items-start" style="font-size:14px;">
+                        <i class="fa fa-info-circle" style="font-size:20px; margin-right:10px; margin-top:2px;"></i>
+                        <div>
+                            <strong>Bin Visibility</strong>
+                            <br/>
+                            <p>You can make bins visible by clicking the hamburger menu on the left side of the table
+                                header and selecting the fields you need.
+                            </p>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="request_id" invisible="0" readonly="1" options="{'no_open': True}"/>
+                            <field name="svc_code" invisible="0" readonly="1"/>
+                            <field name="partner_id" invisible="1" readonly="1" options="{'no_open': True}"/>
+                        </group>
+                        <group>
+                            <field name="bin_type_id" invisible="1" readonly="1" options="{'no_open': True}"/>
+                            <field name="waste_type_id" invisible="1" readonly="1" options="{'no_open': True}"/>
+                        </group>
+
+                    </group>
+
+                    <field name="line_ids">
+                        <tree editable="bottom" create="1" edit="1" delete="1">
+
+                            <!-- Pickup Point
+                                 Show for everything except 'placement of bins'
+                            -->
+                            <field name="pickup_point_id"
+                                   optional="show"
+                                   invisible="svc_code == 'placement of bins'"
+                                   required="1"
+                            />
+
+                            <!-- Bin Lifted
+                                 Show for:
+                                   - shunting of bins
+                                   - removal of bins
+                                   - general collection & desposal / disposal
+                                   - swapping of bins
+                                 Hide only for:
+                                   - placement of bins
+                            -->
+                            <field name="bin_lifted_ids"
+                                   widget="many2many_tags"
+                                   optional="show"
+                                   invisible="svc_code == 'placement of bins'"
+
+                                   domain="[
+                                            ('bin_type_id', '=', bin_type_id),
+                                            ('partner_id', '=', partner_id),
+                                            ('pickup_point_id', '=', pickup_point_id),
+                                            ('status', '=', 'in_use'),
+                                            ('inUse', '=', True),
+                                            ('reserved_request_id', '=', False)
+
+                                        ]
+                                         "
+                            />
+
+                            <!-- Drop-off Point
+                                 Show for:
+                                   - placement of bins
+                                   - shunting of bins
+                            -->
+                            <field name="dropoff_point_id"
+                                   optional="show"
+                                   invisible="svc_code not in ('placement of bins',
+                                           'shunting of bins')"
+                                   required="1"
+                            />
+
+                            <!-- Bin Dropped – controlled entirely by show_bin_dropped -->
+                            <field name="bin_dropped_ids"
+                                   widget="many2many_tags"
+                                   optional="show"
+                                   invisible="not show_bin_dropped"/>
+
+<!--                            <field name="tank_ids"-->
+<!--                                   widget="many2many_tags"-->
+<!--                                   optional="show"-->
+<!--                                   invisible="svc_code not in (-->
+<!--                                               'waste collection &amp; disposal',-->
+<!--                                               'waste collection and disposal',)"/>-->
+
+<!--                            &lt;!&ndash;                             Liters – simple rule: only visible for waste collection scenarios &ndash;&gt;-->
+<!--                            <field name="liters_collected"-->
+<!--                                   optional="show"-->
+<!--                                   invisible="svc_code not in (-->
+<!--                                               'waste collection &amp; disposal',-->
+<!--                                               'waste collection and disposal',-->
+
+<!--                                           )"/>-->
+
+                            <!--                        <field name="liters_remaining"-->
+                            <!--                               optional="show"-->
+                            <!--                               invisible="svc_code not in (-->
+                            <!--                   'waste collection &amp; disposal',-->
+                            <!--                   'waste collection and disposal',-->
+                            <!--               )"-->
+                            <!--                            readonly="0"/>-->
+                            <field name="bin_duplicate_warning" decoration-danger="1"
+                                   readonly="1"
+                                   optional="show"/>
+                            <!-- keep helper fields for domains -->
+                            <field name="partner_id" invisible="1" optional="hide"/>
+                            <field name="bin_type_id" invisible="1" optional="hide"/>
+                            <field name="waste_type_id" invisible="1" optional="hide"/>
+                            <field name="svc_code" invisible="1" optional="hide"/>
+                            <field name="show_bin_dropped" invisible="1" optional="hide"/>
+                            <field name="request_id" invisible="1" optional="hide"/>
+
+                        </tree>
+                    </field>
+
+                    <footer>
+                        <button name="action_confirm" type="object"
+                                string="Apply" class="btn-primary"/>
+                        <button string="Cancel" special="cancel"
+                                class="btn-secondary"/>
+                    </footer>
+                </sheet>
+
+
+            </form>
+
+
+        </field>
+    </record>
+
+    <record id="action_waste_assign_bin_wizard" model="ir.actions.act_window">
+        <field name="name">Assign Bins</field>
+        <field name="res_model">waste.request.assign.bin.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_waste_assign_bin_wizard_form"/>
+
+    </record>
+</odoo>
+
+

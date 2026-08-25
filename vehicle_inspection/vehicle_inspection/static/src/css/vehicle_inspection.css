@@ -1,0 +1,163 @@
+/* Vehicle inspection — form, kanban, checklist */
+
+.o_vi_inspection_form .o_vi_summary_row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0 0 16px;
+}
+
+.o_vi_inspection_form .o_vi_stat_card {
+    flex: 1 1 140px;
+    min-width: 120px;
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.o_vi_inspection_form .o_vi_stat_label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.o_vi_inspection_form .o_vi_stat_value {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.o_vi_inspection_form .o_vi_stat_card_clear .o_vi_stat_value { color: #15803d; }
+.o_vi_inspection_form .o_vi_stat_card_fault .o_vi_stat_value { color: #b91c1c; }
+.o_vi_inspection_form .o_vi_stat_card_pending .o_vi_stat_value { color: #b45309; }
+.o_vi_inspection_form .o_vi_stat_card_progress .o_vi_stat_value { color: #1d4ed8; }
+
+.o_vi_inspection_form .o_vi_progress_bar {
+    height: 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.o_vi_inspection_form .o_vi_progress_fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    transition: width 0.2s ease;
+}
+
+.o_vi_inspection_form .o_vi_checklist_section td {
+    background: #eff6ff !important;
+    font-weight: 700;
+    color: #1e40af;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Kanban */
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card {
+    border: none !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    margin: 8px 4px !important;
+    padding: 0 !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1) !important;
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card:hover {
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.16) !important;
+    transform: translateY(-1px);
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    color: #fff;
+    background: linear-gradient(135deg, #475569, #334155);
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_banner_draft { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_banner_faulty { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_banner_not_running { background: linear-gradient(135deg, #d97706, #b45309); }
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_banner_resolved { background: linear-gradient(135deg, #0891b2, #0e7490); }
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_banner_done { background: linear-gradient(135deg, #16a34a, #15803d); }
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_ref {
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_body {
+    padding: 12px 14px;
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 6px;
+    line-height: 1.35;
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_row i {
+    color: #94a3b8;
+    width: 14px;
+    margin-top: 2px;
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_card_footer {
+    padding: 0 14px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_tag_fault {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.o_kanban_view.o_vi_inspection_kanban .o_vi_tag_clear {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+/* Photo kanban on inspection form */
+.o_vi_inspection_form .o_vi_photo_card {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.o_vi_inspection_form .o_vi_photo_card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.o_vi_inspection_form .o_vi_photo_caption {
+    padding: 8px 10px;
+    font-size: 12px;
+    background: #f8fafc;
+}

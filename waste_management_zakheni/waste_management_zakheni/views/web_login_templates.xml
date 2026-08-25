@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Branded login / signup / reset password -->
+<odoo>
+
+    <!-- ================================================================
+         LOGIN LAYOUT SHELL
+         ================================================================ -->
+    <!-- website.login_layout wraps login in website.layout (header + footer) -->
+    <template id="wmz_login_layout"
+              inherit_id="website.login_layout"
+              name="WMZ Login Layout"
+              priority="25">
+
+        <xpath expr="//div[hasclass('oe_website_login_container')]" position="replace">
+            <div t-attf-class="oe_website_login_container wmz-login-page wmz-login-shell #{login_card_classes or ''}">
+                <div class="wmz-login-card o_database_list">
+                    <div class="wmz-login-card_head text-center">
+                        <a href="/" class="wmz-login-logo d-inline-block">
+                            <img t-attf-src="/web/binary/company_logo{{ '?dbname='+db if db else '' }}"
+                                 alt="Logo"/>
+                        </a>
+                        <h1 class="wmz-login-title">Client Portal</h1>
+                        <p class="wmz-login-subtitle">
+                            Sign in to manage your waste service requests
+                        </p>
+                    </div>
+                    <div class="wmz-login-card_body">
+                        <t t-out="0"/>
+                    </div>
+                    <div class="wmz-login-card_foot text-center small"
+                         t-if="not disable_footer and not disable_database_manager">
+                        <a href="/web/database/manager">Manage Databases</a>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+
+    </template>
+
+    <!-- ================================================================
+         LOGIN FORM
+         ================================================================ -->
+    <template id="wmz_login_form"
+              inherit_id="web.login"
+              name="WMZ Login Form"
+              priority="25">
+
+        <xpath expr="//form[hasclass('oe_login_form')]" position="attributes">
+            <attribute name="class" add="wmz-login-form" separator=" "/>
+        </xpath>
+
+        <xpath expr="//div[hasclass('field-login')]//label[@for='login']" position="replace">
+            <label for="login" class="form-label wmz-login-label">
+                <i class="fa fa-envelope-o me-1"/> Email
+            </label>
+        </xpath>
+
+        <xpath expr="//div[.//input[@id='password']]/label[@for='password']" position="replace">
+            <label for="password" class="form-label wmz-login-label">
+                <i class="fa fa-lock me-1"/> Password
+            </label>
+        </xpath>
+
+        <xpath expr="//input[@id='password' and @name='password']" position="replace">
+            <div class="wmz-password-toggle input-group">
+                <input type="password"
+                       placeholder="Password"
+                       name="password"
+                       id="password"
+                       t-attf-class="form-control #{'form-control-sm' if form_small else ''}"
+                       required="required"
+                       autocomplete="current-password"
+                       t-att-autofocus="'autofocus' if login else None"
+                       maxlength="4096"/>
+                <button type="button"
+                        class="btn wmz-password-toggle-btn"
+                        aria-label="Show password"
+                        tabindex="-1">
+                    <i class="fa fa-eye" aria-hidden="true"/>
+                </button>
+            </div>
+        </xpath>
+
+        <xpath expr="//button[@type='submit' and hasclass('btn-primary')]" position="replace">
+            <button type="submit" class="btn btn-primary wmz-login-submit">
+                <i class="fa fa-sign-in me-1"/> Log in
+            </button>
+        </xpath>
+
+    </template>
+
+    <!-- Signup / reset password fields -->
+    <template id="wmz_signup_password_toggle"
+              inherit_id="auth_signup.fields"
+              name="WMZ Signup Password Toggle"
+              priority="25">
+
+        <xpath expr="//input[@id='password']" position="replace">
+            <div class="wmz-password-toggle input-group">
+                <input type="password"
+                       name="password"
+                       id="password"
+                       class="form-control form-control-sm"
+                       required="required"
+                       t-att-autofocus="'autofocus' if only_passwords else None"/>
+                <button type="button"
+                        class="btn wmz-password-toggle-btn"
+                        aria-label="Show password"
+                        tabindex="-1">
+                    <i class="fa fa-eye" aria-hidden="true"/>
+                </button>
+            </div>
+        </xpath>
+
+        <xpath expr="//input[@id='confirm_password']" position="replace">
+            <div class="wmz-password-toggle input-group">
+                <input type="password"
+                       name="confirm_password"
+                       id="confirm_password"
+                       class="form-control form-control-sm"
+                       required="required"/>
+                <button type="button"
+                        class="btn wmz-password-toggle-btn"
+                        aria-label="Show password"
+                        tabindex="-1">
+                    <i class="fa fa-eye" aria-hidden="true"/>
+                </button>
+            </div>
+        </xpath>
+
+    </template>
+
+</odoo>

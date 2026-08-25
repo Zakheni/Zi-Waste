@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vehicle Inspection - Item Views
+    Tree, form, and action for checklist items.
+-->
+<odoo>
+
+    <!-- ============================= -->
+    <!-- ITEM TREE VIEW -->
+    <!-- ============================= -->
+    <record id="view_vehicle_inspection_item_tree" model="ir.ui.view">
+        <field name="name">vehicle.inspection.item.tree</field>
+        <field name="model">vehicle.inspection.item</field>
+        <field name="arch" type="xml">
+            <tree string="Vehicle Inspection Item">
+                <field name="name"/>
+                <field name="require_photo" />
+                <field name="active"/>
+                <field name="category_id" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================= -->
+    <!-- ITEM FORM VIEW -->
+    <!-- ============================= -->
+    <record id="view_vehicle_inspection_item_form" model="ir.ui.view">
+        <field name="name">vehicle.inspection.item.form</field>
+        <field name="model">vehicle.inspection.item</field>
+        <field name="arch" type="xml">
+            <form string="Vehicle Inspection Item">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="require_photo" />
+
+                        </group>
+                        <group>
+                            <field name="category_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================= -->
+    <!-- ITEM ACTION -->
+    <!-- ============================= -->
+    <record id="action_inspection_item" model="ir.actions.act_window">
+        <field name="name">Inspection Items</field>
+        <field name="res_model">vehicle.inspection.item</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

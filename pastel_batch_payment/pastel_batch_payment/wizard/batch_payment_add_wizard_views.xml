@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    Module: pastel_batch_payment
+    File: batch_payment_add_wizard_views.xml
+    Description: Wizard to add lines to a batch payment.
+-->
+<odoo>
+    <!-- View/action record: View batch payment add wizard -->
+    <record id="view_batch_payment_add_wizard" model="ir.ui.view">
+        <field name="name">batch.payment.add.wizard.form</field>
+        <field name="model">batch.payment.add.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Select Payments" class="o_batch_payment_form">
+                <group>
+                    <field name="batch_id" invisible="1"/>
+                    <!-- m2m list with checkboxes comes for free in list view -->
+
+                    <field name="payment_ids"
+                           widget="many2many_tags"
+                           domain="[
+    ('state', '=', 'posted'),
+    ('company_id', '=', context.get('bp_company_id')),
+    ('in_exported_batch', '=', False),
+    ('batch_payment_state', 'not in', ['not_paid', 'validated', 'exported', 'partial', 'paid']),
+
+    '&amp;',
+        ('batch_invoice_id', '!=', False),
+
+
+    '|',
+        ('journal_id', '=', context.get('bp_journal_id')),
+        ('journal_id', '!=', False),
+
+
+    ('partner_id', '=', context.get('bp_partner_id')),
+
+    '|',
+        ('journal_id', '=', context.get('bp_journal_id')),
+        ('journal_id', '!=', False),
+
+
+]"/>
+
+
+                </group>
+                <footer>
+                    <button string="Add" type="object" class="btn-primary" name="action_add"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- View/action record: Action batch payment add wizard -->
+
+    <record id="action_batch_payment_add_wizard" model="ir.actions.act_window">
+        <field name="name">Select Payments</field>
+        <field name="res_model">batch.payment.add.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+    </record>
+
+</odoo>

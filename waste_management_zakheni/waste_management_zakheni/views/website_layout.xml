@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         HEADER
+         ================================================================ -->
+
+    <template id="wmz_website_header" inherit_id="website.layout" name="Zakheni Waste — Header">
+        <xpath expr="//header" position="attributes">
+            <attribute name="t-attf-class" add="wmz-site-header sticky-top o_no_autohide_menu" separator=" "/>
+        </xpath>
+    </template>
+
+    <!-- Green dark navbar — avoids Odoo white navbar-light / o_menu_loading -->
+    <template id="wmz_website_navbar" inherit_id="website.navbar" name="Zakheni Waste — Navbar">
+        <xpath expr="//nav" position="attributes">
+            <attribute name="t-attf-class">navbar #{_navbar_expand_class} navbar-dark wmz-navbar #{_navbar_classes} #{_extra_navbar_classes}</attribute>
+        </xpath>
+    </template>
+
+    <template id="wmz_website_navbar_nav" inherit_id="website.navbar_nav" name="Zakheni Waste — Navbar Nav">
+        <xpath expr="//ul" position="attributes">
+            <attribute name="t-attf-class">nav navbar-nav top_menu wmz-top-menu #{_nav_class}</attribute>
+        </xpath>
+    </template>
+
+    <!-- Disable Odoo header menu cache so nav changes apply immediately -->
+    <template id="wmz_website_theme_boot" inherit_id="website.layout" name="Zakheni Waste — Theme Boot">
+        <xpath expr="//head" position="inside">
+            <script type="text/javascript">
+                (function () {
+                    var key = 'wmz-theme';
+                    var stored = localStorage.getItem(key);
+                    var theme = stored === 'dark' || stored === 'light'
+                        ? stored
+                        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                    document.documentElement.setAttribute('data-wmz-theme', theme);
+                })();
+            </script>
+        </xpath>
+    </template>
+
+    <template id="wmz_theme_toggle" name="Zakheni Waste — Theme Toggle">
+        <li class="o_not_editable wmz-theme-toggle-wrap d-flex align-items-center">
+            <button type="button"
+                    class="btn wmz-header-search-btn wmz-theme-toggle rounded-circle border-0 d-inline-flex align-items-center justify-content-center"
+                    aria-label="Toggle dark mode"
+                    title="Toggle dark mode">
+                <i class="fa fa-moon-o wmz-theme-icon-dark" aria-hidden="true"/>
+                <i class="fa fa-sun-o wmz-theme-icon-light d-none" aria-hidden="true"/>
+            </button>
+        </li>
+    </template>
+
+    <!-- Disable Odoo header menu cache so nav changes apply immediately -->
+    <template id="wmz_website_header_cache" inherit_id="website.layout" name="Zakheni Waste — Header Cache">
+        <xpath expr="//header/t[@t-cache]" position="attributes">
+            <attribute name="t-cache">None</attribute>
+        </xpath>
+    </template>
+
+    <!-- Branded navbar: keep uploaded logo when set -->
+    <template id="wmz_website_brand" inherit_id="website.option_header_brand_logo" name="Zakheni Waste — Brand">
+        <xpath expr="//a[@data-name='Navbar Logo']" position="replace">
+            <a data-name="Navbar Logo" href="/" t-attf-class="navbar-brand logo #{_link_class} wmz-site-brand">
+                <t t-if="website.logo">
+                    <span t-field="website.logo"
+                          t-options="{'widget': 'image', 'width': 95, 'height': 40}"
+                          role="img"
+                          t-att-aria-label="'Logo of %s' % website.name"
+                          t-att-title="website.name"/>
+                </t>
+                <t t-else="">
+                    <span class="wmz-site-brand_icon"><i class="fa fa-recycle"/></span>
+                    <span class="wmz-site-brand_text">
+                        <t t-esc="website.name or res_company.name"/>
+                    </span>
+                </t>
+            </a>
+        </xpath>
+    </template>
+
+    <!-- Explicit main navigation (always visible) -->
+    <template id="wmz_website_header_menu" inherit_id="website.template_header_default" name="Zakheni Waste — Main Menu">
+        <xpath expr="//t[@t-foreach='website.menu_id.child_id']" position="replace">
+            <li class="nav-item">
+                <a href="/" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="/contactus" class="nav-link">Contact Us</a>
+            </li>
+        </xpath>
+        <xpath expr="//t[@t-call='website.placeholder_header_call_to_action']" position="replace"/>
+    </template>
+
+    <!-- Clean header extras (keep search) -->
+    <template id="wmz_website_header_nav" inherit_id="website.template_header_default" name="Zakheni Waste — Header Nav">
+        <xpath expr="//t[@t-call='website.placeholder_header_search_box']" position="replace">
+            <t t-call="website.placeholder_header_search_box" t-nocache="The searchbox should not cache previous searches.">
+                <t t-set="_layout" t-valuef="modal"/>
+                <t t-set="_input_classes" t-valuef="border border-end-0 p-3"/>
+                <t t-set="_submit_classes" t-valuef="border border-start-0 px-4 bg-o-color-4"/>
+                <t t-set="_button_classes" t-valuef="wmz-header-search-btn"/>
+            </t>
+        </xpath>
+        <xpath expr="//t[@t-call='website.placeholder_header_text_element']" position="replace"/>
+        <xpath expr="//t[@t-call='website.placeholder_header_social_links']" position="replace"/>
+        <xpath expr="//t[@t-call='website.placeholder_header_language_selector']" position="replace"/>
+        <xpath expr="//t[@t-call='portal.placeholder_user_sign_in']" position="before">
+            <t t-call="waste_management_zakheni.wmz_theme_toggle"/>
+        </xpath>
+        <xpath expr="//t[@t-call='portal.placeholder_user_sign_in']" position="replace">
+            <t t-call="portal.placeholder_user_sign_in">
+                <t t-set="_link_class" t-valuef="btn wmz-header-btn wmz-header-btn-portal"/>
+            </t>
+        </xpath>
+        <xpath expr="//t[@t-call='portal.user_dropdown']" position="replace">
+            <t t-call="portal.user_dropdown">
+                <t t-set="_user_name" t-value="True"/>
+                <t t-set="_item_class" t-valuef="dropdown"/>
+                <t t-set="_link_class" t-valuef="btn wmz-header-btn wmz-header-btn-portal border-0"/>
+                <t t-set="_dropdown_menu_class" t-valuef="dropdown-menu-end"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Mobile main navigation -->
+    <template id="wmz_website_header_mobile_menu" inherit_id="website.template_header_mobile" name="Zakheni Waste — Mobile Menu">
+        <xpath expr="//t[@t-foreach='website.menu_id.child_id']" position="replace">
+            <li class="nav-item">
+                <a href="/" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item">
+                <a href="/contactus" class="nav-link">Contact Us</a>
+            </li>
+        </xpath>
+    </template>
+
+    <!-- Mobile header extras -->
+    <template id="wmz_website_header_mobile" inherit_id="website.template_header_mobile" name="Zakheni Waste — Mobile Header">
+        <xpath expr="//ul[hasclass('o_header_mobile_buttons_wrap')]" position="inside">
+            <t t-call="waste_management_zakheni.wmz_theme_toggle"/>
+            <li class="o_not_editable">
+                <t t-call="website.placeholder_header_search_box" t-nocache="The searchbox should not cache previous searches.">
+                    <t t-set="_layout" t-valuef="modal"/>
+                    <t t-set="_button_classes" t-valuef="wmz-header-search-btn"/>
+                </t>
+            </li>
+        </xpath>
+        <xpath expr="//div[hasclass('offcanvas-body')]//t[@t-call='website.placeholder_header_search_box']" position="replace"/>
+        <xpath expr="//t[@t-call='website.placeholder_header_text_element']" position="replace"/>
+        <xpath expr="//t[@t-call='website.placeholder_header_social_links']" position="replace"/>
+        <xpath expr="//t[@t-call='website.header_call_to_action_large']" position="replace"/>
+        <xpath expr="//t[@t-call='website.placeholder_header_language_selector']" position="replace"/>
+        <xpath expr="//t[@t-call='portal.placeholder_user_sign_in']" position="replace">
+            <t t-call="portal.placeholder_user_sign_in">
+                <t t-set="_link_class" t-valuef="btn wmz-header-btn wmz-header-btn-portal w-100"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- ================================================================
+         FOOTER
+         ================================================================ -->
+
+    <template id="wmz_website_footer" inherit_id="website.footer_custom" name="Zakheni Waste — Footer">
+        <xpath expr="//div[@id='footer']" position="replace">
+            <div id="footer" class="wmz-site-footer oe_structure oe_structure_solo" t-ignore="true" t-if="not no_footer">
+                <section class="wmz-site-footer_main">
+                    <div class="container">
+                        <div class="row g-4 g-lg-5">
+                            <div class="col-lg-4">
+                                <div class="wmz-site-footer_brand">
+                                    <a href="/" class="wmz-site-footer_logo">
+                                        <span class="wmz-site-brand_icon"><i class="fa fa-recycle"/></span>
+                                        <span class="wmz-site-footer_brand-name">
+                                            <t t-esc="website.name or res_company.name"/>
+                                        </span>
+                                    </a>
+                                </div>
+                                <p class="wmz-site-footer_tagline">
+                                    Professional waste collection, licensed disposal, and digital
+                                    compliance for businesses across South Africa.
+                                </p>
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <h6 class="wmz-site-footer_title">Quick links</h6>
+                                <ul class="wmz-site-footer_links list-unstyled">
+                                    <li><a href="/">Home</a></li>
+                                    <li><a href="/contactus">Contact Us</a></li>
+                                    <li><a href="/web/login">Client Portal</a></li>
+                                </ul>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <h6 class="wmz-site-footer_title">Services</h6>
+                                <ul class="wmz-site-footer_links list-unstyled">
+                                    <li>Bin collection</li>
+                                    <li>Liquid &amp; tank waste</li>
+                                    <li>Licensed disposal</li>
+                                    <li>Reporting &amp; compliance</li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-3">
+                                <h6 class="wmz-site-footer_title">Contact</h6>
+                                <ul class="wmz-site-footer_contact list-unstyled">
+                                    <li>
+                                        <i class="fa fa-building"/>
+                                        <span><t t-esc="res_company.name"/></span>
+                                    </li>
+                                    <t t-if="res_company.phone">
+                                        <li>
+                                            <i class="fa fa-phone"/>
+                                            <a t-att-href="'tel:%s' % res_company.phone" class="o_force_ltr">
+                                                <t t-esc="res_company.phone"/>
+                                            </a>
+                                        </li>
+                                    </t>
+                                    <t t-if="res_company.email">
+                                        <li>
+                                            <i class="fa fa-envelope"/>
+                                            <a t-att-href="'mailto:%s' % res_company.email">
+                                                <t t-esc="res_company.email"/>
+                                            </a>
+                                        </li>
+                                    </t>
+                                    <t t-if="res_company.street or res_company.city">
+                                        <li>
+                                            <i class="fa fa-map-marker"/>
+                                            <span class="o_force_ltr">
+                                                <t t-if="res_company.street"><t t-esc="res_company.street"/>, </t>
+                                                <t t-if="res_company.city"><t t-esc="res_company.city"/></t>
+                                            </span>
+                                        </li>
+                                    </t>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- Copyright bar -->
+    <template id="wmz_website_footer_copyright" inherit_id="website.layout" name="Zakheni Waste — Footer Copyright">
+        <xpath expr="//div[hasclass('o_footer_copyright')]//div[hasclass('row')]" position="replace">
+            <div class="row align-items-center wmz-site-footer_copy-row">
+                <div class="col-md-7 text-center text-md-start">
+                    <span class="wmz-site-footer_copy">
+                        Copyright ©
+                        <t t-esc="res_company.name or 'Zakheni Waste Management'"/>.
+                        All rights reserved.
+                    </span>
+                </div>
+                <div class="col-md-5 text-center text-md-end mt-2 mt-md-0">
+                    <span class="wmz-site-footer_copy-links">
+                        <a href="/">Home</a>
+                        <span class="mx-1">·</span>
+                        <a href="/contactus">Contact</a>
+                        <span class="mx-1">·</span>
+                        <a href="/web/login">Portal</a>
+                    </span>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- Footer dark theme -->
+    <template id="wmz_website_footer_theme" inherit_id="website.layout" name="Zakheni Waste — Footer Theme">
+        <xpath expr="//footer[@id='bottom']" position="attributes">
+            <attribute name="t-attf-class" add="wmz-site-footer-wrap o_colored_level o_cc" separator=" "/>
+        </xpath>
+        <xpath expr="//div[hasclass('o_footer_copyright')]" position="attributes">
+            <attribute name="class" add="wmz-site-footer-copyright" separator=" "/>
+        </xpath>
+    </template>
+
+</odoo>

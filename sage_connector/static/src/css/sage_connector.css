@@ -1,0 +1,588 @@
+/* Sage Connector — themed forms, lists, kanban, wizard */
+
+/* Shared labels */
+.o_sage_eyebrow {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 55%, #64748b);
+    margin-bottom: 4px;
+}
+
+.o_sage_backend_form .o_form_sheet,
+.o_sage_job_form .o_form_sheet,
+.o_sage_log_form .o_form_sheet,
+.o_sage_mapping_form .o_form_sheet {
+    padding: 24px 32px !important;
+}
+
+.o_sage_backend_form .oe_title h1,
+.o_sage_job_form .oe_title h1,
+.o_sage_log_form .oe_title h1 {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--company-theme-color, var(--wmz-brand, #15803d));
+}
+
+.o_sage_backend_form header .btn-primary,
+.o_sage_job_form header .btn-primary,
+.o_sage_import_wizard footer .btn-primary,
+.o_sage_transfer_wizard footer .btn-primary,
+.o_sage_backend_form .btn-primary,
+.o_sage_job_form .btn-primary {
+    background-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    border-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    color: var(--company-theme-text, #ffffff) !important;
+}
+
+.o_sage_backend_form header .btn-primary:hover,
+.o_sage_job_form header .btn-primary:hover,
+.o_sage_import_wizard footer .btn-primary:hover,
+.o_sage_transfer_wizard footer .btn-primary:hover {
+    background-color: var(--company-theme-hover, var(--company-theme-border, #166534)) !important;
+    border-color: var(--company-theme-hover, var(--company-theme-border, #166534)) !important;
+}
+
+/* Themed info alert (not Bootstrap alert-success green) */
+.o_sage_backend_form .o_sage_alert {
+    background: var(--company-theme-accent-soft, color-mix(in srgb, var(--company-theme-color, #15803d) 12%, #ffffff)) !important;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 28%, #e2e8f0) !important;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 55%, #1e293b) !important;
+    border-radius: 10px;
+}
+
+.o_sage_backend_form .o_sage_alert .fa,
+.o_sage_backend_form .o_sage_alert .fw-bold {
+    color: var(--company-theme-color, #15803d) !important;
+}
+
+/* Backend header — company theme, not fixed mint green */
+.o_sage_backend_form .o_sage_header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 16px 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--company-theme-accent-soft, color-mix(in srgb, var(--company-theme-color, #15803d) 10%, #ffffff));
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 28%, #e2e8f0);
+}
+
+.o_sage_backend_form .o_sage_icon {
+    grid-row: 1 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(
+        135deg,
+        var(--company-theme-color, #15803d) 0%,
+        color-mix(in srgb, var(--company-theme-color, #15803d) 70%, #0f172a) 100%
+    );
+    color: var(--company-theme-text, #fff);
+    font-size: 24px;
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--company-theme-color, #15803d) 35%, transparent);
+}
+
+.o_sage_backend_form .o_sage_title_text {
+    min-width: 0;
+}
+
+.o_sage_backend_form .o_sage_meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-top: 8px;
+}
+
+.o_sage_backend_form .o_sage_meta_item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 35%, #475569);
+}
+
+.o_sage_backend_form .o_sage_meta_item .fa {
+    color: var(--company-theme-color, #15803d);
+}
+
+.o_sage_backend_form .o_sage_summary {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.o_sage_backend_form .o_sage_summary_item {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 6%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 18%, #e2e8f0);
+}
+
+.o_sage_backend_form .o_sage_summary_label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 45%, #64748b);
+    margin-bottom: 4px;
+}
+
+.o_sage_backend_form .o_sage_summary_value {
+    font-size: 14px;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 25%, #1e293b);
+    word-break: break-all;
+}
+
+.o_sage_backend_form .o_sage_panel,
+.o_sage_job_form .o_sage_panel,
+.o_sage_log_form .o_sage_panel {
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 5%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 16%, #e2e8f0);
+    margin-bottom: 12px;
+}
+
+.o_sage_backend_form .o_sage_panel_title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 50%, #64748b);
+    margin-bottom: 10px;
+}
+
+.o_sage_backend_form .o_notebook .nav-link.active,
+.o_sage_job_form .o_notebook .nav-link.active,
+.o_sage_log_form .o_notebook .nav-link.active {
+    color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    border-bottom-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+}
+
+.o_sage_backend_form .oe_button_box .oe_stat_button .o_button_icon,
+.o_sage_backend_form .oe_button_box .oe_stat_button .fa,
+.o_sage_backend_form .oe_button_box .oe_stat_button {
+    color: var(--company-theme-color, #15803d) !important;
+    border-color: color-mix(in srgb, var(--company-theme-color, #15803d) 35%, #e2e8f0) !important;
+}
+
+.o_sage_backend_form .o_field_boolean_toggle .form-check-input:checked,
+.o_sage_backend_form .form-check-input:checked,
+.o_sage_backend_form .o_boolean_toggle input:checked {
+    background-color: var(--company-theme-color, #15803d) !important;
+    border-color: var(--company-theme-color, #15803d) !important;
+}
+
+/* Import / transfer wizard */
+.o_form_view.o_sage_transfer_wizard .o_form_sheet,
+.o_sage_transfer_wizard .o_form_sheet {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 24px 32px 28px 32px !important;
+    border-left: 4px solid var(--company-theme-color, #15803d) !important;
+    box-sizing: border-box;
+}
+
+.o_sage_transfer_wizard .oe_title h1,
+.o_sage_transfer_wizard .o_sage_transfer_title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--company-theme-color, #15803d);
+}
+
+.o_sage_transfer_wizard header .btn-primary {
+    background-color: var(--company-theme-color, #15803d) !important;
+    border-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+.o_sage_transfer_wizard header .btn-secondary {
+    border-color: color-mix(in srgb, var(--company-theme-color, #15803d) 45%, #cbd5e1) !important;
+    color: var(--company-theme-color, #15803d) !important;
+    background: transparent !important;
+}
+
+.o_sage_transfer_wizard header .btn-secondary:hover {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 10%, #ffffff) !important;
+}
+
+.o_sage_transfer_wizard header .o_statusbar_status .o_arrow_button.btn-primary,
+.o_sage_transfer_wizard header .o_statusbar_status .o_arrow_button.o_arrow_button_current {
+    background-color: var(--company-theme-color, #15803d) !important;
+    border-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+.o_sage_import_wizard .o_sage_wizard_intro,
+.o_sage_transfer_wizard .o_sage_wizard_intro {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0 0 18px 0;
+    padding: 12px 16px 12px 18px;
+    border-radius: 10px;
+    background: var(--company-theme-accent-soft, color-mix(in srgb, var(--company-theme-color, #15803d) 10%, #ffffff));
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 22%, #e2e8f0);
+    border-left: 4px solid var(--company-theme-color, #15803d);
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 40%, #334155);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.o_sage_transfer_wizard .o_sage_wizard_intro .fa {
+    color: var(--company-theme-color, #15803d);
+    margin-top: 2px;
+}
+
+.o_sage_transfer_wizard .o_sage_transfer_setup_panel {
+    margin-bottom: 16px;
+    padding: 14px 18px 16px 18px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 5%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 16%, #e2e8f0);
+}
+
+.o_sage_transfer_wizard .o_sage_panel_title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 50%, #64748b);
+    margin-bottom: 10px;
+}
+
+.o_sage_transfer_wizard .o_sage_transfer_summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 0 16px 0;
+}
+
+.o_sage_transfer_wizard .o_sage_transfer_chip {
+    min-width: 140px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 18%, #e2e8f0);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.o_sage_transfer_wizard .o_sage_transfer_chip_label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 45%, #64748b);
+    margin-bottom: 2px;
+}
+
+.o_sage_transfer_wizard .o_sage_transfer_warn {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 8%, #fff7ed) !important;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 25%, #fed7aa) !important;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 35%, #9a3412) !important;
+    border-radius: 10px;
+    padding: 10px 14px;
+}
+
+.o_sage_transfer_wizard .o_sage_preview_table,
+.o_sage_transfer_wizard .o_sage_preview_table .o_field_widget,
+.o_sage_transfer_wizard .o_sage_preview_table .o_list_renderer,
+.o_sage_transfer_wizard .o_sage_preview_table .o_list_table {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.o_sage_transfer_wizard .o_sage_preview_table {
+    margin-left: 0;
+    padding: 4px 0 0 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 14%, #e2e8f0);
+    background: #fff;
+}
+
+.o_sage_transfer_wizard .o_sage_preview_table .o_list_renderer {
+    overflow-x: auto;
+}
+
+.o_sage_transfer_wizard .o_sage_preview_table thead th {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 8%, #ffffff) !important;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 55%, #334155) !important;
+    font-weight: 700;
+}
+
+.o_sage_transfer_wizard .o_sage_preview_table .form-check-input:checked {
+    background-color: var(--company-theme-color, #15803d) !important;
+    border-color: var(--company-theme-color, #15803d) !important;
+}
+
+.o_sage_transfer_wizard .o_sage_preview_table .badge {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 14%, #ffffff) !important;
+    color: var(--company-theme-color, #15803d) !important;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 28%, #ffffff);
+}
+
+.o_sage_import_wizard .o_sage_wizard_grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 24px;
+}
+
+@media (max-width: 768px) {
+    .o_sage_import_wizard .o_sage_wizard_grid {
+        grid-template-columns: 1fr;
+    }
+
+    .o_form_view.o_sage_transfer_wizard .o_form_sheet,
+    .o_sage_transfer_wizard .o_form_sheet {
+        padding: 18px 18px 22px 20px !important;
+    }
+}
+
+/* Job kanban */
+.o_kanban_view.o_sage_job_kanban .o_kanban_renderer.o_kanban_grouped {
+    --KanbanGroup-width: calc(100% / 5);
+    min-height: calc(100vh - 220px);
+}
+
+.o_kanban_view.o_sage_job_kanban .o_kanban_renderer.o_kanban_grouped .o_column_quick_create {
+    display: none !important;
+}
+
+.o_kanban_view.o_sage_job_kanban .o_sage_job_card {
+    border: none !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    margin: 8px 4px !important;
+    padding: 0 !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12) !important;
+}
+
+.o_kanban_view.o_sage_job_kanban .o_sage_job_card:hover {
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18) !important;
+    transform: translateY(-2px);
+}
+
+.o_kanban_view.o_sage_job_kanban .o_sage_job_banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    color: #fff;
+}
+
+.o_kanban_view.o_sage_job_kanban .o_sage_job_banner_pending { background: linear-gradient(120deg, #64748b, #475569); }
+.o_kanban_view.o_sage_job_kanban .o_sage_job_banner_running { background: linear-gradient(120deg, #38bdf8, #0284c7); }
+.o_kanban_view.o_sage_job_kanban .o_sage_job_banner_done { background: linear-gradient(120deg, #22c55e, #15803d); }
+.o_kanban_view.o_sage_job_kanban .o_sage_job_banner_error { background: linear-gradient(120deg, #f97316, #ea580c); }
+.o_kanban_view.o_sage_job_kanban .o_sage_job_banner_dead { background: linear-gradient(120deg, #ef4444, #b91c1c); }
+
+.o_kanban_view.o_sage_job_kanban .o_sage_job_banner_icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.o_kanban_view.o_sage_job_kanban .o_sage_job_title {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.o_kanban_view.o_sage_job_kanban .o_sage_job_body {
+    padding: 12px 14px 10px;
+    font-size: 12px;
+    color: #475569;
+}
+
+.o_kanban_view.o_sage_job_kanban .o_sage_job_row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+/* Backend kanban cards */
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_card {
+    border: none !important;
+    border-radius: 14px !important;
+    overflow: hidden;
+    margin: 8px 4px !important;
+    padding: 0 !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12) !important;
+}
+
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_card:hover {
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18) !important;
+}
+
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_banner {
+    padding: 14px 16px;
+    color: #fff;
+    background: linear-gradient(120deg, var(--company-theme-color, #15803d), color-mix(in srgb, var(--company-theme-color, #15803d) 65%, #0f172a));
+}
+
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_banner_ok {
+    background: linear-gradient(120deg, var(--company-theme-color, #15803d), color-mix(in srgb, var(--company-theme-color, #15803d) 65%, #0f172a));
+}
+
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_banner_fail {
+    background: linear-gradient(120deg, #ef4444, #b91c1c);
+}
+
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_banner_unknown {
+    background: linear-gradient(120deg, #64748b, #475569);
+}
+
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_banner_circuit {
+    background: linear-gradient(120deg, #f59e0b, #d97706);
+}
+
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_body {
+    padding: 14px 16px 16px 20px;
+}
+
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_body .fa {
+    color: var(--company-theme-color, #15803d);
+}
+
+.o_kanban_view.o_sage_backend_kanban .o_sage_backend_mode_badge {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 14%, #ffffff) !important;
+    color: var(--company-theme-color, #15803d) !important;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 30%, #ffffff);
+}
+    font-size: 12px;
+    color: #475569;
+}
+
+/* Log kanban */
+.o_kanban_view.o_sage_log_kanban .o_sage_log_card {
+    border: none !important;
+    border-radius: 12px !important;
+    margin: 8px 4px !important;
+    padding: 0 !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1) !important;
+}
+
+.o_kanban_view.o_sage_log_kanban .o_sage_log_banner_ok {
+    padding: 10px 14px;
+    color: #fff;
+    background: linear-gradient(120deg, #22c55e, #15803d);
+}
+
+.o_kanban_view.o_sage_log_kanban .o_sage_log_banner_fail {
+    padding: 10px 14px;
+    color: #fff;
+    background: linear-gradient(120deg, #ef4444, #b91c1c);
+}
+
+.o_kanban_view.o_sage_log_kanban .o_sage_log_body {
+    padding: 10px 14px 12px;
+    font-size: 12px;
+    color: #475569;
+}
+
+/* Mapping cards */
+.o_kanban_view.o_sage_mapping_kanban .o_sage_map_card {
+    border: none !important;
+    border-radius: 12px !important;
+    margin: 8px 4px !important;
+    padding: 14px 16px !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1) !important;
+}
+
+.o_kanban_view.o_sage_mapping_kanban .o_sage_map_title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+
+.o_kanban_view.o_sage_mapping_kanban .o_sage_map_code {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--company-theme-accent-soft, #f0fdf4);
+    color: var(--company-theme-color, #15803d);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Partner / product sage tab */
+.o_sage_partner_tab .o_sage_code_highlight,
+.o_sage_product_tab .o_sage_code_highlight {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--company-theme-accent-soft, #f0fdf4);
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 20%, #e2e8f0);
+}
+
+/* Dark payload / request panels (match export history) */
+.o_sage_job_form .o_sage_payload_panel,
+.o_sage_log_form .o_sage_payload_panel {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #0f172a;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 25%, #1e293b);
+}
+
+.o_sage_job_form .o_sage_payload_panel_error,
+.o_sage_log_form .o_sage_payload_panel_error {
+    border-color: color-mix(in srgb, #dc2626 40%, #1e293b);
+}
+
+.o_sage_job_form .o_sage_payload_panel_title,
+.o_sage_log_form .o_sage_payload_panel_title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 55%, #94a3b8);
+    margin-bottom: 8px;
+}
+
+.o_sage_job_form .o_sage_payload_panel_error .o_sage_payload_panel_title,
+.o_sage_log_form .o_sage_payload_panel_error .o_sage_payload_panel_title {
+    color: color-mix(in srgb, #f87171 70%, #94a3b8);
+}
+
+.o_sage_job_form .o_sage_payload_panel textarea,
+.o_sage_job_form .o_sage_payload_panel .o_field_text,
+.o_sage_log_form .o_sage_payload_panel textarea,
+.o_sage_log_form .o_sage_payload_panel .o_field_text {
+    color: #e2e8f0 !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: pre;
+    background: transparent !important;
+    border: none !important;
+    min-height: 280px;
+    box-shadow: none !important;
+}
+
+.o_sage_job_form .o_sage_payload_panel textarea:focus,
+.o_sage_log_form .o_sage_payload_panel textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}

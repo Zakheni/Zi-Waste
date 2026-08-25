@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_pastel_import_hourly" model="ir.cron">
+        <field name="name">Pastel: Import All (Hourly)</field>
+        <field name="model_id" ref="model_pastel_sync"/>
+        <field name="state">code</field>
+        <field name="code">model.import_all(customers=True, products=True, invoices=True)</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="numbercall">-1</field>
+        <field name="active">False</field>
+    </record>
+
+    <record id="ir_cron_pastel_push_queue" model="ir.cron">
+        <field name="name">Pastel: Process Push Queue</field>
+        <field name="model_id" ref="model_pastel_sync_queue"/>
+        <field name="state">code</field>
+        <field name="code">model.process_queue(limit=100)</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="numbercall">-1</field>
+        <field name="active">False</field>
+    </record>
+</odoo>

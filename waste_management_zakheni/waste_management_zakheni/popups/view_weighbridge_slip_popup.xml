@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wizard / popup — View Weighbridge Slip Popup -->
+<odoo>
+    <!-- Weighbridge Slip Popup -->
+    <!-- Views / records -->
+    <record id="view_weighbridge_slip_popup" model="ir.ui.view">
+        <field name="name">waste.service.request.weighbridge.slip.popup</field>
+        <field name="model">waste.service.request</field>
+        <field name="arch" type="xml">
+            <form string="Weighbridge Slip" create="false" edit="false">
+                <sheet>
+                    <field name="latest_worksheet_weighbridge_slip" widget="pdf_viewer" filename="latest_worksheet_weighbridge_slip_filename"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

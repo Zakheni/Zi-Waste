@@ -1,0 +1,311 @@
+/* Zakheni Waste — dark mode (toggle via data-wmz-theme on html) */
+
+html[data-wmz-theme="dark"] {
+    color-scheme: dark;
+}
+
+html[data-wmz-theme="dark"] body {
+    background-color: #0b1120;
+    color: #e2e8f0;
+}
+
+html[data-wmz-theme="dark"] #wrapwrap {
+    background-color: #0b1120;
+    color: #e2e8f0;
+}
+
+html[data-wmz-theme="dark"] #wrapwrap main,
+html[data-wmz-theme="dark"] .wmz-site-home,
+html[data-wmz-theme="dark"] .wmz-site-contact {
+    background-color: #0b1120;
+}
+
+html[data-wmz-theme="dark"] .wmz-site {
+    --wmz-slate: #e2e8f0;
+    --wmz-muted: #94a3b8;
+    --wmz-border: #334155;
+    --wmz-bg: #111827;
+    --wmz-green: #22c55e;
+    --wmz-green-dark: #16a34a;
+    --wmz-green-light: #064e3b;
+    color: #e2e8f0;
+}
+
+/* Hero — darker overlay & glass card in dark mode */
+html[data-wmz-theme="dark"] .wmz-site-hero {
+    color: #f1f5f9;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-hero_bg::after {
+    background: linear-gradient(
+        135deg,
+        rgba(2, 44, 22, 0.94) 0%,
+        rgba(15, 23, 42, 0.9) 45%,
+        rgba(5, 46, 22, 0.88) 100%
+    );
+}
+
+html[data-wmz-theme="dark"] .wmz-site-hero_badge {
+    background: rgba(15, 23, 42, 0.55);
+    border-color: rgba(134, 239, 172, 0.25);
+    color: #d1fae5;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-hero_card {
+    background: rgba(15, 23, 42, 0.62);
+    border-color: rgba(134, 239, 172, 0.22);
+}
+
+html[data-wmz-theme="dark"] .wmz-site-hero_card-icon {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-checklist .fa-check-circle {
+    color: #4ade80;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-hero .btn-light {
+    background: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #475569;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-hero .btn-light:hover {
+    background: #334155;
+    color: #fff;
+    border-color: #64748b;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-hero .btn-outline-light {
+    color: #e2e8f0;
+    border-color: rgba(226, 232, 240, 0.55);
+}
+
+html[data-wmz-theme="dark"] .wmz-site-hero .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-hero_photo {
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* Contact / page hero */
+html[data-wmz-theme="dark"] .wmz-site-page-hero_overlay {
+    background: linear-gradient(
+        135deg,
+        rgba(2, 44, 22, 0.92),
+        rgba(15, 23, 42, 0.88)
+    );
+}
+
+html[data-wmz-theme="dark"] .wmz-site-page-hero:not(.wmz-site-page-hero-photo) {
+    background: linear-gradient(135deg, #022c16, #14532d);
+}
+
+html[data-wmz-theme="dark"] .wmz-site-kicker {
+    color: #4ade80;
+}
+
+/* CTA band — deeper in dark mode */
+html[data-wmz-theme="dark"] .wmz-site-cta {
+    background: linear-gradient(135deg, #020617, #0f172a);
+    border-top-color: #334155;
+    border-bottom: 1px solid #334155;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-cta .btn-light {
+    background: #15803d;
+    color: #fff;
+    border: none;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-cta .btn-light:hover {
+    background: #16a34a;
+    color: #fff;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-cta .btn-outline-light {
+    color: #e2e8f0;
+    border-color: rgba(226, 232, 240, 0.5);
+}
+
+html[data-wmz-theme="dark"] .wmz-site-cta .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: #fff;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-btn-outline {
+    color: #6ee7b7;
+    border-color: #22c55e;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-btn-outline:hover {
+    background: #15803d;
+    border-color: #15803d;
+    color: #fff;
+}
+
+/* Header & footer — deeper forest in dark mode */
+html[data-wmz-theme="dark"] .wmz-site-header,
+html[data-wmz-theme="dark"] .wmz-site-footer-wrap {
+    --wmz-chrome-from: #022c16;
+    --wmz-chrome-to: #14532d;
+    --wmz-footer-bg: #022c16;
+    --wmz-footer-deep: #011a0e;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-header .o_navbar_mobile,
+html[data-wmz-theme="dark"] .wmz-site-header .offcanvas.o_navbar_mobile {
+    background: #0f172a !important;
+    color: #e2e8f0;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-header .o_navbar_mobile .nav-link {
+    color: #e2e8f0 !important;
+}
+
+/* Stats & sections */
+html[data-wmz-theme="dark"] .wmz-site-stats {
+    background: #111827;
+    border-bottom-color: #334155;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-stat_value {
+    color: #6ee7b7;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-stat_label {
+    color: #94a3b8;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-section {
+    background: transparent;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-section-alt {
+    background: var(--wmz-bg);
+}
+
+html[data-wmz-theme="dark"] .wmz-site-showcase-photo {
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
+}
+html[data-wmz-theme="dark"] .wmz-site-section_head h2,
+html[data-wmz-theme="dark"] .wmz-site-step h3,
+html[data-wmz-theme="dark"] .wmz-site-service h3,
+html[data-wmz-theme="dark"] .wmz-site-feature strong {
+    color: #f1f5f9;
+}
+
+/* Cards & panels */
+html[data-wmz-theme="dark"] .wmz-site-service,
+html[data-wmz-theme="dark"] .wmz-site-step,
+html[data-wmz-theme="dark"] .wmz-site-feature,
+html[data-wmz-theme="dark"] .wmz-site-contact-form-wrap,
+html[data-wmz-theme="dark"] .wmz-site-contact-info,
+html[data-wmz-theme="dark"] .wmz-site-contact-portal {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-service:hover,
+html[data-wmz-theme="dark"] .wmz-site-feature:hover {
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+}
+
+html[data-wmz-theme="dark"] .wmz-site-service p,
+html[data-wmz-theme="dark"] .wmz-site-step p,
+html[data-wmz-theme="dark"] .wmz-site-feature span,
+html[data-wmz-theme="dark"] .wmz-site-section_head p,
+html[data-wmz-theme="dark"] .wmz-site .text-muted,
+html[data-wmz-theme="dark"] .wmz-site p.text-muted,
+html[data-wmz-theme="dark"] .wmz-site-contact-portal p {
+    color: #94a3b8 !important;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-contact-portal h3,
+html[data-wmz-theme="dark"] .wmz-site-contact-portal h6 {
+    color: #f1f5f9;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-service_icon,
+html[data-wmz-theme="dark"] .wmz-site-feature > .fa,
+html[data-wmz-theme="dark"] .wmz-site-contact-item_icon {
+    background: #064e3b;
+    color: #6ee7b7;
+}
+
+html[data-wmz-theme="dark"] .wmz-hero-carousel {
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+    border: 1px solid #334155;
+}
+
+html[data-wmz-theme="dark"] .wmz-hero-carousel_indicators .active {
+    background-color: #4ade80;
+}
+
+html[data-wmz-theme="dark"] .wmz-hero-carousel_control {
+    filter: brightness(0.85);
+}
+
+/* Contact form */
+html[data-wmz-theme="dark"] .wmz-site-form .form-label {
+    color: #e2e8f0;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-form .form-control,
+html[data-wmz-theme="dark"] .wmz-site-form .form-select,
+html[data-wmz-theme="dark"] .wmz-site-form textarea {
+    background: #0f172a;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-form .form-control:focus {
+    background: #0f172a;
+    border-color: #22c55e;
+    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.2);
+}
+
+html[data-wmz-theme="dark"] .wmz-site-form .form-control::placeholder {
+    color: #64748b;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-link {
+    color: #6ee7b7;
+}
+
+html[data-wmz-theme="dark"] .wmz-site-link:hover {
+    color: #a7f3d0;
+}
+
+/* Theme toggle button */
+.wmz-theme-toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.05rem;
+}
+
+html[data-wmz-theme="dark"] .wmz-theme-toggle .wmz-theme-icon-light {
+    color: #fde047;
+}
+
+/* Generic website pages (non-marketing) */
+html[data-wmz-theme="dark"] main .oe_structure {
+    color: #e2e8f0;
+}
+
+html[data-wmz-theme="dark"] .o_footer_copyright {
+    color: #fff !important;
+}
+
+html[data-wmz-theme="dark"] .o_portal_wrap {
+    background-color: #0f172a;
+}
+
+html[data-wmz-theme="dark"] #wrap:has(.o_portal_wrap) {
+    background-color: #0f172a;
+}

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vehicle Inspection - Menus
+    Root menu and navigation entries for inspections and configuration.
+-->
+<odoo>
+
+    <!-- ============================= -->
+    <!-- ROOT MENU -->
+    <!-- ============================= -->
+    <menuitem id="menu_vehicle_inspection_root"
+              name="Vehicle Inspections"
+              sequence="50"/>
+
+    <!-- ============================= -->
+    <!-- INSPECTIONS MENU -->
+    <!-- ============================= -->
+    <menuitem id="menu_vehicle_inspection"
+              name="Inspections"
+              parent="menu_vehicle_inspection_root"
+              action="vehicle_inspection.action_vehicle_inspection"/>
+
+    <!-- ============================= -->
+    <!-- CATEGORIES MENU -->
+    <!-- ============================= -->
+    <menuitem id="menu_inspection_category"
+              name="Inspection Categories"
+              parent="menu_vehicle_inspection_root"
+              action="vehicle_inspection.action_inspection_category"/>
+
+    <!-- ============================= -->
+    <!-- ITEMS MENU -->
+    <!-- ============================= -->
+    <menuitem id="menu_inspection_item"
+              name="Inspection Items"
+              parent="menu_vehicle_inspection_root"
+              action="vehicle_inspection.action_inspection_item"/>
+
+<!--    <menuitem id="menu_configuration"-->
+<!--              name="Configuration "-->
+<!--              parent="menu_vehicle_inspection_root"/>-->
+
+<!--    <menuitem id="menu_configuration_history"-->
+<!--              name="Vehicle Inspection History"-->
+<!--              parent="menu_configuration"-->
+<!--              action="vehicle_inspection.action_vehicle_inspection_history"/>-->
+
+    <!--    <menuitem id="menu_vehicle_inspection_dashboard"-->
+    <!--              name="Dashboard"-->
+    <!--              parent="menu_vehicle_inspection_root"-->
+    <!--              action="action_vehicle_inspection_dashboard"-->
+    <!--              sequence="1"/>-->
+
+
+</odoo>

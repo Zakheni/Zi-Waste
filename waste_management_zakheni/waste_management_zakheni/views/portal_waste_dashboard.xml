@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Portal — Portal Waste Dashboard -->
+<odoo>
+
+    <template id="portal_waste_dashboard" name="Waste Dashboard">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="/my/home">
+                            <i class="fa fa-home"/> My Account
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">
+                        <span>Reporting &amp; Dashboard</span>
+                    </li>
+                </ol>
+            </t>
+
+            <div class="o_portal_wrap wmz-portal">
+
+                <div class="wmz-portal-hero mb-4">
+                    <h1 class="wmz-portal-hero_title">
+                        Waste Service Dashboard
+                        <t t-if="is_agent">
+                            <small class="d-block fs-6 fw-normal mt-1 opacity-90">Agent view</small>
+                        </t>
+                    </h1>
+                    <p class="wmz-portal-hero_subtitle mb-0">
+                        Overview of your waste service requests, revenue, and operational activity.
+                    </p>
+                    <div class="wmz-dashboard-actions">
+                        <a href="/my/waste/report" target="_blank" class="btn btn-light btn-sm">
+                            <i class="fa fa-print me-1"/> Print Report
+                        </a>
+                        <a href="/my/waste/requests" class="btn btn-light btn-sm">
+                            <i class="fa fa-list me-1"/> View Requests
+                        </a>
+                        <t t-if="not is_agent">
+                            <a href="/my/waste/request/new" class="btn btn-success btn-sm">
+                                <i class="fa fa-plus me-1"/> Log New Request
+                            </a>
+                        </t>
+                    </div>
+                </div>
+
+                <!-- KPI tiles -->
+                <div class="wmz-dashboard-panel mb-4">
+                    <h2 class="wmz-dashboard-panel_title mb-1">At a glance</h2>
+                    <p class="text-muted small mb-0">Click a tile to filter your request list.</p>
+
+                    <div class="wmz-kpi-grid">
+                        <a class="wmz-kpi-item" href="/my/waste/requests">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div>
+                                    <div class="wmz-kpi-label">Total Requests</div>
+                                    <div class="wmz-kpi-value"><t t-esc="total_requests or 0"/></div>
+                                </div>
+                                <div class="wmz-kpi-icon"><i class="fa fa-recycle"/></div>
+                            </div>
+                        </a>
+
+                        <a class="wmz-kpi-item" href="/my/waste/requests?state=open">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div>
+                                    <div class="wmz-kpi-label">Open</div>
+                                    <div class="wmz-kpi-value wmz-kpi-value-primary"><t t-esc="open_requests or 0"/></div>
+                                </div>
+                                <div class="wmz-kpi-icon wmz-kpi-icon-primary"><i class="fa fa-clock-o"/></div>
+                            </div>
+                        </a>
+
+                        <a class="wmz-kpi-item" href="/my/waste/requests?state=scheduled">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div>
+                                    <div class="wmz-kpi-label">Scheduled</div>
+                                    <div class="wmz-kpi-value"><t t-esc="scheduled_requests or 0"/></div>
+                                </div>
+                                <div class="wmz-kpi-icon wmz-kpi-icon-info"><i class="fa fa-calendar"/></div>
+                            </div>
+                        </a>
+
+                        <a class="wmz-kpi-item" href="/my/waste/requests?state=dispatched">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div>
+                                    <div class="wmz-kpi-label">Dispatched</div>
+                                    <div class="wmz-kpi-value"><t t-esc="dispatched_requests or 0"/></div>
+                                </div>
+                                <div class="wmz-kpi-icon wmz-kpi-icon-warning"><i class="fa fa-truck"/></div>
+                            </div>
+                        </a>
+
+                        <a class="wmz-kpi-item" href="/my/waste/requests?state=service_delivered">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div>
+                                    <div class="wmz-kpi-label">Delivered</div>
+                                    <div class="wmz-kpi-value"><t t-esc="delivered_requests or 0"/></div>
+                                </div>
+                                <div class="wmz-kpi-icon wmz-kpi-icon-info"><i class="fa fa-check-square-o"/></div>
+                            </div>
+                        </a>
+
+                        <a class="wmz-kpi-item" href="/my/waste/requests?state=done">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div>
+                                    <div class="wmz-kpi-label">Completed</div>
+                                    <div class="wmz-kpi-value wmz-kpi-value-success"><t t-esc="done_requests or 0"/></div>
+                                </div>
+                                <div class="wmz-kpi-icon wmz-kpi-icon-success"><i class="fa fa-check"/></div>
+                            </div>
+                        </a>
+
+                        <a class="wmz-kpi-item" href="/my/waste/requests?state=cancelled">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div>
+                                    <div class="wmz-kpi-label">Cancelled</div>
+                                    <div class="wmz-kpi-value wmz-kpi-value-danger"><t t-esc="cancelled_requests or 0"/></div>
+                                </div>
+                                <div class="wmz-kpi-icon wmz-kpi-icon-danger"><i class="fa fa-times-circle"/></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-6">
+                        <div class="wmz-dashboard-panel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h3 class="wmz-dashboard-panel_title">Revenue by Customer</h3>
+                                <span class="wmz-dashboard-panel_badge">Worksheets</span>
+                            </div>
+                            <canvas id="wmzRevenueByCustomer" height="130" class="w-100 wmz-small-chart"/>
+                            <t t-if="chart_labels_json == '[]'">
+                                <p class="text-muted small mt-2 mb-0">
+                                    No worksheet data yet to compute revenue by customer.
+                                </p>
+                            </t>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="wmz-dashboard-panel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h3 class="wmz-dashboard-panel_title">Bin Collection vs Revenue</h3>
+                                <span class="wmz-dashboard-panel_badge">Quantity vs billing</span>
+                            </div>
+                            <canvas id="wmzBinsVsRevenue" height="180" class="w-100 wmz-small-chart"/>
+                            <t t-if="chart_labels_json == '[]'">
+                                <p class="text-muted small mt-2 mb-0">
+                                    No worksheet data yet to show collection vs revenue.
+                                </p>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Client report -->
+                <div class="wmz-dashboard-panel mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h3 class="wmz-dashboard-panel_title mb-0">Client Report</h3>
+                        <span class="wmz-dashboard-panel_badge">Manifest • Sales Order • Invoice</span>
+                    </div>
+
+                    <form method="get" action="/my/waste" class="row g-2 mb-3 wmz-dashboard-filters">
+                        <div class="col-12 col-md-3">
+                            <label class="form-label small text-muted mb-1">Date (from)</label>
+                            <input type="date" name="date_from" class="form-control form-control-sm"
+                                   t-att-value="report_filters and report_filters.get('date_from') or ''"/>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label small text-muted mb-1">Date (to)</label>
+                            <input type="date" name="date_to" class="form-control form-control-sm"
+                                   t-att-value="report_filters and report_filters.get('date_to') or ''"/>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label small text-muted mb-1">Manifest No</label>
+                            <input type="text" name="manifest_no" class="form-control form-control-sm"
+                                   placeholder="e.g. MNF-0001"
+                                   t-att-value="report_filters and report_filters.get('manifest_no') or ''"/>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label small text-muted mb-1">Sales Order</label>
+                            <input type="text" name="sale_order_no" class="form-control form-control-sm"
+                                   placeholder="e.g. S00012"
+                                   t-att-value="report_filters and report_filters.get('sale_order_no') or ''"/>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label small text-muted mb-1">Invoice No</label>
+                            <input type="text" name="invoice_no" class="form-control form-control-sm"
+                                   placeholder="e.g. INV/2025/0012"
+                                   t-att-value="report_filters and report_filters.get('invoice_no') or ''"/>
+                        </div>
+                        <div class="col-12 d-flex gap-2 mt-1">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fa fa-filter me-1"/> Apply Filters
+                            </button>
+                            <a href="/my/waste" class="btn btn-outline-secondary btn-sm">
+                                <i class="fa fa-times me-1"/> Clear
+                            </a>
+                        </div>
+                    </form>
+
+                    <div class="wmz-dashboard-table-wrap">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Planned Date</th>
+                                    <th>Manifest</th>
+                                    <th>Sales Order</th>
+                                    <th>Invoice</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="not report_rows">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            No records found for the selected filters.
+                                        </td>
+                                    </tr>
+                                </t>
+                                <t t-foreach="report_rows" t-as="r">
+                                    <tr>
+                                        <td><t t-esc="r.get('planned_date')"/></td>
+                                        <td>
+                                            <t t-if="r.get('manifest')"><t t-esc="r['manifest'].name"/></t>
+                                        </td>
+                                        <td>
+                                            <t t-if="r.get('sale_order')"><t t-esc="r['sale_order'].name"/></t>
+                                        </td>
+                                        <td>
+                                            <t t-if="r.get('invoice')"><t t-esc="r['invoice'].name"/></t>
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            <t t-esc="r.get('total') or 0.0"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <t t-if="report_rows">
+                        <div class="wmz-dashboard-grand-total">
+                            <span class="text-muted me-2">Grand Total:</span>
+                            <strong class="text-success">
+                                <t t-esc="sum([x.get('total') or 0.0 for x in report_rows])"/>
+                            </strong>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Driver trips -->
+                <div class="wmz-dashboard-panel mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h3 class="wmz-dashboard-panel_title mb-0">Recent Driver Trips</h3>
+                        <span class="wmz-dashboard-panel_badge">Latest completed worksheets</span>
+                    </div>
+
+                    <div class="wmz-dashboard-table-wrap">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date / Arrival</th>
+                                    <th>Driver / Provider</th>
+                                    <th>Request</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th class="text-end">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="not driver_trips_rows">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            No trips found yet.
+                                        </td>
+                                    </tr>
+                                </t>
+                                <t t-foreach="driver_trips_rows" t-as="trow">
+                                    <tr>
+                                        <td><t t-esc="trow.get('arrival')"/></td>
+                                        <td><t t-esc="trow.get('who') or '—'"/></td>
+                                        <td><t t-esc="trow.get('request')"/></td>
+                                        <td class="text-end"><t t-esc="trow.get('qty') or 0.0"/></td>
+                                        <td class="text-end fw-semibold"><t t-esc="trow.get('revenue') or 0.0"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <a href="/my/home" class="btn btn-outline-secondary">
+                        <i class="fa fa-arrow-left me-1"/> Back to My Account
+                    </a>
+                </div>
+
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var labels = <t t-raw="chart_labels_json or '[]'"/>;
+                        var revenueData = <t t-raw="chart_revenue_json or '[]'"/>;
+                        var binsData = <t t-raw="chart_bins_json or '[]'"/>;
+
+                        var green = '#15803d';
+                        var greenLight = '#86efac';
+
+                        var ctxPie = document.getElementById('wmzRevenueByCustomer');
+                        if (ctxPie &amp;&amp; typeof Chart !== 'undefined' &amp;&amp; labels.length) {
+                            new Chart(ctxPie, {
+                                type: 'pie',
+                                data: {
+                                    labels: labels,
+                                    datasets: [{
+                                        data: revenueData,
+                                        backgroundColor: ['#15803d', '#2563eb', '#0891b2', '#d97706', '#7c3aed', '#dc2626']
+                                    }]
+                                },
+                                options: { plugins: { legend: { position: 'bottom' } } }
+                            });
+                        }
+
+                        var ctxBar = document.getElementById('wmzBinsVsRevenue');
+                        if (ctxBar &amp;&amp; typeof Chart !== 'undefined' &amp;&amp; labels.length) {
+                            new Chart(ctxBar, {
+                                type: 'bar',
+                                data: {
+                                    labels: labels,
+                                    datasets: [
+                                        { label: 'Revenue', data: revenueData, backgroundColor: green, yAxisID: 'y' },
+                                        { label: 'Bin Quantity', data: binsData, backgroundColor: greenLight, yAxisID: 'y1' }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    interaction: { mode: 'index', intersect: false },
+                                    scales: {
+                                        y: { beginAtZero: true, position: 'left' },
+                                        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                </script>
+            </div>
+        </t>
+    </template>
+
+</odoo>

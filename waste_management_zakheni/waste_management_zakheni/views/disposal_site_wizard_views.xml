@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_waste_request_disposal_wizard_form" model="ir.ui.view">
+        <field name="name">waste.request.disposal.wizard.form</field>
+        <field name="model">waste.request.disposal.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Find Disposal Site" class="o_wmz_provider_wizard">
+                <field name="request_id" invisible="1"/>
+                <field name="map_data_json" invisible="1"/>
+                <field name="job_latitude" invisible="1"/>
+                <field name="job_longitude" invisible="1"/>
+
+                <group string="Pickup location" class="o_wmz_provider_wizard_intro">
+                    <field name="pickup_point_name" readonly="1"/>
+                    <field name="waste_type_label" readonly="1"/>
+                    <field name="job_address" readonly="1" nolabel="0" colspan="2"/>
+                </group>
+
+                <group string="Map" class="o_wmz_provider_map_section">
+                    <field name="map_data_json" widget="provider_map" nolabel="1" colspan="2" readonly="1"/>
+                </group>
+
+                <group string="Nearest disposal sites (closest first)">
+                    <field name="site_candidate_ids" nolabel="1" colspan="2">
+                        <tree create="false" delete="false" edit="false"
+                              decoration-bf="rank == 1"
+                              decoration-success="rank == 1"
+                              decoration-info="site_id == parent.disposal_site_id">
+                            <field name="rank" string="#"/>
+                            <field name="site_display" string="Site"/>
+                            <field name="site_address" string="Location"/>
+                            <field name="site_waste_type" string="Waste Type" optional="hide"/>
+                            <field name="distance_km" string="Distance (km)"/>
+                            <field name="capacity_tons" string="Capacity (t)" optional="hide"/>
+                            <field name="site_id" column_invisible="1"/>
+                            <button name="action_select" type="object"
+                                    string="Select" icon="fa-check" class="btn-link"/>
+                        </tree>
+                    </field>
+                </group>
+
+                <group string="Selected disposal site">
+                    <field name="disposal_site_id" readonly="1"/>
+                </group>
+
+                <footer>
+                    <button name="action_search_sites"
+                            type="object"
+                            string="Search nearest sites"
+                            class="btn-primary"
+                            icon="fa-search"/>
+                    <button name="action_apply_site"
+                            type="object"
+                            string="Use this site"
+                            class="btn-success"
+                            icon="fa-check"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

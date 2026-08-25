@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Views — Transport Rate Views -->
+<odoo>
+
+    <!-- ================================================== -->
+    <!-- TREE VIEW -->
+    <!-- ================================================== -->
+    <record id="view_waste_transport_tariff_tree" model="ir.ui.view">
+        <field name="name">waste.transport.tariff.tree</field>
+        <field name="model">waste.transport.tariff</field>
+        <field name="arch" type="xml">
+
+            <tree string="Transport Tariffs">
+
+                <field name="name"/>
+
+                <field name="rate_type"/>
+
+                <field name="company_id"/>
+
+                <field name="date_from"/>
+
+                <field name="date_to"/>
+
+                <field name="active"/>
+
+            </tree>
+
+        </field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- FORM VIEW -->
+    <!-- ================================================== -->
+    <record id="view_waste_transport_tariff_form" model="ir.ui.view">
+        <field name="name">waste.transport.tariff.form</field>
+        <field name="model">waste.transport.tariff</field>
+        <field name="arch" type="xml">
+
+            <form string="Transport Tariff">
+
+                <sheet>
+
+                    <!-- ====================================== -->
+                    <!-- HEADER -->
+                    <!-- ====================================== -->
+                    <group>
+
+                        <group>
+
+                            <field name="name"/>
+
+                            <field name="rate_type"/>
+
+                            <field name="company_id"/>
+
+                            <field name="active"/>
+
+                        </group>
+
+                        <group>
+
+                            <field name="date_from"/>
+
+                            <field name="date_to"/>
+
+                        </group>
+
+                    </group>
+
+                    <notebook>
+
+                        <page string="Pricing">
+
+                            <group>
+
+                                <!-- LEFT SIDE -->
+                                <group>
+
+                                    <field name="rate"
+                                           invisible="rate_type not in ('tier_bin','tier_distance')"/>
+
+                                    <field name="base_rate"
+                                           invisible="rate_type not in ('flat',
+                                                'hybrid_bin_trip',
+                                                'hybrid_trip_km')"/>
+
+                                    <field name="increment_rate"
+                                           invisible="rate_type != 'flat'"/>
+
+                                </group>
+
+                                <group>
+
+                                    <!-- ===================================== -->
+                                    <!-- MASTER PER BIN RATE (READ ONLY) -->
+                                    <!-- ===================================== -->
+                                    <field name="display_per_bin_rate"
+                                           string="Master Per Bin Rate"
+                                           readonly="1"
+                                           invisible="rate_type != 'per_bin_km'"/>
+
+                                    <!-- ===================================== -->
+                                    <!-- PER BIN RATE -->
+                                    <!-- ===================================== -->
+                                    <field name="per_bin_rate"
+                                           string="Per Bin Rate"
+                                           invisible="rate_type not in ('per_bin',
+                                        'hybrid_bin_trip',
+                                        'per_bin_km')"/>
+
+                                    <!-- ===================================== -->
+                                    <!-- MASTER PER TRIP RATE (READ ONLY) -->
+                                    <!-- ===================================== -->
+                                    <field name="display_per_trip_rate"
+                                           string="Master Per Trip Rate"
+                                           readonly="1"
+                                           invisible="rate_type != 'per_trip_km'"/>
+
+                                    <!-- ===================================== -->
+                                    <!-- PER TRIP RATE -->
+                                    <!-- ===================================== -->
+                                    <field name="per_trip_rate"
+                                           string="Per Trip Rate"
+                                           invisible="rate_type not in ('per_trip',
+                                        'per_trip_km')"/>
+
+                                    <!-- ===================================== -->
+                                    <!-- PER KM RATE -->
+                                    <!-- ===================================== -->
+                                    <field name="per_km_rate"
+                                           invisible="rate_type not in ('per_bin_km',
+                                        'per_trip_km',
+                                        'hybrid_trip_km')"/>
+
+                                    <!-- ===================================== -->
+                                    <!-- PER TON RATE -->
+                                    <!-- ===================================== -->
+                                    <field name="per_ton_rate"
+                                           invisible="rate_type != 'per_ton'"/>
+
+                                    <!-- ===================================== -->
+                                    <!-- PER KG RATE -->
+                                    <!-- ===================================== -->
+                                    <field name="per_kg_rate"
+                                           invisible="rate_type != 'per_kg'"/>
+
+                                </group>
+
+                            </group>
+
+                        </page>
+
+                        <!-- ================================== -->
+                        <!-- TIERING -->
+                        <!-- ================================== -->
+                        <page string="Tiering"
+                              invisible="rate_type not in ('tier_bin','tier_distance')">
+
+                            <group>
+
+                                <group invisible="rate_type != 'tier_bin'">
+
+                                    <field name="min_bin_qty"/>
+
+                                    <field name="max_bin_qty"/>
+
+                                </group>
+
+                                <group invisible="rate_type != 'tier_distance'">
+
+                                    <field name="min_distance"/>
+
+                                    <field name="max_distance"/>
+
+                                </group>
+
+                            </group>
+
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+
+                <!-- ====================================== -->
+                <!-- CHATTER -->
+                <!-- ====================================== -->
+                <chatter/>
+
+            </form>
+
+        </field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- SEARCH VIEW -->
+    <!-- ================================================== -->
+    <record id="view_waste_transport_tariff_search" model="ir.ui.view">
+        <field name="name">waste.transport.tariff.search</field>
+        <field name="model">waste.transport.tariff</field>
+        <field name="arch" type="xml">
+
+            <search string="Search Transport Tariffs">
+
+                <field name="name"/>
+
+                <field name="rate_type"/>
+
+                <field name="company_id"/>
+
+                <field name="active"/>
+
+                <group expand="0"
+                       string="Group By">
+
+                    <filter string="Rate Type"
+                            name="group_by_rate_type"
+                            context="{'group_by':'rate_type'}"/>
+
+                    <filter string="Company"
+                            name="group_by_company"
+                            context="{'group_by':'company_id'}"/>
+
+                </group>
+
+            </search>
+
+        </field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- ACTION -->
+    <!-- ================================================== -->
+    <record id="action_waste_transport_tariff" model="ir.actions.act_window">
+        <field name="name">Transport Tariffs</field>
+        <field name="res_model">waste.transport.tariff</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_waste_transport_tariff_search"/>
+
+    </record>
+
+</odoo>
+

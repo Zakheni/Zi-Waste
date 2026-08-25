@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <!-- Kept for upgrade path; kanban views are intentional and must not be deleted. -->
+</odoo>

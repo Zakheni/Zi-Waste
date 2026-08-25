@@ -1,0 +1,17 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sage_backend_user,sage.backend user,model_sage_backend,sage_connector.group_sage_user,1,0,0,0
+access_sage_backend_manager,sage.backend manager,model_sage_backend,sage_connector.group_sage_manager,1,1,1,1
+access_sage_job_user,sage.job user,model_sage_job,sage_connector.group_sage_user,1,0,0,0
+access_sage_job_manager,sage.job manager,model_sage_job,sage_connector.group_sage_manager,1,1,1,1
+access_sage_sync_log_user,sage.sync.log user,model_sage_sync_log,sage_connector.group_sage_user,1,0,0,0
+access_sage_sync_log_manager,sage.sync.log manager,model_sage_sync_log,sage_connector.group_sage_manager,1,1,1,1
+access_sage_mapping_tax_user,sage.mapping.tax user,model_sage_mapping_tax,sage_connector.group_sage_user,1,0,0,0
+access_sage_mapping_tax_manager,sage.mapping.tax manager,model_sage_mapping_tax,sage_connector.group_sage_manager,1,1,1,1
+access_sage_mapping_journal_user,sage.mapping.journal user,model_sage_mapping_journal,sage_connector.group_sage_user,1,0,0,0
+access_sage_mapping_journal_manager,sage.mapping.journal manager,model_sage_mapping_journal,sage_connector.group_sage_manager,1,1,1,1
+access_sage_transfer_wizard_user,sage.transfer.wizard user,model_sage_transfer_wizard,sage_connector.group_sage_user,1,1,1,1
+access_sage_transfer_wizard_manager,sage.transfer.wizard manager,model_sage_transfer_wizard,sage_connector.group_sage_manager,1,1,1,1
+access_sage_transfer_line_user,sage.transfer.line user,model_sage_transfer_line,sage_connector.group_sage_user,1,1,1,1
+access_sage_transfer_line_manager,sage.transfer.line manager,model_sage_transfer_line,sage_connector.group_sage_manager,1,1,1,1
+access_sage_transfer_inv_line_user,sage.transfer.invoice.line user,model_sage_transfer_invoice_line,sage_connector.group_sage_user,1,1,1,1
+access_sage_transfer_inv_line_manager,sage.transfer.invoice.line manager,model_sage_transfer_invoice_line,sage_connector.group_sage_manager,1,1,1,1

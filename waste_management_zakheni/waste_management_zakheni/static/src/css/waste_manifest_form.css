@@ -1,0 +1,129 @@
+/* Waste manifest (service request) form layout */
+
+.o_wmz_manifest_form .o_form_sheet {
+    padding: 24px 32px !important;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_header {
+    margin-bottom: 16px;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_title {
+    margin-bottom: 12px;
+}
+.o_wmz_manifest_form .o_wmz_manifest_title h1 {
+    margin-bottom: 4px;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_title .o_form_label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_subtitle {
+    margin-top: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--wmz-subtitle-color, #546e7a);
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 16px 20px;
+    border-radius: 10px;
+    background: var(--wmz-summary-bg, linear-gradient(90deg, #f8fafc 0%, #eef2ff 100%));
+    border: 1px solid var(--wmz-summary-border, #e2e8f0);
+}
+.o_wmz_manifest_form .o_wmz_manifest_summary_item {
+    min-width: 0;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_summary_label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--wmz-summary-label, #64748b);
+    margin-bottom: 2px;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_summary_value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wmz-summary-value, #1e293b);
+    line-height: 1.35;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_info group > label {
+    font-weight: 600;
+}
+
+.o_wmz_manifest_form .oe_button_box .oe_stat_button .o_stat_value {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Status alerts (authorised / rejected / amendments) */
+.o_wmz_manifest_form .o_wmz_manifest_alert {
+    margin: 0 0 16px;
+    padding: 14px 18px;
+    padding-right: 4.5rem;
+    border-radius: 8px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_alert.alert-success {
+    background-color: var(--wmz-alert-success-bg, #d1fae5) !important;
+    background-image: none !important;
+    border-color: var(--wmz-alert-success-border, #a7f3d0) !important;
+    color: var(--wmz-alert-success-text, #065f46) !important;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_alert.alert-danger {
+    background-color: var(--wmz-alert-danger-bg, #fee2e2) !important;
+    background-image: none !important;
+    border-color: var(--wmz-alert-danger-border, #fecaca) !important;
+    color: var(--wmz-alert-danger-text, #991b1b) !important;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_alert.alert-info {
+    background-color: var(--wmz-alert-info-bg, #dbeafe) !important;
+    background-image: none !important;
+    border-color: var(--wmz-alert-info-border, #bfdbfe) !important;
+    color: var(--wmz-alert-info-text, #1e40af) !important;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_alert .fa {
+    color: inherit;
+    opacity: 0.9;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_alert strong {
+    color: inherit;
+}
+
+.o_wmz_manifest_form .o_wmz_manifest_alert .o_field_widget,
+.o_wmz_manifest_form .o_wmz_manifest_alert .o_field_widget span {
+    color: inherit !important;
+}
+
+/* Authorised / rejected ribbon on dark forms */
+.o_wmz_manifest_form .ribbon span.text-bg-success {
+    background-color: var(--wmz-ribbon-success-bg, #198754) !important;
+    color: #ffffff !important;
+}
+
+.o_wmz_manifest_form .ribbon span.text-bg-danger {
+    background-color: var(--wmz-ribbon-danger-bg, #dc3545) !important;
+    color: #ffffff !important;
+}

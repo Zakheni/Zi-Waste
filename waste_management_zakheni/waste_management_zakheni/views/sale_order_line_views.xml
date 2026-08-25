@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Views — Sale Order Line Views -->
+<odoo>
+    <!--    <record id="view_order_form_transport_bins" model="ir.ui.view">-->
+    <!--        <field name="name">sale.order.form.transport.bins</field>-->
+    <!--        <field name="model">sale.order</field>-->
+    <!--        <field name="inherit_id" ref="sale.view_order_form"/>-->
+    <!--        <field name="arch" type="xml">-->
+
+    <!--            &lt;!&ndash; ========================================== &ndash;&gt;-->
+    <!--            &lt;!&ndash; ADD NUMBER OF BINS BEFORE QUANTITY &ndash;&gt;-->
+    <!--            &lt;!&ndash; ========================================== &ndash;&gt;-->
+    <!--            <xpath expr="//field[@name='order_line']/tree//field[@name='product_uom_qty']"-->
+    <!--                   position="before">-->
+
+    <!--                <field name="number_of_bins"/>-->
+
+    <!--            </xpath>-->
+
+    <!--            &lt;!&ndash; ========================================== &ndash;&gt;-->
+    <!--            &lt;!&ndash; ADD NUMBER OF BINS IN FORM VIEW &ndash;&gt;-->
+    <!--            &lt;!&ndash; ========================================== &ndash;&gt;-->
+    <!--            <xpath expr="//field[@name='order_line']/form//field[@name='product_uom_qty']"-->
+    <!--                   position="before">-->
+
+    <!--                <field name="number_of_bins"/>-->
+
+    <!--            </xpath>-->
+
+    <!--        </field>-->
+
+
+    <!--    </record>-->
+
+    <record id="view_order_form_transport_bins"
+            model="ir.ui.view">
+
+        <field name="name">sale.order.form.transport.bins</field>
+
+        <field name="model">sale.order</field>
+
+        <field name="inherit_id" ref="sale.view_order_form"/>
+
+        <field name="arch" type="xml">
+
+            <!-- ===================================================== -->
+            <!-- TREE VIEW -->
+            <!-- ===================================================== -->
+            <xpath expr="//field[@name='order_line']/tree//field[@name='product_uom_qty']"
+                   position="before">
+
+                <!--            <field name="transport_tariff_id"-->
+                <!--                   optional="show"/>-->
+
+                <field name="number_of_bins" string="Bins"
+                       optional="show"/>
+
+                <field name="distance_km" string="Distance"
+                       optional="show"/>
+
+                <field name="number_of_trips"
+                       optional="show"/>
+
+                <field name="weight_ton" string="Ton"
+                       optional="show"
+                      />
+
+                <field name="weight_kg" string="kg"
+                       optional="show"/>
+
+
+
+            </xpath>
+
+            <!-- ===================================================== -->
+            <!-- FORM VIEW -->
+            <!-- ===================================================== -->
+            <xpath expr="//field[@name='order_line']/form//field[@name='product_uom_qty']"
+                   position="before">
+
+                    <field name="product_transport_rate_type" invisible="1"/>
+
+
+                <group string="Transport Details">
+
+                    <!--                    <group>-->
+
+                    <!--                        &lt;!&ndash;                    <field name="transport_tariff_id"/>&ndash;&gt;-->
+
+                    <!--                        <field name="number_of_bins" string="Bins"/>-->
+
+                    <!--                    </group>-->
+
+                    <!--                    <group>-->
+
+                    <!--                        <field name="distance_km"/>-->
+
+                    <!--                        <field name="number_of_trips"/>-->
+
+                    <!--                    </group>-->
+
+                    <!--                    <group>-->
+                    <!--                        <field name="weight_ton"-->
+                    <!--                               invisible="product_transport_rate_type != 'per_ton'"/>-->
+
+                    <!--                        <field name="weight_kg"-->
+                    <!--                               invisible="product_transport_rate_type != 'per_kg'"/>-->
+                    <!--                    </group>-->
+
+
+                    <group>
+                        <field name="number_of_bins"/>
+                        <field name="distance_km"/>
+                    </group>
+
+                    <group>
+                        <field name="number_of_trips"/>
+
+                        <field name="weight_ton"
+                               invisible="product_transport_rate_type != 'per_ton'"/>
+
+                        <field name="weight_kg"
+                               invisible="product_transport_rate_type != 'per_kg'"/>
+                    </group>
+
+                </group>
+
+            </xpath>
+
+        </field>
+
+    </record>
+
+</odoo>

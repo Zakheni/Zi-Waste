@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vehicle Inspection - Record Rules
+    Row-level access for users, managers, and multi-company filtering.
+-->
+<odoo>
+
+    <!-- ======================================= -->
+    <!-- USER: Only See Their Own Inspections -->
+    <!-- ======================================= -->
+    <record id="rule_vehicle_inspection_user_own" model="ir.rule">
+        <field name="name">Inspection User: Own Records Only</field>
+        <field name="model_id" ref="model_vehicle_inspection"/>
+        <field name="groups" eval="[(4, ref('vehicle_inspection.group_vehicle_inspection_user'))]"/>
+        <field name="domain_force">
+            [('inspector_id', '=', user.id)]
+        </field>
+    </record>
+
+
+    <!-- ======================================= -->
+    <!-- MANAGER: See All Records -->
+    <!-- ======================================= -->
+    <record id="rule_vehicle_inspection_manager_all" model="ir.rule">
+        <field name="name">Inspection Manager: All Records</field>
+        <field name="model_id" ref="model_vehicle_inspection"/>
+        <field name="groups" eval="[(4, ref('vehicle_inspection.group_vehicle_inspection_manager'))]"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+    </record>
+
+        <!-- ======================================= -->
+    <!-- MULTI COMPANY SECURITY -->
+    <!-- ======================================= -->
+    <record id="rule_vehicle_inspection_multi_company" model="ir.rule">
+        <field name="name">Inspection Multi Company</field>
+        <field name="model_id" ref="model_vehicle_inspection"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">
+            [('company_id', 'in', user.company_ids.ids)]
+        </field>
+    </record>
+
+
+</odoo>

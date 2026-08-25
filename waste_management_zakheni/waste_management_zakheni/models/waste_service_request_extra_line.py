@@ -1,0 +1,42 @@
+# models/waste_service_request_extra_line.py
+"""Additional billable products added to a manifest beyond the main SO line."""
+from odoo import models, fields, api
+
+class WasteServiceRequestExtraLine(models.Model):
+    """Extra product lines pushed to the linked sale order."""
+    _name = 'waste.service.request.extra.line'
+    _description = 'Extra Product for Waste Service'
+
+    request_id = fields.Many2one(
+        'waste.service.request',
+        required=True,
+        ondelete='cascade',
+    )
+    product_id = fields.Many2one('product.product', required=True)
+    quantity = fields.Float(default=1.0)
+    price_unit = fields.Float()
+    sale_order_line_id = fields.Many2one('sale.order.line', readonly=True)
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        related='request_id.company_id.currency_id',
+        store=True, readonly=True,
+    )
+    price_subtotal = fields.Monetary(
+        compute='_compute_price_subtotal',
+        currency_field='currency_id',
+    )
+
+    @api.onchange('product_id')
+    def _onchange_product_id(self):
+        for line in self:
+            if line.product_id:
+                line.price_unit = line.product_id.lst_price
+
+    @api.depends('quantity', 'price_unit')
+    def _compute_price_subtotal(self):
+        for line in self:
+            line.price_subtotal = (line.quantity or 0.0) * (line.price_unit or 0.0)
+
+
+

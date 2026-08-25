@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- MODULE CATEGORY -->
+    <record id="module_category_vehicle_inspection" model="ir.module.category">
+        <field name="name">Vehicle Inspection</field>
+        <field name="description">Access groups for Vehicle Inspectio</field>
+        <field name="visible" eval="1"/>
+        <field name="sequence">25</field>
+    </record>
+
+<!--    INHERIT INTERNAL USER-->
+     <record id="group_vs_user" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="vehicle_inspection.module_category_vehicle_inspection"/>
+        <!-- Internal user (backend) -->
+        <field name="implied_ids" eval="[
+            (4, ref('base.group_user'))
+        ]"/>
+    </record>
+
+    <!-- VEHICLE INSPECTION -->
+    <record id="group_vehicle_inspection" model="res.groups">
+        <field name="name">Inspector</field>
+        <field name="category_id" ref="vehicle_inspection.module_category_vehicle_inspection"/>
+        <field name="implied_ids" eval="[
+            (4, ref('vehicle_inspection.group_vs_user'))
+        ]"/>
+    </record>
+
+</odoo>

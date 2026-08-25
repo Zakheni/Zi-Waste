@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Portal — Waste Service Report -->
+<odoo>
+
+    <template id="portal_waste_report_html" name="Waste Portal Printable Report">
+        <t t-call="website.layout">
+            <t t-set="filters" t-value="filters or {}"/>
+
+            <div class="container my-5 wmz-portal wmz-portal-report">
+                <nav aria-label="breadcrumb" class="wmz-portal-breadcrumb mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/home"><i class="fa fa-home"/></a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="/my/waste">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            Service Report
+                        </li>
+                    </ol>
+                </nav>
+
+                <!-- Hero -->
+                <div class="wmz-portal-hero wmz-detail-hero mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                        <div>
+                            <p class="wmz-detail-hero_kicker mb-1">Reporting</p>
+                            <h1 class="wmz-portal-hero_title mb-2">Waste Service Report</h1>
+                            <p class="wmz-portal-hero_subtitle mb-0">
+                                Generated for <t t-esc="user.name"/>
+                            </p>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-light btn-sm"
+                               t-att-href="'/my/waste/report/pdf?date_from=%s&amp;date_to=%s&amp;manifest_no=%s&amp;sale_order_no=%s&amp;invoice_no=%s' % (
+                                   (filters.get('date_from') or ''),
+                                   (filters.get('date_to') or ''),
+                                   (filters.get('manifest_no') or ''),
+                                   (filters.get('sale_order_no') or ''),
+                                   (filters.get('invoice_no') or '')
+                               )">
+                                <i class="fa fa-file-pdf-o me-1"/> PDF
+                            </a>
+                            <a class="btn btn-light btn-sm"
+                               t-att-href="'/my/waste/report/xlsx?date_from=%s&amp;date_to=%s&amp;manifest_no=%s&amp;sale_order_no=%s&amp;invoice_no=%s' % (
+                                   (filters.get('date_from') or ''),
+                                   (filters.get('date_to') or ''),
+                                   (filters.get('manifest_no') or ''),
+                                   (filters.get('sale_order_no') or ''),
+                                   (filters.get('invoice_no') or '')
+                               )">
+                                <i class="fa fa-file-excel-o me-1"/> Excel
+                            </a>
+                        </div>
+                    </div>
+                    <div class="wmz-detail-hero_actions">
+                        <a href="/my/waste" class="btn btn-light btn-sm">
+                            <i class="fa fa-arrow-left me-1"/> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="wmz-dashboard-panel mb-4">
+                    <h2 class="wmz-dashboard-panel_title mb-3">
+                        <i class="fa fa-filter me-1"/> Filters
+                    </h2>
+                    <form method="get" action="/my/waste/report" class="row g-2 wmz-dashboard-filters wmz-portal-form">
+                        <div class="col-12 col-md-3">
+                            <label class="form-label small mb-1">Date (from)</label>
+                            <input type="date" name="date_from" class="form-control form-control-sm"
+                                   t-att-value="filters.get('date_from') or ''"/>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label small mb-1">Date (to)</label>
+                            <input type="date" name="date_to" class="form-control form-control-sm"
+                                   t-att-value="filters.get('date_to') or ''"/>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label small mb-1">Manifest No</label>
+                            <input type="text" name="manifest_no" class="form-control form-control-sm"
+                                   placeholder="e.g. RQWS-0027"
+                                   t-att-value="filters.get('manifest_no') or ''"/>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label small mb-1">Sales Order</label>
+                            <input type="text" name="sale_order_no" class="form-control form-control-sm"
+                                   placeholder="e.g. S00012"
+                                   t-att-value="filters.get('sale_order_no') or ''"/>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label small mb-1">Invoice No</label>
+                            <input type="text" name="invoice_no" class="form-control form-control-sm"
+                                   placeholder="e.g. INV/2025/0012"
+                                   t-att-value="filters.get('invoice_no') or ''"/>
+                        </div>
+                        <div class="col-12 d-flex flex-wrap gap-2 mt-2">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fa fa-search me-1"/> Apply Filters
+                            </button>
+                            <a href="/my/waste/report" class="btn btn-outline-secondary btn-sm">
+                                <i class="fa fa-times me-1"/> Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Summary stats -->
+                <div class="wmz-detail-stats mb-4">
+                    <div class="wmz-detail-stat wmz-detail-stat-highlight">
+                        <div class="wmz-detail-stat_icon wmz-detail-stat_icon-success">
+                            <i class="fa fa-file-text-o"/>
+                        </div>
+                        <div>
+                            <div class="wmz-detail-stat_label">Client report rows</div>
+                            <div class="wmz-detail-stat_value"><t t-esc="len(rows) if rows else 0"/></div>
+                        </div>
+                    </div>
+                    <div class="wmz-detail-stat">
+                        <div class="wmz-detail-stat_icon wmz-detail-stat_icon-info">
+                            <i class="fa fa-list"/>
+                        </div>
+                        <div>
+                            <div class="wmz-detail-stat_label">Recent requests</div>
+                            <div class="wmz-detail-stat_value">
+                                <t t-esc="len(requests_summary_rows) if requests_summary_rows else 0"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wmz-detail-stat">
+                        <div class="wmz-detail-stat_icon"><i class="fa fa-truck"/></div>
+                        <div>
+                            <div class="wmz-detail-stat_label">Driver trips</div>
+                            <div class="wmz-detail-stat_value">
+                                <t t-esc="len(recent_trips_rows) if recent_trips_rows else 0"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Client Report -->
+                <div class="wmz-dashboard-panel mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h3 class="wmz-dashboard-panel_title mb-0">Client Report</h3>
+                        <span class="wmz-dashboard-panel_badge">Manifest • Sales Order • Invoice</span>
+                    </div>
+                    <div class="wmz-portal-table-wrap wmz-report-table-wrap">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Planned Date</th>
+                                        <th>Manifest</th>
+                                        <th>Sales Order</th>
+                                        <th>Invoice Number</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="not rows">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                <i class="fa fa-inbox d-block mb-2 fs-4"/>
+                                                No data found for the selected filters.
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="rows" t-as="r">
+                                        <tr>
+                                            <td><t t-esc="r.get('planned_date') or '—'"/></td>
+                                            <td><t t-esc="r.get('manifest') or '—'"/></td>
+                                            <td><t t-esc="r.get('sale_order') or '—'"/></td>
+                                            <td><t t-esc="r.get('invoice') or '—'"/></td>
+                                            <td class="text-end fw-semibold">
+                                                <t t-esc="'%.2f' % (r.get('total') or 0.0)"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service Requests Summary -->
+                <div class="wmz-dashboard-panel mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h3 class="wmz-dashboard-panel_title mb-0">Recent Service Requests</h3>
+                        <span class="wmz-dashboard-panel_badge">Last 50</span>
+                    </div>
+                    <div class="wmz-portal-table-wrap wmz-report-table-wrap">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Reference</th>
+                                        <th>Date</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="not requests_summary_rows">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">
+                                                No service requests found.
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="requests_summary_rows" t-as="req_row">
+                                        <tr>
+                                            <td class="fw-semibold"><t t-esc="req_row.get('name') or '—'"/></td>
+                                            <td><t t-esc="req_row.get('date') or '—'"/></td>
+                                            <td><t t-esc="req_row.get('customer') or '—'"/></td>
+                                            <td>
+                                                <span class="wmz-badge wmz-badge-progress text-capitalize">
+                                                    <t t-esc="req_row.get('state') or '—'"/>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Driver Trips -->
+                <div class="wmz-dashboard-panel mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h3 class="wmz-dashboard-panel_title mb-0">Recent Driver Trips</h3>
+                        <span class="wmz-dashboard-panel_badge">Worksheets</span>
+                    </div>
+                    <div class="wmz-portal-table-wrap wmz-report-table-wrap">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Arrival</th>
+                                        <th>Return</th>
+                                        <th>Planned</th>
+                                        <th>Manifest</th>
+                                        <th>Driver</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="not recent_trips_rows">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">
+                                                No recent trips found.
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="recent_trips_rows" t-as="trow">
+                                        <tr>
+                                            <td><t t-esc="trow.get('arrival') or '—'"/></td>
+                                            <td><t t-esc="trow.get('return') or '—'"/></td>
+                                            <td><t t-esc="trow.get('planned') or '—'"/></td>
+                                            <td><t t-esc="trow.get('manifest') or '—'"/></td>
+                                            <td><t t-esc="trow.get('driver') or '—'"/></td>
+                                            <td class="text-end"><t t-esc="trow.get('qty')"/></td>
+                                            <td class="text-end fw-semibold">
+                                                <t t-esc="'%.2f' % (trow.get('revenue') or 0.0)"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </t>
+    </template>
+
+</odoo>

@@ -1,0 +1,135 @@
+/* Company theme — all form widgets (backend, website, portal, login) */
+
+:root {
+    accent-color: var(--company-theme-color, #15803d);
+}
+
+.btn-primary,
+.btn-fill-primary,
+.btn-success,
+.o_primary,
+button.btn-primary,
+.oe_login_buttons .btn-primary,
+.wmz-login-submit {
+    background-color: var(--company-theme-color, #15803d) !important;
+    border-color: var(--company-theme-hover, var(--company-theme-color, #166534)) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-success:hover,
+.btn-fill-primary:hover,
+.wmz-login-submit:hover {
+    background-color: var(--company-theme-hover, #166534) !important;
+    border-color: var(--company-theme-hover, #166534) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+.btn-outline-primary,
+.btn-outline-success {
+    color: var(--company-theme-color, #15803d) !important;
+    border-color: var(--company-theme-color, #15803d) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-success:hover {
+    background-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+.btn-link,
+a.btn-link,
+.text-primary,
+.link-primary,
+.text-success,
+a.text-primary {
+    color: var(--company-theme-color, #15803d) !important;
+}
+
+.bg-primary,
+.bg-success,
+.badge.bg-primary,
+.badge.text-bg-primary,
+.badge.text-bg-success {
+    background-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+.border-primary {
+    border-color: var(--company-theme-color, #15803d) !important;
+}
+
+.form-check-input:checked,
+.form-switch .form-check-input:checked,
+.o_field_boolean_toggle .form-check-input:checked,
+.o_boolean_toggle .form-check-input:checked,
+.o_field_boolean .form-check-input:checked,
+.o_list_record_selector .form-check-input:checked,
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+    background-color: var(--company-theme-color, #15803d) !important;
+    border-color: var(--company-theme-color, #15803d) !important;
+}
+
+.form-check-input:focus,
+.form-control:focus,
+.form-select:focus,
+.o_input:focus,
+textarea:focus {
+    border-color: var(--company-theme-color, #15803d) !important;
+    box-shadow: 0 0 0 0.2rem var(--company-theme-accent-soft, rgba(21, 128, 61, 0.2)) !important;
+}
+
+.progress-bar,
+.progress-bar.bg-primary,
+.progress-bar.bg-success {
+    background-color: var(--company-theme-color, #15803d) !important;
+}
+
+.nav-link.active,
+.nav-pills .nav-link.active,
+.page-item.active .page-link,
+.list-group-item.active {
+    background-color: var(--company-theme-color, #15803d) !important;
+    border-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+.o_statusbar_status .o_arrow_button.btn-primary,
+.o_statusbar_status .o_arrow_button_current,
+.o_field_statusbar .o_arrow_button_current {
+    background-color: var(--company-theme-color, #15803d) !important;
+    border-color: var(--company-theme-hover, #166534) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+.o_field_widget a,
+.o_form_uri,
+.o_kanban_record_title {
+    color: var(--company-theme-color, #15803d);
+}
+
+.o_priority .fa.fa-star,
+.o_priority .fa.o_priority_star {
+    color: var(--company-theme-color, #15803d) !important;
+}
+
+.o_field_percent_pie .o_pie,
+.o_field_progressbar .o_progress .o_progressbar {
+    background-color: var(--company-theme-color, #15803d) !important;
+}
+
+.o_select_menu .o_select_menu_item.o-selected,
+.o-autocomplete--dropdown-item.o-selected,
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+input[type="range"],
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--company-theme-color, #15803d);
+}

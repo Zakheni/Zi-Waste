@@ -1,0 +1,25 @@
+<!--
+    Module: pastel_connector
+    File: account_move_pastel_export.xml
+    Description: Invoice list/form export-to-Sage actions.
+-->
+<odoo>
+  <!-- View/action record: View move form pastel export -->
+  <record id="view_move_form_pastel_export" model="ir.ui.view">
+    <field name="name">account.move.form.pastel.export</field>
+    <field name="model">account.move</field>
+    <field name="inherit_id" ref="account.view_move_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//header" position="inside">
+<!--        <button name="action_export_to_sage"-->
+<!--                string="Export to Sage"-->
+<!--                type="object"-->
+<!--                class="oe_highlight"-->
+<!--                invisible="state != 'posted' or move_type not in ('out_invoice','out_refund')"/>-->
+      </xpath>
+    </field>
+  </record>
+</odoo>
+
+
+

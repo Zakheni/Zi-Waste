@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Data — Tank Tariff Data -->
+<odoo noupdate="1">
+
+    <!-- Views / records -->
+    <record id="tank_tariff_septic_initial" model="waste.tank.tariff">
+        <field name="name">Septic Tank (Initial)</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="code">septic</field>
+        <field name="date_from">2025-01-01</field>
+        <field name="base_kl">4</field>
+        <field name="base_price">2395</field>
+        <field name="extra_rate">295</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="tank_tariff_grease_initial" model="waste.tank.tariff">
+        <field name="name">Grease Trap (Initial)</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="code">grease</field>
+        <field name="date_from">2025-01-01</field>
+        <field name="base_kl">4</field>
+        <field name="base_price">3606.75</field>
+        <field name="extra_rate">362.25</field>
+        <field name="active">True</field>
+    </record>
+
+
+
+
+</odoo>

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree (res.users-style columns) -->
+    <record id="view_service_request_user_tree" model="ir.ui.view">
+        <field name="name">wmz.service.request.user.tree</field>
+        <field name="model">wmz.service.request.user</field>
+        <field name="arch" type="xml">
+            <tree string="Users" decoration-muted="active == False">
+                <field name="name"/>
+                <field name="email" string="Login"/>
+                <field name="company_id" groups="waste_management_zakheni.group_central_admin,waste_management_zakheni.group_wmz_admin,base.group_system"/>
+                <field name="lang" optional="hide"/>
+                <field name="last_login" string="Latest authentication" optional="show"/>
+                <field name="active" widget="boolean_toggle" optional="hide"/>
+                <field name="status" widget="badge" optional="hide"
+                       decoration-success="status == 'confirmed'"
+                       decoration-info="status == 'not_confirmed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Kanban (res.users-style cards) -->
+    <record id="view_service_request_user_kanban" model="ir.ui.view">
+        <field name="name">wmz.service.request.user.kanban</field>
+        <field name="model">wmz.service.request.user</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="email"/>
+                <field name="lang"/>
+                <field name="active"/>
+                <field name="last_login"/>
+                <field name="avatar_128"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_image">
+                                <field name="avatar_128" widget="image" class="o_kanban_image_inner_pic"/>
+                            </div>
+                            <div class="oe_kanban_details">
+                                <ul>
+                                    <li class="text-success float-end mb4" t-if="record.active.raw_value">
+                                        <i class="fa fa-circle" role="img" aria-label="Active" title="Active"/>
+                                    </li>
+                                    <li class="text-danger float-end mb4" t-if="!record.active.raw_value">
+                                        <i class="fa fa-circle" role="img" aria-label="Inactive" title="Inactive"/>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong><field name="name"/></strong>
+                                    </li>
+                                    <li class="d-flex flex-wrap">
+                                        <span class="mb4 text-truncate" title="Login">
+                                            <i class="fa fa-envelope me-1" role="img" aria-label="Login"/>
+                                            <field name="email"/>
+                                        </span>
+                                        <field class="badge rounded-pill mb4 ms-auto" name="lang"/>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Search -->
+    <record id="view_service_request_user_search" model="ir.ui.view">
+        <field name="name">wmz.service.request.user.search</field>
+        <field name="model">wmz.service.request.user</field>
+        <field name="arch" type="xml">
+            <search string="Users">
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('email', 'ilike', self)]" string="User"/>
+                <field name="company_id" groups="waste_management_zakheni.group_central_admin,waste_management_zakheni.group_wmz_admin,base.group_system"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactive Users" domain="[('active', '=', False)]"/>
+                <filter name="not_created" string="Pending Setup" domain="[('state', '!=', 'created')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Form (res.users-style layout) -->
+    <record id="view_service_request_user_form" model="ir.ui.view">
+        <field name="name">wmz.service.request.user.form</field>
+        <field name="model">wmz.service.request.user</field>
+        <field name="arch" type="xml">
+            <form string="User">
+                <header>
+                    <button name="action_create_user"
+                            type="object"
+                            string="Create User"
+                            class="btn-primary"
+                            invisible="state == 'created'"/>
+                    <button name="action_update_user"
+                            type="object"
+                            string="Save"
+                            class="btn-primary"
+                            invisible="state != 'created'"/>
+                    <button name="action_reset_invite_link"
+                            type="object"
+                            string="Send Reset Link"
+                            class="btn-secondary"
+                            invisible="state != 'created'"/>
+                    <button name="action_open_change_password"
+                            type="object"
+                            string="Change Password"
+                            class="btn-secondary"
+                            invisible="state != 'created'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,created,error"/>
+                </header>
+
+                <div class="alert alert-success alert-dismissible text-center mb-0"
+                     role="alert"
+                     invisible="not message">
+                    <button name="action_clear_message"
+                            type="object"
+                            class="btn-close"
+                            style="float: right;"/>
+                    <field name="message" widget="html" options="{'sanitize': False}"/>
+                </div>
+
+                <sheet>
+                    <field name="user_id" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+
+                    <field name="avatar_128" invisible="1"/>
+                    <field name="image_1920" widget="image" class="oe_avatar"
+                           options="{'zoom': true, 'preview_image': 'avatar_128'}"/>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. John Doe" required="1"/></h1>
+                        <label for="email" string="Email Address"/>
+                        <h2><field name="email" widget="email" placeholder="e.g. email@yourcompany.com" required="1"/></h2>
+                    </div>
+
+                    <notebook colspan="4">
+                        <page name="access_rights" string="Access Rights">
+                            <group string="Multi Companies">
+                                <field name="wmz_can_edit_company" invisible="1"/>
+                                <field name="company_id"
+                                       readonly="not wmz_can_edit_company"
+                                       options="{'no_create': True}"/>
+                                <field name="company_ids" widget="many2many_tags"
+                                       options="{'no_create': True, 'color_field': 'color'}"
+                                       invisible="state != 'created' or not wmz_can_edit_company"/>
+                            </group>
+                            <separator string="Waste Management"/>
+                            <field name="role_wmz_ids"
+                                   widget="many2many_checkboxes"
+                                   domain="[('name', 'in', ['Operations Manager', 'Admin Clerk', 'Driver', 'Finance', 'Service Provider', 'User Manager', 'Super Admin'])]"
+                                   options="{'no_create': True}"/>
+                            <separator string="Sage Connector"/>
+                            <field name="role_sage_ids"
+                                   widget="many2many_checkboxes"
+                                   domain="[('name', 'in', ['Sage User', 'Sage Manager'])]"
+                                   options="{'no_create': True}"/>
+                            <separator string="Vehicle Inspection"/>
+                            <field name="role_vehicle_ids"
+                                   widget="many2many_checkboxes"
+                                   domain="[('category_id.name', '=', 'Vehicle Inspection')]"
+                                   options="{'no_create': True}"/>
+                            <separator string="Fleet"/>
+                            <field name="role_fleet_ids"
+                                   widget="many2many_checkboxes"
+                                   domain="[('category_id.name', '=', 'Fleet')]"
+                                   options="{'no_create': True}"/>
+                            <field name="role_ids" invisible="1"/>
+                        </page>
+                        <page string="Preferences" name="preferences">
+                            <group>
+                                <group string="Localization">
+                                    <field name="active"/>
+                                    <field name="phone" widget="phone"/>
+                                    <field name="lang" invisible="state != 'created'"/>
+                                    <field name="last_login" invisible="state != 'created'"/>
+                                </group>
+                                <group string="Account">
+                                    <field name="status" readonly="1"/>
+                                    <field name="invite_url" widget="url" invisible="not invite_url"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_service_request_user" model="ir.actions.act_window">
+        <field name="name">Users</field>
+        <field name="res_model">wmz.service.request.user</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_service_request_user_search"/>
+        <field name="domain">[('company_id', 'in', allowed_company_ids)]</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create backend users for your company
+            </p>
+            <p>
+                Add users with photo and login, assign operational access rights using checkboxes,
+                and send password setup or reset links.
+            </p>
+        </field>
+    </record>
+
+</odoo>

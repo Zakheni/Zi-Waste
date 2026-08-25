@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <function model="res.company" name="_wmz_apply_portal_quotation_policy"/>
+</odoo>

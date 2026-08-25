@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_waste_request_provider_wizard_form" model="ir.ui.view">
+        <field name="name">waste.request.provider.wizard.form</field>
+        <field name="model">waste.request.provider.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Find Closest Service Provider" class="o_wmz_provider_wizard">
+                <field name="request_id" invisible="1"/>
+                <field name="map_data_json" invisible="1"/>
+                <field name="job_display_name" invisible="1"/>
+                <field name="job_latitude" invisible="1"/>
+                <field name="job_longitude" invisible="1"/>
+                <field name="province" invisible="1"/>
+                <field name="city" invisible="1"/>
+                <field name="suburb" invisible="1"/>
+
+                <group string="Pickup location" class="o_wmz_provider_wizard_intro">
+                    <field name="pickup_point_name" readonly="1"/>
+                    <field name="job_address" readonly="1" nolabel="0" colspan="2"/>
+                </group>
+
+                <group string="Map" class="o_wmz_provider_map_section">
+                    <field name="map_data_json" widget="provider_map" nolabel="1" colspan="2" readonly="1"/>
+                </group>
+
+                <group string="Nearest providers (closest first)">
+                    <field name="provider_candidate_ids" nolabel="1" colspan="2">
+                        <tree create="false" delete="false" edit="false"
+                              decoration-bf="rank == 1"
+                              decoration-success="rank == 1"
+                              decoration-info="provider_id == parent.provider_id">
+                            <field name="rank" string="#"/>
+                            <field name="provider_name" string="Provider"/>
+                            <field name="provider_address" string="Location"/>
+                            <field name="distance_km" string="Distance (km)"/>
+                            <field name="provider_phone" string="Phone" optional="hide"/>
+                            <field name="provider_id" column_invisible="1"/>
+                            <button name="action_select" type="object"
+                                    string="Select" icon="fa-check" class="btn-link"/>
+                        </tree>
+                    </field>
+                </group>
+
+                <group string="Selected provider">
+                    <field name="provider_id" readonly="1"/>
+                </group>
+
+                <footer>
+                    <button name="action_search_providers"
+                            type="object"
+                            string="Search nearest providers"
+                            class="btn-primary"
+                            icon="fa-search"/>
+                    <button name="action_apply_provider"
+                            type="object"
+                            string="Use this provider"
+                            class="btn-success"
+                            icon="fa-check"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

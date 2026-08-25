@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+  <t t-name="waste_management_zakheni.ProviderMapField">
+    <div class="o_wmz_provider_map_wrap">
+      <t t-if="!hasMapData">
+        <div class="o_wmz_provider_map_empty text-muted p-4">
+          <div>
+            <i class="fa fa-map-marker fa-2x mb-2" title="Map"/>
+            <div>Click <strong>Search nearest providers</strong> to locate the pickup point and rank providers by distance.</div>
+          </div>
+        </div>
+      </t>
+      <div t-ref="mapContainer" class="o_wmz_provider_map" t-att-class="{'d-none': !hasMapData}"/>
+    </div>
+  </t>
+
+</templates>

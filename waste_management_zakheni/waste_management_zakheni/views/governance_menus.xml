@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Single action: own company(ies) + branches under allowed companies -->
+    <record id="action_wmz_company_and_branches" model="ir.actions.act_window">
+        <field name="name">Company &amp; Branches</field>
+        <field name="res_model">res.company</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">['|', ('id', 'in', allowed_company_ids), ('parent_id', 'in', allowed_company_ids)]</field>
+        <field name="context">{'default_is_branch': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Manage your company and branches
+            </p>
+            <p>
+                View and edit your company profile, create branches, and configure waste settings per branch.
+            </p>
+        </field>
+    </record>
+
+    <!-- Remove superseded menus from earlier versions -->
+    <delete model="ir.ui.menu" id="waste_management_zakheni.menu_wmz_customers"/>
+    <delete model="ir.ui.menu" id="waste_management_zakheni.menu_wmz_branches_governance"/>
+    <delete model="ir.ui.menu" id="waste_management_zakheni.menu_wmz_my_company"/>
+
+</odoo>

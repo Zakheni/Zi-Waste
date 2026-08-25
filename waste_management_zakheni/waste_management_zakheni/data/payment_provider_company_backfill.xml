@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <function model="payment.provider" name="_wmz_backfill_providers_from_master_company"/>
+    <function model="payment.provider" name="_wmz_activate_portal_payment_providers"/>
+</odoo>

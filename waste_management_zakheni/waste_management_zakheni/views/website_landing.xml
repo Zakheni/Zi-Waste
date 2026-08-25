@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         HOME — Waste management landing page (/)
+         ================================================================ -->
+    <template id="wmz_website_homepage" inherit_id="website.homepage" name="Zakheni Waste — Home">
+        <xpath expr="//div[@id='wrap']" position="replace">
+            <div id="wrap" class="wmz-site wmz-site-home">
+                <t t-set="wmz_client_portal_url" t-value="'/my/home' if not request.env.user._is_public() else '/web/login'"/>
+                <!-- Hero -->
+                <section class="wmz-site-hero">
+                    <div class="wmz-site-hero_bg"
+                         style="background-image: url('/waste_management_zakheni/static/src/img/website/hero-bg.jpg');"/>
+                    <div class="container position-relative">
+                        <div class="row align-items-center g-4">
+                            <div class="col-lg-7">
+                                <span class="wmz-site-hero_badge">
+                                    <i class="fa fa-leaf me-1"/>
+                                    Sustainable waste solutions
+                                </span>
+                                <h1 class="wmz-site-hero_title">
+                                    Professional waste management you can trust
+                                </h1>
+                                <p class="wmz-site-hero_lead">
+                                    From scheduled bin collections and liquid waste removal to
+                                    licensed disposal and digital compliance — we help businesses
+                                    stay clean, compliant, and in control.
+                                </p>
+                                <div class="wmz-site-hero_actions">
+                                    <a href="/contactus" class="btn btn-light btn-lg wmz-site-btn">
+                                        <i class="fa fa-envelope me-2"/>
+                                        Contact Us
+                                    </a>
+                                    <a t-att-href="wmz_client_portal_url" class="btn btn-outline-light btn-lg wmz-site-btn">
+                                        <i class="fa fa-sign-in me-2"/>
+                                        Client Portal
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="wmz-site-hero_photo-wrap">
+                                    <img src="/waste_management_zakheni/static/src/img/website/hero-truck.jpg"
+                                         alt="Waste collection truck on route"
+                                         class="wmz-site-hero_photo img-fluid"/>
+                                    <div class="wmz-site-hero_card wmz-site-hero_card-overlay">
+                                        <div class="wmz-site-hero_card-icon">
+                                            <i class="fa fa-recycle"/>
+                                        </div>
+                                        <h3>End-to-end service</h3>
+                                        <p class="mb-3">
+                                            Log requests online, track status in real time, and receive
+                                            documented proof of collection and disposal.
+                                        </p>
+                                        <ul class="wmz-site-checklist mb-0">
+                                            <li><i class="fa fa-check-circle"/> Scheduled collections</li>
+                                            <li><i class="fa fa-check-circle"/> Licensed disposal sites</li>
+                                            <li><i class="fa fa-check-circle"/> Digital manifests</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Hero carousel — overlaps hero, YouTube thumbnail proportions -->
+                <div class="wmz-hero-carousel-wrap">
+                    <div class="container">
+                        <div id="wmzHeroCarousel"
+                             class="carousel slide wmz-hero-carousel"
+                             data-bs-ride="carousel"
+                             data-bs-interval="4500">
+                            <div class="carousel-indicators wmz-hero-carousel_indicators">
+                                <button type="button" data-bs-target="#wmzHeroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Bin collection"/>
+                                <button type="button" data-bs-target="#wmzHeroCarousel" data-bs-slide-to="1" aria-label="Liquid waste"/>
+                                <button type="button" data-bs-target="#wmzHeroCarousel" data-bs-slide-to="2" aria-label="Fleet operations"/>
+                            </div>
+                            <div class="carousel-inner">
+                                <div class="carousel-item active">
+                                    <div class="wmz-hero-carousel_slide">
+                                        <img src="/waste_management_zakheni/static/src/img/website/service-bins.jpg"
+                                             alt="Commercial bin collection service"/>
+                                        <div class="wmz-hero-carousel_label">
+                                            <i class="fa fa-trash me-1"/>
+                                            Bin Collection
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="carousel-item">
+                                    <div class="wmz-hero-carousel_slide">
+                                        <img src="/waste_management_zakheni/static/src/img/website/service-tanker.jpg"
+                                             alt="Liquid waste tanker service"/>
+                                        <div class="wmz-hero-carousel_label">
+                                            <i class="fa fa-tint me-1"/>
+                                            Liquid &amp; Tank Waste
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="carousel-item">
+                                    <div class="wmz-hero-carousel_slide">
+                                        <img src="/waste_management_zakheni/static/src/img/website/operations-fleet.jpg"
+                                             alt="Waste management fleet"/>
+                                        <div class="wmz-hero-carousel_label">
+                                            <i class="fa fa-truck me-1"/>
+                                            Fleet Operations
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="carousel-control-prev wmz-hero-carousel_control" type="button" data-bs-target="#wmzHeroCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"/>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next wmz-hero-carousel_control" type="button" data-bs-target="#wmzHeroCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"/>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <section class="wmz-site-stats">
+                    <div class="container">
+                        <div class="row g-3 text-center">
+                            <div class="col-6 col-md-3">
+                                <div class="wmz-site-stat">
+                                    <div class="wmz-site-stat_value">500+</div>
+                                    <div class="wmz-site-stat_label">Collections per month</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="wmz-site-stat">
+                                    <div class="wmz-site-stat_value">100%</div>
+                                    <div class="wmz-site-stat_label">Licensed disposal</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="wmz-site-stat">
+                                    <div class="wmz-site-stat_value">24/7</div>
+                                    <div class="wmz-site-stat_label">Client portal access</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="wmz-site-stat">
+                                    <div class="wmz-site-stat_value">POPIA</div>
+                                    <div class="wmz-site-stat_label">Compliant operations</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Services -->
+                <section class="wmz-site-section">
+                    <div class="container">
+                        <div class="wmz-site-section_head text-center mx-auto">
+                            <span class="wmz-site-kicker">Our services</span>
+                            <h2>Complete waste management for your business</h2>
+                            <p>
+                                Whether you need regular bin lifts, tanker services, or compliant
+                                disposal documentation — we have you covered.
+                            </p>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-6 col-lg-3">
+                                <div class="wmz-site-service">
+                                    <div class="wmz-site-service_photo">
+                                        <img src="/waste_management_zakheni/static/src/img/website/service-bins.jpg"
+                                             alt="Commercial waste bin collection"/>
+                                    </div>
+                                    <h3>Bin Collection</h3>
+                                    <p>Scheduled lifts, drop-offs, and container management across multiple pickup points.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="wmz-site-service">
+                                    <div class="wmz-site-service_photo">
+                                        <img src="/waste_management_zakheni/static/src/img/website/service-tanker.jpg"
+                                             alt="Industrial tank and liquid waste"/>
+                                    </div>
+                                    <h3>Liquid &amp; Tank Waste</h3>
+                                    <p>Tanker collections with volume-based billing, tariffs, and weighbridge documentation.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="wmz-site-service">
+                                    <div class="wmz-site-service_photo">
+                                        <img src="/waste_management_zakheni/static/src/img/website/service-disposal.jpg"
+                                             alt="Licensed waste disposal site"/>
+                                    </div>
+                                    <h3>Licensed Disposal</h3>
+                                    <p>Waste routed to approved disposal sites with full traceability and compliance records.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="wmz-site-service">
+                                    <div class="wmz-site-service_photo">
+                                        <img src="/waste_management_zakheni/static/src/img/website/service-compliance.jpg"
+                                             alt="Compliance reporting and documentation"/>
+                                    </div>
+                                    <h3>Reporting &amp; Compliance</h3>
+                                    <p>Digital manifests, worksheets, invoices, and audit-ready reporting for your team.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- How it works -->
+                <section class="wmz-site-section wmz-site-section-alt">
+                    <div class="container">
+                        <div class="wmz-site-section_head text-center mx-auto">
+                            <span class="wmz-site-kicker">How it works</span>
+                            <h2>Simple, transparent, from request to disposal</h2>
+                        </div>
+                        <div class="row g-4 wmz-site-steps">
+                            <div class="col-md-6 col-lg-3">
+                                <div class="wmz-site-step">
+                                    <div class="wmz-site-step_num">1</div>
+                                    <h3>Log a request</h3>
+                                    <p>Submit a service request via the client portal with pickup points, waste type, and schedule.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="wmz-site-step">
+                                    <div class="wmz-site-step_num">2</div>
+                                    <h3>Schedule &amp; dispatch</h3>
+                                    <p>Our team assigns vehicles and drivers, then confirms your planned collection date.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="wmz-site-step">
+                                    <div class="wmz-site-step_num">3</div>
+                                    <h3>Collect &amp; transport</h3>
+                                    <p>On-site collection with digital worksheets capturing quantities, bins, and timestamps.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="wmz-site-step">
+                                    <div class="wmz-site-step_num">4</div>
+                                    <h3>Dispose &amp; document</h3>
+                                    <p>Waste delivered to licensed sites. Receive manifests, billing, and completion records.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Why us -->
+                <section class="wmz-site-section">
+                    <div class="container">
+                        <div class="row g-4 align-items-center">
+                            <div class="col-lg-5">
+                                <div class="wmz-site-showcase-photo">
+                                    <img src="/waste_management_zakheni/static/src/img/website/operations-fleet.jpg"
+                                         alt="Waste management fleet and operations"
+                                         class="img-fluid"/>
+                                </div>
+                            </div>
+                            <div class="col-lg-7">
+                                <span class="wmz-site-kicker">Why choose us</span>
+                                <h2 class="mb-3">Built for operations teams and finance alike</h2>
+                                <p class="text-muted mb-4">
+                                    Our platform connects field operations with back-office billing,
+                                    giving your organisation a single source of truth for every job.
+                                </p>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-sm-6">
+                                        <div class="wmz-site-feature">
+                                            <i class="fa fa-dashboard"/>
+                                            <div>
+                                                <strong>Live client portal</strong>
+                                                <span>Track requests, view status, and download reports anytime.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="wmz-site-feature">
+                                            <i class="fa fa-shield"/>
+                                            <div>
+                                                <strong>Compliance first</strong>
+                                                <span>Licensed disposal routing with full audit trails.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="wmz-site-feature">
+                                            <i class="fa fa-truck"/>
+                                            <div>
+                                                <strong>Fleet visibility</strong>
+                                                <span>Driver assignment, vehicle tracking, and worksheet capture.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="wmz-site-feature">
+                                            <i class="fa fa-line-chart"/>
+                                            <div>
+                                                <strong>Clear billing</strong>
+                                                <span>Volume-based tariffs, sales orders, and invoicing built in.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="/contactus" class="btn btn-primary wmz-site-btn-primary">
+                                    Talk to our team
+                                    <i class="fa fa-arrow-right ms-2"/>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CTA -->
+                <section class="wmz-site-cta">
+                    <div class="container text-center">
+                        <h2>Ready to streamline your waste operations?</h2>
+                        <p class="mb-4">
+                            Get in touch for a quote, or log in to the client portal to submit your first service request.
+                        </p>
+                        <div class="d-flex flex-wrap justify-content-center gap-3">
+                            <a href="/contactus" class="btn btn-light btn-lg wmz-site-btn">
+                                <i class="fa fa-envelope me-2"/>
+                                Contact Us
+                            </a>
+                            <a t-att-href="wmz_client_portal_url" class="btn btn-outline-light btn-lg wmz-site-btn">
+                                <i class="fa fa-user me-2"/>
+                                Client Login
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- ================================================================
+         CONTACT US — /contactus
+         ================================================================ -->
+    <template id="wmz_website_contactus" inherit_id="website.contactus" name="Zakheni Waste — Contact Us">
+        <xpath expr="//div[@id='wrap']" position="replace">
+            <div id="wrap" class="wmz-site wmz-site-contact">
+                <t t-set="wmz_client_portal_url" t-value="'/my/home' if not request.env.user._is_public() else '/web/login'"/>
+                <section class="wmz-site-page-hero wmz-site-page-hero-photo"
+                         style="background-image: url('/waste_management_zakheni/static/src/img/website/contact-hero.jpg');">
+                    <div class="wmz-site-page-hero_overlay"/>
+                    <div class="container position-relative">
+                        <span class="wmz-site-kicker wmz-site-kicker-light">Get in touch</span>
+                        <h1>Contact Us</h1>
+                        <p class="mb-0">
+                            Questions about collections, disposal, or client portal access?
+                            Send us a message and we'll respond as soon as possible.
+                        </p>
+                    </div>
+                </section>
+
+                <section class="wmz-site-section pb-5">
+                    <div class="container">
+                        <div class="row g-4 g-lg-5">
+                            <div class="col-lg-7">
+                                <div class="wmz-site-contact-form-wrap">
+                                    <h2 class="h4 mb-3">Send a message</h2>
+                                    <t t-set="logged_partner" t-value="request.env['website.visitor']._get_visitor_from_request().partner_id"/>
+                                    <t t-set="contactus_form_values" t-value="{
+                                        'email_to': res_company.email,
+                                        'name': request.params.get('name', ''),
+                                        'phone': request.params.get('phone', ''),
+                                        'email_from': request.params.get('email_from', ''),
+                                        'company': request.params.get('company', ''),
+                                        'subject': request.params.get('subject', ''),
+                                    }"/>
+                                    <span class="hidden" data-for="contactus_form" t-att-data-values="contactus_form_values"/>
+                                    <section class="s_website_form" data-snippet="s_website_form">
+                                        <form id="contactus_form" action="/website/form/" method="post"
+                                              enctype="multipart/form-data"
+                                              class="o_mark_required wmz-site-form"
+                                              data-mark="*"
+                                              data-model_name="mail.mail"
+                                              data-success-mode="redirect"
+                                              data-success-page="/contactus-thank-you"
+                                              data-pre-fill="true">
+                                            <div class="s_website_form_rows row s_col_no_bgcolor">
+                                                <div class="mb-3 col-12 s_website_form_field s_website_form_custom s_website_form_required" data-type="char">
+                                                    <label class="form-label" for="wmz_contact_name">
+                                                        Name <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input id="wmz_contact_name" type="text" class="form-control s_website_form_input" name="name" required="" data-fill-with="name"/>
+                                                </div>
+                                                <div class="mb-3 col-md-6 s_website_form_field s_website_form_custom" data-type="char">
+                                                    <label class="form-label" for="wmz_contact_phone">Phone</label>
+                                                    <input id="wmz_contact_phone" type="tel" class="form-control s_website_form_input" name="phone" data-fill-with="phone"/>
+                                                </div>
+                                                <div class="mb-3 col-md-6 s_website_form_field s_website_form_required s_website_form_model_required" data-type="email">
+                                                    <label class="form-label" for="wmz_contact_email">
+                                                        Email <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input id="wmz_contact_email" type="email" class="form-control s_website_form_input" name="email_from" required="" data-fill-with="email"/>
+                                                </div>
+                                                <div class="mb-3 col-12 s_website_form_field s_website_form_custom" data-type="char">
+                                                    <label class="form-label" for="wmz_contact_company">Company</label>
+                                                    <input id="wmz_contact_company" type="text" class="form-control s_website_form_input" name="company" data-fill-with="commercial_company_name"/>
+                                                </div>
+                                                <div class="mb-3 col-12 s_website_form_field s_website_form_required s_website_form_model_required" data-type="char">
+                                                    <label class="form-label" for="wmz_contact_subject">
+                                                        Subject <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input id="wmz_contact_subject" type="text" class="form-control s_website_form_input" name="subject" required="" placeholder="e.g. Quote for weekly bin collection"/>
+                                                </div>
+                                                <div class="mb-3 col-12 s_website_form_field s_website_form_custom s_website_form_required" data-type="text">
+                                                    <label class="form-label" for="wmz_contact_message">
+                                                        Message <span class="text-danger">*</span>
+                                                    </label>
+                                                    <textarea id="wmz_contact_message" class="form-control s_website_form_input" name="description" required="" rows="5" placeholder="Tell us about your waste management needs..."/>
+                                                </div>
+                                                <div class="mb-0 col-12 s_website_form_field s_website_form_dnone">
+                                                    <input type="hidden" class="form-control s_website_form_input" name="email_to"/>
+                                                </div>
+                                                <div class="col-12 s_website_form_submit">
+                                                    <a href="#" role="button" class="btn btn-primary btn-lg wmz-site-btn-primary s_website_form_send">
+                                                        <i class="fa fa-paper-plane me-2"/>
+                                                        Send Message
+                                                    </a>
+                                                    <span id="s_website_form_result" class="ms-3"/>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </section>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-5">
+                                <div class="wmz-site-contact-info">
+                                    <h2 class="h4 mb-4">Company details</h2>
+                                    <div class="wmz-site-contact-item">
+                                        <div class="wmz-site-contact-item_icon"><i class="fa fa-building"/></div>
+                                        <div>
+                                            <strong><t t-esc="res_company.name"/></strong>
+                                        </div>
+                                    </div>
+                                    <t t-if="res_company.street or res_company.city">
+                                        <div class="wmz-site-contact-item">
+                                            <div class="wmz-site-contact-item_icon"><i class="fa fa-map-marker"/></div>
+                                            <div>
+                                                <span class="o_force_ltr">
+                                                    <t t-if="res_company.street"><t t-esc="res_company.street"/><br/></t>
+                                                    <t t-if="res_company.street2"><t t-esc="res_company.street2"/><br/></t>
+                                                    <t t-if="res_company.city">
+                                                        <t t-esc="res_company.city"/>
+                                                        <t t-if="res_company.state_id">, <t t-esc="res_company.state_id.name"/></t>
+                                                        <t t-if="res_company.zip"> <t t-esc="res_company.zip"/></t>
+                                                    </t>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <t t-if="res_company.phone">
+                                        <div class="wmz-site-contact-item">
+                                            <div class="wmz-site-contact-item_icon"><i class="fa fa-phone"/></div>
+                                            <div>
+                                                <a t-att-href="'tel:%s' % res_company.phone" class="wmz-site-link">
+                                                    <span class="o_force_ltr"><t t-esc="res_company.phone"/></span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <t t-if="res_company.email">
+                                        <div class="wmz-site-contact-item">
+                                            <div class="wmz-site-contact-item_icon"><i class="fa fa-envelope"/></div>
+                                            <div>
+                                                <a t-att-href="'mailto:%s' % res_company.email" class="wmz-site-link">
+                                                    <t t-esc="res_company.email"/>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <div class="wmz-site-contact-item">
+                                        <div class="wmz-site-contact-item_icon"><i class="fa fa-clock-o"/></div>
+                                        <div>
+                                            <strong>Business hours</strong><br/>
+                                            <span class="text-muted">Mon – Fri: 08:00 – 17:00</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="wmz-site-contact-portal mt-4">
+                                        <h3 class="h6">Existing client?</h3>
+                                        <p class="small text-muted mb-3">
+                                            Log in to the client portal to track requests, view worksheets, and download reports.
+                                        </p>
+                                        <a t-att-href="wmz_client_portal_url" class="btn btn-outline-primary wmz-site-btn-outline">
+                                            <i class="fa fa-sign-in me-2"/>
+                                            Client Portal Login
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- Website branding & menu -->
+    <record id="website.default_website" model="website">
+        <field name="name">Zakheni Waste Management</field>
+    </record>
+
+    <record id="website.menu_home" model="website.menu">
+        <field name="name">Home</field>
+        <field name="sequence" type="int">10</field>
+    </record>
+
+    <record id="website.menu_contactus" model="website.menu">
+        <field name="name">Contact Us</field>
+        <field name="sequence" type="int">20</field>
+    </record>
+
+    <delete model="website.menu" id="wmz_menu_client_portal"/>
+
+    <record id="website.homepage_page" model="website.page">
+        <field name="website_meta_description">Professional waste collection, liquid waste removal, licensed disposal, and compliance reporting for businesses.</field>
+    </record>
+
+    <record id="website.contactus_page" model="website.page">
+        <field name="website_meta_description">Contact Zakheni Waste Management for quotes, support, and client portal access.</field>
+    </record>
+
+</odoo>

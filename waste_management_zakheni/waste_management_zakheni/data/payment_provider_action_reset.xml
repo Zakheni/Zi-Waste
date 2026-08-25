@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <delete model="ir.ui.view" id="payment_provider_search_wmz"/>
+
+    <!-- Restore standard Odoo Payment Providers action (no WMZ domain/filters). -->
+    <record id="payment.action_payment_provider" model="ir.actions.act_window">
+        <field name="domain" eval="False"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new payment provider
+            </p>
+        </field>
+    </record>
+</odoo>

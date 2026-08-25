@@ -1,0 +1,16 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+
+access_pastel_sync_user,pastel.sync user,model_pastel_sync,pastel_connector.group_pastel_connector_user,1,0,0,0
+access_pastel_sync_manager,pastel.sync manager,model_pastel_sync,pastel_connector.group_pastel_connector_manager,1,1,1,1
+
+access_pastel_import_form_user,pastel.import.form user,model_pastel_import_form,pastel_connector.group_pastel_connector_user,1,1,1,0
+access_pastel_import_form_manager,pastel.import.form manager,model_pastel_import_form,pastel_connector.group_pastel_connector_manager,1,1,1,1
+
+access_pastel_connector_setting_user,pastel.connector.setting user,model_pastel_connector_setting,pastel_connector.group_pastel_connector_user,1,0,0,0
+access_pastel_connector_setting_manager,pastel.connector.setting manager,model_pastel_connector_setting,pastel_connector.group_pastel_connector_manager,1,1,1,1
+
+access_pastel_sync_log_user,pastel.sync.log user,model_pastel_sync_log,pastel_connector.group_pastel_connector_user,1,0,0,0
+access_pastel_sync_log_manager,pastel.sync.log manager,model_pastel_sync_log,pastel_connector.group_pastel_connector_manager,1,1,1,1
+
+access_pastel_sync_queue_user,pastel.sync.queue user,model_pastel_sync_queue,pastel_connector.group_pastel_connector_user,1,0,0,0
+access_pastel_sync_queue_manager,pastel.sync.queue manager,model_pastel_sync_queue,pastel_connector.group_pastel_connector_manager,1,1,1,1

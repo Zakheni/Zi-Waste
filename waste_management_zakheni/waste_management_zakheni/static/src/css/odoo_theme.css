@@ -1,0 +1,125 @@
+/* Zakheni Waste — global green theme (replaces Odoo purple / maroon) */
+
+:root {
+    --wmz-brand: var(--company-theme-color, #15803d);
+    --wmz-brand-dark: var(--company-theme-hover, #166534);
+    --wmz-brand-light: var(--company-theme-accent-soft, #dcfce7);
+    --primary: var(--company-theme-color, #15803d);
+    --o-color-1: var(--company-theme-color, #15803d);
+    --o-color-2: var(--company-theme-hover, #166534);
+    --bs-primary: var(--company-theme-color, #15803d);
+}
+
+/* Primary buttons */
+.btn-primary,
+.btn-fill-primary,
+.o_primary,
+button.btn-primary {
+    background-color: var(--wmz-brand) !important;
+    border-color: var(--wmz-brand) !important;
+    color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-fill-primary:hover,
+.btn-fill-primary:focus,
+.o_primary:hover {
+    background-color: var(--wmz-brand-dark) !important;
+    border-color: var(--wmz-brand-dark) !important;
+    color: #fff !important;
+}
+
+.btn-outline-primary {
+    color: var(--wmz-brand) !important;
+    border-color: var(--wmz-brand) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary.active,
+.btn-outline-primary:active {
+    background-color: var(--wmz-brand) !important;
+    border-color: var(--wmz-brand) !important;
+    color: #fff !important;
+}
+
+.btn-link,
+a.btn-link {
+    color: var(--wmz-brand) !important;
+}
+
+.btn-link:hover,
+a.btn-link:hover {
+    color: var(--wmz-brand-dark) !important;
+}
+
+/* Text & badges */
+.text-primary,
+a.text-primary {
+    color: var(--wmz-brand) !important;
+}
+
+.text-o-color-1 {
+    color: var(--wmz-brand) !important;
+}
+
+.bg-primary,
+.badge.bg-primary,
+.badge.text-bg-primary {
+    background-color: var(--wmz-brand) !important;
+}
+
+.border-primary {
+    border-color: var(--wmz-brand) !important;
+}
+
+/* Form controls */
+.form-check-input:checked,
+.form-switch .form-check-input:checked {
+    background-color: var(--wmz-brand) !important;
+    border-color: var(--wmz-brand) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--company-theme-color, #15803d) !important;
+    box-shadow: 0 0 0 0.2rem var(--company-theme-accent-soft, rgba(21, 128, 61, 0.2)) !important;
+}
+
+/* Backend widgets */
+.o_field_widget a,
+.o_form_uri span:first-child,
+.o_kanban_record_title,
+.o_data_row.o_selected_row,
+.nav-link.active,
+.page-item.active .page-link,
+.list-group-item.active {
+    color: var(--wmz-brand);
+}
+
+.page-item.active .page-link,
+.nav-pills .nav-link.active,
+.progress-bar {
+    background-color: var(--wmz-brand) !important;
+    border-color: var(--wmz-brand) !important;
+}
+
+.o_statusbar_status .o_arrow_button.btn-primary,
+.o_statusbar_status .o_arrow_button_current {
+    background-color: var(--wmz-brand) !important;
+    border-color: var(--wmz-brand) !important;
+}
+
+.o-mail-DiscussSidebar-item.o-active,
+.o-mail-NavigableList-item.o-active {
+    background-color: var(--wmz-brand-light) !important;
+    color: var(--wmz-brand-dark) !important;
+}
+
+/* Odoo loading / auth screens with hardcoded maroon */
+.o_loading,
+.oe_login_buttons .btn-primary {
+    background-color: var(--wmz-brand) !important;
+    border-color: var(--wmz-brand) !important;
+}

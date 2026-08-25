@@ -1,0 +1,5 @@
+/* Hide Odoo branding in footer */
+footer a[href*="odoo.com"],
+footer a[href*="www.odoo.com"] {
+    display: none !important;
+}

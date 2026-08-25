@@ -1,0 +1,126 @@
+/* Disposal site kanban */
+
+.o_kanban_view.o_wmz_disposal_kanban .o_kanban_renderer.o_kanban_grouped {
+    overflow-x: auto !important;
+    min-height: calc(100vh - 180px);
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_kanban_renderer.o_kanban_grouped .o_kanban_group,
+.o_kanban_view.o_wmz_disposal_kanban .o_kanban_renderer.o_kanban_grouped .o_column_quick_create {
+    flex: 0 0 300px !important;
+    min-width: 280px;
+    max-width: 320px;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_kanban_renderer.o_kanban_grouped .o_column_quick_create {
+    display: none !important;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_card {
+    border: none !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    margin: 8px 4px !important;
+    padding: 0 !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1) !important;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_card:hover {
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.16) !important;
+    transform: translateY(-1px);
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    color: #fff;
+    background: linear-gradient(135deg, #546e7a, #37474f);
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_banner_hazardous {
+    background: linear-gradient(135deg, #c62828, #8e0000);
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_banner_general_compactable {
+    background: linear-gradient(135deg, #1565c0, #0d47a1);
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_banner_general_non-compactable {
+    background: linear-gradient(135deg, #00897b, #00695c);
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_banner_none {
+    background: linear-gradient(135deg, #78909c, #546e7a);
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_banner_icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_name {
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_type {
+    font-size: 11px;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_body {
+    padding: 10px 14px 12px;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: #455a64;
+    margin-bottom: 6px;
+    line-height: 1.35;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_row i {
+    color: #78909c;
+    margin-top: 2px;
+    width: 14px;
+    flex-shrink: 0;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_footer {
+    padding: 0 14px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.o_kanban_view.o_wmz_disposal_kanban .o_wmz_ds_tag_mapped {
+    background: #e8f5e9;
+    color: #2e7d32;
+}

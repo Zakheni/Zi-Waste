@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vehicle Inspection - Sequence
+    Numbering sequence for inspection reference names.
+-->
+<odoo>
+    <data noupdate="1">
+
+        <!-- ============================= -->
+        <!-- INSPECTION REFERENCE SEQUENCE -->
+        <!-- ============================= -->
+        <!--        <record id="seq_vehicle_inspection" model="ir.sequence">-->
+        <!--            <field name="name">Vehicle Inspection</field>-->
+        <!--            <field name="code">vehicle.inspection</field>-->
+        <!--            <field name="prefix">VEHICLE/INSPECTION/</field>-->
+        <!--            <field name="padding">4</field>-->
+        <!--        </record>-->
+
+        <record id="seq_vehicle_inspection" model="ir.sequence">
+            <field name="name">Vehicle Inspection</field>
+            <field name="code">vehicle.inspection</field>
+            <field name="prefix">VEHICLE/INSPECTION/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

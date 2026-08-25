@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sage_sync_log_tree" model="ir.ui.view">
+        <field name="name">sage.sync.log.tree</field>
+        <field name="model">sage.sync.log</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="not ok" decoration-success="ok" default_order="create_date desc">
+                <field name="create_date"/>
+                <field name="method" decoration-bf="1"/>
+                <field name="path"/>
+                <field name="http_status"/>
+                <field name="duration_ms" string="ms"/>
+                <field name="ok" widget="boolean"/>
+                <field name="backend_id"/>
+                <field name="correlation_id" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sage_sync_log_form" model="ir.ui.view">
+        <field name="name">sage.sync.log.form</field>
+        <field name="model">sage.sync.log</field>
+        <field name="arch" type="xml">
+            <form class="o_sage_log_form">
+                <sheet>
+                    <div class="oe_title mb-3">
+                        <span class="o_sage_eyebrow">Bridge call</span>
+                        <h1><field name="method" readonly="1"/> <field name="path" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="backend_id"/>
+                            <field name="job_id"/>
+                            <field name="correlation_id"/>
+                        </group>
+                        <group>
+                            <field name="http_status"/>
+                            <field name="duration_ms"/>
+                            <field name="ok" widget="boolean"/>
+                            <field name="create_date"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Request">
+                            <div class="o_sage_payload_panel">
+                                <div class="o_sage_payload_panel_title">Request</div>
+                                <field name="request_pretty" widget="text" nolabel="1" readonly="1"/>
+                            </div>
+                        </page>
+                        <page string="Response">
+                            <div class="o_sage_payload_panel">
+                                <div class="o_sage_payload_panel_title">Response</div>
+                                <field name="response_pretty" widget="text" nolabel="1" readonly="1"/>
+                            </div>
+                        </page>
+                        <page string="Error" invisible="not error">
+                            <div class="o_sage_payload_panel o_sage_payload_panel_error">
+                                <div class="o_sage_payload_panel_title">Error</div>
+                                <field name="error" widget="text" nolabel="1" readonly="1"/>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sage_sync_log_search" model="ir.ui.view">
+        <field name="name">sage.sync.log.search</field>
+        <field name="model">sage.sync.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="path"/>
+                <field name="method"/>
+                <field name="correlation_id"/>
+                <field name="backend_id"/>
+                <filter name="ok" string="Success" domain="[('ok','=',True)]"/>
+                <filter name="failed" string="Failed" domain="[('ok','=',False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sage_sync_log" model="ir.actions.act_window">
+        <field name="name">Sage Sync Logs</field>
+        <field name="res_model">sage.sync.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sage_sync_log_tree"/>
+        <field name="mobile_view_mode">tree</field>
+        <field name="search_view_id" ref="view_sage_sync_log_search"/>
+    </record>
+</odoo>

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_inherit_pickup" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.pickup</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+
+            <!-- ✅ CREATE HEADER (SAFE POSITION) -->
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_send_portal_reset"
+                            type="object"
+                            string="Send Portal Reset Link"
+                            class="btn-primary oe_highlight"
+                            invisible="email == False"/>
+                </header>
+            </xpath>
+
+            <!-- ✅ ALERT AT VERY TOP -->
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-success alert-dismissible text-center"
+                     role="alert"
+                     invisible="not invite_url"
+                     style="margin: 10px;">
+
+                    <!-- Close -->
+                    <button name="action_clear_invite"
+                            type="object"
+                            class="btn-close"
+                            style="float: right;"/>
+
+                    <!-- Message -->
+                    <field name="invite_message"
+                           widget="html"
+                           options="{'sanitize': False}"/>
+
+
+                </div>
+            </xpath>
+
+            <!-- Customer Reference — prominent at top of form -->
+            <xpath expr="//div[hasclass('oe_title')]//field[@name='company_type']" position="before">
+                <h1 class="mb-1">
+                    <field name="customer_reference"
+                           placeholder="Customer Reference"
+                           class="text-break"/>
+                </h1>
+            </xpath>
+
+            <!-- Company link: companies AND individuals (not Odoo res.company) -->
+            <xpath expr="//div[hasclass('o_row')]//field[@name='parent_id']" position="replace">
+                <field name="parent_id"
+                       string="Company"
+                       widget="res_partner_many2one"
+                       placeholder="Select company or individual..."
+                       domain="['&amp;', ('id', '!=', id), '|', ('company_id', '=', False), ('company_id', '=', company_id)]"
+                       context="{'show_vat': True, 'default_user_id': user_id}"/>
+            </xpath>
+
+            <!-- WMZ fields -->
+            <field name="category_id" position="after">
+                <field name="company_id"
+                       readonly="1"
+                       force_save="1"
+                       options="{'no_create': True, 'no_open': True}"/>
+
+                <field name="role_ids"
+                       widget="many2many_tags"
+                       groups="waste_management_zakheni.group_wmz_admin,
+                           waste_management_zakheni.group_wmz_user_manager"/>
+
+                <field name="invite_message" readonly="1" widget="html" invisible="1"/>
+                <field name="invite_url" readonly="1" invisible="1"/>
+            </field>
+
+            <!-- ✅ NOTEBOOK PAGES -->
+            <xpath expr="//notebook" position="inside">
+
+                <page string="Pickup Points">
+                    <field name="pickup_point_ids"
+                           widget="many2many_tags"
+                           readonly="1"/>
+                </page>
+
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Waste Management" name="wmz_waste_management"
+                      invisible="'is_company' == False">
+
+                    <group string="Service Configuration" col="2">
+
+                        <field name="wmz_use_company_config"/>
+                        <field name="wmz_service_ids"
+                               widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               placeholder="Select services for this company..."
+                               string="Waste Services for Company"/>
+
+                        <field name="wmz_container_type_ids"
+                               widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               placeholder="Select container types for this company..."
+                               string="Container Types for Company"/>
+
+                        <field name="wmz_waste_type_ids"
+                               widget="many2many_tags"
+                               options="{'no_create_edit': True}"
+                               placeholder="Select waste types for this company..."
+                               string="Waste Types for Company"/>
+                    </group>
+
+                </page>
+            </xpath>
+            <!-- Example: put it near the name -->
+            <xpath expr="//field[@name='vat']" position="after">
+                <!--                <group>-->
+                <!--                    <field name="company_id"/>-->
+                <!--                </group>-->
+
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_simple_form_inherit_wmz" model="ir.ui.view">
+        <field name="name">res.partner.simple.form.inherit.wmz</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_simple_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="before">
+                <field name="company_id"
+                       readonly="1"
+                       force_save="1"
+                       options="{'no_create': True, 'no_open': True}"/>
+            </xpath>
+            <xpath expr="//field[@name='parent_id']" position="attributes">
+                <attribute name="domain">[('id', '!=', id)]</attribute>
+                <attribute name="context">{'show_vat': True, 'default_user_id': user_id}</attribute>
+                <attribute name="string">Company</attribute>
+                <attribute name="placeholder">Select company or individual...</attribute>
+                <attribute name="invisible">False</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_search_inherit_wmz" model="ir.ui.view">
+        <field name="name">res.partner.search.inherit.wmz</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="attributes">
+                <attribute name="domain">[]</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_tree_customer_reference" model="ir.ui.view">
+        <field name="name">res.partner.tree.customer.reference</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='complete_name']" position="after">
+                <field name="customer_reference" optional="show"/>
+                <field name="company_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_kanban_customer_reference" model="ir.ui.view">
+        <field name="name">res.partner.kanban.customer.reference</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.res_partner_kanban_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='display_name']" position="after">
+                <field name="customer_reference" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+
+</odoo>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Remove Odoo branding from portal, website footer, and login -->
+<odoo>
+
+    <!-- Portal sidebar (invoices, orders, etc.) -->
+    <template id="hide_portal_sidebar_powered_by"
+              inherit_id="portal.portal_record_sidebar"
+              name="Hide Portal Sidebar Powered By Odoo">
+
+        <xpath expr="//div[@id='sidebar_content']/div[.//a[contains(@href, 'odoo.com')]]" position="replace"/>
+
+    </template>
+
+    <!-- Website / portal footer -->
+    <template id="hide_web_brand_promotion"
+              inherit_id="web.brand_promotion"
+              name="Hide Web Brand Promotion">
+
+        <xpath expr="//div[hasclass('o_brand_promotion')]" position="replace"/>
+
+    </template>
+
+    <!-- Login page footer link -->
+    <template id="hide_login_powered_by"
+              inherit_id="web.login_layout"
+              name="Hide Login Powered By Odoo">
+
+        <xpath expr="//a[contains(@href, 'odoo.com') and contains(@href, 'utm_medium=auth')]" position="replace"/>
+
+    </template>
+
+</odoo>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    Module: pastel_connector
+    File: pastel_queue_views.xml
+    Description: Outbound sync queue tree/form views.
+-->
+<odoo>
+    <!-- View/action record: View pastel sync queue tree -->
+    <record id="view_pastel_sync_queue_tree" model="ir.ui.view">
+        <field name="name">pastel.sync.queue.tree</field>
+        <field name="model">pastel.sync.queue</field>
+        <field name="arch" type="xml">
+            <tree string="Pastel Sync Queue">
+                <field name="model"/>
+                <field name="res_id"/>
+                <field name="operation"/>
+                <field name="state"/>
+                <field name="error"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- View/action record: Action pastel sync queue -->
+
+    <record id="action_pastel_sync_queue" model="ir.actions.act_window">
+        <field name="name">Queue</field>
+        <field name="res_model">pastel.sync.queue</field>
+        <field name="view_mode">tree</field>
+    </record>
+</odoo>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sage_mapping_tax_tree" model="ir.ui.view">
+        <field name="name">sage.mapping.tax.tree</field>
+        <field name="model">sage.mapping.tax</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" decoration-bf="1">
+                <field name="backend_id" optional="hide"/>
+                <field name="tax_id"/>
+                <field name="sage_tax_code"/>
+                <field name="notes"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sage_mapping_tax_form" model="ir.ui.view">
+        <field name="name">sage.mapping.tax.form</field>
+        <field name="model">sage.mapping.tax</field>
+        <field name="arch" type="xml">
+            <form class="o_sage_mapping_form">
+                <sheet>
+                    <group>
+                        <field name="backend_id"/>
+                        <field name="tax_id"/>
+                        <field name="sage_tax_code"/>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sage_mapping_tax" model="ir.actions.act_window">
+        <field name="name">Tax Mappings</field>
+        <field name="res_model">sage.mapping.tax</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sage_mapping_tax_tree"/>
+        <field name="mobile_view_mode">tree</field>
+    </record>
+
+    <record id="view_sage_mapping_journal_tree" model="ir.ui.view">
+        <field name="name">sage.mapping.journal.tree</field>
+        <field name="model">sage.mapping.journal</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" decoration-bf="1">
+                <field name="backend_id" optional="hide"/>
+                <field name="journal_id"/>
+                <field name="sage_journal_code"/>
+                <field name="notes"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sage_mapping_journal_form" model="ir.ui.view">
+        <field name="name">sage.mapping.journal.form</field>
+        <field name="model">sage.mapping.journal</field>
+        <field name="arch" type="xml">
+            <form class="o_sage_mapping_form">
+                <sheet>
+                    <group>
+                        <field name="backend_id"/>
+                        <field name="journal_id"/>
+                        <field name="sage_journal_code"/>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sage_mapping_journal" model="ir.actions.act_window">
+        <field name="name">Journal Mappings</field>
+        <field name="res_model">sage.mapping.journal</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sage_mapping_journal_tree"/>
+        <field name="mobile_view_mode">tree</field>
+    </record>
+</odoo>

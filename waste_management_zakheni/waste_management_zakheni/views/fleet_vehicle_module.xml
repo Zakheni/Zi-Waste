@@ -1,0 +1,52 @@
+<!-- Views — Fleet Vehicle Module -->
+<odoo>
+    <data>
+
+        <!-- Views / records -->
+    <record id="view_fleet_vehicle_model_form_inherit_wmz" model="ir.ui.view">
+            <field name="name">fleet.vehicle.model.form.inherit.wmz</field>
+            <field name="model">fleet.vehicle.model</field>
+            <!-- USE THE REAL EXTERNAL ID YOU SAW IN THE UI HERE -->
+            <field name="inherit_id" ref="fleet.fleet_vehicle_model_view_form"/>
+            <field name="arch" type="xml">
+
+                <!-- Example: Doors field now visible for car + all your types -->
+                <!-- Make Doors visible only for car + your types -->
+                <!-- MODEL group: car + your new types -->
+                <!--                <xpath expr="//page[@name='information']/group/group[@string='Model']"-->
+                <!--                       position="attributes">-->
+                <!--                    <attribute name="invisible">-->
+                <!--                        vehicle_type not in ['car', 'truck', 'compactor', 'trailer', 'tank_truck']-->
+                <!--                    </attribute>-->
+                <!--                </xpath>-->
+
+                <!--                &lt;!&ndash; ENGINE group: car + your new types &ndash;&gt;-->
+                <!--                <xpath expr="//page[@name='information']/group[@string='Engine']"-->
+                <!--                       position="attributes">-->
+                <!--                    <attribute name="invisible">-->
+                <!--                        vehicle_type not in ['car', 'truck', 'compactor', 'trailer', 'tank_truck']-->
+                <!--                    </attribute>-->
+                <!--                </xpath>-->
+
+                <!-- 1) MODEL group: first inner group under the first <group> on the page -->
+                <xpath expr="//page[@name='information']/group/group[1]"
+                       position="attributes">
+                    <attribute name="invisible">
+                        vehicle_type not in ['car', 'truck', 'compactor', 'trailer', 'tank_truck']
+                    </attribute>
+                </xpath>
+
+                <!-- 2) ENGINE group: second top-level group under the page -->
+                <xpath expr="//page[@name='information']/group[2]"
+                       position="attributes">
+                    <attribute name="invisible">
+                        vehicle_type not in ['car', 'truck', 'compactor', 'trailer', 'tank_truck']
+                    </attribute>
+                </xpath>
+
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

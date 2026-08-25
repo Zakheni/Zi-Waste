@@ -1,0 +1,243 @@
+/* Waste Worksheet Kanban — 3 status columns fill the page width
+   Class o_wmz_worksheet_kanban is on .o_kanban_view (controller root), not the renderer. */
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped {
+    --KanbanGroup-width: calc(100% / 3);
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    overflow-x: hidden !important;
+    min-height: calc(100vh - 180px);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped .o_kanban_group,
+.o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped .o_column_quick_create {
+    flex: none !important;
+    flex-grow: 1 !important;
+    flex-basis: auto !important;
+    max-width: none !important;
+    min-width: 0;
+    width: 100%;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped .o_column_quick_create {
+    display: none !important;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped .o_kanban_record {
+    width: 100%;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_card {
+    border: none !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    margin: 8px 4px !important;
+    padding: 0 !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12) !important;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_card:hover {
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18) !important;
+    transform: translateY(-2px);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    color: #fff;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_banner_draft {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 28%, #64748b);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_banner_progress {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 72%, #1e293b);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_banner_done {
+    background: var(--company-theme-color, #15803d);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_banner_icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_ref {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_status {
+    display: inline-block;
+    margin-top: 3px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_body {
+    padding: 12px 14px 10px;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #37474f;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_value {
+    font-weight: 600;
+    line-height: 1.3;
+    min-width: 0;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_driver_tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--company-theme-accent-soft, #f0fdf4);
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 22%, #e2e8f0);
+    color: var(--company-theme-hover, #166534);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_driver_text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_driver_label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.85;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_driver_name {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_ico {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_ico_customer {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 55%, #475569);
+}
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_ico_driver {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 70%, #334155);
+}
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_ico_request {
+    background: #64748b;
+}
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_ico_date {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 40%, #64748b);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_stats {
+    display: flex;
+    border-top: 1px solid #eceff1;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_stat {
+    flex: 1;
+    text-align: center;
+    padding: 9px 4px;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 700;
+    background: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_stat:last-child {
+    border-right: none;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_stat i {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_stat_val {
+    display: block;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--company-theme-color, #15803d);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_stat_km,
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_stat_trips,
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_stat_ton {
+    background: #f8fafc;
+}
+.o_kanban_view.o_wmz_worksheet_kanban .o_wmz_ws_stat_empty { background: #f1f5f9; color: #94a3b8; }
+
+/* Column tints: 1=Draft, 2=In Progress, 3=Done (workflow order) */
+.o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped .o_kanban_group:nth-child(1) {
+    --KanbanGroup-background: color-mix(in srgb, var(--company-theme-color, #15803d) 6%, #f8fafc);
+    border-top: 3px solid color-mix(in srgb, var(--company-theme-color, #15803d) 35%, #94a3b8);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped .o_kanban_group:nth-child(2) {
+    --KanbanGroup-background: color-mix(in srgb, var(--company-theme-color, #15803d) 10%, #f8fafc);
+    border-top: 3px solid color-mix(in srgb, var(--company-theme-color, #15803d) 70%, #334155);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped .o_kanban_group:nth-child(3) {
+    --KanbanGroup-background: color-mix(in srgb, var(--company-theme-color, #15803d) 14%, #f8fafc);
+    border-top: 3px solid var(--company-theme-color, #15803d);
+}
+
+.o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped .o_kanban_group .o_kanban_header {
+    font-weight: 600;
+}
+
+@media (max-width: 767px) {
+    .o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped {
+        display: flex !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory;
+    }
+
+    .o_kanban_view.o_wmz_worksheet_kanban .o_kanban_renderer.o_kanban_grouped .o_kanban_group {
+        flex: 0 0 90% !important;
+        scroll-snap-align: start;
+    }
+}

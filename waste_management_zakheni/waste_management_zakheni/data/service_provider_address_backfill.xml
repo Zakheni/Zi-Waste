@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <function model="wms.service.provider" name="_backfill_full_address"/>
+</odoo>

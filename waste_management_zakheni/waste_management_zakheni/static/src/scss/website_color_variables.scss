@@ -1,0 +1,14 @@
+// Zakheni Waste — website / portal frontend color palette
+
+$o-user-theme-color-palette: map-merge($o-user-theme-color-palette, (
+    'primary': #15803d,
+    'secondary': #166534,
+));
+
+$o-user-color-palette: map-merge($o-user-color-palette, (
+    'o-color-1': #15803d,
+    'o-color-2': #166534,
+    'o-color-3': #dcfce7,
+    'o-color-4': #ffffff,
+    'o-color-5': #14532d,
+));

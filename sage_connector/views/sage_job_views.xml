@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sage_job_tree" model="ir.ui.view">
+        <field name="name">sage.job.tree</field>
+        <field name="model">sage.job</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="state == 'done'"
+                  decoration-danger="state in ('error','dead')"
+                  decoration-warning="state == 'running'"
+                  decoration-info="state == 'pending'"
+                  default_order="create_date desc">
+                <field name="create_date"/>
+                <field name="name" decoration-bf="1"/>
+                <field name="backend_id"/>
+                <field name="job_type"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state in ('error','dead')"
+                       decoration-warning="state == 'running'"
+                       decoration-info="state == 'pending'"/>
+                <field name="retry_count"/>
+                <field name="next_retry"/>
+                <field name="correlation_id" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sage_job_form" model="ir.ui.view">
+        <field name="name">sage.job.form</field>
+        <field name="model">sage.job</field>
+        <field name="arch" type="xml">
+            <form class="o_sage_job_form">
+                <header>
+                    <button name="action_process_now" type="object" string="Process Now" class="btn-primary" icon="fa-play" invisible="state == 'done'"/>
+                    <button name="action_retry" type="object" string="Retry" icon="fa-refresh" invisible="state not in ('error','dead')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,running,done,error,dead"/>
+                </header>
+                <sheet>
+                    <div class="oe_title mb-3">
+                        <span class="text-muted text-uppercase small">Sync job</span>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Job">
+                            <field name="backend_id"/>
+                            <field name="job_type"/>
+                            <field name="idempotency_key"/>
+                            <field name="correlation_id"/>
+                        </group>
+                        <group string="Target">
+                            <field name="res_model"/>
+                            <field name="res_id"/>
+                            <field name="retry_count"/>
+                            <field name="next_retry"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Payload">
+                            <div class="o_sage_payload_panel">
+                                <div class="o_sage_payload_panel_title">Payload</div>
+                                <field name="payload_pretty" widget="text" nolabel="1" readonly="1"/>
+                            </div>
+                        </page>
+                        <page string="Result">
+                            <div class="o_sage_payload_panel">
+                                <div class="o_sage_payload_panel_title">Result</div>
+                                <field name="result_pretty" widget="text" nolabel="1" readonly="1"/>
+                            </div>
+                        </page>
+                        <page string="Error" invisible="not error">
+                            <div class="o_sage_payload_panel o_sage_payload_panel_error">
+                                <div class="o_sage_payload_panel_title">Error</div>
+                                <field name="error" widget="text" nolabel="1" readonly="1"/>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sage_job_search" model="ir.ui.view">
+        <field name="name">sage.job.search</field>
+        <field name="model">sage.job</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="job_type"/>
+                <field name="idempotency_key"/>
+                <field name="backend_id"/>
+                <filter name="pending" string="Pending" domain="[('state','=','pending')]"/>
+                <filter name="running" string="Running" domain="[('state','=','running')]"/>
+                <filter name="done" string="Done" domain="[('state','=','done')]"/>
+                <filter name="error" string="Errors" domain="[('state','in',('error','dead'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="groupby_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="groupby_type" string="Job type" context="{'group_by': 'job_type'}"/>
+                    <filter name="groupby_backend" string="Backend" context="{'group_by': 'backend_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sage_job" model="ir.actions.act_window">
+        <field name="name">Sage Jobs</field>
+        <field name="res_model">sage.job</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sage_job_tree"/>
+        <field name="mobile_view_mode">tree</field>
+        <field name="search_view_id" ref="view_sage_job_search"/>
+        <field name="context">{'search_default_groupby_state': 1}</field>
+    </record>
+</odoo>

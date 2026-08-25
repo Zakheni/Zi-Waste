@@ -1,0 +1,640 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- Views â€” Waste Worksheet View -->
+<odoo>
+    <!-- Tree view: worksheet list -->
+    <record id="view_waste_worksheet_tree" model="ir.ui.view">
+        <field name="name">waste.worksheet.tree</field>
+        <field name="model">waste.worksheet</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc">
+                <field name="name" string="Reference" decoration-bf="1"/>
+                <field name="arrival_time" optional="show"/>
+                <field name="return_date" optional="show"/>
+                <field name="kilometers" optional="hide"/>
+                <field name="unit_of_measure" optional="hide"/>
+                <!--                <field name="quantity_collected" optional="hide"/>-->
+                <field name="trip_taken" optional="hide"/>
+                <!--                <field name="driver_id" optional="hide" widget="many2one_avatar_user"/>-->
+                <field name="driver_id"
+                       optional="show"
+                       widget="many2one_avatar_user"/>
+
+                <field name="provider_id"
+                       optional="show"
+                       invisible="driver_id != False"/>
+
+                <field name="service_request_id"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-warning="state == 'draft'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form view: field worksheet capture -->
+    <record id="view_waste_worksheet_form" model="ir.ui.view">
+        <field name="name">waste.worksheet.form</field>
+        <field name="model">waste.worksheet</field>
+        <field name="arch" type="xml">
+            <form class="o_wmz_worksheet_form">
+                <header>
+                    <button name="action_set_to_draft"
+                            type="object"
+                            string="Set to Draft"
+                            class="btn-secondary"
+                            invisible="state not in ('in_progress','done')"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_driver,waste_management_zakheni.group_wmz_admin_clerk"
+                    />
+                    <button name="action_start"
+                            type="object"
+                            string="Start"
+                            class="btn-primary"
+                            invisible="state != 'draft'"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_driver,waste_management_zakheni.group_wmz_admin_clerk"
+                    />
+                    <button name="action_done"
+                            type="object"
+                            string="Mark as done"
+                            class="btn-primary"
+                            invisible="state != 'in_progress'"
+                            groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_driver,waste_management_zakheni.group_wmz_admin_clerk"
+                    />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
+                </header>
+                <sheet readonly="state != 'in_progress'">
+
+                    <field name="work_started_at" invisible="1"/>
+                    <field name="work_finished_at" invisible="1"/>
+
+                    <div class="o_wmz_ws_draft_banner" invisible="state != 'draft'" role="status">
+                        Click <strong>Start</strong> to begin the job. Worksheet fields unlock once the job is in progress.
+                    </div>
+
+                    <div name="button_box" class="oe_button_box">
+
+                        <button name="action_open_waste_request"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-external-link"
+                                string="Waste Request"
+                                invisible="service_request_id == False"
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance">
+                            <field name="service_request_id" widget="statinfo" string="Request"/>
+                        </button>
+
+                        <button name="action_open_ws_bin_assignment_wizard"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-truck"
+                                string="Assign Bins"
+                                invisible="state in ('draft','done') or hide_bin == False"
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance,waste_management_zakheni.group_wmz_driver">
+
+                            <!-- Pickup Points -->
+                            <field name="wizard_pickup_point_count"
+                                   widget="statinfo"
+                                   string="Pickup Point(s)"
+                            />
+
+                            <!-- Slash separator -->
+                            <span style="font-size:14px; padding:0 4px;">|</span>
+
+                            <!-- Bins -->
+                            <field name="bin_line_count"
+                                   widget="statinfo"
+                                   string="Bin(s)"
+                            />
+                        </button>
+                        <button name="action_open_sale_order"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-external-link"
+                                string="Sale Order"
+                                groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_manager,waste_management_zakheni.group_wmz_finance"
+                                invisible="request_sale_order_id == False">
+                            <field name="request_sale_order_id" widget="statinfo" string="Sales"/>
+                        </button>
+
+
+                    </div>
+
+                    <div class="o_wmz_ws_header">
+                        <div class="o_wmz_ws_title_block">
+                            <span class="o_wmz_ws_icon" title="Worksheet">
+                                <i class="fa fa-clipboard"/>
+                            </span>
+                            <div class="o_wmz_ws_title_text">
+                                <span class="o_wmz_ws_eyebrow">Worksheet</span>
+                                <h1>
+                                    <field name="name" readonly="1"/>
+                                </h1>
+                                <div class="o_wmz_ws_meta">
+                                    <span class="o_wmz_ws_meta_item" invisible="not partner_id">
+                                        <i class="fa fa-building" title="Customer"/>
+                                        <field name="partner_id" readonly="1" nolabel="1"/>
+                                    </span>
+                                    <span class="o_wmz_ws_meta_item" invisible="not planned_date">
+                                        <i class="fa fa-calendar" title="Planned date"/>
+                                        <field name="planned_date" readonly="1" nolabel="1" widget="datetime"/>
+                                    </span>
+                                    <span class="o_wmz_ws_meta_item" invisible="not service_request_id">
+                                        <i class="fa fa-file-text-o" title="Manifest"/>
+                                        <field name="service_request_id" readonly="1" nolabel="1"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="o_wmz_ws_stopwatch_panel" invisible="not work_started_at">
+                            <widget name="wmz_worksheet_stopwatch"/>
+                        </div>
+                    </div>
+
+                    <group class="o_wmz_ws_section">
+                        <group string="Worksheet information">
+                            <field name="arrival_time" required="state == 'in_progress'"
+                                   readonly="state != 'in_progress'"/>
+                            <field name="kilometers" required="state == 'in_progress'"
+                                   readonly="state != 'in_progress'"/>
+                            <field name="unit_of_measure"
+                                   readonly="state != 'in_progress'"/>
+                            <field name="return_date" readonly="state != 'in_progress'"/>
+
+                            <field name="show_ton_qty" invisible="1"/>
+                            <field name="show_kg_qty" invisible="1"/>
+                            <field name="is_collection_qty" widget="boolean_toggle" readonly="state != 'in_progress'"/>
+
+                            <field name="quantity_collected_ton"
+                                   invisible="is_collection_qty == False or show_ton_qty == False"
+                                   readonly="state != 'in_progress'"/>
+                            <field name="quantity_collected_kg"
+                                   invisible="is_collection_qty == False or show_kg_qty == False"
+                                   readonly="state != 'in_progress'"/>
+                            <field name="is_trip" widget="boolean_toggle" readonly="state != 'in_progress'"/>
+                            <field name="trip_taken" invisible="is_trip == False"
+                                   readonly="state != 'in_progress'"/>
+
+                            <separator string="signatures"/>
+                            <field name="driver_signature" widget="signature"
+                                   required="state == 'in_progress'"
+                                   readonly="state != 'in_progress'"/>
+                            <field name="service_provider_signature" string="Customer Signature" widget="signature"
+                                   required="state == 'in_progress'" readonly="state != 'in_progress'"/>
+
+
+                            <!--                            <field name="employee_id" widget="many2one_avatar_user" required="1"/>-->
+                            <!--                            <field name="manager_email" readonly="1"/>-->
+                        </group>
+                        <group string="Manifest Details">
+
+                            <field name="partner_id"
+                                   widget="res_partner_many2one"
+                                   options="{'no_open': True}"
+                                   readonly="1"
+                                   context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}"
+                                   placeholder="Type to find a customer..."/>
+
+
+                            <field name="hide_waste_type" invisible="1"/>
+                            <field name="hide_waste_details" invisible="1"/>
+                            <field name="hide_bin" invisible="1"/>
+                            <field name="hide_tank" invisible="1"/>
+
+                            <field name="request_sale_order_id"
+                                   options="{'no_open': True}"
+                                   readonly="1"
+                                   groups="waste_management_zakheni.group_wmz_admin,waste_management_zakheni.group_wmz_admin_clerk,waste_management_zakheni.group_wmz_driver"
+                            />
+                            <field name="service_requested_id"
+                                   options="{'no_open': True}"
+                                   readonly="1"
+                                   domain="[('id','in', allowed_service_ids)]"
+                            />
+
+                            <field name="waste_type_id" readonly="1"
+                                   options="{'no_open': True}"
+                                   invisible="hide_waste_type == True"
+                                   domain="[('id','in', allowed_waste_type_ids)]"
+                            />
+
+                            <field name="waste_details_id" readonly="1"
+                                   options="{'no_open': True}"
+                                   invisible="hide_waste_details == True"/>
+
+                            <field name="bin_type_id" readonly="1"
+                                   options="{'no_open': True}"
+                                   invisible="hide_tank == True and hide_bin == False"/>
+                            <!--                            <field name="container_type_id" readonly="1"/>-->
+                            <field name="container_type_id" readonly="1" widget="radio"
+                                   options="{'horizontal': True}"
+                                   domain="[('id','in', allowed_container_type_ids)]"
+                            />
+
+
+                            <!--                             <field name="pickup_id" invisible="1"/>-->
+                            <!--                            <field name="customer_id" invisible="1"/>-->
+                            <field name="allowed_service_ids" invisible="1"/>
+                            <field name="allowed_container_type_ids" invisible="1"/>
+                            <field name="allowed_waste_type_ids" invisible="1"/>
+                            <field name="hide_droppoff_container_ids_placement" invisible="1"/>
+                            <field name="hide_droppoff_container_ids_removal" invisible="1"/>
+                            <field name="hide_droppoff_container_ids_collection" invisible="1"/>
+                            <field name="hide_droppoff_container_ids_is_bin" invisible="1"/>
+
+                            <field name="hide_lifted_bin_ids_swap" invisible="1"/>
+                            <field name="hide_dropped_bin_ids_swap" invisible="1"/>
+                            <field name="hide_dropped_to_swap" invisible="1"/>
+
+                            <field name="hide_tank_ids" invisible="1"/>
+                            <field name="hide_tank_volume" invisible="1"/>
+                            <field name="hide_liters_collected" invisible="1"/>
+                            <field name="hide_liters_remaining" invisible="1"/>
+                            <field name="hide_service_collection" invisible="1"/>
+                            <field name="hide_shunt_container_ids" invisible="1"/>
+
+                            <field name="hide_hazardous_fields" invisible="1"/>
+                            <field name="hide_general" invisible="1"/>
+                            <field name="hide_none_general" invisible="1"/>
+                            <field name="hide_service_placement" invisible="1"/>
+                            <field name="hide_disposal_site" invisible="1"/>
+                            <field name="qty_updated_from_worksheet" invisible="1"/>
+                            <separator string="Bins / Tank"/>
+                            <field name="pickup_point_bins_summary" readonly="1" class="text-muted"
+                                   style="font-size:10px;"
+                                   placeholder="No bins assigned yet." decoration-info="1" decoration-bf="1"/>
+                            <field name="pickup_point_ids" widget="many2many_tags"
+                                   readonly="state != 'in_progress'"
+                                   domain="[('partner_id', '=', partner_id)]"
+                                   invisible="hide_droppoff_container_ids_placement
+                                              or (not hide_droppoff_container_ids_collection
+                                                  and not hide_tank_volume
+                                                  and not hide_lifted_bin_ids_swap
+                                                  and not hide_shunt_container_ids
+                                                  and not hide_droppoff_container_ids_removal)"
+                            />
+
+                            <field name="bin_lifted_ids"
+                                   widget="many2many_tags"
+                                   readonly="state != 'in_progress'"
+                                   domain="[('pickup_point_id', 'in', pickup_point_ids),
+                                               ('pickup_point_id.partner_id', '=', partner_id),
+                                               ('status', 'in', ['in_use', 'un_use']),
+                                               ('inUse', '=', True),
+                                               ('container_type_id.name', 'ilike', 'bin')
+                                            ]"
+                                   invisible="hide_droppoff_container_ids_placement
+                                              or (not hide_droppoff_container_ids_collection
+                                                  and not hide_lifted_bin_ids_swap
+                                                  and not hide_shunt_container_ids
+                                                  and not hide_droppoff_container_ids_removal)
+                                              or hide_tank_volume"
+                            />
+
+                            <!-- bin_dropped_ids for placement / general use -->
+                            <field name="bin_dropped_ids" widget="many2many_tags"
+                                   readonly="state != 'in_progress'"
+                                   domain="[('partner_id', '=', False),
+                                               ('pickup_point_id', '=', False),
+                                               ('status', '=', 'intact'),
+                                               ('inUse', '=', False),
+                                               ('dropoff_point_id', '=', False),
+
+                                           ]"
+                                   invisible="(not hide_droppoff_container_ids_placement
+                                               and not hide_droppoff_container_ids_collection
+                                               and not hide_lifted_bin_ids_swap)
+                                               or hide_general
+                                               or hide_tank_volume
+                                               or hide_lifted_bin_ids_swap"
+                            />
+
+                            <!-- bin_dropped_ids for swap / shunt behaviour -->
+                            <field name="bin_dropped_ids" widget="many2many_tags"
+                                   readonly="state != 'in_progress'"
+                                   domain="[('partner_id', '=', False),
+                                               ('pickup_point_id', '=', False),
+                                               ('status', '=', 'intact'),
+                                               ('inUse', '=', False),
+                                               ('dropoff_point_id', '=', False),
+                                           ]"
+                                   invisible="not hide_lifted_bin_ids_swap
+                                              or (not hide_general and hide_shunt_container_ids)"
+                            />
+
+                            <field name="dropoff_point_ids" widget="many2many_tags"
+                                   readonly="state != 'in_progress'"
+                                   domain="[('partner_id', '=', partner_id)]"
+                                   invisible="(not hide_droppoff_container_ids_placement
+                                               and not hide_shunt_container_ids)
+                                               or hide_tank_volume"
+                            />
+                            <field name="product_uom_qty" string="No. of Bins"
+                                   readonly="state != 'in_progress'"
+                                   invisible="not partner_id or hide_bin == False"/>
+
+                            <label for="product_uom_qty" string="Quantity (kL)" invisible="not hide_tank_volume"/>
+
+                            <div class="o_row">
+                                <field name="product_uom_qty"
+                                       readonly="state != 'in_progress'"
+                                       class="oe_inline" invisible="not hide_tank_volume"/>
+                                <div class="oe_inline text-success"
+                                     invisible="qty_updated_from_worksheet == False">
+                                    <span>Updated from worksheet</span>
+                                </div>
+                            </div>
+
+                            <!--                            <field name="tank_ids" widget="many2many_tags"-->
+                            <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
+                            <!--                                              or hide_bin"-->
+
+                            <field name="truck_tanker_id" readonly="1" string="Tank Truck"
+                                   options="{'no_open': True}"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                                                           or hide_bin"
+                            />
+
+
+                            <!--                            <field name="product_uom_qty"-->
+                            <!--                                   string="Quantity (kL)"-->
+                            <!--                                   invisible="(not hide_general and not hide_tank_volume)-->
+                            <!--                                              or hide_bin"-->
+                            <!--                            help="Billing quantity in kiloliters, used for tariff (1â€“4 kL flat, 5+ incremental)."/>-->
+                            <field name="liters_collected" readonly="1"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                              or hide_bin"/>
+                            <field name="billing_amount" readonly="1"
+                                   invisible="(not hide_general and not hide_tank_volume)
+                                              or hide_bin"/>
+
+                            <separator string="Driver / sevice provider"/>
+                            <field name="driver_id"
+                                   widget="many2one_avatar_user"
+                                   invisible="provider_id != False"/>
+
+                            <field name="provider_id"
+                                   invisible="driver_id != False"/>
+
+
+                        </group>
+                    </group>
+                    <separator string="Upload information"/>
+                    <div>
+                        <separator/>
+
+                        <group style="display:flex; align-items:center;">
+                            <field name="manifest_document" filename="manifest_document_filename"
+                                   style="flex:1;" readonly="state != 'in_progress'"/>
+                            <button name="action_open_manifest_document"
+                                    type="object"
+                                    icon="fa-file-pdf-o"
+                                    class="btn-sm"
+                                    invisible="manifest_document == False"
+                                    style="margin-left: -10px;"/>
+
+                        </group>
+
+                        <group style="display:flex; align-items:center;">
+                            <field name="weighbridge_slip" invisible="hide_waste_type == True"
+                                   filename="weighbridge_slip_filename"
+                                   style="flex:1;" readonly="state != 'in_progress'"/>
+                            <button name="action_open_weighbridge_slip"
+                                    type="object"
+                                    icon="fa-file-pdf-o"
+                                    class="btn-sm"
+                                    invisible="weighbridge_slip == False"
+                                    style="margin-left: -10px;"/>
+
+                        </group>
+
+
+                        <group style="display:flex; align-items:center;" invisible="not hide_hazardous_fields">
+                            <field name="safety_certificate" filename="safety_certificate_filename"
+                                   style="flex:1;" readonly="state != 'in_progress'"/>
+                            <button name="action_open_safety_certificate"
+                                    type="object"
+                                    class="btn-sm"
+                                    icon="fa-file-pdf-o"
+                                    invisible="safety_certificate == False"
+                                    style="margin-left: -10px;"/>
+
+                        </group>
+                    </div>
+
+
+                    <separator/>
+
+                    <notebook>
+                        <page string="Photos">
+                            <field name="image_ids" mode="kanban" readonly="state != 'in_progress'">
+                                <kanban create="true" quick_create="false" class="o_kanban_large_column">
+                                    <field name="image"/>
+                                    <field name="name"/>
+
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_kanban_global_click o_kanban_card" style="padding: 6px;">
+                                                <!-- Image block with fixed height -->
+                                                <div style="
+                                                        height: 220px;
+                                                        overflow: hidden;
+                                                        display: flex;
+                                                        align-items: center;
+                                                        justify-content: center;
+                                                    ">
+                                                    <img t-att-src="kanban_image('waste.worksheet.image', 'image', record.id.value)"
+                                                         style="
+                                                             width: 100%;
+                                                             height: 100%;
+                                                             object-fit: cover;
+                                                         "/>
+                                                </div>
+
+                                                <!-- Caption / description -->
+                                                <div class="oe_kanban_details o_kanban_record_title"
+                                                     style="margin-top: 4px;">
+                                                    <strong>
+                                                        <field name="name"/>
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </page>
+                        <page string="Notes &amp; Photos (HTML)">
+                            <field name="notes_html"
+                                   widget="html"
+                                   readonly="state != 'in_progress'"
+                                   options="{'toolbar': ['bold', 'italic', 'underline', 'image', 'link', 'ul', 'ol']}"/>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search -->
+    <record id="view_waste_worksheet_search" model="ir.ui.view">
+        <field name="name">waste.worksheet.search</field>
+        <field name="model">waste.worksheet</field>
+        <field name="arch" type="xml">
+            <search string="Worksheets">
+                <field name="name"/>
+                <field name="service_request_id"/>
+                <field name="driver_id"/>
+                <field name="partner_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <separator/>
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="In Progress" name="filter_in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Done" name="filter_done" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter string="Planned Date" name="filter_planned_date" date="planned_date"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Driver" name="group_driver" context="{'group_by': 'driver_id'}"/>
+                    <filter string="Service Request" name="group_service_request" context="{'group_by': 'service_request_id'}"/>
+                    <filter string="Company" name="group_company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                    <filter string="Planned Month" name="group_planned_month" context="{'group_by': 'planned_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Kanban — CSS classes from waste_worksheet_kanban.css (web.assets_backend) -->
+    <record id="view_waste_worksheet_kanban" model="ir.ui.view">
+        <field name="name">waste.worksheet.kanban</field>
+        <field name="model">waste.worksheet</field>
+        <field name="priority">1</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_wmz_worksheet_kanban" quick_create="false" group_create="false">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="state_label"/>
+                <field name="partner_id"/>
+                <field name="driver_id"/>
+                <field name="service_request_id"/>
+                <field name="planned_date"/>
+                <field name="kilometers"/>
+                <field name="trip_taken"/>
+                <field name="quantity_collected_ton"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click oe_kanban_card o_wmz_ws_card">
+                            <div t-if="record.state.raw_value == 'draft'" class="o_wmz_ws_banner o_wmz_ws_banner_draft">
+                                <span class="o_wmz_ws_banner_icon"><i class="fa fa-pencil" title="Draft"/></span>
+                                <div>
+                                    <div class="o_wmz_ws_ref"><field name="name"/></div>
+                                    <span class="o_wmz_ws_status"><field name="state_label"/></span>
+                                </div>
+                            </div>
+                            <div t-elif="record.state.raw_value == 'in_progress'" class="o_wmz_ws_banner o_wmz_ws_banner_progress">
+                                <span class="o_wmz_ws_banner_icon"><i class="fa fa-truck" title="In Progress"/></span>
+                                <div>
+                                    <div class="o_wmz_ws_ref"><field name="name"/></div>
+                                    <span class="o_wmz_ws_status"><field name="state_label"/></span>
+                                </div>
+                            </div>
+                            <div t-else="" class="o_wmz_ws_banner o_wmz_ws_banner_done">
+                                <span class="o_wmz_ws_banner_icon"><i class="fa fa-check-circle" title="Done"/></span>
+                                <div>
+                                    <div class="o_wmz_ws_ref"><field name="name"/></div>
+                                    <span class="o_wmz_ws_status"><field name="state_label"/></span>
+                                </div>
+                            </div>
+                            <div class="o_wmz_ws_body">
+                                <div t-if="record.partner_id.value" class="o_wmz_ws_row">
+                                    <span class="o_wmz_ws_ico o_wmz_ws_ico_customer"><i class="fa fa-building" title="Customer"/></span>
+                                    <span class="o_wmz_ws_value" t-esc="record.partner_id.value"/>
+                                </div>
+                                <div t-if="record.driver_id.value" class="o_wmz_ws_driver_tile">
+                                    <span class="o_wmz_ws_ico o_wmz_ws_ico_driver"><i class="fa fa-user" title="Driver"/></span>
+                                    <div class="o_wmz_ws_driver_text">
+                                        <span class="o_wmz_ws_driver_label">Assigned driver</span>
+                                        <span class="o_wmz_ws_driver_name" t-esc="record.driver_id.value"/>
+                                    </div>
+                                </div>
+                                <div t-if="record.service_request_id.value" class="o_wmz_ws_row">
+                                    <span class="o_wmz_ws_ico o_wmz_ws_ico_request"><i class="fa fa-file-text-o" title="Request"/></span>
+                                    <span class="o_wmz_ws_value" t-esc="record.service_request_id.value"/>
+                                </div>
+                                <div t-if="record.planned_date.value" class="o_wmz_ws_row">
+                                    <span class="o_wmz_ws_ico o_wmz_ws_ico_date"><i class="fa fa-calendar" title="Planned"/></span>
+                                    <field name="planned_date" widget="date"/>
+                                </div>
+                            </div>
+                            <div class="o_wmz_ws_stats">
+                                <div class="o_wmz_ws_stat o_wmz_ws_stat_km">
+                                    <i class="fa fa-road" title="Kilometers"/>
+                                    <span class="o_wmz_ws_stat_val"><field name="kilometers"/></span>
+                                    km
+                                </div>
+                                <div class="o_wmz_ws_stat o_wmz_ws_stat_trips">
+                                    <i class="fa fa-refresh" title="Trips"/>
+                                    <span class="o_wmz_ws_stat_val"><field name="trip_taken"/></span>
+                                    trips
+                                </div>
+                                <div class="o_wmz_ws_stat o_wmz_ws_stat_ton">
+                                    <i class="fa fa-balance-scale" title="Tonnage"/>
+                                    <span class="o_wmz_ws_stat_val"><field name="quantity_collected_ton"/></span>
+                                    ton
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Graph -->
+    <record id="view_waste_worksheet_graph" model="ir.ui.view">
+        <field name="name">waste.worksheet.graph</field>
+        <field name="model">waste.worksheet</field>
+        <field name="arch" type="xml">
+            <graph string="Worksheet Analysis" type="bar" stacked="True">
+                <field name="state"/>
+                <field name="driver_id"/>
+                <field name="kilometers" type="measure"/>
+                <field name="trip_taken" type="measure"/>
+                <field name="quantity_collected_ton" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Pivot -->
+    <record id="view_waste_worksheet_pivot" model="ir.ui.view">
+        <field name="name">waste.worksheet.pivot</field>
+        <field name="model">waste.worksheet</field>
+        <field name="arch" type="xml">
+            <pivot string="Worksheet Analysis">
+                <field name="state" type="row"/>
+                <field name="driver_id" type="row"/>
+                <field name="planned_date" interval="month" type="col"/>
+                <field name="kilometers" type="measure"/>
+                <field name="trip_taken" type="measure"/>
+                <field name="quantity_collected_ton" type="measure"/>
+                <field name="quantity_collected_kg" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Window action: worksheets (visibility scoped by ir.rule per role) -->
+    <record id="action_waste_worksheet" model="ir.actions.act_window">
+        <field name="name">Worksheet</field>
+        <field name="res_model">waste.worksheet</field>
+        <field name="view_mode">kanban,graph,pivot,tree,form</field>
+        <field name="search_view_id" ref="view_waste_worksheet_search"/>
+        <field name="context">{'search_default_group_state': 0}</field>
+    </record>
+
+
+</odoo>

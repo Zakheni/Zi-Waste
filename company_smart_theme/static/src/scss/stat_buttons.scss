@@ -1,0 +1,45 @@
+/* Stat buttons (control panel + form) — colors driven by company theme CSS variables */
+
+.o-form-buttonbox .oe_stat_button,
+.o-form-buttonbox .oe_stat_button.btn-outline-secondary {
+    background-color: var(--company-stat-btn-bg, #ffffff) !important;
+    border: 1px solid var(--company-stat-btn-border, #adb5bd) !important;
+    color: var(--company-stat-btn-color, inherit) !important;
+}
+
+.o-form-buttonbox .oe_stat_button.btn-outline-secondary:hover,
+.o-form-buttonbox .oe_stat_button.btn-outline-secondary:focus,
+.o-form-buttonbox .oe_stat_button.btn-outline-secondary:active {
+    background-color: var(--company-stat-btn-hover, #f3f4f6) !important;
+    border-color: var(--company-theme-color, #714b67) !important;
+    color: var(--company-stat-btn-hover-color, inherit) !important;
+}
+
+.o-form-buttonbox .oe_stat_button .o_stat_text,
+.o-form-buttonbox .oe_stat_button .o_field_statinfo .o_stat_text {
+    color: var(--company-stat-label, #6b7280) !important;
+}
+
+.o-form-buttonbox .oe_stat_button .o_stat_value,
+.o-form-buttonbox .oe_stat_button span.o_stat_info.o_stat_value,
+.o-form-buttonbox .oe_stat_button .o_stat_info .o_stat_value,
+.o-form-buttonbox .oe_stat_button .o_field_statinfo .o_stat_value {
+    color: var(--company-stat-value, var(--company-theme-color, #714b67)) !important;
+}
+
+.o-form-buttonbox .oe_stat_button .o_button_icon,
+.o-form-buttonbox .oe_stat_button .o_button_icon::before,
+.o-form-buttonbox .oe_stat_button > .fa,
+.o-form-buttonbox .oe_stat_button .fa {
+    color: var(--company-stat-icon, var(--company-stat-value)) !important;
+}
+
+.o-form-buttonbox .oe_stat_button .o_field_widget,
+.o-form-buttonbox .oe_stat_button .o_field_widget span,
+.o-form-buttonbox .oe_stat_button .o_field_widget a {
+    color: var(--company-stat-value, inherit) !important;
+}
+
+.o-form-buttonbox .oe_stat_button > span:not(.o_stat_info):not(.o_field_statinfo) {
+    color: var(--company-stat-label, #6b7280) !important;
+}

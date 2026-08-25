@@ -1,0 +1,437 @@
+/* Batch Payment form — clearer hierarchy, summary strip, company theme */
+
+.o_batch_payment_form .o_form_sheet {
+    padding: 20px 28px !important;
+}
+
+.o_batch_payment_form .oe_title h1 {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--company-theme-color, var(--wmz-brand, #15803d));
+}
+
+.o_batch_payment_form .oe_button_box .oe_stat_button {
+    min-width: 110px;
+}
+
+.o_batch_payment_form .o_batch_payment_hint {
+    margin: 0 0 12px 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-left: 4px solid var(--company-theme-color, var(--wmz-brand, #15803d));
+    background: var(--company-theme-accent-soft, var(--wmz-summary-bg, #f0fdf4));
+    border-top: 1px solid var(--company-theme-accent-soft, #bbf7d0);
+    border-right: 1px solid var(--company-theme-accent-soft, #bbf7d0);
+    border-bottom: 1px solid var(--company-theme-accent-soft, #bbf7d0);
+}
+
+.o_batch_payment_form .o_batch_payment_hint .o_field_widget,
+.o_batch_payment_form .o_batch_payment_hint_text {
+    margin: 0;
+    font-weight: 500;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 70%, #14532d);
+}
+
+/* Primary actions (Validate / Receive Payment) */
+.o_batch_payment_form header .btn-primary,
+.o_batch_payment_form header .oe_highlight,
+.o_batch_payment_form .o_statusbar_buttons .btn-primary,
+.o_batch_payment_form .o_batch_payment_line_actions .btn-primary {
+    background-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    border-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    color: var(--company-theme-text, #ffffff) !important;
+}
+
+.o_batch_payment_form header .btn-primary:hover,
+.o_batch_payment_form header .oe_highlight:hover,
+.o_batch_payment_form .o_statusbar_buttons .btn-primary:hover,
+.o_batch_payment_form .o_batch_payment_line_actions .btn-primary:hover {
+    background-color: var(--company-theme-hover, var(--company-theme-border, #166534)) !important;
+    border-color: var(--company-theme-hover, var(--company-theme-border, #166534)) !important;
+    color: var(--company-theme-text, #ffffff) !important;
+}
+
+/* Secondary (Export to Sage) stays outlined so it is not confused with Receive Payment */
+.o_batch_payment_form header .btn-secondary {
+    border-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    background: transparent !important;
+}
+
+.o_batch_payment_form header .btn-secondary:hover {
+    background: var(--company-theme-accent-soft, #f0fdf4) !important;
+}
+
+.o_batch_payment_form header .btn-link.text-danger {
+    font-weight: 600;
+}
+
+/* Statusbar current step */
+.o_batch_payment_form header .o_statusbar_status .o_arrow_button.btn-primary,
+.o_batch_payment_form header .o_statusbar_status .o_arrow_button.o_arrow_button_current,
+.o_batch_payment_form .o_statusbar_status .o_arrow_button.btn-primary.disabled {
+    background-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    border-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    color: var(--company-theme-text, #ffffff) !important;
+}
+
+.o_batch_payment_form .o_batch_payment_line_actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.o_batch_payment_form .o_batch_payment_credit {
+    margin-top: 4px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--company-theme-accent-soft, var(--wmz-summary-bg, #f0fdf4));
+    border: 1px solid var(--company-theme-accent-soft, var(--wmz-summary-border, #bbf7d0));
+}
+
+.o_batch_payment_form .o_batch_payment_totals {
+    min-width: 280px;
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: var(--wmz-summary-bg, #f8fafc);
+    border: 1px solid var(--wmz-summary-border, #e2e8f0);
+}
+
+.o_batch_payment_form .o_notebook .nav-link.active {
+    color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    border-bottom-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+}
+
+.modal-content .o_batch_payment_form footer .btn-primary,
+.o_dialog .o_batch_payment_form footer .btn-primary {
+    background-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    border-color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+    color: var(--company-theme-text, #ffffff) !important;
+}
+
+/* Kanban board — icons & badges follow company theme */
+.o_kanban_view.o_batch_payment_kanban .o_kanban_group {
+    min-width: 280px;
+}
+
+.o_kanban_view.o_batch_payment_kanban .o_kanban_header .o_column_title,
+.o_kanban_view.o_batch_payment_kanban .o_kanban_counter {
+    color: var(--company-theme-color, var(--wmz-brand, #15803d));
+}
+
+.o_batch_payment_kanban_card {
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 18%, #e2e8f0);
+    border-left: 4px solid var(--company-theme-color, #15803d);
+    padding: 14px 16px 14px 20px !important;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.o_kanban_view.o_batch_payment_kanban .o_kanban_record {
+    padding-left: 2px;
+}
+
+.o_batch_payment_kanban_card .o_kanban_record_top,
+.o_batch_payment_kanban_card .o_batch_payment_kanban_body,
+.o_batch_payment_kanban_card .o_kanban_record_bottom {
+    margin-left: 2px;
+}
+
+/* State accents = muted mixes of company color (not hardcoded orange/blue) */
+.o_batch_payment_kanban_card.o_batch_payment_state_draft {
+    border-left-color: color-mix(in srgb, var(--company-theme-color, #15803d) 35%, #94a3b8);
+}
+
+.o_batch_payment_kanban_card.o_batch_payment_state_validated {
+    border-left-color: color-mix(in srgb, var(--company-theme-color, #15803d) 70%, #ca8a04);
+}
+
+.o_batch_payment_kanban_card.o_batch_payment_state_exported {
+    border-left-color: color-mix(in srgb, var(--company-theme-color, #15803d) 55%, #0284c7);
+}
+
+.o_batch_payment_kanban_card.o_batch_payment_state_partial {
+    border-left-color: color-mix(in srgb, var(--company-theme-color, #15803d) 65%, #ca8a04);
+}
+
+.o_batch_payment_kanban_card.o_batch_payment_state_paid {
+    border-left-color: var(--company-theme-color, #15803d);
+}
+
+.o_batch_payment_kanban_card.o_batch_payment_state_cancelled {
+    border-left-color: color-mix(in srgb, var(--company-theme-color, #15803d) 25%, #dc2626);
+    opacity: 0.9;
+}
+
+.o_batch_payment_kanban_card .o_kanban_record_title {
+    color: var(--company-theme-color, #15803d);
+    font-size: 1rem;
+}
+
+.o_batch_payment_kanban_row {
+    font-size: 0.92rem;
+    line-height: 1.35;
+}
+
+.o_batch_payment_kanban_card .o_kanban_record_bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Icons on cards */
+.o_batch_payment_kanban_card .fa,
+.o_batch_payment_kanban_card i[class*="fa-"] {
+    color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+}
+
+.o_batch_payment_kanban_card .o_mail_activity .fa {
+    color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+}
+
+/* Badges / label_selection / partner_type badge */
+.o_batch_payment_kanban_card .badge,
+.o_batch_payment_kanban_card .o_field_badge,
+.o_batch_payment_kanban_card .o_field_widget.o_field_badge,
+.o_batch_payment_kanban_card .o_tag,
+.o_batch_payment_kanban_card span.badge {
+    background-color: color-mix(in srgb, var(--company-theme-color, #15803d) 16%, #ffffff) !important;
+    color: var(--company-theme-color, #15803d) !important;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 35%, #ffffff) !important;
+}
+
+.o_batch_payment_kanban_card .badge.text-bg-light,
+.o_batch_payment_kanban_card .badge.bg-light {
+    background-color: color-mix(in srgb, var(--company-theme-color, #15803d) 12%, #ffffff) !important;
+    color: var(--company-theme-color, #15803d) !important;
+}
+
+/* State label_selection variants — all themed, paid strongest */
+.o_batch_payment_kanban_card .o_label_secondary,
+.o_batch_payment_kanban_card .badge.text-bg-secondary,
+.o_batch_payment_kanban_card .o_status_label {
+    background-color: color-mix(in srgb, var(--company-theme-color, #15803d) 14%, #ffffff) !important;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 75%, #334155) !important;
+    border-color: color-mix(in srgb, var(--company-theme-color, #15803d) 28%, #ffffff) !important;
+}
+
+.o_batch_payment_kanban_card .o_label_warning,
+.o_batch_payment_kanban_card .badge.text-bg-warning,
+.o_batch_payment_kanban_card .bg-warning-subtle {
+    background-color: color-mix(in srgb, var(--company-theme-color, #15803d) 22%, #fff7ed) !important;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 55%, #9a3412) !important;
+    border-color: color-mix(in srgb, var(--company-theme-color, #15803d) 40%, #fed7aa) !important;
+}
+
+.o_batch_payment_kanban_card .o_label_info,
+.o_batch_payment_kanban_card .badge.text-bg-info,
+.o_batch_payment_kanban_card .bg-info-subtle {
+    background-color: color-mix(in srgb, var(--company-theme-color, #15803d) 20%, #eff6ff) !important;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 60%, #1e40af) !important;
+    border-color: color-mix(in srgb, var(--company-theme-color, #15803d) 38%, #bfdbfe) !important;
+}
+
+.o_batch_payment_kanban_card .o_label_success,
+.o_batch_payment_kanban_card .badge.text-bg-success,
+.o_batch_payment_kanban_card .bg-success-subtle {
+    background-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #ffffff) !important;
+    border-color: var(--company-theme-hover, #166534) !important;
+}
+
+.o_batch_payment_kanban_card .o_label_danger,
+.o_batch_payment_kanban_card .badge.text-bg-danger {
+    background-color: color-mix(in srgb, var(--company-theme-color, #15803d) 15%, #fef2f2) !important;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 30%, #b91c1c) !important;
+    border-color: color-mix(in srgb, var(--company-theme-color, #15803d) 25%, #fecaca) !important;
+}
+
+/* Form + list badges/icons also follow theme */
+.o_batch_payment_form .oe_button_box .oe_stat_button .o_button_icon,
+.o_batch_payment_form .oe_button_box .oe_stat_button .fa {
+    color: var(--company-theme-color, var(--wmz-brand, #15803d)) !important;
+}
+
+.o_batch_payment_form .badge,
+.o_batch_payment_form .o_field_badge .badge,
+.o_batch_payment_form span.badge {
+    background-color: color-mix(in srgb, var(--company-theme-color, #15803d) 16%, #ffffff) !important;
+    color: var(--company-theme-color, #15803d) !important;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 35%, #ffffff) !important;
+}
+
+.o_batch_payment_form .badge.text-bg-success,
+.o_batch_payment_form .o_field_badge .badge.text-bg-success {
+    background-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #ffffff) !important;
+    border-color: var(--company-theme-hover, #166534) !important;
+}
+
+/* ---- Batch export history ---- */
+.o_batch_export_history_form .o_form_sheet {
+    padding: 22px 28px !important;
+}
+
+.o_batch_export_history_form .o_batch_export_eyebrow {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 50%, #64748b);
+    margin-bottom: 4px;
+}
+
+.o_batch_export_history_form .oe_title h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--company-theme-color, #15803d);
+}
+
+.o_batch_export_history_form .o_batch_export_status_banner {
+    margin: 8px 0 16px;
+    padding: 12px 16px 12px 18px;
+    border-radius: 10px;
+    border-left: 4px solid var(--company-theme-color, #15803d);
+}
+
+.o_batch_export_history_form .o_batch_export_ok {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 10%, #ffffff);
+    border-color: var(--company-theme-color, #15803d);
+}
+
+.o_batch_export_history_form .o_batch_export_fail {
+    background: color-mix(in srgb, #dc2626 8%, #ffffff);
+    border-left-color: #dc2626;
+}
+
+.o_batch_export_history_form .o_batch_export_status_main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.o_batch_export_history_form .o_batch_export_ref {
+    font-weight: 600;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 40%, #334155);
+}
+
+.o_batch_export_history_form .o_batch_export_summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.o_batch_export_history_form .o_batch_export_chip {
+    min-width: 160px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 6%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 18%, #e2e8f0);
+}
+
+.o_batch_export_history_form .o_batch_export_chip_label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 45%, #64748b);
+    margin-bottom: 2px;
+}
+
+.o_batch_export_history_form .o_batch_export_payload_panel {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #0f172a;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 25%, #1e293b);
+}
+
+.o_batch_export_history_form .o_batch_export_panel_title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--company-theme-color, #15803d) 55%, #94a3b8);
+    margin-bottom: 8px;
+}
+
+.o_batch_export_history_form .o_batch_export_payload_panel textarea,
+.o_batch_export_history_form .o_batch_export_payload_panel .o_field_text {
+    color: #e2e8f0 !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+    background: transparent !important;
+    border: none !important;
+    min-height: 220px;
+}
+
+.o_batch_export_history_form .o_notebook .nav-link.active {
+    color: var(--company-theme-color, #15803d) !important;
+    border-bottom-color: var(--company-theme-color, #15803d) !important;
+}
+
+.o_batch_export_history_form .badge.text-bg-success {
+    background-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #fff) !important;
+}
+
+/* Kanban */
+.o_kanban_view.o_batch_export_history_kanban .o_kanban_group {
+    min-width: 280px;
+}
+
+.o_batch_export_history_card {
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 16%, #e2e8f0);
+    border-left: 4px solid var(--company-theme-color, #15803d);
+    padding: 12px 14px 12px 18px !important;
+    background: #fff;
+}
+
+.o_batch_export_history_card.o_batch_export_failed {
+    border-left-color: #dc2626;
+}
+
+.o_batch_export_history_card .o_batch_export_card_banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.o_batch_export_history_card .o_batch_export_card_banner .fw-bold {
+    color: var(--company-theme-color, #15803d);
+}
+
+.o_batch_export_card_body .o_batch_export_row {
+    font-size: 0.92rem;
+    margin-bottom: 4px;
+}
+
+.o_batch_export_history_card .fa {
+    color: var(--company-theme-color, #15803d);
+}
+
+.o_batch_export_history_card.o_batch_export_failed .fa {
+    color: #dc2626;
+}
+
+.o_batch_export_history_card .badge,
+.o_batch_export_history_card .o_label_success {
+    background: color-mix(in srgb, var(--company-theme-color, #15803d) 14%, #ffffff) !important;
+    color: var(--company-theme-color, #15803d) !important;
+    border: 1px solid color-mix(in srgb, var(--company-theme-color, #15803d) 30%, #ffffff);
+}
+
+.o_batch_payment_form .o_notebook .o_field_one2many .badge.text-bg-success {
+    background-color: var(--company-theme-color, #15803d) !important;
+    color: var(--company-theme-text, #fff) !important;
+}

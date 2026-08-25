@@ -1,0 +1,208 @@
+/* Zakheni Waste — login / signup / reset password (within website layout) */
+
+.wmz-login-page,
+.oe_website_login_container {
+    --company-theme-color: #15803d;
+    --company-theme-hover: #166534;
+    --company-theme-accent-soft: #dcfce7;
+}
+
+.wmz-login-page.oe_website_login_container {
+    background: linear-gradient(145deg, #ecfdf5 0%, #f0fdf4 40%, #dcfce7 100%);
+}
+
+.wmz-login-shell {
+    min-height: 55vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.25rem;
+}
+
+.wmz-login-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border: 1px solid #bbf7d0;
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(21, 128, 61, 0.12);
+    padding: 2rem 2rem 1.5rem;
+}
+
+.wmz-login-card_head {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #dcfce7;
+}
+
+.wmz-login-logo img {
+    max-height: 72px;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+}
+
+.wmz-login-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #14532d;
+    margin: 0.75rem 0 0.35rem;
+}
+
+.wmz-login-subtitle {
+    font-size: 0.92rem;
+    color: #4d7c62;
+    margin: 0;
+}
+
+.wmz-login-label {
+    font-weight: 600;
+    color: #14532d;
+    font-size: 0.875rem;
+}
+
+.wmz-login-form .form-control {
+    border-radius: 10px;
+    border-color: #bbf7d0;
+    min-height: 44px;
+    padding: 0.55rem 0.85rem;
+}
+
+.wmz-login-form .form-control:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.18);
+}
+
+.wmz-password-toggle .form-control {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.wmz-password-toggle-btn {
+    border: 1px solid #bbf7d0;
+    border-left: 0;
+    background: #f0fdf4;
+    color: #15803d;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    min-width: 44px;
+    padding: 0 0.85rem;
+}
+
+.wmz-password-toggle-btn:hover,
+.wmz-password-toggle-btn:focus {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.wmz-login-submit {
+    background: #15803d !important;
+    border-color: #15803d !important;
+    border-radius: 10px;
+    min-height: 46px;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.wmz-login-submit:hover {
+    background: #166534 !important;
+    border-color: #166534 !important;
+}
+
+.wmz-login-form .btn-link {
+    color: #15803d;
+}
+
+.wmz-login-form .btn-link:hover {
+    color: #166534;
+}
+
+.wmz-login-card_foot {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dcfce7;
+    color: #64748b;
+}
+
+.wmz-login-card_foot a {
+    color: #15803d;
+    text-decoration: none;
+}
+
+.wmz-login-card_foot a:hover {
+    text-decoration: underline;
+}
+
+/* Dark mode */
+html[data-wmz-theme="dark"] .wmz-login-page.oe_website_login_container {
+    background: linear-gradient(145deg, #020617 0%, #0f172a 50%, #052e16 100%);
+}
+
+html[data-wmz-theme="dark"] .wmz-login-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+html[data-wmz-theme="dark"] .wmz-login-card_head {
+    border-bottom-color: #334155;
+}
+
+html[data-wmz-theme="dark"] .wmz-login-title {
+    color: #f1f5f9;
+}
+
+html[data-wmz-theme="dark"] .wmz-login-subtitle,
+html[data-wmz-theme="dark"] .wmz-login-card_foot {
+    color: #94a3b8;
+}
+
+html[data-wmz-theme="dark"] .wmz-login-label {
+    color: #e2e8f0;
+}
+
+html[data-wmz-theme="dark"] .wmz-login-form .form-control {
+    background: #111827;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+html[data-wmz-theme="dark"] .wmz-login-form .form-control:focus {
+    background: #111827;
+    border-color: #22c55e;
+    color: #f1f5f9;
+}
+
+html[data-wmz-theme="dark"] .wmz-login-form .form-control::placeholder {
+    color: #64748b;
+}
+
+html[data-wmz-theme="dark"] .wmz-password-toggle-btn {
+    background: #111827;
+    border-color: #334155;
+    color: #4ade80;
+}
+
+html[data-wmz-theme="dark"] .wmz-password-toggle-btn:hover {
+    background: #334155;
+    color: #86efac;
+    border-color: #475569;
+}
+
+html[data-wmz-theme="dark"] .wmz-login-card_foot a,
+html[data-wmz-theme="dark"] .wmz-login-form .btn-link {
+    color: #4ade80;
+}
+
+html[data-wmz-theme="dark"] .oe_login_form .alert-danger {
+    background: #450a0a;
+    border-color: #7f1d1d;
+    color: #fecaca;
+}
+
+html[data-wmz-theme="dark"] .oe_login_form .alert-success {
+    background: #064e3b;
+    border-color: #166534;
+    color: #bbf7d0;
+}

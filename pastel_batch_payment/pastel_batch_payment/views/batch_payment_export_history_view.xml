@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_batch_payment_export_history_search" model="ir.ui.view">
+        <field name="name">batch.payment.export.history.search</field>
+        <field name="model">batch.payment.export.history</field>
+        <field name="arch" type="xml">
+            <search string="Export History">
+                <field name="batch_id"/>
+                <field name="sage_reference"/>
+                <field name="user_id"/>
+                <filter string="Success" name="success" domain="[('state','=','success')]"/>
+                <filter string="Failed" name="failed" domain="[('state','=','failed')]"/>
+                <separator/>
+                <filter string="Export Date" name="export_date" date="export_date"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Batch" name="group_batch" context="{'group_by': 'batch_id'}"/>
+                    <filter string="User" name="group_user" context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_batch_payment_export_history_tree" model="ir.ui.view">
+        <field name="name">batch.payment.export.history.tree</field>
+        <field name="model">batch.payment.export.history</field>
+        <field name="arch" type="xml">
+            <tree default_order="export_date desc"
+                  decoration-success="state == 'success'"
+                  decoration-danger="state == 'failed'"
+                  class="o_batch_export_history_list">
+                <field name="export_date"/>
+                <field name="batch_id"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'success'"
+                       decoration-danger="state == 'failed'"/>
+                <field name="sage_reference" optional="show"/>
+                <field name="company_id" optional="hide" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_batch_payment_export_history_kanban" model="ir.ui.view">
+        <field name="name">batch.payment.export.history.kanban</field>
+        <field name="model">batch.payment.export.history</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state"
+                    class="o_batch_export_history_kanban"
+                    sample="1"
+                    create="0"
+                    group_create="0"
+                    records_draggable="0"
+                    quick_create="0">
+                <field name="batch_id"/>
+                <field name="export_date"/>
+                <field name="user_id"/>
+                <field name="state"/>
+                <field name="sage_reference"/>
+                <field name="is_success"/>
+                <field name="is_failed"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click oe_kanban_card o_batch_export_history_card o_batch_export_#{record.state.raw_value}">
+                            <div class="o_batch_export_card_banner">
+                                <div class="fw-bold">
+                                    <field name="batch_id"/>
+                                </div>
+                                <field name="state" widget="label_selection"
+                                       options="{'classes': {'success': 'success', 'failed': 'danger'}}"/>
+                            </div>
+                            <div class="o_batch_export_card_body">
+                                <div class="o_batch_export_row">
+                                    <i class="fa fa-calendar me-1" title="Date"/>
+                                    <field name="export_date"/>
+                                </div>
+                                <div class="o_batch_export_row">
+                                    <i class="fa fa-user me-1" title="User"/>
+                                    <field name="user_id"/>
+                                </div>
+                                <div class="o_batch_export_row" t-if="record.sage_reference.value">
+                                    <i class="fa fa-cloud-upload me-1" title="Sage"/>
+                                    <field name="sage_reference"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_batch_payment_export_history_form" model="ir.ui.view">
+        <field name="name">batch.payment.export.history.form</field>
+        <field name="model">batch.payment.export.history</field>
+        <field name="arch" type="xml">
+            <form string="Batch Export History" class="o_batch_export_history_form" create="0">
+                <sheet>
+                    <field name="is_success" invisible="1"/>
+                    <field name="is_failed" invisible="1"/>
+                    <widget name="web_ribbon" title="Success" bg_color="text-bg-success"
+                            invisible="not is_success"/>
+                    <widget name="web_ribbon" title="Failed" bg_color="text-bg-danger"
+                            invisible="not is_failed"/>
+
+                    <div class="oe_title">
+                        <span class="o_batch_export_eyebrow">Sage export attempt</span>
+                        <h1>
+                            <field name="batch_id" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <div class="o_batch_export_status_banner o_batch_export_ok" invisible="not is_success">
+                        <div class="o_batch_export_status_main">
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'success'"
+                                   decoration-danger="state == 'failed'"
+                                   readonly="1"/>
+                            <span class="o_batch_export_ref" invisible="not sage_reference">
+                                Sage ref: <field name="sage_reference" readonly="1" nolabel="1" class="oe_inline"/>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="o_batch_export_status_banner o_batch_export_fail" invisible="not is_failed">
+                        <div class="o_batch_export_status_main">
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'success'"
+                                   decoration-danger="state == 'failed'"
+                                   readonly="1"/>
+                            <span class="o_batch_export_ref" invisible="not sage_reference">
+                                Sage ref: <field name="sage_reference" readonly="1" nolabel="1" class="oe_inline"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="o_batch_export_summary">
+                        <div class="o_batch_export_chip">
+                            <span class="o_batch_export_chip_label">Exported on</span>
+                            <field name="export_date" readonly="1" nolabel="1"/>
+                        </div>
+                        <div class="o_batch_export_chip">
+                            <span class="o_batch_export_chip_label">Exported by</span>
+                            <field name="user_id" readonly="1" nolabel="1" widget="many2one_avatar_user"/>
+                        </div>
+                        <div class="o_batch_export_chip" groups="base.group_multi_company">
+                            <span class="o_batch_export_chip_label">Company</span>
+                            <field name="company_id" readonly="1" nolabel="1"/>
+                        </div>
+                    </div>
+
+                    <notebook>
+                        <page string="Request" name="request">
+                            <div class="o_batch_export_payload_panel">
+                                <div class="o_batch_export_panel_title">Request payload</div>
+                                <field name="request_pretty" widget="text" readonly="1" nolabel="1"/>
+                            </div>
+                        </page>
+                        <page string="Response / Error" name="response">
+                            <div class="o_batch_export_payload_panel">
+                                <div class="o_batch_export_panel_title">Response / error</div>
+                                <field name="response_pretty" widget="text" readonly="1" nolabel="1"/>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_batch_payment_export_history" model="ir.actions.act_window">
+        <field name="name">Batch Export History</field>
+        <field name="res_model">batch.payment.export.history</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_batch_payment_export_history_search"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No batch exports recorded yet.
+            </p>
+            <p>
+                Each Export to Sage from a batch payment creates a history entry with request and response detail.
+            </p>
+        </field>
+    </record>
+
+</odoo>

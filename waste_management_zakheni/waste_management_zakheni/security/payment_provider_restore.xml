@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <record id="payment.payment_provider_company_rule" model="ir.rule">
+        <field name="name">Access providers in own companies only</field>
+        <field name="domain_force">[('company_id', 'parent_of', company_ids)]</field>
+    </record>
+</odoo>

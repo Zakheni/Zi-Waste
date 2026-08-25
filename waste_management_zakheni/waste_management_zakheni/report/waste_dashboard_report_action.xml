@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Report — Waste Dashboard Report Action -->
+<odoo>
+
+
+  <!-- PDF Report Action -->
+  <!-- Views / records -->
+    <record id="action_waste_dashboard_report_pdf" model="ir.actions.report">
+    <field name="name">Waste Dashboard</field>
+    <field name="model">waste.service.request</field>
+    <field name="report_type">qweb-pdf</field>
+
+    <!-- these must match your qweb template name -->
+    <field name="report_name">waste_management_zakheni.report_waste_dashboard_pdf</field>
+    <field name="report_file">waste_management_zakheni.report_waste_dashboard_pdf</field>
+
+    <field name="print_report_name">'Waste Dashboard - %s' % (object.name or '')</field>
+
+    <!-- optional: add to Print menu of manifests -->
+    <!-- <field name="binding_model_id" ref="model_waste_service_request"/> -->
+    <!-- <field name="binding_type">report</field> -->
+  </record>
+
+
+
+
+<!--    &lt;!&ndash; =========================-->
+<!--       Report Action-->
+<!--  ========================== &ndash;&gt;-->
+<!--    <record id="action_waste_dashboard_pdf" model="ir.actions.report">-->
+<!--        <field name="name">Waste Dashboard Report</field>-->
+<!--        <field name="model">waste.service.request</field>-->
+<!--        <field name="report_type">qweb-pdf</field>-->
+
+<!--        &lt;!&ndash; QWeb template name &ndash;&gt;-->
+<!--        <field name="report_name">waste_management_zakheni.waste_dashboard_report_pdf</field>-->
+<!--        <field name="report_file">waste_management_zakheni.waste_dashboard_report_pdf</field>-->
+
+<!--        &lt;!&ndash; file name &ndash;&gt;-->
+<!--        <field name="print_report_name">'Waste_Dashboard_%s' % (object.name or "Report")</field>-->
+<!--    </record>-->
+
+    <!--  <record id="action_report_waste_dashboard" model="ir.actions.report">-->
+    <!--    <field name="name">Waste Dashboard</field>-->
+    <!--    <field name="model">waste.service.request</field>-->
+    <!--    <field name="report_type">qweb-pdf</field>-->
+    <!--    <field name="report_name">waste_management_zakheni.waste_dashboard_report</field>-->
+    <!--    <field name="report_file">waste_management_zakheni.waste_dashboard_report</field>-->
+    <!--    <field name="print_report_name">'Waste Dashboard'</field>-->
+    <!--  </record>-->
+
+
+    <!--    <record id="action_report_waste_dashboard" model="ir.actions.report">-->
+    <!--        <field name="name">Waste Dashboard</field>-->
+    <!--        <field name="model">waste.service.request</field>-->
+    <!--        <field name="report_type">qweb-pdf</field>-->
+    <!--        <field name="report_name">waste_management_zakheni.waste_dashboard_report</field>-->
+    <!--        <field name="report_file">waste_management_zakheni.waste_dashboard_report</field>-->
+    <!--        <field name="print_report_name">-->
+    <!--            'Waste Dashboard - %s' % (object.env.company.name)-->
+    <!--        </field>-->
+    <!--    </record>-->
+</odoo>

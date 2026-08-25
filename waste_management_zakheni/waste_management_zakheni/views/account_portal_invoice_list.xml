@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Portal — Branded invoices list UI -->
+<odoo>
+
+    <!-- ================================================================
+         INVOICES LIST — /my/invoices
+         ================================================================ -->
+    <template id="wmz_portal_my_invoices"
+              inherit_id="account.portal_my_invoices"
+              name="WMZ Portal Invoices List"
+              priority="30">
+
+        <xpath expr="//t[@t-set='breadcrumbs_searchbar']" position="before">
+            <t t-set="no_breadcrumbs" t-value="True"/>
+        </xpath>
+
+        <xpath expr="//t[@t-set='breadcrumbs_searchbar']" position="replace">
+            <t t-set="breadcrumbs_searchbar" t-value="False"/>
+        </xpath>
+
+        <xpath expr="//t[@t-call='portal.portal_searchbar']" position="before">
+            <t t-set="classes" t-value="'wmz-portal-invoices-toolbar'"/>
+            <div class="wmz-portal wmz-portal-invoices mb-3">
+                <nav aria-label="breadcrumb" class="wmz-portal-breadcrumb mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/home"><i class="fa fa-home"/></a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            Invoices &amp; Bills
+                        </li>
+                    </ol>
+                </nav>
+                <div class="wmz-portal-hero wmz-portal-invoices-hero mb-0">
+                    <h1 class="wmz-portal-hero_title">Invoices &amp; Bills</h1>
+                    <p class="wmz-portal-hero_subtitle mb-0">
+                        View, download, and track payment status for your invoices.
+                    </p>
+                </div>
+            </div>
+        </xpath>
+
+        <xpath expr="//p[hasclass('alert-warning')]" position="attributes">
+            <attribute name="class" add="wmz-portal-invoices-empty" separator=" "/>
+        </xpath>
+
+        <xpath expr="//t[@t-call='portal.portal_table']" position="before">
+            <t t-set="classes" t-value="'wmz-portal-table-wrap wmz-portal-invoices-table-wrap'"/>
+        </xpath>
+
+    </template>
+
+    <template id="portal_my_invoices_manifest"
+              inherit_id="account.portal_my_invoices"
+              priority="20">
+
+        <xpath expr="//thead/tr/th[1]" position="after">
+            <th>Manifest</th>
+        </xpath>
+
+        <xpath expr="//tr/td[1]" position="after">
+            <td>
+                <t t-set="sale_order"
+                   t-value="request.env['sale.order'].sudo().search([('name', '=', invoice.invoice_origin)], limit=1)"/>
+                <span t-if="sale_order and sale_order.service_request_id"
+                      t-out="sale_order.service_request_id.display_name"/>
+                <span t-else="">-</span>
+            </td>
+        </xpath>
+
+    </template>
+
+</odoo>

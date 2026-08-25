@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wizard / popup — View Safety Certificate Popup -->
+<odoo>
+    <!-- Safety Certificate Popup -->
+    <!-- Views / records -->
+    <record id="view_safety_certificate_popup" model="ir.ui.view">
+        <field name="name">waste.service.request.safety.certificate.popup</field>
+        <field name="model">waste.service.request</field>
+        <field name="arch" type="xml">
+            <form string="Safety Certificate" create="false" edit="false">
+                <sheet>
+                    <field name="latest_worksheet_safety_certificate" widget="pdf_viewer" filename="latest_worksheet_safety_certificate_filename"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

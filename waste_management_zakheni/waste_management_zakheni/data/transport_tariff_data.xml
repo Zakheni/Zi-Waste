@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Data — Transport Tariff Data -->
+<odoo noupdate="0">
+
+    <!-- ================================================== -->
+    <!-- FLAT RATE -->
+    <!-- Formula:
+         base_rate + ((bins - 1) * increment_rate)
+    -->
+    <!-- Example:
+         1 bin  = 500
+         2 bins = 700
+         3 bins = 900
+    -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_flat_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Flat Rate</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">flat</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="base_rate">500</field>
+
+        <field name="increment_rate">200</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- PER BIN -->
+    <!-- Formula:
+         bins × per_bin_rate
+    -->
+    <!-- Example:
+         2 bins × 300 = 600
+    -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_per_bin_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Per Bin</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">per_bin</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="per_bin_rate">300</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- PER TRIP -->
+    <!-- Formula:
+         trips × per_trip_rate
+    -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_per_trip_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Per Trip</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">per_trip</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="per_trip_rate">700</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- PER TON -->
+    <!-- Formula:
+         ton × per_ton_rate
+    -->
+    <!-- ================================================== -->
+
+    <record id="transport_tariff_per_ton_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Per Ton</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">per_ton</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="per_ton_rate">850</field>
+
+        <field name="active">True</field>
+
+    </record>
+    <!-- ================================================== -->
+    <!-- PER KG -->
+    <!-- Formula:
+         kg × per_kg_rate
+    -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_per_kg_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Per KG</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">per_kg</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="per_kg_rate">1.50</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!--    &lt;!&ndash; ================================================== &ndash;&gt;-->
+    <!--    &lt;!&ndash; PER BIN PER KM &ndash;&gt;-->
+    <!--    &lt;!&ndash; Formula:-->
+    <!--         bins × km × per_km_rate-->
+    <!--    &ndash;&gt;-->
+    <!--    &lt;!&ndash; ================================================== &ndash;&gt;-->
+    <!--    <record id="transport_tariff_per_bin_km_initial"-->
+    <!--            model="waste.transport.tariff">-->
+
+    <!--        <field name="name">Per Bin Per KM</field>-->
+
+    <!--        <field name="company_id" ref="base.main_company"/>-->
+
+    <!--        <field name="rate_type">per_bin_km</field>-->
+
+    <!--        <field name="date_from">2025-01-01</field>-->
+
+    <!--        <field name="per_km_rate">5</field>-->
+
+    <!--        <field name="active">True</field>-->
+
+    <!--    </record>-->
+
+    <!--    &lt;!&ndash; ================================================== &ndash;&gt;-->
+    <!--    &lt;!&ndash; PER TRIP PER KM &ndash;&gt;-->
+    <!--    &lt;!&ndash; Formula:-->
+    <!--         trips × km × per_km_rate-->
+    <!--    &ndash;&gt;-->
+    <!--    &lt;!&ndash; ================================================== &ndash;&gt;-->
+    <!--    <record id="transport_tariff_per_trip_per_km_initial"-->
+    <!--            model="waste.transport.tariff">-->
+
+    <!--        <field name="name">Per Trip Per KM</field>-->
+
+    <!--        <field name="company_id" ref="base.main_company"/>-->
+
+    <!--        <field name="rate_type">per_trip_km</field>-->
+
+    <!--        <field name="date_from">2025-01-01</field>-->
+
+    <!--        <field name="per_km_rate">10</field>-->
+
+    <!--        <field name="active">True</field>-->
+
+    <!--    </record>-->
+
+    <!-- ================================================== -->
+    <!-- PER BIN PER KM -->
+    <!-- Formula:
+         (bins × per_bin_rate)
+         + (bins × km × per_km_rate)
+    -->
+    <!-- Example:
+         2 bins × 300 = 600
+         2 bins × 10 km × 5 = 100
+         Total = 700
+    -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_per_bin_km_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Per Bin Per KM</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">per_bin_km</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <!-- NEW -->
+        <field name="per_bin_rate">300</field>
+
+        <field name="per_km_rate">5</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- PER TRIP PER KM -->
+    <!-- Formula:
+         (trips × per_trip_rate)
+         + (trips × km × per_km_rate)
+    -->
+    <!-- Example:
+         2 trips × 700 = 1400
+         2 trips × 10 km × 10 = 200
+         Total = 1600
+    -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_per_trip_per_km_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Per Trip Per KM</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">per_trip_km</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <!-- NEW -->
+        <field name="per_trip_rate">700</field>
+
+        <field name="per_km_rate">10</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- TIERED BY BIN COUNT -->
+    <!-- 1 BIN -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_tier_bin_1_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Tiered By Bin Count - 1 Bin</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">tier_bin</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="min_bin_qty">1</field>
+
+        <field name="max_bin_qty">1</field>
+
+        <field name="base_rate">300</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- TIERED BY BIN COUNT -->
+    <!-- 2 TO 3 BINS -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_tier_bin_2_3_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Tiered By Bin Count - 2 To 3 Bins</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">tier_bin</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="min_bin_qty">2</field>
+
+        <field name="max_bin_qty">3</field>
+
+        <field name="base_rate">550</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- TIERED BY BIN COUNT -->
+    <!-- 4+ BINS -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_tier_bin_4_plus_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Tiered By Bin Count - 4+ Bins</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">tier_bin</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="min_bin_qty">4</field>
+
+        <field name="base_rate">800</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- TIERED DISTANCE -->
+    <!-- 0 TO 10 KM -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_tier_distance_0_10_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Tiered Distance - 0 To 10 KM</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">tier_distance</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="min_distance">0</field>
+
+        <field name="max_distance">10</field>
+
+        <field name="base_rate">300</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- TIERED DISTANCE -->
+    <!-- 11 TO 30 KM -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_tier_distance_11_30_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Tiered Distance - 11 To 30 KM</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">tier_distance</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="min_distance">11</field>
+
+        <field name="max_distance">30</field>
+
+        <field name="base_rate">600</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- TIERED DISTANCE -->
+    <!-- 31+ KM -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_tier_distance_31_plus_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Tiered Distance - 31+ KM</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">tier_distance</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="min_distance">31</field>
+
+        <field name="base_rate">1000</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- HYBRID -->
+    <!-- Formula:
+         base_rate + (bins × per_bin_rate)
+    -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_hybrid_bin_trip_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Hybrid - Per Bin + Flat Trip</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">hybrid_bin_trip</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="base_rate">300</field>
+
+        <field name="per_bin_rate">200</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+    <!-- ================================================== -->
+    <!-- HYBRID -->
+    <!-- Formula:
+         (trips × base_rate)
+         + (trips × km × per_km_rate)
+    -->
+    <!-- ================================================== -->
+    <record id="transport_tariff_hybrid_trip_km_initial"
+            model="waste.transport.tariff">
+
+        <field name="name">Hybrid - Trip + KM</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="rate_type">hybrid_trip_km</field>
+
+        <field name="date_from">2025-01-01</field>
+
+        <field name="base_rate">400</field>
+
+        <field name="per_km_rate">5</field>
+
+        <field name="active">True</field>
+
+    </record>
+
+</odoo>

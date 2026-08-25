@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    Module: pastel_connector
+    File: pastel_invoice_inherit_views.xml
+    Description: Invoice form fields for Sage document metadata.
+-->
+<odoo>
+    <!-- View/action record: View account move form sage -->
+    <record id="view_account_move_form_sage" model="ir.ui.view">
+        <field name="name">account.move.form.sage</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Sage">
+                    <group>
+                        <field name="x_pastel_doc_no"/>
+                        <field name="x_pastel_status"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

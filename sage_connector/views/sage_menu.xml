@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_sage_root" name="Sage Connector" sequence="46"
+              action="action_sage_backend"
+              groups="sage_connector.group_sage_user"/>
+    <menuitem id="menu_sage_backend" name="Backends" parent="menu_sage_root"
+              action="action_sage_backend" sequence="5"
+              groups="sage_connector.group_sage_user"/>
+    <menuitem id="menu_sage_import" name="Transfer" parent="menu_sage_root"
+              action="action_sage_import_wizard" sequence="10"/>
+    <menuitem id="menu_sage_jobs" name="Jobs" parent="menu_sage_root"
+              action="action_sage_job" sequence="20"/>
+    <menuitem id="menu_sage_logs" name="Logs" parent="menu_sage_root"
+              action="action_sage_sync_log" sequence="30"/>
+    <menuitem id="menu_sage_tax_map" name="Tax Mappings" parent="menu_sage_root"
+              action="action_sage_mapping_tax" sequence="40"
+              groups="sage_connector.group_sage_manager"/>
+    <menuitem id="menu_sage_journal_map" name="Journal Mappings" parent="menu_sage_root"
+              action="action_sage_mapping_journal" sequence="50"
+              groups="sage_connector.group_sage_manager"/>
+    <function model="sage.backend" name="cleanup_action_views"/>
+</odoo>

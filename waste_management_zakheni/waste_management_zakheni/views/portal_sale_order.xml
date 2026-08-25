@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Portal — Branded sales orders UI -->
+<odoo>
+
+    <!-- ================================================================
+         ORDERS LIST — /my/orders
+         ================================================================ -->
+    <template id="wmz_portal_my_orders"
+              inherit_id="sale.portal_my_orders"
+              name="WMZ Portal Orders List"
+              priority="30">
+
+        <xpath expr="//t[@t-set='breadcrumbs_searchbar']" position="before">
+            <t t-set="no_breadcrumbs" t-value="True"/>
+        </xpath>
+
+        <xpath expr="//t[@t-set='breadcrumbs_searchbar']" position="replace">
+            <t t-set="breadcrumbs_searchbar" t-value="False"/>
+        </xpath>
+
+        <xpath expr="//t[@t-call='portal.portal_searchbar']" position="before">
+            <t t-set="classes" t-value="'wmz-portal-orders-toolbar'"/>
+            <div class="wmz-portal wmz-portal-orders mb-3">
+                <nav aria-label="breadcrumb" class="wmz-portal-breadcrumb mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/my/home"><i class="fa fa-home"/></a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            Your Orders
+                        </li>
+                    </ol>
+                </nav>
+                <div class="wmz-portal-hero wmz-portal-orders-hero mb-0">
+                    <h1 class="wmz-portal-hero_title">Your Orders</h1>
+                    <p class="wmz-portal-hero_subtitle mb-0">
+                        View sales orders, track status, and download order details.
+                    </p>
+                </div>
+            </div>
+        </xpath>
+
+        <xpath expr="//div[@t-if='not orders']" position="attributes">
+            <attribute name="class" add="wmz-portal-orders-empty" separator=" "/>
+        </xpath>
+
+        <xpath expr="//t[@t-call='portal.portal_table']" position="before">
+            <t t-set="classes" t-value="'wmz-portal-table-wrap wmz-portal-orders-table-wrap'"/>
+        </xpath>
+
+    </template>
+
+    <template id="portal_my_orders_manifest"
+              inherit_id="sale.portal_my_orders"
+              priority="20">
+
+        <xpath expr="//thead/tr/th[1]" position="after">
+            <th>Manifest</th>
+        </xpath>
+
+        <xpath expr="//tr/td[1]" position="after">
+            <td>
+                <t t-if="order.service_request_id">
+                    <t t-out="order.service_request_id.display_name"/>
+                </t>
+                <t t-else="">-</t>
+            </td>
+        </xpath>
+
+    </template>
+
+    <!-- ================================================================
+         ORDER DETAIL — /my/orders/<id>
+         ================================================================ -->
+    <template id="wmz_portal_sale_order_detail"
+              inherit_id="sale.sale_order_portal_template"
+              name="WMZ Portal Order Detail"
+              priority="30">
+
+        <xpath expr="//t[@t-call='portal.portal_layout']" position="before">
+            <t t-set="no_breadcrumbs" t-value="True"/>
+        </xpath>
+
+        <xpath expr="//div[hasclass('o_portal_sale_sidebar')]" position="attributes">
+            <attribute name="class" add="wmz-portal wmz-portal-order-detail" separator=" "/>
+        </xpath>
+
+        <xpath expr="//div[@id='quote_content']" position="attributes">
+            <attribute name="class" add="wmz-portal-order-main" separator=" "/>
+        </xpath>
+
+        <xpath expr="//div[@id='portal_sale_content']" position="before">
+            <nav aria-label="breadcrumb" class="wmz-portal-breadcrumb mb-3 d-print-none">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="/my/home"><i class="fa fa-home"/></a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="/my/orders">Your Orders</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <t t-out="sale_order.name"/>
+                    </li>
+                </ol>
+            </nav>
+            <div class="wmz-portal-hero wmz-portal-order-hero wmz-detail-hero mb-4 d-print-none">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                    <div>
+                        <p class="wmz-detail-hero_kicker mb-1">
+                            <t t-out="sale_order.type_name"/>
+                        </p>
+                        <h1 class="wmz-portal-hero_title mb-2">
+                            <t t-out="sale_order.name"/>
+                        </h1>
+                        <div class="wmz-detail-hero_meta">
+                            <span class="me-3">
+                                <i class="fa fa-calendar me-1"/>
+                                <span t-field="sale_order.date_order" t-options="{'widget': 'date'}"/>
+                            </span>
+                            <span t-if="sale_order.service_request_id">
+                                <i class="fa fa-file-text-o me-1"/>
+                                Manifest:
+                                <t t-out="sale_order.service_request_id.display_name"/>
+                            </span>
+                        </div>
+                    </div>
+                    <span t-attf-class="wmz-badge wmz-badge-lg #{sale_order.state == 'done' and 'wmz-badge-done' or sale_order.state == 'cancel' and 'wmz-badge-cancelled' or sale_order.state == 'draft' and 'wmz-badge-draft' or 'wmz-badge-progress'}">
+                        <span t-field="sale_order.state"/>
+                    </span>
+                </div>
+            </div>
+        </xpath>
+
+        <xpath expr="//div[@id='portal_sale_content']" position="attributes">
+            <attribute name="class" add="wmz-portal-order-panel" separator=" "/>
+        </xpath>
+
+    </template>
+
+    <template id="wmz_portal_sale_order_content"
+              inherit_id="sale.sale_order_portal_content"
+              name="WMZ Portal Order Content"
+              priority="30">
+
+        <xpath expr="//div[@id='introduction']" position="replace"/>
+
+        <xpath expr="//div[@id='content']" position="attributes">
+            <attribute name="class" add="wmz-portal-order-body" separator=" "/>
+        </xpath>
+
+        <xpath expr="//div[@id='informations']" position="attributes">
+            <attribute name="class" add="wmz-portal-order-info" separator=" "/>
+        </xpath>
+
+    </template>
+
+    <template id="portal_sale_order_manifest"
+              inherit_id="sale.sale_order_portal_content"
+              priority="20">
+
+        <xpath expr="//tbody[@id='sale_info_table']" position="inside">
+            <tr t-if="sale_order.service_request_id">
+                <th class="ps-0 pb-0">Manifest:</th>
+                <td class="w-100 pb-0 text-wrap">
+                    <span t-field="sale_order.service_request_id"/>
+                </td>
+            </tr>
+        </xpath>
+
+    </template>
+
+</odoo>

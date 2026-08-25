@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sage_transfer_line_tree" model="ir.ui.view">
+        <field name="name">sage.transfer.line.tree</field>
+        <field name="model">sage.transfer.line</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" create="0" delete="1"
+                  decoration-muted="not selected"
+                  decoration-warning="match_status == 'skip'">
+                <field name="selected"/>
+                <field name="code" readonly="1"/>
+                <field name="name"/>
+                <field name="phone" optional="show"/>
+                <field name="email" optional="show"/>
+                <field name="tax_code" optional="show"/>
+                <field name="credit_limit" optional="hide"/>
+                <field name="customer_code" optional="hide"/>
+                <field name="doc_no" optional="hide"/>
+                <field name="invoice_date" optional="hide"/>
+                <field name="amount" optional="hide"/>
+                <field name="match_status" readonly="1"/>
+                <field name="skip_reason" optional="show" readonly="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sage_transfer_line_form" model="ir.ui.view">
+        <field name="name">sage.transfer.line.form</field>
+        <field name="model">sage.transfer.line</field>
+        <field name="arch" type="xml">
+            <form string="Preview row">
+                <group>
+                    <group>
+                        <field name="selected"/>
+                        <field name="code" readonly="1"/>
+                        <field name="name"/>
+                        <field name="phone"/>
+                        <field name="email"/>
+                    </group>
+                    <group>
+                        <field name="tax_code"/>
+                        <field name="credit_limit"/>
+                        <field name="customer_code"/>
+                        <field name="doc_no"/>
+                        <field name="invoice_date"/>
+                        <field name="amount"/>
+                        <field name="match_status" readonly="1"/>
+                        <field name="skip_reason" readonly="1"/>
+                    </group>
+                </group>
+                <group string="Invoice lines">
+                    <field name="invoice_line_ids" nolabel="1">
+                        <tree editable="bottom">
+                            <field name="product_code"/>
+                            <field name="name"/>
+                            <field name="quantity"/>
+                            <field name="price_unit"/>
+                            <field name="tax_code"/>
+                        </tree>
+                    </field>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sage_transfer_wizard_form" model="ir.ui.view">
+        <field name="name">sage.transfer.wizard.form</field>
+        <field name="model">sage.transfer.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Sage Transfer" class="o_sage_transfer_wizard">
+                <header>
+                    <button name="action_load_preview" type="object" string="Load preview"
+                            class="btn-primary" icon="fa-search" invisible="state != 'setup'"/>
+                    <button name="action_select_all" type="object" string="Select all"
+                            class="btn-secondary" invisible="state != 'preview'"/>
+                    <button name="action_deselect_all" type="object" string="Deselect all"
+                            class="btn-secondary" invisible="state != 'preview'"/>
+                    <button name="action_goto_confirm" type="object" string="Review selection"
+                            class="btn-primary" icon="fa-check" invisible="state != 'preview'"/>
+                    <button name="action_back_setup" type="object" string="Back"
+                            class="btn-secondary" invisible="state != 'preview'"/>
+                    <button name="action_back_preview" type="object" string="Back to preview"
+                            class="btn-secondary" invisible="state != 'confirm'"/>
+                    <button name="action_transfer" type="object" string="Transfer now"
+                            class="btn-primary" icon="fa-exchange" invisible="state != 'confirm'"/>
+                    <button name="action_open_jobs" type="object" string="Jobs"
+                            class="btn-secondary" invisible="state != 'done'"/>
+                    <button name="action_open_logs" type="object" string="Logs"
+                            class="btn-secondary" invisible="state != 'done'"/>
+                    <button name="action_back_setup" type="object" string="New transfer"
+                            class="btn-secondary" invisible="state != 'done'"/>
+                    <button name="action_open_backend" type="object" string="Configure Backend"
+                            class="btn-secondary" icon="fa-cog" invisible="state == 'done'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="setup,preview,confirm,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title mb-3">
+                        <span class="o_sage_eyebrow">Sage Connector</span>
+                        <h1>
+                            <field name="name" readonly="1" class="o_sage_transfer_title"/>
+                        </h1>
+                    </div>
+
+                    <div class="o_sage_wizard_intro" invisible="not step_hint">
+                        <i class="fa fa-info-circle me-2" title="Hint"/>
+                        <field name="step_hint" nolabel="1" readonly="1"/>
+                    </div>
+
+                    <div class="o_sage_transfer_setup_panel" invisible="state != 'setup'">
+                        <div class="o_sage_panel_title">Transfer setup</div>
+                        <group>
+                            <group>
+                                <field name="backend_id" options="{'no_create': True}"/>
+                                <field name="direction" widget="radio" options="{'horizontal': true}"/>
+                                <field name="data_type"/>
+                            </group>
+                            <group>
+                                <field name="search" placeholder="Filter by name or code"/>
+                                <field name="date_from" invisible="data_type != 'invoices'"/>
+                            </group>
+                        </group>
+                    </div>
+
+                    <div class="o_sage_transfer_summary" invisible="state == 'setup'">
+                        <div class="o_sage_transfer_chip">
+                            <span class="o_sage_transfer_chip_label">Backend</span>
+                            <field name="backend_id" readonly="1" nolabel="1"/>
+                        </div>
+                        <div class="o_sage_transfer_chip">
+                            <span class="o_sage_transfer_chip_label">Direction</span>
+                            <field name="direction" readonly="1" nolabel="1"/>
+                        </div>
+                        <div class="o_sage_transfer_chip">
+                            <span class="o_sage_transfer_chip_label">Data</span>
+                            <field name="data_type" readonly="1" nolabel="1"/>
+                        </div>
+                        <div class="o_sage_transfer_chip">
+                            <span class="o_sage_transfer_chip_label">Rows</span>
+                            <span><field name="selected_count" readonly="1" nolabel="1"/> / <field name="line_count" readonly="1" nolabel="1"/></span>
+                        </div>
+                        <div class="o_sage_transfer_chip" invisible="not preview_note">
+                            <span class="o_sage_transfer_chip_label">Note</span>
+                            <field name="preview_note" readonly="1" nolabel="1"/>
+                        </div>
+                        <field name="truncated" invisible="1"/>
+                    </div>
+
+                    <div class="alert o_sage_transfer_warn mb-3" role="status" invisible="not truncated">
+                        Preview is limited to 500 rows. Use search or a from-date to narrow the list.
+                    </div>
+
+                    <div class="o_sage_preview_table" invisible="state != 'preview'">
+                        <field name="is_partner_type" invisible="1"/>
+                        <field name="is_product_type" invisible="1"/>
+                        <field name="is_invoice_type" invisible="1"/>
+                        <field name="line_ids" nolabel="1" colspan="2">
+                            <tree editable="bottom" create="0"
+                                  decoration-muted="not selected"
+                                  decoration-warning="match_status == 'skip'"
+                                  decoration-success="match_status == 'new'"
+                                  decoration-info="match_status == 'update'">
+                                <field name="selected" width="40px"/>
+                                <field name="code" readonly="1" string="Sage code"/>
+                                <field name="name"/>
+                                <field name="phone" optional="show"/>
+                                <field name="email" optional="show"/>
+                                <field name="tax_code" optional="show"/>
+                                <field name="credit_limit" optional="hide"/>
+                                <field name="customer_code" optional="hide"/>
+                                <field name="doc_no" optional="hide"/>
+                                <field name="invoice_date" optional="hide"/>
+                                <field name="amount" optional="hide"/>
+                                <field name="match_status" readonly="1" widget="badge"
+                                       decoration-success="match_status == 'new'"
+                                       decoration-info="match_status == 'update'"
+                                       decoration-warning="match_status == 'skip'"/>
+                                <field name="skip_reason" optional="show" readonly="1"/>
+                            </tree>
+                        </field>
+                    </div>
+
+                    <div class="o_sage_transfer_setup_panel" invisible="state != 'confirm'">
+                        <div class="o_sage_panel_title">Selection summary</div>
+                        <group>
+                            <group>
+                                <field name="selected_count"/>
+                                <field name="new_count"/>
+                            </group>
+                            <group>
+                                <field name="update_count"/>
+                                <field name="skip_count"/>
+                            </group>
+                        </group>
+                    </div>
+                    <div class="o_sage_preview_table" invisible="state != 'confirm'">
+                        <field name="selected_line_ids" nolabel="1" readonly="1">
+                            <tree create="0" edit="0" delete="0">
+                                <field name="code" string="Sage code"/>
+                                <field name="name"/>
+                                <field name="match_status" widget="badge"/>
+                            </tree>
+                        </field>
+                    </div>
+
+                    <div class="o_sage_transfer_setup_panel" invisible="state != 'done'">
+                        <div class="o_sage_panel_title">Result</div>
+                        <field name="result_text" nolabel="1"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sage_import_wizard" model="ir.actions.act_window">
+        <field name="name">Sage Transfer</field>
+        <field name="res_model">sage.transfer.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="view_id" ref="view_sage_transfer_wizard_form"/>
+    </record>
+</odoo>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Restore module categories on Settings → Users; keep WMZ user-form migration -->
+<odoo>
+
+    <!-- Sage Connector (replaces Pastel on WMZ Users form) -->
+    <record id="sage_connector.group_sage_user" model="res.groups">
+        <field name="name">Sage User</field>
+        <field name="category_id" ref="sage_connector.module_category_sage_connector"/>
+    </record>
+    <record id="sage_connector.group_sage_manager" model="res.groups">
+        <field name="name">Sage Manager</field>
+        <field name="category_id" ref="sage_connector.module_category_sage_connector"/>
+    </record>
+
+    <!-- Vehicle Inspection — clear labels (not Fleet app) -->
+    <record id="vehicle_inspection.group_vehicle_inspection_user" model="res.groups">
+        <field name="name">Inspection User</field>
+        <field name="category_id" ref="vehicle_inspection.module_category_vehicle_inspection"/>
+    </record>
+    <record id="vehicle_inspection.group_vehicle_inspection_manager" model="res.groups">
+        <field name="name">Inspection Manager</field>
+        <field name="category_id" ref="vehicle_inspection.module_category_vehicle_inspection"/>
+    </record>
+
+    <!-- Odoo Fleet app -->
+    <record id="fleet.fleet_group_user" model="res.groups">
+        <field name="category_id" ref="base.module_category_human_resources_fleet"/>
+    </record>
+    <record id="fleet.fleet_group_manager" model="res.groups">
+        <field name="category_id" ref="base.module_category_human_resources_fleet"/>
+    </record>
+
+    <function model="wmz.service.request.user" name="action_migrate_role_sections"/>
+    <function model="res.groups" name="refresh_user_groups_access_view"/>
+
+</odoo>

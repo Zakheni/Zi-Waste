@@ -1,0 +1,69 @@
+/* Waste manifest status alerts — override Bootstrap alert gradients */
+
+.o_wmz_manifest_alert.alert-success {
+    background-color: var(--wmz-alert-success-bg, #d1fae5) !important;
+    background-image: none !important;
+    border-color: var(--wmz-alert-success-border, #a7f3d0) !important;
+    color: var(--wmz-alert-success-text, #065f46) !important;
+}
+
+.o_wmz_manifest_alert.alert-danger {
+    background-color: var(--wmz-alert-danger-bg, #fee2e2) !important;
+    background-image: none !important;
+    border-color: var(--wmz-alert-danger-border, #fecaca) !important;
+    color: var(--wmz-alert-danger-text, #991b1b) !important;
+}
+
+.o_wmz_manifest_alert.alert-info {
+    background-color: var(--wmz-alert-info-bg, #dbeafe) !important;
+    background-image: none !important;
+    border-color: var(--wmz-alert-info-border, #bfdbfe) !important;
+    color: var(--wmz-alert-info-text, #1e40af) !important;
+}
+
+.o_wmz_manifest_alert .fa,
+.o_wmz_manifest_alert strong,
+.o_wmz_manifest_alert .o_field_widget,
+.o_wmz_manifest_alert .o_field_widget span {
+    color: inherit !important;
+}
+
+.o_wmz_manifest_form .ribbon span.text-bg-success {
+    background-color: var(--wmz-ribbon-success-bg, #198754) !important;
+    color: #ffffff !important;
+}
+
+.o_wmz_manifest_form .ribbon span.text-bg-danger {
+    background-color: var(--wmz-ribbon-danger-bg, #dc3545) !important;
+    color: #ffffff !important;
+}
+
+/* Fallback when theme JS has not run yet but Odoo dark bundle is active */
+html[data-company-color-scheme="dark"] .o_wmz_manifest_alert.alert-success {
+    background-color: rgba(34, 197, 94, 0.16) !important;
+    background-image: none !important;
+    border-color: rgba(34, 197, 94, 0.42) !important;
+    color: #bbf7d0 !important;
+}
+
+html[data-company-color-scheme="dark"] .o_wmz_manifest_alert.alert-danger {
+    background-color: rgba(239, 68, 68, 0.16) !important;
+    background-image: none !important;
+    border-color: rgba(239, 68, 68, 0.42) !important;
+    color: #fecaca !important;
+}
+
+html[data-company-color-scheme="dark"] .o_wmz_manifest_alert.alert-info {
+    background-color: rgba(59, 130, 246, 0.16) !important;
+    background-image: none !important;
+    border-color: rgba(59, 130, 246, 0.42) !important;
+    color: #bfdbfe !important;
+}
+
+html[data-company-color-scheme="dark"] .o_wmz_manifest_form .ribbon span.text-bg-success {
+    background-color: #15803d !important;
+}
+
+html[data-company-color-scheme="dark"] .o_wmz_manifest_form .ribbon span.text-bg-danger {
+    background-color: #b91c1c !important;
+}

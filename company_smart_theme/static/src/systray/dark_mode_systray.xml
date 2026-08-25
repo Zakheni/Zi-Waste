@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="company_smart_theme.DarkModeSystray">
+        <button
+            type="button"
+            class="o_dark_mode_toggle o_nav_entry btn btn-link p-2"
+            t-att-title="title"
+            t-att-aria-label="title"
+            t-on-click="onToggle"
+        >
+            <i t-att-class="isDark ? 'fa fa-sun-o' : 'fa fa-moon-o'" role="img"/>
+        </button>
+    </t>
+
+</templates>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Vehicle Inspection - Not Running Wizard View
+    Popup form for sending not-running notification emails.
+-->
+<odoo>
+
+    <!-- ============================= -->
+    <!-- NOT RUNNING WIZARD FORM -->
+    <!-- ============================= -->
+    <record id="view_vehicle_not_running_wizard_form" model="ir.ui.view">
+        <field name="name">ehicle.not.running.wizard.form</field>
+        <field name="model">vehicle.not.running.wizard</field>
+        <field name="arch" type="xml">
+
+            <form string="Send Fault Notification">
+
+                <sheet>
+
+                    <group>
+
+                        <field name="reporting_manager_id" widget="many2one_avatar_user" string="Fleet Manager"/>
+                        <field name="manager_email" String="Mail To"
+                               readonly="1"/>
+                        <field name="comment"/>
+
+
+                    </group>
+
+                </sheet>
+
+                <footer>
+
+                    <button name="action_send_not_running_email"
+                            type="object"
+                            string="Send Email"
+                            class="btn-primary"/>
+
+                    <button string="Cancel"
+                            special="cancel"/>
+
+                </footer>
+
+            </form>
+
+        </field>
+
+    </record>
+
+</odoo>

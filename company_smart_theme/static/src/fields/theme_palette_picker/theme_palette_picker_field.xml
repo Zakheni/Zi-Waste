@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="company_smart_theme.ThemePalettePickerField">
+        <div class="o_field_theme_palette_picker" t-att-class="{ 'o_field_cursor_disabled': props.readonly }">
+            <t t-foreach="paletteColors" t-as="color" t-key="color">
+                <button
+                    type="button"
+                    class="o_theme_palette_swatch btn p-0 border-0"
+                    t-att-class="{ 'o_selected': isSelected(color) }"
+                    t-attf-style="background-color: {{ color }};"
+                    t-att-title="color"
+                    t-att-disabled="props.readonly"
+                    t-att-aria-pressed="isSelected(color) ? 'true' : 'false'"
+                    t-att-aria-label="color"
+                    t-on-click="() => this.onSelectColor(color)"
+                />
+            </t>
+        </div>
+    </t>
+
+</templates>

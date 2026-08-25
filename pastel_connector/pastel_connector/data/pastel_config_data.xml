@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="pastel_connector_default_setting" model="pastel.connector.setting">
+        <field name="name">Pastel Connector Configuration</field>
+        <field name="pastel_api_base"/>
+        <field name="pastel_api_key"/>
+        <field name="enable_push_to_sage">0</field>
+    </record>
+
+    <record id="pastel_import_form_singleton" model="pastel.import.form">
+        <field name="name">Import from Sage</field>
+        <field name="import_customers">1</field>
+        <field name="import_products">1</field>
+        <field name="import_invoices">1</field>
+    </record>
+
+</odoo>
