@@ -1,0 +1,309 @@
+openapi: 3.0.3
+info:
+  title: Sage 50 Pastel Bridge
+  version: 1.0.0
+  description: |
+    Versioned HTTP contract between Odoo sage_connector and a Windows Sage host.
+    Odoo never talks to Sage files or COM. Auth is x-api-key only.
+servers:
+  - url: http://127.0.0.1:8788
+security:
+  - ApiKeyAuth: []
+paths:
+  /health:
+    get:
+      summary: Health, adapter, DSN, Sage company, capabilities
+      security: []
+      responses:
+        "200":
+          description: Bridge is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /v1/customers:
+    get:
+      summary: Page customers (incremental)
+      parameters:
+        - $ref: "#/components/parameters/since"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/q"
+      responses:
+        "200":
+          description: Page of customers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPage"
+  /v1/customers/{code}:
+    put:
+      summary: Upsert customer by Sage code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerIn"
+      responses:
+        "200":
+          description: Upserted
+  /v1/suppliers:
+    get:
+      summary: Page suppliers
+      parameters:
+        - $ref: "#/components/parameters/since"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/q"
+      responses:
+        "200":
+          description: Page of suppliers
+  /v1/products:
+    get:
+      summary: Page products
+      parameters:
+        - $ref: "#/components/parameters/since"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/q"
+      responses:
+        "200":
+          description: Page of products
+  /v1/products/{code}:
+    put:
+      summary: Upsert product by Sage item code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductIn"
+      responses:
+        "200":
+          description: Upserted
+  /v1/invoices:
+    get:
+      summary: Page invoices since a document date
+      parameters:
+        - $ref: "#/components/parameters/since"
+        - $ref: "#/components/parameters/cursor"
+        - $ref: "#/components/parameters/limit"
+        - name: doc_type
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Page of invoices
+    post:
+      summary: Post invoice or credit note; returns Sage doc_no
+      parameters:
+        - $ref: "#/components/parameters/idempotency"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceIn"
+      responses:
+        "200":
+          description: Posted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoicePostResult"
+        "409":
+          description: Already exists
+  /v1/invoices/{doc_no}:
+    put:
+      summary: Replace existing Sage invoice
+      parameters:
+        - name: doc_no
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/idempotency"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceIn"
+      responses:
+        "200":
+          description: Updated
+  /v1/invoices/exists:
+    get:
+      summary: Check whether a Sage document exists
+      parameters:
+        - name: doc_no
+          in: query
+          required: true
+          schema: { type: string }
+        - name: doc_type
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Exists flag
+  /v1/payments/batch:
+    post:
+      summary: Post a customer receipt batch (allocation when supported)
+      parameters:
+        - $ref: "#/components/parameters/idempotency"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentBatchIn"
+      responses:
+        "200":
+          description: Posted
+        "501":
+          description: Capability not available (e.g. supplier payments)
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  parameters:
+    since:
+      name: since
+      in: query
+      schema: { type: string, format: date }
+    cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 5000, default: 200 }
+    q:
+      name: q
+      in: query
+      schema: { type: string }
+    idempotency:
+      name: Idempotency-Key
+      in: header
+      schema: { type: string }
+  schemas:
+    Health:
+      type: object
+      properties:
+        ok: { type: boolean }
+        adapter: { type: string }
+        adapter_version: { type: string }
+        write_mode: { type: string, enum: [sdkcom, odbc_guarded] }
+        dsn_ok: { type: boolean }
+        company_open: { type: boolean }
+        capabilities:
+          $ref: "#/components/schemas/Capabilities"
+    Capabilities:
+      type: object
+      properties:
+        pull_customers: { type: boolean }
+        pull_suppliers: { type: boolean }
+        pull_products: { type: boolean }
+        pull_invoices: { type: boolean }
+        upsert_customer: { type: boolean }
+        upsert_product: { type: boolean }
+        post_invoice: { type: boolean }
+        credit_notes: { type: boolean }
+        post_receipt_batch: { type: boolean }
+        invoice_allocation: { type: boolean }
+        supplier_payments: { type: boolean }
+    PageMeta:
+      type: object
+      properties:
+        next_cursor: { type: string, nullable: true }
+        has_more: { type: boolean }
+    CustomerPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/CustomerOut" } }
+        meta: { $ref: "#/components/schemas/PageMeta" }
+    CustomerOut:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        tax_code: { type: string }
+        credit_limit: { type: number }
+        balance: { type: number }
+        currency_code: { type: string }
+        updated_on: { type: string }
+    CustomerIn:
+      type: object
+      properties:
+        name: { type: string }
+        tax_code: { type: string }
+        currency_code: { type: string }
+        credit_limit: { type: number }
+    ProductIn:
+      type: object
+      properties:
+        name: { type: string }
+        tax_code: { type: string }
+    InvoiceIn:
+      type: object
+      required: [customer_code, lines]
+      properties:
+        doc_no: { type: string }
+        invoice_date: { type: string }
+        delivery_date: { type: string }
+        customer_code: { type: string }
+        payment_reference: { type: string }
+        currency: { type: string }
+        document_type: { type: integer, description: "3 invoice, 13 credit note" }
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              product_code: { type: string }
+              name: { type: string }
+              quantity: { type: number }
+              price_unit: { type: number }
+              tax_code: { type: string }
+    InvoicePostResult:
+      type: object
+      properties:
+        ok: { type: boolean }
+        doc_no: { type: string }
+        write_mode: { type: string }
+        created: { type: boolean }
+    PaymentBatchIn:
+      type: object
+      required: [batch_ref, lines]
+      properties:
+        batch_ref: { type: string }
+        payment_date: { type: string }
+        partner_type: { type: string }
+        journal_code: { type: string }
+        currency_code: { type: string }
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              partner_code: { type: string }
+              invoice_doc_no: { type: string }
+              amount: { type: number }
+              reference: { type: string }
+              currency_code: { type: string }
+              allocate: { type: boolean }
